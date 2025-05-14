@@ -67,7 +67,7 @@ def get_agg_results():
 
         for cat in categories:
             this_summ = sum(dictio[llm][x] for x in dictio[llm] if x.startswith(cat))
-            row["Score C"+cat] = round(this_summ/10.0, 1)
+            row["C"+cat] = round(this_summ/10.0, 1)
 
         results.append(row)
 
