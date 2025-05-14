@@ -15,8 +15,6 @@ Large Language Models (LLMs) are increasingly used to support complex tasks in p
 
 This benchmark systematically assesses the ability of LLMs to adhere strictly to provided domain-specific process information, especially when faced with edge cases, rare events, or atypical scenarios. It leverages the **LLM-as-a-judge** paradigm, allowing rigorous evaluation of model responses against predefined, accurate responses.
 
-Here's a high-level, concise, and clear summary for your README.md covering **all 13 categories** of the benchmark:
-
 ## Benchmark Categories Overview
 
 This benchmark evaluates hallucinations and inaccuracies in Large Language Models (LLMs) across **13 carefully defined categories** related to process mining, modeling, and querying scenarios:
