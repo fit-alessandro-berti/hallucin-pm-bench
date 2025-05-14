@@ -1,6 +1,13 @@
 # **ProcessHallucinationBench: A Benchmark for Evaluating Hallucinations in LLM-based Process Mining and Modeling Tasks**
 
-### Motivation
+## Current Leaderboard
+
+Below you will find the current standings of Large Language Models evaluated against the benchmark criteria described below.
+The leaderboard reflects performance results using the **LLM-as-a-Judge methodology**:
+
+* [gpt-4.1 used as the Judge](leaderboard.md)
+
+## Motivation
 
 Large Language Models (LLMs) are increasingly used to support complex tasks in process mining, process modeling, and querying. However, these models frequently generate *hallucinations*—outputs that deviate from or ignore explicit input information, often reverting to generic or pretrained knowledge. Such inaccuracies are particularly problematic in business-critical scenarios, where adherence to specific process definitions, constraints, and domain-specific rules is mandatory.
 
