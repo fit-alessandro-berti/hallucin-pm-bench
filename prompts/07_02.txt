@@ -1,0 +1,61 @@
+System (background for judged model):
+You are a meticulous process-mining analyst.  
+Compare the two **BPMN XML** versions of Acme Bank’s *Loan_Process* that follow.
+Your task: **Summarise *all* changes, grouped under exactly these headings:**
+• Added tasks  
+• Removed tasks  
+• Gateway-type changes (e.g., Exclusive → Inclusive)  
+Ignore cosmetic renamings or reordered XML lines.
+
+User:
+########  BPMN_v1  ########
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Def_1" targetNamespace="http://example.com/bpmn">
+  <process id="Loan_Process" isExecutable="true">
+    <startEvent        id="StartEvent_1"    name="Start"/>
+    <task              id="Task_ReviewApplication" name="Review Application"/>
+    <exclusiveGateway  id="Gateway_Decision"       name="Eligible?"/>
+    <task              id="Task_ApproveLoan"       name="Approve Loan"/>
+    <task              id="Task_RejectLoan"        name="Reject Loan"/>
+    <endEvent          id="EndEvent_1"      name="End"/>
+
+    <!-- flows -->
+    <sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_ReviewApplication"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_ReviewApplication" targetRef="Gateway_Decision"/>
+    <sequenceFlow id="Flow_3" sourceRef="Gateway_Decision" targetRef="Task_ApproveLoan" name="yes"/>
+    <sequenceFlow id="Flow_4" sourceRef="Gateway_Decision" targetRef="Task_RejectLoan"  name="no"/>
+    <sequenceFlow id="Flow_5" sourceRef="Task_ApproveLoan" targetRef="EndEvent_1"/>
+    <sequenceFlow id="Flow_6" sourceRef="Task_RejectLoan"  targetRef="EndEvent_1"/>
+  </process>
+</definitions>
+
+########  BPMN_v2  ########
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Def_2" targetNamespace="http://example.com/bpmn">
+  <process id="Loan_Process" isExecutable="true">
+    <startEvent        id="StartEvent_1"      name="Start"/>
+    <task              id="Task_VerifyIdentity"     name="Verify Identity"/>
+    <task              id="Task_ReviewApplication"  name="Review Application"/>
+    <inclusiveGateway  id="Gateway_Decision"        name="Eligibility Check"/>
+    <task              id="Task_ApproveLoan"        name="Auto-Approve Loan"/>
+    <task              id="Task_RequestDocs"        name="Request Additional Documents"/>
+    <task              id="Task_FinalReject"        name="Final Reject"/>
+    <endEvent          id="EndEvent_1"        name="End"/>
+
+    <!-- flows -->
+    <sequenceFlow id="Flow_1" sourceRef="StartEvent_1"      targetRef="Task_VerifyIdentity"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_VerifyIdentity" targetRef="Task_ReviewApplication"/>
+    <sequenceFlow id="Flow_3" sourceRef="Task_ReviewApplication" targetRef="Gateway_Decision"/>
+    <sequenceFlow id="Flow_4" sourceRef="Gateway_Decision" targetRef="Task_ApproveLoan"   name="eligible"/>
+    <sequenceFlow id="Flow_5" sourceRef="Gateway_Decision" targetRef="Task_RequestDocs"   name="missing docs"/>
+    <sequenceFlow id="Flow_6" sourceRef="Gateway_Decision" targetRef="Task_FinalReject"   name="ineligible"/>
+    <sequenceFlow id="Flow_7" sourceRef="Task_ApproveLoan"   targetRef="EndEvent_1"/>
+    <sequenceFlow id="Flow_8" sourceRef="Task_RequestDocs"   targetRef="EndEvent_1"/>
+    <sequenceFlow id="Flow_9" sourceRef="Task_FinalReject"   targetRef="EndEvent_1"/>
+  </process>
+</definitions>
+
+### Question
+Summarise every change **strictly** under the three requested headings.

@@ -1,0 +1,45 @@
+System: You are a senior BPMN consultant. 
+Here is the current BPMN 2.0 XML of **Acme Telecom’s customer-onboarding process** (37 lines).
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def_01">
+  <bpmn:process id="Onboarding_Process" isExecutable="true">
+    <bpmn:startEvent id="Start_01" name="Customer submits request"/>
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="Start_01" targetRef="Activity_CollectDocs"/>
+
+    <bpmn:userTask id="Activity_CollectDocs" name="Collect Documents"/>
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Activity_CollectDocs" targetRef="Activity_VerifyID"/>
+
+    <bpmn:userTask id="Activity_VerifyID" name="Verify Identity"/>
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Activity_VerifyID" targetRef="Gateway_VerifyOutcome"/>
+
+    <bpmn:exclusiveGateway id="Gateway_VerifyOutcome" name="Identity OK?"/>
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="Gateway_VerifyOutcome" targetRef="Activity_CreateAccount">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Gateway_VerifyOutcome" targetRef="End_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">rejected</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:endEvent id="End_Rejected" name="Reject onboarding"/>
+
+    <bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System"/>
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Activity_CreateAccount" targetRef="Activity_ActivateAccount"/>
+
+    <bpmn:userTask id="Activity_ActivateAccount" name="Activate Account"/>
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="Activity_ActivateAccount" targetRef="End_Success"/>
+
+    <!-- *Unused but existing escalation activity* -->
+    <bpmn:userTask id="Activity_AMReview" name="Account-Manager Review"/>
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="Activity_AMReview" targetRef="Activity_ActivateAccount"/>
+
+    <bpmn:endEvent id="End_Success" name="Onboarding finished"/>
+  </bpmn:process>
+</bpmn:definitions>
+
+Business context – SLA:  
+“**Create Account in Core System**” must complete *within 48 hours of finishing **Verify Identity***.  
+Currently the XML has **no timer or escalation path enforcing that deadline**, which leads to SLA breaches.
+
+**Task** – Suggest one specific SLA-compliance improvement **without adding any new activities** (no extra tasks, no subprocesses).  
+Return **only** the changed or added XML elements (do not repeat the whole model) and a one-sentence justification.

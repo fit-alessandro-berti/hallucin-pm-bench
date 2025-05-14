@@ -1,0 +1,37 @@
+System:
+You are a certified BPMN 2.0 architect working for Sparta Insurance.  
+Below is the current BPMN XML (namespaces stripped for brevity) of the **“FastClaimOnboarding”** process.
+
+<bpmn:process id="FastClaimOnboarding" isExecutable="true">
+  <bpmn:startEvent id="Start_Claim" name="Claim Submitted"/>
+  <bpmn:task id="Task_Receive"     name="Receive Claim"/>
+  <bpmn:task id="Task_Check"       name="Check Completeness"/>
+  <bpmn:exclusiveGateway id="GW_Docs" name="Docs complete?"/>
+  <bpmn:task id="Task_RequestDocs" name="Request Missing Docs"/>
+  <bpmn:task id="Task_Triage"      name="Triage Claim"/>
+  <bpmn:task id="Task_Assign"      name="Assign Adjuster"/>
+  <bpmn:task id="Task_Notify"      name="Notify Claimant"/>
+  <bpmn:endEvent id="End_Done"     name="End"/>
+
+  <!-- flows -->
+  <bpmn:sequenceFlow id="f1" sourceRef="Start_Claim"   targetRef="Task_Receive"/>
+  <bpmn:sequenceFlow id="f2" sourceRef="Task_Receive"  targetRef="Task_Check"/>
+  <bpmn:sequenceFlow id="f3" sourceRef="Task_Check"    targetRef="GW_Docs"/>
+  <bpmn:sequenceFlow id="f4" sourceRef="GW_Docs"       targetRef="Task_RequestDocs">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[missing]]></bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="f5" sourceRef="GW_Docs"       targetRef="Task_Triage">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[complete]]></bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="f6" sourceRef="Task_RequestDocs" targetRef="Task_Triage"/>
+  <bpmn:sequenceFlow id="f7" sourceRef="Task_Triage"   targetRef="Task_Assign"/>
+  <bpmn:sequenceFlow id="f8" sourceRef="Task_Assign"   targetRef="Task_Notify"/>
+  <bpmn:sequenceFlow id="f9" sourceRef="Task_Notify"   targetRef="End_Done"/>
+</bpmn:process>
+
+Business rule (SLA): **Every claim must reach “Triage Claim” within 48 hours of submission; otherwise it must be auto-escalated.**
+
+User:
+Suggest **one** improvement to bring the process into SLA **without adding any new activities (tasks or subprocesses)**.  
+You may introduce events, modify attributes (e.g., timers), or reconnect existing flows, but must not create new tasks.  
+Answer in plain English, ≤120 words, and reference element IDs where relevant.
