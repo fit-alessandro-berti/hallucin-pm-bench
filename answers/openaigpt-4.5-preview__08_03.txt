@@ -1,0 +1,65 @@
+### Step-by-step reasoning:
+
+Initially, the marking is:
+```
+p0 = 1
+pa, pb, pc, pd, pe, pf = 0
+```
+
+Let's analyze how T5 (transition T5 needs tokens in places `pd` **and** `pe`) can get enabled before T3 (transition T3 needs a token in place `pc`):
+
+- Initially enabled: Only T1 can fire (requires a token in place `p0`).
+- After firing **T1**, tokens appear in `pa` and `pb`, and `p0` token disappears.
+  ```
+  After T1:
+  pa = 1, pb = 1
+  p0, pc, pd, pe, pf = 0
+  ```
+
+- We have two choices (`T2` or `T2b`) for the token in place `pa`. Note carefully:
+  - **T2** moves token from `pa` → `pc`
+  - **T2b** moves token from `pa` → `pd` directly (thus skipping `pc`)
+
+Since we want to enable **T5** before **T3**, let's carefully reason on what we need:
+
+- Transition **T3** requires a token in `pc` (so firing it would mean we already have token in `pc`).
+- To fire T5 earlier (i.e., before T3), we must first ensure T5 is enabled with tokens at both `pd` and `pe`. Let's try if that's achievable quickly without ever firing T3.
+
+### Quick check:
+
+- To enable T5 (input: `pd`, `pe`) we must get:
+  - Token in **place `pd`**: Use **T2b** (from `pa`) → `pd`
+  - Token in **place `pe`**: Use **T4** (from `pb`) → `pe`.
+- Notice we don't need to fire **T2** or **T3** at this stage.
+
+Check this clearly again step-by-step:
+
+| Action | Marking after firing           | Enabled Transitions |
+|--------|-------------------------------|---------------------|
+| INIT   | p0=1                          | T1                  |
+| **T1** | pa=1, pb=1                    | T2, T2b, T4         |
+| **T2b**| pd=1, pb=1                    | T4 (pd ready, need pe for T5) |
+| **T4** | pd=1, pe=1                    | **T5 enabled**, T5 ready now |
+
+At this point, T5 can fire **before** we've even introduced a token into `pc`, meaning before T3 has a chance to fire.
+
+- Observe:
+  - After T1, we fired T2b and T4 only.
+  - **T3 never fired**, indeed it's not even possible yet since `pc` has no token.
+  - Clearly, from marking above (`pd=1, pe=1`), **T5** is enabled and can now immediately fire.
+
+### Conclusion:
+
+**YES**. It is possible **for T5 to fire before T3**.
+
+One **shortest firing sequence** demonstrating this is:
+```
+T1, T2b, T4, T5
+```
+
+### Final Answer:
+
+**Yes**, a shortest firing sequence demonstrating this is:
+```
+T1 → T2b → T4 → T5
+```

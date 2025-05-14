@@ -1,0 +1,67 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://example.com/warranty-replacement">
+             
+    <process id="wrc_WarrantyReplacement_v1_3" name="Warranty-Replacement v1.3" isExecutable="false">
+
+        <!-- Start event -->
+        <startEvent id="wrc_StartEvent" name="Claim Submitted"/>
+
+        <!-- Tasks -->
+        <task id="wrc_ValidateClaim" name="validates the claim"/>
+        <task id="wrc_RequestMissingInformation" name="requests missing information"/>
+        <task id="wrc_CheckWarrantyEligibility" name="checks warranty eligibility"/>
+        <task id="wrc_SendRejectionNotice" name="send rejection notice"/>
+        <task id="wrc_CreateShipmentOrder" name="Create shipment order"/>
+        <task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup"/>
+        <task id="wrc_UpdateInventoryRecords" name="update inventory records"/>
+        <task id="wrc_CloseClaim" name="close the claim"/>
+
+        <!-- Gateways -->
+        <exclusiveGateway id="wrc_GatewayClaimComplete" name="Claim Complete?"/>
+        <exclusiveGateway id="wrc_GatewayWarrantyValid" name="Warranty valid?"/>
+        <parallelGateway id="wrc_ParallelSplit" name="Parallel Activities Start"/>
+        <parallelGateway id="wrc_ParallelJoin" name="Parallel Activities End"/>
+
+        <!-- End events -->
+        <endEvent id="wrc_EndSuccess" name="Successful Completion"/>
+        <endEvent id="wrc_EndRejected" name="Claim Rejected"/>
+
+        <!-- Sequence flows -->
+        <sequenceFlow id="wrc_flow_start_validate" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim"/>
+
+        <!-- Claim validation loop -->
+        <sequenceFlow id="wrc_flow_validate_to_gateway" sourceRef="wrc_ValidateClaim" targetRef="wrc_GatewayClaimComplete"/>
+        <sequenceFlow id="wrc_flow_gateway_to_requestInfo" sourceRef="wrc_GatewayClaimComplete" targetRef="wrc_RequestMissingInformation" name="Incomplete"/>
+        <sequenceFlow id="wrc_flow_gateway_complete" sourceRef="wrc_GatewayClaimComplete" targetRef="wrc_CheckWarrantyEligibility" name="Complete"/>
+        <sequenceFlow id="wrc_flow_requestInfo_to_validate" sourceRef="wrc_RequestMissingInformation" targetRef="wrc_ValidateClaim"/>
+
+        <!-- Warranty eligibility -->
+        <sequenceFlow id="wrc_flow_checkWarranty_gateway" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_GatewayWarrantyValid"/>
+        <sequenceFlow id="wrc_flow_gateway_warrantyYes" sourceRef="wrc_GatewayWarrantyValid" targetRef="wrc_ParallelSplit" name="within warranty"/>
+        <sequenceFlow id="wrc_flow_gateway_warrantyNo" sourceRef="wrc_GatewayWarrantyValid" targetRef="wrc_SendRejectionNotice" name="out of warranty"/>
+        <sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndRejected"/>
+
+        <!-- Parallel paths -->
+        <sequenceFlow id="wrc_flow_paraCreateShipment" sourceRef="wrc_ParallelSplit" targetRef="wrc_CreateShipmentOrder"/>
+        <sequenceFlow id="wrc_flow_paraScheduleCourier" sourceRef="wrc_ParallelSplit" targetRef="wrc_ScheduleCourierPickup"/>
+
+        <sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_ParallelJoin"/>
+        <sequenceFlow id="wrc_flow_courier_to_join" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_ParallelJoin"/>
+
+        <!-- Completion path -->
+        <sequenceFlow id="wrc_flow_join_to_updateInventory" sourceRef="wrc_ParallelJoin" targetRef="wrc_UpdateInventoryRecords"/>
+        <sequenceFlow id="wrc_flow_updateInventory_to_closeClaim" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim"/>
+        <sequenceFlow id="wrc_flow_closeClaim_to_endSuccess" sourceRef="wrc_CloseClaim" targetRef="wrc_EndSuccess"/>
+        
+    </process>
+
+</definitions>
+```
