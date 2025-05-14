@@ -1,0 +1,197 @@
+I want to create a benchmark related to hallucinations in Large Language Model instruction-following for process mining and annexed areas (process modeling, process querying). I have seen LLMs tend to ignore information specific to my business processes when they differ from their trained knowledge base. I want to use the LLMs-as-a-judge paradigm.
+Create a challenging and creative prompt to test CATEGORY 1 of the ones mentioned below.
+Return me both the prompt, and the expected answer for such prompt.
+
+
+### 1. **Domain-override / Precedence checks**
+
+| Purpose                                                                                             | Reveal whether the model lets *newly-given* process information override what it “already knows.” |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Typical hallucination                                                                               | Ignoring or silently rewriting custom activity names, roles, or constraints.                      |
+| Skeleton prompt                                                                                     | \`\`\`                                                                                            |
+| System: You are an expert on *Acme Bank’s* loan-approval process (defined below).                   |                                                                                                   |
+| \[Insert a concise but *nonstandard* variant of the process that contradicts the textbook version.] |                                                                                                   |
+| User: Summarise the decision points in Acme’s process and list every required document.  \`\`\`     |                                                                                                   |
+
+---
+
+### 2. **Event‐log fact-extraction**
+
+| Purpose                                                              | Test pure factual grounding on short, concrete artefacts.         |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Typical hallucination                                                | Reporting frequencies, timestamps, or case IDs that never appear. |
+| Skeleton prompt                                                      | \`\`\`                                                            |
+| You are given the following fragment of an XES event log (10 lines). |                                                                   |
+| \[Paste snippet.]                                                    |                                                                   |
+| Q1: How many distinct cases are present?                             |                                                                   |
+| Q2: Which activity immediately precedes "Ship\_Order"?  \`\`\`       |                                                                   |
+
+---
+
+### 3. **Text → Model reconstruction**
+
+| Purpose                                                     | Check whether the model invents tasks or flows when translating prose into BPMN / Petri nets / textual DSLs. |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Skeleton prompt                                             | \`\`\`                                                                                                       |
+| Below is a textual description of a support-ticket process. |                                                                                                              |
+| \[\~10 lines, intentionally omitting escalations.]          |                                                                                                              |
+| Draw the BPMN diagram in XML (or JSON) format.  \`\`\`      |                                                                                                              |
+
+---
+
+### 4. **Compliance / Conformance reasoning**
+
+| Purpose                                                         | Detect hallucinations in rule application—and whether the model fabricates violations or compliances. |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Skeleton prompt                                                 | \`\`\`                                                                                                |
+| Process rule set:                                               |                                                                                                       |
+| • A manager must approve any invoice > €5 000.                  |                                                                                                       |
+| • …                                                             |                                                                                                       |
+| Trace: \<create, approve\_by\_team, approve\_by\_manager, pay>. |                                                                                                       |
+| Is this trace compliant with the rules? Justify.  \`\`\`        |                                                                                                       |
+
+---
+
+### 5. **Process-query synthesis**
+
+| Purpose                                                                                        | Stress the model on formal query languages (e.g., Celonis PQL, ProM filters, SQL on flattened logs). |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Typical hallucination                                                                          | Non-existent function names, wrong column headers.                                                   |
+| Skeleton prompt                                                                                | \`\`\`                                                                                               |
+| Given the log schema (case\_id, activity, org\_unit, start\_time, end\_time)                   |                                                                                                      |
+| Write a PQL query that returns all cases that contain activity "Rework" twice or more.  \`\`\` |                                                                                                      |
+
+---
+
+### 6. **Counterfactual edits**
+
+| Purpose                                                                         | See if the model introduces phantom edits when asked to “improve” a process. |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Skeleton prompt                                                                 | \`\`\`                                                                       |
+| Here is the BPMN XML of our onboarding process.                                 |                                                                              |
+| \[XML block]                                                                    |                                                                              |
+| Suggest one SLA-compliance improvement *without* adding new activities.  \`\`\` |                                                                              |
+
+---
+
+### 7. **Multi-process memory interference**
+
+| Purpose                                                             | Place two or more similar but distinct processes in context and ask about just one. |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Skeleton prompt                                                     | \`\`\`                                                                              |
+| Process A (Retail\_Ordering): …                                     |                                                                                     |
+| Process B (Manufacturing\_WorkOrder): …                             |                                                                                     |
+| Question: Which tasks in **Process B** can run in parallel?  \`\`\` |                                                                                     |
+
+---
+
+### 8. **Change-log diffing**
+
+| Purpose                                                                                      | Exposes hallucinated differences or missed changes. |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Skeleton prompt                                                                              | \`\`\`                                              |
+| BPMN\_v1 …                                                                                   |                                                     |
+| BPMN\_v2 …                                                                                   |                                                     |
+| Summarise all changes, grouped by: added tasks, removed tasks, gateway type changes.  \`\`\` |                                                     |
+
+---
+
+### 9. **Temporal / concurrency reasoning**
+
+| Purpose                                                                                       | Test formal reasoning on ordering constraints and parallel branches. |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Skeleton prompt                                                                               | \`\`\`                                                               |
+| Consider the Petri net below.                                                                 |                                                                      |
+| \[net syntax block]                                                                           |                                                                      |
+| Is it possible for transition T5 to fire before T3 in any reachable marking? Explain.  \`\`\` |                                                                      |
+
+---
+
+### 10. **“Unknown-should-remain-unknown” prompts**
+
+| Purpose                                                                                                                                                 | Benchmark whether the model gracefully says “not enough info” instead of inventing numbers. |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Skeleton prompt                                                                                                                                         | \`\`\`                                                                                      |
+| Here is an event log header (no bodies). Can you compute the average cycle time of activity "Review Contract"?  \`\`\` (Correct answer is: impossible). |                                                                                             |
+
+---
+
+### 11. **Domain-synonym enforcement**
+
+| Purpose                                                              | Check if the model sticks to custom vocabulary you prescribe for activities, roles, KPIs. |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Skeleton prompt                                                      | \`\`\`                                                                                    |
+| Use the term "KYC Review" (not "Customer Due Diligence") throughout. |                                                                                           |
+| Now produce a RACI table for the process below.  \`\`\`              |                                                                                           |
+
+---
+
+### 12. **Process-aware code generation**
+
+| Purpose                                                                                                                | Catch hallucinated library calls / APIs in ML or Python snippets that analyse logs. |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Skeleton prompt                                                                                                        | \`\`\`                                                                              |
+| Write Python code with PM4Py that computes a dotted-chart of the log "invoices.xes". Do *not* rely on seaborn.  \`\`\` |                                                                                     |
+
+---
+
+### 13. **Performance analytics commentary**
+
+| Purpose                                                                                       | Provide numeric tables (throughput, waiting times) and ask for an executive summary. |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Typical hallucination                                                                         | Referencing bottlenecks not present, mixing up measures.                             |
+| Skeleton prompt                                                                               | \`\`\`                                                                               |
+| Table: \[CSV pasted]                                                                          |                                                                                      |
+| Draft a memo highlighting the three worst-performing activities and concrete actions.  \`\`\` |                                                                                      |
+
+---
+
+### 14. **Misinformation injection**
+
+| Purpose                                                                                 | Plant a deliberate factual error in the context and see if the model propagates or corrects it. |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Skeleton prompt                                                                         | \`\`\`                                                                                          |
+| FACT (incorrect): The "Validate\_Payment" activity always follows "Receive\_Order".     |                                                                                                 |
+| Question: Is the above fact accurate with respect to the log fragment provided?  \`\`\` |                                                                                                 |
+
+---
+
+### 15. **Edge-case / low-support prompts**
+
+| Purpose                                                                          | Provide logs with extremely rare events or variant cases to see if the model guesses frequencies. |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Skeleton prompt                                                                  | \`\`\`                                                                                            |
+| In the supplied log, the activity "Manual Fraud Check" appears exactly once.     |                                                                                                   |
+| Confirm the count and explain why sampling error might mislead analysis.  \`\`\` |                                                                                                   |
+
+---
+
+## How these categories play with **LLMs-as-a-judge**
+
+1. **Ground-truth objects**
+   *Keep the artefact small*: 10–40 log lines, < 40 lines of BPMN XML, etc., so a judging LLM can parse it reliably.
+
+2. **Evaluation rubric**
+
+   * **Correctness**: Judge factual alignment line-by-line.
+   * **Unwarranted content**: Flag any element/value not derivable from the prompt context.
+   * **Self-awareness**: Reward appropriately caveated “unknown” answers.
+
+3. **Scoring**
+   Pair each primary prompt with an *expected answer key* (could be hidden from the judged model), then let the judge rate on a 0-5 scale for *factual precision* and *hallucination severity*.  “Severe hallucination” = fabricated critical fact; “minor” = irrelevant embellishment.
+
+4. **Prompt variations**
+   – Shuffle information order.
+   – Add deceptive distractors (extra text about a *different* process).
+   – Compress into a single long context window to test retention.
+
+---
+
+### Next steps
+
+1. **Select 5–6 categories** that best match your day-to-day pain points.
+2. Build a **10–20 prompt set per category** with diversity in length & complexity.
+3. Pilot with two model families (e.g., GPT-4-turbo vs. an open model) to calibrate judge prompts and scoring thresholds.
+4. Iterate: prune prompts where judges disagree heavily; add more where models tie.
+
+This layered approach surfaces *both* overt hallucinations (fabricated tasks, bogus metrics) and subtle ones (misordered paths, ignored constraints), giving you a robust benchmark for instruction-following fidelity in process-centric scenarios. Good luck building—and feel free to ping me once you have a draft set; I’m happy to help refine it!
