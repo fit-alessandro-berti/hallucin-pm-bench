@@ -1,4 +1,4 @@
-import os
+import os, time
 from common import *
 
 
@@ -8,6 +8,7 @@ EVALUATING_MODEL_NAME = "openai/gpt-4.1"
 def evaluate():
     model_name = EVALUATING_MODEL_NAME
     m_name = model_name.replace(":", "").replace("/", "")
+    modified_something = False
 
     for answer in os.listdir("answers"):
         evaluation_path = os.path.join("evaluations", answer)
@@ -38,9 +39,18 @@ def evaluate():
                     F.close()
 
                     print("completed", evaluation_path)
+                    modified_something = True
             except Exception as e:
                 print("except", evaluation_path, str(e))
 
+    return modified_something
+
 
 if __name__ == "__main__":
-    evaluate()
+    while True:
+        modified_something = evaluate()
+
+        if not modified_something:
+            break
+
+        time.sleep(30)

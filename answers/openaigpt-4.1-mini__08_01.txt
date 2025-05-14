@@ -1,0 +1,102 @@
+Let's first restate the problem clearly:
+
+- Initial marking:  
+  \( M_0 = (p0=1, p1=0, p2=0, p3=0, p4=0, p5=0, p6=0) \).
+
+- Transitions:
+  - \( T1: p0 \rightarrow p1 + p2 \)  (parallel split)
+  - \( T2: p1 \rightarrow p3 \)
+  - \( T3: p2 \rightarrow p4 \)
+  - \( T4: p3 + p4 \rightarrow p5 \)  (synchronising join)
+  - \( T5: p3 \rightarrow p6 \) **with inhibitor arc from \(p4\)**, i.e., \(T5\) enabled if \(p4=0\).
+
+---
+
+### Question:
+Can \( T5 \) fire **before** \( T3 \)?
+
+---
+
+### Analysis:
+
+1. **Initial marking:**  
+   \( M_0 = (1,0,0,0,0,0,0) \)
+
+2. **Fire \( T1 \)** (enabled from \( p0=1 \)):  
+   Consumes 1 token from \(p0\), produces 1 token in both \(p1\) and \(p2\):
+
+   \( M_1 = (0,1,1,0,0,0,0) \)
+
+3. From \( M_1 \), which transitions are enabled?  
+   - \( T2 \) requires token in \(p1\) (has 1 token)  
+   - \( T3 \) requires token in \(p2\) (has 1 token)  
+   - \( T5 \) requires token in \(p3\) and \(p4=0\)  
+     - But currently \( p3=0 \), so \( T5 \) **not** enabled  
+   - \( T4 \) requires tokens in both \(p3\) and \(p4\), not enabled because both are 0
+
+4. **Check if \( T5 \) can fire before \( T3 \).**  
+   To fire \( T5 \):  
+   - Need a token in \(p3\)  
+   - \(p4\) must be empty (0 tokens).  
+   Currently, \( p3=0 \), so \( T5 \) cannot fire immediately.
+
+5. To get tokens in \( p3 \), must fire \( T2 \):  
+   \( T2: p1 \rightarrow p3 \), consuming token in \(p1\), producing token in \(p3\).
+
+6. **If \( T3 \) fires before \( T5 \), then \(p4\) will contain a token \( (p4=1) \), disabling \( T5 \) due to the inhibitor arc.**
+
+7. **Is it possible for \( T5 \) to fire before \( T3 \) after \( T2 \) fires?**
+
+   Fire \( T2 \):  
+   \( M_2 = (0,0,1,1,0,0,0) \)
+
+   Now, tokens are \(p2=1\), \(p3=1\), \(p4=0\).
+
+   Conditions for \( T5 \) (enabled if \(p3 \ge 1\) and \( p4 = 0\)):
+
+   - \(p3=1\) ⇒ consumable
+   - \(p4=0\) ⇒ inhibitor satisfied
+
+   So \( T5 \) **is enabled at \(M_2\)**.
+
+8. Before \( T3 \) fires, at \( M_2 \), we can fire \( T5 \).
+
+---
+
+### Concrete firing sequence where \( T5 \) fires before \( T3 \):
+
+- \( M_0 = (1,0,0,0,0,0,0) \)
+- Fire \( T1 \):
+  
+  \( M_1 = (0,1,1,0,0,0,0) \)
+  
+- Fire \( T2 \):
+
+  \( M_2 = (0,0,1,1,0,0,0) \)
+  
+- Fire \( T5 \):
+
+  \( M_3 = (0,0,1,0,0,0,1) \)  
+  (token moved from \(p3\) to \(p6\))
+
+- \( T3 \) has **not** fired yet.
+
+---
+
+### Conclusion:
+
+**Yes**, \( T5 \) **can** fire before \( T3 \).
+
+---
+
+### Brief justification:
+
+- \( T5 \) requires tokens in \( p3 \) and zero tokens in \( p4 \).
+- \( p3 \) gets tokens only after firing \( T2 \).
+- Firing \( T1 \), then \( T2 \) places tokens in \( p2 \) and \( p3 \), with \( p4=0 \).
+- Thus \( T5 \) can fire immediately after \( T2 \) but before \( T3 \).
+- Firing \( T5 \) consumes \(p3\) and produces \(p6\), without interfering with tokens in \(p2\) (so \(T3\) can still fire later). 
+
+---
+
+If you want, I can also provide a step-by-step firing sequence in notation. Just ask!

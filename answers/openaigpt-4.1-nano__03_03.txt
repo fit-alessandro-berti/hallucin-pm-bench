@@ -1,0 +1,81 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- BPMN 2.0 diagram for Warranty-Replacement v1.3 -->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="warranty-replacement-diagram"
+             targetNamespace="http://example.org/warranty">
+  <process id="warranty_replacement_process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Customer submits an online warranty claim" />
+
+    <!-- Validation Step -->
+    <task id="wrc_validate_claim" name="validate the claim" />
+
+    <!-- Completeness Check Gateway -->
+    <exclusiveGateway id="wrc_completeness_gateway" name="Claim complete?" />
+
+    <!-- Request Missing Information Step -->
+    <task id="wrc_request_missing_info" name="request missing information" />
+
+    <!-- Re-Validation Gateway (loop back) -->
+    <exclusiveGateway id="wrc_revalidate_gateway" name="Claim complete?" />
+
+    <!-- Warranty Check Gateway -->
+    <exclusiveGateway id="wrc_warranty_gateway" name="Product within warranty?" />
+
+    <!-- Send Rejection Notice -->
+    <task id="wrc_send_rejection" name="send rejection notice" />
+
+    <!-- End Event for Claim Rejection -->
+    <endEvent id="wrc_end_rejection" name="End - Claim Rejected" />
+
+    <!-- Activities for eligible claims -->
+    <task id="wrc_create_shipment" name="Create shipment order" />
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup" />
+
+    <!-- Parallel Gateway for activities in parallel -->
+    <parallelGateway id="wrc_parallel_split" name="Parallel split" />
+    <parallelGateway id="wrc_parallel_join" name="Parallel join" />
+
+    <!-- Final Activities -->
+    <task id="wrc_update_inventory" name="update inventory records" />
+    <task id="wrc_close_claim" name="close the claim" />
+
+    <!-- Successful Completion End Event -->
+    <endEvent id="wrc_end_success" name="End - Claim completed successfully" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="wrc_flow_start_validate" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+
+    <sequenceFlow id="wrc_flow_completeness_gateway" sourceRef="wrc_validate_claim" targetRef="wrc_completeness_gateway" />
+
+    <sequenceFlow id="wrc_flow_incomplete" sourceRef="wrc_completeness_gateway" targetRef="wrc_request_missing_info" name="No" />
+    <sequenceFlow id="wrc_flow_complete" sourceRef="wrc_completeness_gateway" targetRef="wrc_warranty_gateway" name="Yes" />
+
+    <sequenceFlow id="wrc_flow_request_info" sourceRef="wrc_request_missing_info" targetRef="wrc_validate_claim" />
+
+    <sequenceFlow id="wrc_flow_revalidate" sourceRef="wrc_revalidate_gateway" targetRef="wrc_validate_claim" />
+
+    <sequenceFlow id="wrc_flow_warranty_yes" sourceRef="wrc_warranty_gateway" targetRef="wrc_parallel_split" />
+
+    <sequenceFlow id="wrc_flow_warranty_no" sourceRef="wrc_warranty_gateway" targetRef="wrc_send_rejection" />
+
+    <sequenceFlow id="wrc_flow_send_rejection" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection" />
+
+    <!-- Parallel Activities for eligible claims -->
+    <sequenceFlow id="wrc_flow_parallel_split" sourceRef="wrc_parallel_split" targetRef1="wrc_create_shipment" targetRef2="wrc_schedule_pickup" />
+
+    <sequenceFlow id="wrc_flow_create_shipment" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_flow_schedule_pickup" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join" />
+
+    <!-- Synchronize parallel activities -->
+    <sequenceFlow id="wrc_flow_parallel_join" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory" />
+
+    <sequenceFlow id="wrc_flow_update_inventory" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim" />
+
+    <sequenceFlow id="wrc_flow_close" sourceRef="wrc_close_claim" targetRef="wrc_end_success" />
+
+  </process>
+</definitions>
+```

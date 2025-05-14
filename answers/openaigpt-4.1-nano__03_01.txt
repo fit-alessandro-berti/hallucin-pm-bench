@@ -1,0 +1,49 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="AcmeTechSupportProcess" targetNamespace="http://example.org/bpmn">
+  <process id="SupportTicketProcess" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="start" name="Ticket Submitted"/>
+    <!-- System Classifies Ticket -->
+    <serviceTask id="autoClassification" name="Classify Ticket" implementation="##Automated"/>
+    <!-- Decision Gate: Is it password reset? -->
+    <exclusiveGateway id="gwPasswordCheck" name="Is Password Reset?"/>
+    <!-- Provide Reset Instructions -->
+    <task id="provideResetInstructions" name="Provide Reset Instructions"/>
+    <!-- Support Agent Performs Initial Diagnosis -->
+    <task id="initialDiagnosis" name="Initial Diagnosis"/>
+    <!-- Decision Gate: Resolve or Forward -->
+    <exclusiveGateway id="gwDiagnosisDecision" name="Issue Resolved?"/>
+    <!-- Resolve Issue directly -->
+    <task id="resolveIssue" name="Resolve Issue"/>
+    <!-- Forward to Specialist -->
+    <task id="forwardToSpecialist" name="Forward to Specialist"/>
+    <!-- Specialist Resolves -->
+    <task id="specialistResolve" name="Resolve Issue"/>
+    <!-- After resolution, confirm with customer -->
+    <task id="confirmWithCustomer" name="Confirm with Customer"/>
+    <!-- Gateway for customer confirmation -->
+    <exclusiveGateway id="gwCustomerConfirmation" name="Customer Confirms?"/>
+    <!-- Close Ticket -->
+    <endEvent id="closeTicket" name="Close Ticket"/>
+    <!-- Loop back to diagnosis if issue persists -->
+    <sequenceFlow id="loopDiagnosis" sourceRef="gwCustomerConfirmation" targetRef="initialDiagnosis"/>
+    <!-- Process flow -->
+    <sequenceFlow id="startToClassification" sourceRef="start" targetRef="autoClassification"/>
+    <sequenceFlow id="classificationYes" sourceRef="autoClassification" targetRef="gwPasswordCheck"/>
+    <sequenceFlow id="passwordResetFlow" sourceRef="gwPasswordCheck" targetRef="provideResetInstructions" name="Yes"/>
+    <sequenceFlow id="classificationNo" sourceRef="gwPasswordCheck" targetRef="initialDiagnosis" name="No"/>
+    <sequenceFlow id="diagnosisToDecision" sourceRef="initialDiagnosis" targetRef="gwDiagnosisDecision"/>
+    <!-- From diagnosis decision -->
+    <sequenceFlow id="resolveFlow" sourceRef="gwDiagnosisDecision" targetRef="resolveIssue" name="Resolve"/>
+    <sequenceFlow id="forwardFlow" sourceRef="gwDiagnosisDecision" targetRef="forwardToSpecialist" name="Forward"/>
+    <!-- After resolving issue -->
+    <sequenceFlow id="resolveIssueToConfirmation" sourceRef="resolveIssue" targetRef="confirmWithCustomer"/>
+    <!-- After specialist resolves -->
+    <sequenceFlow id="specialistResolveToConfirmation" sourceRef="specialistResolve" targetRef="confirmWithCustomer"/>
+    <!-- Customer confirms resolution -->
+    <sequenceFlow id="customerConfirmsYes" sourceRef="gwCustomerConfirmation" targetRef="closeTicket" name="Yes"/>
+    <!-- Customer reports issue persists -->
+    <sequenceFlow id="customerConfirmsNo" sourceRef="gwCustomerConfirmation" targetRef="initialDiagnosis" name="No"/>
+  </process>
+</definitions>
+```

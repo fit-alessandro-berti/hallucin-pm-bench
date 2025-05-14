@@ -82,4 +82,12 @@ if __name__ == "__main__":
     results, dictio = get_agg_results()
     results = pd.DataFrame(results)
 
-    results.to_markdown("leaderboard.md", index=False)
+    res = results.to_markdown(index=False)
+
+    F = open("leaderboard.md", "w")
+
+    F.write("## Overall Leaderboard (gpt-4.1 used as the Judge)\n\n")
+    F.write("Maximum attainable score: **39 points**\n\n")
+    F.write(res)
+
+    F.close()

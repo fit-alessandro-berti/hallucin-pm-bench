@@ -1,0 +1,142 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             targetNamespace="http://example.com/warrantyreplacement">
+
+  <process id="wrc_WarrantyReplacement" name="Warranty-Replacement v1.3" isExecutable="true">
+
+    <!-- Start event -->
+    <startEvent id="wrc_StartEvent" name="Customer submits online warranty claim">
+      <outgoing>wrc_seq_1</outgoing>
+    </startEvent>
+
+    <!-- Validate Claim task -->
+    <task id="wrc_Validate the claim" name="Validate the claim">
+      <incoming>wrc_seq_1</incoming>
+      <outgoing>wrc_seq_2</outgoing>
+    </task>
+
+    <!-- Exclusive gateway for completeness -->
+    <exclusiveGateway id="wrc_ExclusiveGateway_Completeness" name="Claim complete?">
+      <incoming>wrc_seq_2</incoming>
+      <outgoing>wrc_seq_3_complete</outgoing>
+      <outgoing>wrc_seq_3_incomplete</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request missing information task -->
+    <task id="wrc_Request missing information" name="Request missing information">
+      <incoming>wrc_seq_3_incomplete</incoming>
+      <outgoing>wrc_seq_4"></outgoing>
+    </task>
+
+    <!-- Flow from requesting info back to Validate the claim -->
+    <sequenceFlow id="wrc_seq_4" sourceRef="wrc_Request missing information" targetRef="wrc_Validate the claim" />
+
+    <!-- Complete flow from completeness gateway -->
+    <sequenceFlow id="wrc_seq_3_complete" sourceRef="wrc_ExclusiveGateway_Completeness" targetRef="wrc_Check warranty eligibility"/>
+    <sequenceFlow id="wrc_seq_3_incomplete" sourceRef="wrc_ExclusiveGateway_Completeness" targetRef="wrc_Request missing information"/>
+
+    <!-- Check warranty eligibility task -->
+    <task id="wrc_Check warranty eligibility" name="Check warranty eligibility">
+      <incoming>wrc_seq_3_complete</incoming>
+      <outgoing>wrc_seq_5</outgoing>
+    </task>
+
+    <!-- Exclusive gateway for warranty decision -->
+    <exclusiveGateway id="wrc_ExclusiveGateway_Warranty" name="Within warranty?">
+      <incoming>wrc_seq_5</incoming>
+      <outgoing>wrc_seq_6_within</outgoing>
+      <outgoing>wrc_seq_6_out</outgoing>
+    </exclusiveGateway>
+
+    <!-- Send rejection notice task -->
+    <task id="wrc_Send rejection notice" name="Send rejection notice">
+      <incoming>wrc_seq_6_out</incoming>
+      <outgoing>wrc_seq_7_reject_end</outgoing>
+    </task>
+
+    <!-- End event for rejection -->
+    <endEvent id="wrc_EndEvent_Rejection" name="Rejection complete">
+      <incoming>wrc_seq_7_reject_end</incoming>
+    </endEvent>
+
+    <!-- Sequence flows for warranty gateway -->
+    <sequenceFlow id="wrc_seq_5" sourceRef="wrc_Check warranty eligibility" targetRef="wrc_ExclusiveGateway_Warranty"/>
+
+    <sequenceFlow id="wrc_seq_6_out" sourceRef="wrc_ExclusiveGateway_Warranty" targetRef="wrc_Send rejection notice"/>
+    <sequenceFlow id="wrc_seq_6_within" sourceRef="wrc_ExclusiveGateway_Warranty" targetRef="wrc_ParallelGateway_Split"/>
+
+    <!-- Parallel gateway split -->
+    <parallelGateway id="wrc_ParallelGateway_Split" name="Start parallel tasks">
+      <incoming>wrc_seq_6_within</incoming>
+      <outgoing>wrc_seq_8_create_shipment"/>
+      <outgoing>wrc_seq_8_schedule_pickup"/>
+    </parallelGateway>
+
+    <!-- Create shipment order task -->
+    <task id="wrc_Create shipment order" name="Create shipment order">
+      <incoming>wrc_seq_8_create_shipment</incoming>
+      <outgoing>wrc_seq_9_join_shipment"/>
+    </task>
+
+    <!-- Schedule courier pickup task -->
+    <task id="wrc_Schedule courier pickup" name="Schedule courier pickup">
+      <incoming>wrc_seq_8_schedule_pickup</incoming>
+      <outgoing>wrc_seq_9_join_pickup"/>
+    </task>
+
+    <!-- Sequence flows from parallel split -->
+    <sequenceFlow id="wrc_seq_8_create_shipment" sourceRef="wrc_ParallelGateway_Split" targetRef="wrc_Create shipment order"/>
+    <sequenceFlow id="wrc_seq_8_schedule_pickup" sourceRef="wrc_ParallelGateway_Split" targetRef="wrc_Schedule courier pickup"/>
+
+    <!-- Parallel gateway join -->
+    <parallelGateway id="wrc_ParallelGateway_Join" name="Join parallel tasks">
+      <incoming>wrc_seq_9_join_shipment</incoming>
+      <incoming>wrc_seq_9_join_pickup</incoming>
+      <outgoing>wrc_seq_10_update_inventory"/>
+    </parallelGateway>
+
+    <!-- Sequence flows from parallel tasks to join -->
+    <sequenceFlow id="wrc_seq_9_join_shipment" sourceRef="wrc_Create shipment order" targetRef="wrc_ParallelGateway_Join"/>
+    <sequenceFlow id="wrc_seq_9_join_pickup" sourceRef="wrc_Schedule courier pickup" targetRef="wrc_ParallelGateway_Join"/>
+
+    <!-- Update inventory records task -->
+    <task id="wrc_Update inventory records" name="Update inventory records">
+      <incoming>wrc_seq_10_update_inventory</incoming>
+      <outgoing>wrc_seq_11_close_claim"/>
+    </task>
+
+    <!-- Sequence flow from parallel join to update inventory -->
+    <sequenceFlow id="wrc_seq_10_update_inventory" sourceRef="wrc_ParallelGateway_Join" targetRef="wrc_Update inventory records"/>
+
+    <!-- Close the claim task -->
+    <task id="wrc_Close the claim" name="Close the claim">
+      <incoming>wrc_seq_11_close_claim</incoming>
+      <outgoing>wrc_seq_12_success_end"/>
+    </task>
+
+    <!-- Sequence flow from update inventory to close claim -->
+    <sequenceFlow id="wrc_seq_11_close_claim" sourceRef="wrc_Update inventory records" targetRef="wrc_Close the claim"/>
+
+    <!-- End event for successful completion -->
+    <endEvent id="wrc_EndEvent_Success" name="Claim closed successfully">
+      <incoming>wrc_seq_12_success_end</incoming>
+    </endEvent>
+
+    <!-- Sequence flow from close claim to end event -->
+    <sequenceFlow id="wrc_seq_12_success_end" sourceRef="wrc_Close the claim" targetRef="wrc_EndEvent_Success"/>
+
+    <!-- Sequence flow from StartEvent to Validate the claim -->
+    <sequenceFlow id="wrc_seq_1" sourceRef="wrc_StartEvent" targetRef="wrc_Validate the claim"/>
+
+    <!-- Sequence flow from Validate the claim to ExclusiceGateway Completeness -->
+    <sequenceFlow id="wrc_seq_2" sourceRef="wrc_Validate the claim" targetRef="wrc_ExclusiveGateway_Completeness"/>
+
+  </process>
+</definitions>
+```

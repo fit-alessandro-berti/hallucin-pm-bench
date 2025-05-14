@@ -1,0 +1,140 @@
+Let's analyze the Petri net step by step, starting from the initial marking and understanding the dependencies, focusing on whether **T5** can fire *before* **T3**.
+
+---
+
+### Net recap and goal
+
+- **Places:** p0, pa, pb, pc, pd, pe, pf
+- **Transitions:**
+
+| Transition | Input places | Output places | Notes                |
+|------------|--------------|---------------|----------------------|
+| T1         | p0           | pa, pb        | parallel split       |
+| T2         | pa           | pc            | normal path          |
+| T2b        | pa           | pd            | shortcut, skips pc   |
+| T3         | pc           | pd            | continuation normal  |
+| T4         | pb           | pe            |                      |
+| T5         | pd, pe       | pf            | synchronizing join   |
+| T6         | pf           | pc            | feedback loop        |
+
+**Initial Marking:** p0 = 1 (all others 0)
+
+---
+
+### Question:
+
+> Can **T5** fire before **T3**?
+
+I.e., is there a reachable marking where T5 is enabled and fires, and so far T3 has not fired?
+
+---
+
+### Intuition
+
+- T5 requires tokens in both **pd** and **pe**.
+- **pe** is produced only by T4, which requires a token in pb.
+- pb comes from T1, from p0.
+- pd can be produced via two ways:
+  - via normal path: pa -> (T2) pc -> (T3) pd
+  - via shortcut: pa -> (T2b) pd
+
+So to get pd token, we can use either:
+
+- T2 + T3 sequence, or
+- T2b shortcut (which skips T3).
+
+If we can get pd without firing T3, then T5 might be enabled before T3 fires.
+
+---
+
+### Step-by-step
+
+Start from marking:
+
+- M0: p0 = 1
+
+**Fire T1:**
+
+- Input: p0=1
+- Output: pa=1, pb=1
+- M1: pa=1, pb=1
+
+From here, the tokens are:
+
+- pa=1
+- pb=1
+
+Now:
+
+- T2 enabled (input pa), produces pc
+- T2b enabled (input pa), produces pd
+- T4 enabled (input pb), produces pe
+
+---
+
+Goal: reach enabling of T5 (pd and pe both ≥ 1) before any T3 fires.
+
+Since T3 requires pc, which is produced by T2, let's consider toggling T2b first to produce pd directly without going through T3.
+
+---
+
+**Fire T2b:**
+
+- consumes pa=1, produces pd=1
+- M2: pb=1, pd=1
+
+Note: pa token consumed, so T2 and T3 won't be enabled anymore.
+
+**Fire T4:**
+
+- consumes pb=1, produces pe=1
+- M3: pd=1, pe=1
+
+Now, T5 is enabled (inputs pd=1, pe=1).
+
+---
+
+**Fire T5:**
+
+- consumes pd=1, pe=1, produces pf=1
+- M4: pf=1
+
+Up to now, transitions fired: T1, T2b, T4, T5
+
+Has T3 fired? No.
+
+---
+
+### Conclusion:
+
+- Yes, T5 **can** fire before T3.
+- One **shortest** firing sequence (transitions in order) is:
+
+```
+T1; T2b; T4; T5
+```
+
+---
+
+### Summary explanation:
+
+- The shortcut path T2b produces pd directly from pa, without passing through pc.
+- Since T3 requires pc to produce pd, if we take the shortcut T2b, T3 is never enabled.
+- Hence, T5 can synchronize pd (from T2b) and pe (from T4) and fire before T3 fires.
+
+---
+
+# **Final answer:**
+
+**Yes**, T5 can fire before T3.
+
+**Shortest firing sequence demonstrating this:**
+
+```
+T1; T2b; T4; T5
+```
+
+This sequence reaches a marking where:
+
+- T3 has never fired,
+- but T5 can fire because it receives tokens from pd (via T2b) and pe (via T4).

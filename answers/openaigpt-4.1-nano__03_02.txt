@@ -1,0 +1,222 @@
+```json
+{
+  "definitions": {
+    "id": "CustomerSupportProcess",
+    "name": "Customer Support Ticket Process",
+    "executable": true,
+    "documentation": "",
+    "collaboration": [],
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "isClosed": false,
+      "flowElements": [
+        {
+          "id": "startEvent",
+          "type": "startEvent",
+          "name": "Support Email Received"
+        },
+        {
+          "id": "parseEmail",
+          "type": "task",
+          "name": "Parse Email"
+        },
+        {
+          "id": "createTicket",
+          "type": "task",
+          "name": "Create Ticket in HelpDesk System"
+        },
+        {
+          "id": "initialClassification",
+          "type": "task",
+          "name": "Initial Classification"
+        },
+        {
+          "id": "decisionSimpleComplex",
+          "type": "exclusiveGateway",
+          "name": "Classify as Simple or Complex"
+        },
+        {
+          "id": "simplePath",
+          "type": "sequenceFlow",
+          "name": "Simple",
+          "sourceRef": "decisionSimpleComplex",
+          "targetRef": "provideResolution",
+          "conditionExpression": "${classification == 'Simple'}"
+        },
+        {
+          "id": "complexPath",
+          "type": "sequenceFlow",
+          "name": "Complex",
+          "sourceRef": "decisionSimpleComplex",
+          "targetRef": "rootCauseAnalysis",
+          "conditionExpression": "${classification == 'Complex'}"
+        },
+        {
+          "id": "rootCauseAnalysis",
+          "type": "task",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "provideResolution",
+          "type": "task",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "sendResponse",
+          "type": "task",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "parallelLogging",
+          "type": "parallelGateway",
+          "name": "Parallel Tasks"
+        },
+        {
+          "id": "logKnowledgeBase",
+          "type": "task",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "waitForReply",
+          "type": "intermediateCatchEvent",
+          "name": "Wait up to 24 hours for Customer Reply",
+          "animation": "Timer",
+          "eventDefinition": {
+            "id": "timerEventDefinition",
+            "type": "timerEventDefinition",
+            "timeDuration": "PT24H"
+          }
+        },
+        {
+          "id": "decisionCustomerReply",
+          "type": "exclusiveGateway",
+          "name": "Customer Reply Received?"
+        },
+        {
+          "id": "closeTicketImmediately",
+          "type": "task",
+          "name": "Close Ticket"
+        },
+        {
+          "id": "sendReminder",
+          "type": "task",
+          "name": "Send Reminder"
+        },
+        {
+          "id": "closeTicket",
+          "type": "task",
+          "name": "Close Ticket"
+        },
+        {
+          "id": "cancelEvent",
+          "type": "intermediateThrowEvent",
+          "name": "Customer Cancels (Any Point)",
+          "triggeredBy": "cancel"
+        },
+        {
+          "id": "terminateProcess",
+          "type": "endEvent",
+          "name": "Terminate Process"
+        },
+        {
+          "id": "endEvent",
+          "type": "endEvent",
+          "name": "End"
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "flow_start_parse",
+          "sourceRef": "startEvent",
+          "targetRef": "parseEmail"
+        },
+        {
+          "id": "flow_parse_create",
+          "sourceRef": "parseEmail",
+          "targetRef": "createTicket"
+        },
+        {
+          "id": "flow_create_initial",
+          "sourceRef": "createTicket",
+          "targetRef": "initialClassification"
+        },
+        {
+          "id": "flow_initial_decision",
+          "sourceRef": "initialClassification",
+          "targetRef": "decisionSimpleComplex"
+        },
+        {
+          "id": "flow_simple",
+          "sourceRef": "decisionSimpleComplex",
+          "targetRef": "provideResolution",
+          "conditionExpression": "${classification == 'Simple'}"
+        },
+        {
+          "id": "flow_complex",
+          "sourceRef": "decisionSimpleComplex",
+          "targetRef": "rootCauseAnalysis",
+          "conditionExpression": "${classification == 'Complex'}"
+        },
+        {
+          "id": "flow_root_cause",
+          "sourceRef": "rootCauseAnalysis",
+          "targetRef": "provideResolution"
+        },
+        {
+          "id": "flow_resolution_send",
+          "sourceRef": "provideResolution",
+          "targetRef": "sendResponse"
+        },
+        {
+          "id": "flow_send_log",
+          "sourceRef": "sendResponse",
+          "targetRef": "parallelLogging"
+        },
+        {
+          "id": "flow_parallel_tasks",
+          "sourceRef": "parallelLogging",
+          "targetRef": "logKnowledgeBase"
+        },
+        {
+          "id": "flow_log_complete",
+          "sourceRef": "logKnowledgeBase",
+          "targetRef": "waitForReply"
+        },
+        {
+          "id": "flow_wait_decision",
+          "sourceRef": "waitForReply",
+          "targetRef": "decisionCustomerReply"
+        },
+        {
+          "id": "flow_customer_reply_yes",
+          "sourceRef": "decisionCustomerReply",
+          "targetRef": "closeTicketImmediately",
+          "conditionExpression": "${customerReplied == true}"
+        },
+        {
+          "id": "flow_customer_reply_no",
+          "sourceRef": "decisionCustomerReply",
+          "targetRef": "sendReminder",
+          "conditionExpression": "${customerReplied == false}"
+        },
+        {
+          "id": "flow_send_reminder",
+          "sourceRef": "sendReminder",
+          "targetRef": "closeTicket"
+        },
+        {
+          "id": "flow_close_ticket",
+          "sourceRef": "closeTicket",
+          "targetRef": "endEvent"
+        },
+        {
+          "id": "flow_cancel",
+          "sourceRef": "cancelEvent",
+          "targetRef": "terminateProcess"
+        }
+      ],
+      "artifacts": []
+    }
+  }
+}
+```
