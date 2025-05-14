@@ -2,7 +2,7 @@ import os
 from common import *
 
 
-EVALUATING_MODEL_NAME = "openai/gpt-4.1-mini"
+EVALUATING_MODEL_NAME = "openai/gpt-4.1"
 
 
 def evaluate():
@@ -19,7 +19,7 @@ def evaluate():
             answer_content = open(os.path.join("answers", answer), encoding="utf-8").read()
 
             evaluation_prompt = []
-            evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt.")
+            evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")
             evaluation_prompt.append("The prompt is accompanied by a ground truth answer, which should be considered to assess the LLM answer. So, the more differences are between the answers and the ground truth answer, the lower is the grade.")
             evaluation_prompt.append("Please evaluate with the utmost strictness. Also small errors should reflect in significant loss of points.")
             evaluation_prompt.append("!! <<PROMPT>>:\n"+prompt_content)
