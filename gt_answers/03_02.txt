@@ -1,0 +1,61 @@
+### Expected Answer (key)
+
+```json
+{
+  "process_id": "SupportTicket",
+  "elements": [
+    { "id": "start",            "type": "startEvent",              "name": "Email Received" },
+    { "id": "createTicket",     "type": "task",                    "name": "Create Ticket" },
+    { "id": "initialClassify",  "type": "task",                    "name": "Initial Classification" },
+    { "id": "classifyDecision", "type": "exclusiveGateway",        "name": "Simple or Complex?" },
+
+    { "id": "rootCause",        "type": "task",                    "name": "Root Cause Analysis" },
+    { "id": "provideResolution","type": "task",                    "name": "Provide Resolution" },
+
+    { "id": "forkLogging",      "type": "parallelGateway",         "name": "Fork Log/Wait" },
+    { "id": "sendResponse",     "type": "task",                    "name": "Send Response to Customer" },
+    { "id": "logSolution",      "type": "task",                    "name": "Log Solution in Knowledge Base" },
+    { "id": "joinAfterLogging", "type": "parallelGateway",         "name": "Join After Log" },
+
+    { "id": "awaitReply",       "type": "eventBasedGateway",       "name": "Wait 24h for Reply" },
+    { "id": "customerReply",    "type": "intermediateCatchEvent",  "event": "message", "name": "Customer Reply" },
+    { "id": "timer24h",         "type": "intermediateCatchEvent",  "event": "timer",   "name": "Timer 24h" },
+
+    { "id": "sendReminder",     "type": "task",                    "name": "Send Reminder" },
+    { "id": "closeTicket",      "type": "task",                    "name": "Close Ticket" },
+    { "id": "end",              "type": "endEvent",                "name": "End" },
+
+    { "id": "cancelEvent",      "type": "intermediateCatchEvent",  "event": "message", "name": "Customer Cancel" },
+    { "id": "terminate",        "type": "terminateEndEvent",       "name": "Terminate" }
+  ],
+  "flows": [
+    { "source": "start",            "target": "createTicket" },
+    { "source": "createTicket",     "target": "initialClassify" },
+    { "source": "initialClassify",  "target": "classifyDecision" },
+
+    { "source": "classifyDecision", "condition": "simple",  "target": "provideResolution" },
+    { "source": "classifyDecision", "condition": "complex", "target": "rootCause" },
+    { "source": "rootCause",        "target": "provideResolution" },
+
+    { "source": "provideResolution","target": "forkLogging" },
+    { "source": "forkLogging",      "target": "sendResponse" },
+    { "source": "forkLogging",      "target": "logSolution" },
+    { "source": "sendResponse",     "target": "joinAfterLogging" },
+    { "source": "logSolution",      "target": "joinAfterLogging" },
+    { "source": "joinAfterLogging", "target": "awaitReply" },
+
+    { "source": "awaitReply",       "target": "customerReply" },
+    { "source": "awaitReply",       "target": "timer24h" },
+
+    { "source": "customerReply",    "target": "closeTicket" },
+    { "source": "timer24h",         "target": "sendReminder" },
+    { "source": "sendReminder",     "target": "closeTicket" },
+
+    { "source": "closeTicket",      "target": "end" },
+
+    { "source": "cancelEvent",      "target": "terminate" }
+  ]
+}
+```
+
+**Evaluation focus:** any appearance of *escalation*, *manager approval*, or additional gateways/flows absent from this key should be penalised as hallucination.

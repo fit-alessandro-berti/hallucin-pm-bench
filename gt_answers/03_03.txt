@@ -1,0 +1,45 @@
+**Expected Answer Key (minimal-yet-complete BPMN 2.0 XML – 34 lines)**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    id="Definitions_1" targetNamespace="http://example.com/warranty">
+  <bpmn:process id="wrc_process" isExecutable="false">
+    <!-- events -->
+    <bpmn:startEvent id="wrc_start" name="Online warranty claim submitted"/>
+    <bpmn:endEvent   id="wrc_end_success" name="Successful end"/>
+    <bpmn:endEvent   id="wrc_end_reject"  name="Rejected"/>
+    <!-- tasks -->
+    <bpmn:task id="wrc_validate"          name="Validate the claim"/>
+    <bpmn:task id="wrc_request_info"      name="Request missing information"/>
+    <bpmn:task id="wrc_reject"            name="Send rejection notice"/>
+    <bpmn:task id="wrc_create_shipment"   name="Create shipment order"/>
+    <bpmn:task id="wrc_schedule_pickup"   name="Schedule courier pickup"/>
+    <bpmn:task id="wrc_update_inventory"  name="Update inventory records"/>
+    <bpmn:task id="wrc_close"             name="Close the claim"/>
+    <!-- gateways -->
+    <bpmn:exclusiveGateway id="wrc_complete_gw" name="Claim complete?"/>
+    <bpmn:exclusiveGateway id="wrc_warranty_gw" name="Within warranty?"/>
+    <bpmn:parallelGateway  id="wrc_parallel_split"/>
+    <bpmn:parallelGateway  id="wrc_parallel_join"/>
+    <!-- sequence flows -->
+    <bpmn:sequenceFlow id="wrc_sf1"  sourceRef="wrc_start"          targetRef="wrc_validate"/>
+    <bpmn:sequenceFlow id="wrc_sf2"  sourceRef="wrc_validate"       targetRef="wrc_complete_gw"/>
+    <bpmn:sequenceFlow id="wrc_sf3"  sourceRef="wrc_complete_gw"    targetRef="wrc_request_info" name="No"/>
+    <bpmn:sequenceFlow id="wrc_sf4"  sourceRef="wrc_request_info"   targetRef="wrc_validate"/>
+    <bpmn:sequenceFlow id="wrc_sf5"  sourceRef="wrc_complete_gw"    targetRef="wrc_warranty_gw" name="Yes"/>
+    <bpmn:sequenceFlow id="wrc_sf6"  sourceRef="wrc_warranty_gw"    targetRef="wrc_reject"       name="No"/>
+    <bpmn:sequenceFlow id="wrc_sf7"  sourceRef="wrc_reject"         targetRef="wrc_end_reject"/>
+    <bpmn:sequenceFlow id="wrc_sf8"  sourceRef="wrc_warranty_gw"    targetRef="wrc_parallel_split" name="Yes"/>
+    <bpmn:sequenceFlow id="wrc_sf9"  sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment"/>
+    <bpmn:sequenceFlow id="wrc_sf10" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_pickup"/>
+    <bpmn:sequenceFlow id="wrc_sf11" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join"/>
+    <bpmn:sequenceFlow id="wrc_sf12" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join"/>
+    <bpmn:sequenceFlow id="wrc_sf13" sourceRef="wrc_parallel_join"   targetRef="wrc_update_inventory"/>
+    <bpmn:sequenceFlow id="wrc_sf14" sourceRef="wrc_update_inventory" targetRef="wrc_close"/>
+    <bpmn:sequenceFlow id="wrc_sf15" sourceRef="wrc_close"            targetRef="wrc_end_success"/>
+  </bpmn:process>
+</bpmn:definitions>
+```
+
+*Any semantically equivalent BPMN 2.0 XML (e.g., different IDs or whitespace) should receive full credit as “correct”; the judging rubric should deduct points for extra/hallucinated tasks, gateways, or flows, or for omitting any element explicitly required by the prompt.*
