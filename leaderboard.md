@@ -1,6 +1,6 @@
 ## Overall Leaderboard (gpt-4.1 used as the Judge)
 
-Maximum attainable score: **39 points**
+The higher the score, the better the model. Maximum attainable score: **39 points**
 
 | LLM                |   TOTAL SCORE |   C01 |   C02 |   C03 |   C04 |   C05 |   C06 |   C07 |   C08 |   C09 |   C10 |   C11 |   C12 |   C13 |
 |:-------------------|--------------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|
