@@ -27,4 +27,5 @@ def respond_for_model(model_name):
 
 
 if __name__ == "__main__":
-    respond_for_model("openai/gpt-4.1-mini")
+    for model in ["openai/gpt-4.1-mini", "openai/gpt-4.1-nano"]:
+        respond_for_model(model)
