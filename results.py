@@ -138,7 +138,7 @@ if __name__ == "__main__":
     F = open("leaderboard.md", "w")
 
     F.write("## Overall Leaderboard (gpt-4.1 used as the Judge)\n\n")
-    F.write("The higher the score, the better the model.\nMaximum attainable score: **39 points**. Maximum attainable score per category: **3 points**.\nThe average is computed over **/10**.\n\n")
+    F.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
     F.write(res)
 
     F.close()
