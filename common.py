@@ -22,52 +22,64 @@ def get_response(prompt, model_name):
         "messages": messages,
     }
 
-    payload["stream"] = True
-    response_message = ""
-    thinking_content = ""
+    enable_streaming = False
 
-    chunk_count = 0
+    if enable_streaming:
+        payload["stream"] = True
+        response_message = ""
+        thinking_content = ""
 
-    with requests.post(complete_url, headers=headers, json=payload, stream=True) as resp:
-        for line in resp.iter_lines():
-            if not line:
-                continue
-            decoded_line = line.decode("utf-8")
+        chunk_count = 0
 
-            # OpenAI-style streaming lines begin with "data: "
-            if decoded_line.startswith("data: "):
-                data_str = decoded_line[len("data: "):].strip()
-                if data_str == "[DONE]":
-                    # End of stream
-                    break
-                try:
-                    data_json = json.loads(data_str)
-                    if "choices" in data_json:
-                        # Each chunk has a delta with partial content
-                        chunk_content = data_json["choices"][0]["delta"].get("content", "")
-                        chunk_reasoning_content = data_json["choices"][0]["delta"].get("reasoning_content", "")
+        with requests.post(complete_url, headers=headers, json=payload, stream=True) as resp:
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                decoded_line = line.decode("utf-8")
 
-                        if chunk_content:
-                            response_message += chunk_content
-                            chunk_count += 1
-                            # print(chunk_count)
-                            if chunk_count % 10 == 0:
-                                # print(chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
-                                pass
-                        elif chunk_reasoning_content:
-                            thinking_content += chunk_reasoning_content
-                            chunk_count += 1
-                            # print("thinking", chunk_count)
-                            if chunk_count % 10 == 0:
-                                # print("thinking", chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
-                                pass
-                except json.JSONDecodeError:
-                    # Possibly a keep-alive or incomplete chunk
-                    traceback.print_exc()
+                # OpenAI-style streaming lines begin with "data: "
+                if decoded_line.startswith("data: "):
+                    data_str = decoded_line[len("data: "):].strip()
+                    if data_str == "[DONE]":
+                        # End of stream
+                        break
+                    try:
+                        data_json = json.loads(data_str)
+                        if "choices" in data_json:
+                            # Each chunk has a delta with partial content
+                            chunk_content = data_json["choices"][0]["delta"].get("content", "")
+                            chunk_reasoning_content = data_json["choices"][0]["delta"].get("reasoning_content", "")
 
-    if thinking_content:
-        response_message = ["<think>", thinking_content, "</think>", response_message]
-        response_message = "\n".join(response_message)
+                            if chunk_content:
+                                response_message += chunk_content
+                                chunk_count += 1
+                                # print(chunk_count)
+                                if chunk_count % 10 == 0:
+                                    # print(chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
+                                    pass
+                            elif chunk_reasoning_content:
+                                thinking_content += chunk_reasoning_content
+                                chunk_count += 1
+                                # print("thinking", chunk_count)
+                                if chunk_count % 10 == 0:
+                                    # print("thinking", chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
+                                    pass
+                    except json.JSONDecodeError:
+                        # Possibly a keep-alive or incomplete chunk
+                        traceback.print_exc()
+
+        if thinking_content:
+            response_message = ["<think>", thinking_content, "</think>", response_message]
+            response_message = "\n".join(response_message)
+    else:
+        with requests.post(complete_url, headers=headers, json=payload) as resp:
+            resp_json = resp.json()
+            message = resp_json["choices"][0]["message"]
+
+            response_message = message["content"]
+            if "reasoning_content" in message:
+                response_message = "<think>\n" + message[
+                    "reasoning_content"] + "\n</think>\n\n" + response_message.strip()
 
     return response_message
 

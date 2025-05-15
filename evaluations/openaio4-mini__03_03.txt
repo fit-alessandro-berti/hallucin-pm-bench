@@ -1,0 +1,66 @@
+5.5
+
+**Evaluation (strict):**
+
+**1. Names on Elements:**
+- **Start Event:**  
+  - LLM: `<bpmn2:startEvent id="wrc_StartEvent"/>` (No `name` attribute, should be `"Online warranty claim submitted"` per ground truth.)
+  - -1.0
+
+- **End Events:**  
+  - LLM: `<bpmn2:endEvent id="wrc_EndEvent_Rejection"/>` and `<bpmn2:endEvent id="wrc_EndEvent_Success"/>` (No `name` attribute, should be `"Rejected"` and `"Successful end"`.)
+  - -0.5
+
+- **Task Names:**  
+  - LLM preserves most task names ("Create shipment order", "Schedule courier pickup", etc.), **but** some are not verbatim to the prompt:
+    - `"validates the claim"` ≠ `"Validate the claim"` (-0.5)
+    - `"requests missing information"` ≠ `"Request missing information"` (-0.5)
+    - `"checks warranty eligibility"` ≠ `"Check warranty eligibility"` ("Check" vs "checks") (-0.25)
+    - `"send rejection notice"` ("send" vs "Send") (-0.25)
+    - `"update inventory records"` ("update" vs "Update") (-0.25)
+    - `"close the claim"` ("close" vs "Close") (-0.25)
+
+- **Gateway Names:**  
+  - **LLM omits all gateway names.** The ground truth provides `"Claim complete?"`, `"Within warranty?"`.
+  - -1.0
+
+**2. BPMN tag namespace:**
+- LLM uses `bpmn2` prefix, while ground truth is `bpmn`. This is acceptable if consistent and the document is otherwise correct. **No deduction.**
+
+**3. Sequence Flows:**  
+- All flows present and correct. Flows for requesting info, eligibility/rejection, and parallel split/merge present.  
+- **However, the semantic labelling ("Yes"/"No" on sequenceFlow's name) is missing.** (Ground truth uses `name="Yes"`/`"No"`.)  
+  - -0.5
+
+**4. IDs:**  
+- All element IDs are correctly prefixed with `wrc_` as required.  
+- **Partial credit** since, e.g., is not exactly the same naming as ground truth, but the prefix is honored as per prompt.
+
+**5. Control Flow / Structure:**
+- **Parallel gateways for split/join:** present and correct.
+- **Exclusive gateways for completeness & warranty:** present and correct.
+- **Both end events as instructed:** present.
+
+**6. Extra/Hallucinated elements:**  
+- No hallucinated steps or elements present.  
+- **Correct**.
+
+**7. Other:**
+- **Process id:** Different, but prefix is correct as per prompt. Acceptable.
+- **Process `isExecutable` attribute:** LLM uses `isExecutable="true"`, ground truth uses `"false"`—not mentioned in prompt, no deduction.
+- **Total lines and compactness:** Not a criteria for correctness.
+
+---
+
+**Summary table of strict deductions:**  
+| Item                        | Deduction |
+|-----------------------------|-----------|
+| Start/end event names       | -1.5      |
+| Task name verbatim errors   | -2.0      |
+| Gateway name omission       | -1.0      |
+| SequenceFlow "Yes"/"No"     | -0.5      |
+|                             | **-5.0**  |
+
+**Starting from 10.0, total after deductions: 5.0.**
+
+**However**, as the major structure is correct and all flows, gateways, and elements are present (with only naming issues and missing labels), I grant a slight rounding up for providing all required constructs and no hallucinated steps: **5.5** is the fair and strict score.

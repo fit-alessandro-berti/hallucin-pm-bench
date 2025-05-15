@@ -43,7 +43,6 @@ if __name__ == "__main__":
                   "x-ai/grok-3-beta",
                   "openai/o4-mini-high",
                   "openai/o4-mini",
-                  "openai/o3",
                   "x-ai/grok-3-mini-beta",
                   "anthropic/claude-3.7-sonnet:thinking",
                   "openai/o3-mini-high",
