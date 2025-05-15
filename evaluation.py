@@ -5,15 +5,20 @@ from common import *
 EVALUATING_MODEL_NAME = "openai/gpt-4.1"
 
 
-def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, parameters=None):
+def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
         parameters = {}
 
     modified_something = False
 
+    m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
 
     for answer in os.listdir("answers"):
+        if filter_self:
+            if not answer.startswith(m_name+"__"):
+                continue
+
         evaluation_path = os.path.join(target_directory, answer)
 
         if (not os.path.exists(evaluation_path)) or (os.path.getsize(evaluation_path) == 0):
@@ -63,5 +68,16 @@ def main1():
         time.sleep(30)
 
 
+def main2():
+    for model in Shared.MODEL_CATALOGUE:
+        parameters = None if isinstance(model, str) else model[1]
+        model_name = model if isinstance(model, str) else model[0]
+
+        if model_name in Shared.SELECTED_FOR_SELF_EVALUATION:
+            evaluate(model_name, target_directory="stats/self_evaluation", include_ground_truth_answer=False,
+                     filter_self=True, parameters=parameters)
+
+
 if __name__ == "__main__":
+    main2()
     main1()

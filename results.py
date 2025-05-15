@@ -86,13 +86,13 @@ def match_regex(text):
         return matches_numbers_ints[0]
 
 
-def get_dictio_results():
-    evaluations = os.listdir("evaluations")
+def get_dictio_results(evaluation_folder):
+    evaluations = os.listdir(evaluation_folder)
 
     dictio = {}
 
     for ev in evaluations:
-        ev_content = open(os.path.join("evaluations", ev), encoding="utf-8").read()
+        ev_content = open(os.path.join(evaluation_folder, ev), encoding="utf-8").read()
 
         llm = ev.split("__")[0]
         question = ev.split("__")[1].split(".")[0]
@@ -109,12 +109,12 @@ def get_dictio_results():
     return dictio
 
 
-def get_agg_results():
-    categories = os.listdir("evaluations")
+def get_agg_results(evaluation_folder):
+    categories = os.listdir(evaluation_folder)
     categories = set(x.split("__")[1].split("_")[0] for x in categories)
     categories = sorted(list(categories))
 
-    dictio = get_dictio_results()
+    dictio = get_dictio_results(evaluation_folder)
     score_key = "SCORE"
     avg_key = "AVG"
 
@@ -211,20 +211,26 @@ def measure_intra_variation(dictio):
     F.close()
 
 
-
-if __name__ == "__main__":
-    results, dictio = get_agg_results()
-    measure_inter_category_correlation(results)
-    measure_intra_variation(dictio)
+def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
+    results, dictio = get_agg_results(evaluation_folder)
+    if write_extra_stats:
+        measure_inter_category_correlation(results)
+        measure_intra_variation(dictio)
 
     results = pd.DataFrame(results)
 
     res = results.to_markdown(index=False)
 
-    F = open("leaderboard.md", "w")
+    F = open(target_leaderboard, "w")
 
     F.write("## Overall Leaderboard (gpt-4.1 used as the Judge)\n\n")
     F.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
     F.write(res)
 
     F.close()
+
+
+
+if __name__ == "__main__":
+    main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False)
+    main("evaluations", "leaderboard.md", write_extra_stats=True)
