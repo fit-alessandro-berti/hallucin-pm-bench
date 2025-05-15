@@ -1,0 +1,245 @@
+```json
+{
+  "definitions": {
+    "id": "CustomerSupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "targetNamespace": "http://bpmn.io/schema/1.0/bpmn",
+    "processes": [
+      {
+        "id": "CustomerSupportTicketProcess",
+        "isExecutable": true,
+        "flowElements": [
+          {
+            "id": "startEvent",
+            "name": "Receive Support E-Mail",
+            "incoming": [],
+            "outgoing": ["parseE-mail"],
+            "type": "mainProcessEvents",
+            "eventDefinitions": [
+              {
+                "id": "startMessageEvent",
+                "type": "MessageEventDefinition",
+                "message": {
+                  "id": "support_EMAIL",
+                  "name": "Support E-Mail"
+                }
+              }
+            ]
+          },
+          {
+            "id": "parseE-mail",
+            "outgoing": ["createTicket"],
+            "incoming": ["startEvent"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "createTicket",
+            "name": "Create Ticket in Help-Desk System",
+            "outgoing": ["initialClassification"],
+            "incoming": ["parseE-mail"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "initialClassification",
+            "name": "Initial Classification",
+            "outgoing": ["gateway-classification"],
+            "incoming": ["createTicket"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "gateway-classification",
+            "name": "Classification Gateway",
+            "type": "mainProcessGateways",
+            "gatewayDirection": "Diverging",
+            "incoming": ["initialClassification"],
+            "outgoing": ["provideResolution-simple", "rootCauseAnalysis-complex"],
+            "gateway": {
+              "type": "ExclusiveGateway"
+                              }
+          },
+          {
+            "id": "provideResolution-simple",
+            "name": "Provide Resolution",
+            "outgoing": ["sendResponse"],
+            "incoming": ["gateway-classification"],
+            "type": "mainProcessActivities",
+            "activity": {
+              "flowElements": [
+                {
+                  "flowElementType": "Task",
+                  "task": {}
+                }
+              ]
+            }
+          },
+          {
+            "id": "rootCauseAnalysis-complex",
+            "name": "Root Cause Analysis",
+            "outgoing": ["provideResolution"],
+            "incoming": ["gateway-classification"],
+            "type": "mainProcessActivities",
+            "activity": {
+              "flowElements": [
+                {
+                  "flowElementType": "Task",
+                  "task": {}
+                }
+              ]
+            }
+          },
+          {
+            "id": "provideResolution",
+            "name": "Provide Resolution",
+            "outgoing": ["sendResponse"],
+            "incoming": ["rootCauseAnalysis-complex"],
+            "type": "mainProcessActivities",
+            "activity": {
+              "flowElements": [
+                {
+                  "flowElementType": "Task",
+                  "task": {}
+                }
+              ]
+            }
+          },
+          {
+            "id": "sendResponse",
+            "name": "Send Response to Customer",
+            "outgoing": ["parallelGateway1"],
+            "incoming": ["provideResolution", "provideResolution-simple"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "logSolution",
+            "name": "Log Solution in Knowledge Base",
+            "outgoing": ["parallelGateway2"],
+            "incoming": ["parallelGateway1"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "parallelGateway1",
+            "name": "Parallel Gateway 1",
+            "type": "mainProcessGateways",
+            "gatewayDirection": "Converging",
+            "incoming": ["sendResponse"],
+            "outgoing": ["logSolution"],
+            "gateway": {
+              "type": "ParallelGateway"
+            }
+          },
+          {
+            "id": "parallelGateway2",
+            "name": "Parallel Gateway 2",
+            "type": "mainProcessGateways",
+            "gatewayDirection": "Diverging",
+            "incoming": ["logSolution"],
+            "outgoing": ["waitCustomerReply", "customerCancel"],
+            "gateway": {
+              "type": "ParallelGateway"
+            }
+          },
+          {
+            "id": "waitCustomerReply",
+            "name": "Wait for Customer Reply (24 hours)",
+            "outgoing": ["gateway-reply"],
+            "incoming": ["parallelGateway2"],
+            "type": "mainProcessEvents",  "+",
+            "eventDefinitions": [
+              {
+                "id": "waitEvent",
+                "type": "TimerEventDefinition",
+                "timeDuration": "P1D24H"
+              }
+
+           ]
+          },
+          {
+            "id": "customerCancel",
+            "name": "Customer Cancels Ticket",
+            "outgoing": ["terminate"],
+            "incoming": ["parallelGateway2"],
+            "type": "mainProcessIntermediate",
+            "intermediateThrowEvents": ["CustomerCancelEvent"]
+          },
+          {
+            "id": "terminate",
+            "name": "Terminate",
+            "type": "mainProcessEvents",
+            "eventDefinitions": []
+          },
+          {
+            "id": "sendReminder",
+            "name": "Send Reminder to Customer",
+            "outgoing": ["closeTicket-reminder"],
+            "incoming": ["gateway-reply"],
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "gateway-reply",
+            "type": "mainProcessGateways",
+            "gatewayDirection": "Diverging",
+            "incoming": ["waitCustomerReply"],
+            "outgoing": ["sendReminder", "closeTicket-noreply"],
+            "gateway": {
+              "type": "ExclusiveGateway",
+              "eventConditions": [
+                {
+                  "event": "CustomerReplyEvent",
+                  "outgoing": "closeTicket"
+                },
+                {
+                  "event": "NoCustomerReplyEvent",
+                  "outgoing": "sendReminder"
+                }
+              ]
+            }
+          },
+          {
+            "id": "closeTicket",
+            "name": "Close Ticket",
+            "type": "mainProcessTasks",
+            "task": {}
+          },
+          {
+            "id": "closeTicket-reminder",
+            "name": "Close Ticket (reminder sent)",
+            "type": "mainProcessTasks",
+            "incoming": ["sendReminder"],
+            "task": {}
+          },
+          {
+            "id": "closeTicket-noreply",
+            "name": "Close Ticket (no reply)",
+            "type": "mainProcessTasks",
+            "incoming": ["gateway-reply"],
+            "task": {}
+          }
+        ]
+      }
+    ],
+    "messages": {
+      "mainProcessMessages": [
+        {
+          "id": "CustomerReplyEvent",
+          "name": "Customer Reply"
+        },
+        {
+          "id": "NoCustomerReplyEvent",
+          "name": "Noting event"
+        },
+
+        {
+          "id": "CustomerCancelEvent",
+          "name": "Customer Cancel"
+        }
+      ]
+    }
+  }
+}
+```

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions 
+    xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+    xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" 
+    xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" 
+    targetNamespace="http://www.example.org/WarrantyReplacement" 
+    xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+
+  <process id="wrc_WarrantyReplacement_v1_3" name="Warranty-Replacement v1.3" isExecutable="true">
+
+    <!-- 1. Start -->
+    <startEvent id="wrc_StartEvent" name="Start"/>
+    <sequenceFlow id="wrc_flow1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidatesClaim"/>
+
+    <!-- 2. Validates claim & completeness check -->
+    <task id="wrc_ValidatesClaim" name="validates the claim"/>
+    <sequenceFlow id="wrc_flow2" sourceRef="wrc_ValidatesClaim" targetRef="wrc_ClaimCompletenessGateway"/>
+
+    <exclusiveGateway id="wrc_ClaimCompletenessGateway" name="Claim Completeness Decision"/>
+    <!-- Incomplete path -->
+    <sequenceFlow id="wrc_flow3" sourceRef="wrc_ClaimCompletenessGateway" targetRef="wrc_RequestsMissingInformation"/>
+    <task id="wrc_RequestsMissingInformation" name="requests missing information"/>
+    <sequenceFlow id="wrc_flow5" sourceRef="wrc_RequestsMissingInformation" targetRef="wrc_ValidatesClaim"/>
+    <!-- Complete path -->
+    <sequenceFlow id="wrc_flow4" sourceRef="wrc_ClaimCompletenessGateway" targetRef="wrc_ChecksWarrantyEligibility"/>
+
+    <!-- 3. Warranty decision -->
+    <task id="wrc_ChecksWarrantyEligibility" name="checks warranty eligibility"/>
+    <sequenceFlow id="wrc_flow6" sourceRef="wrc_ChecksWarrantyEligibility" targetRef="wrc_WarrantyDecisionGateway"/>
+
+    <exclusiveGateway id="wrc_WarrantyDecisionGateway" name="Warranty Decision"/>
+    <!-- Out-of-warranty path -->
+    <sequenceFlow id="wrc_flow7" sourceRef="wrc_WarrantyDecisionGateway" targetRef="wrc_SendRejectionNotice"/>
+    <task id="wrc_SendRejectionNotice" name="send rejection notice"/>
+    <sequenceFlow id="wrc_flow8" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndEvent_Rejected"/>
+    <endEvent id="wrc_EndEvent_Rejected" name="Rejection End"/>
+    <!-- Within-warranty path -->
+    <sequenceFlow id="wrc_flow9" sourceRef="wrc_WarrantyDecisionGateway" targetRef="wrc_ParallelSplit"/>
+
+    <!-- 4. Parallel activities for eligible claims -->
+    <parallelGateway id="wrc_ParallelSplit" name="Parallel Split"/>
+    <sequenceFlow id="wrc_flow10" sourceRef="wrc_ParallelSplit" targetRef="wrc_CreateShipmentOrderForTheReplacementUnit"/>
+    <task id="wrc_CreateShipmentOrderForTheReplacementUnit" name="Create shipment order for the replacement unit"/>
+    <sequenceFlow id="wrc_flow12" sourceRef="wrc_CreateShipmentOrderForTheReplacementUnit" targetRef="wrc_ParallelJoin"/>
+
+    <sequenceFlow id="wrc_flow11" sourceRef="wrc_ParallelSplit" targetRef="wrc_ScheduleCourierPickupOfTheFaultyProduct"/>
+    <task id="wrc_ScheduleCourierPickupOfTheFaultyProduct" name="Schedule courier pickup of the faulty product"/>
+    <sequenceFlow id="wrc_flow13" sourceRef="wrc_ScheduleCourierPickupOfTheFaultyProduct" targetRef="wrc_ParallelJoin"/>
+
+    <parallelGateway id="wrc_ParallelJoin" name="Parallel Join"/>
+    <sequenceFlow id="wrc_flow14" sourceRef="wrc_ParallelJoin" targetRef="wrc_UpdateInventoryRecords"/>
+
+    <!-- 5. Inventory update and closure -->
+    <task id="wrc_UpdateInventoryRecords" name="update inventory records"/>
+    <sequenceFlow id="wrc_flow15" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseTheClaim"/>
+    <task id="wrc_CloseTheClaim" name="close the claim"/>
+    <sequenceFlow id="wrc_flow16" sourceRef="wrc_CloseTheClaim" targetRef="wrc_EndEvent_Success"/>
+
+    <endEvent id="wrc_EndEvent_Success" name="Successful Completion End"/>
+  </process>
+
+  <bpmndi:BPMNDiagram id="wrc_BPMNDiagram">
+    <bpmndi:BPMNPlane id="wrc_BPMNPlane" bpmnElement="wrc_WarrantyReplacement_v1_3"/>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

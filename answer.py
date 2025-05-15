@@ -53,7 +53,17 @@ if __name__ == "__main__":
                   "anthropic/claude-3.7-sonnet:thinking",
                   "openai/o3-mini-high",
                   "openai/o3-mini",
+                  "mistralai/ministral-3b",
+                  "mistral/ministral-8b",
+                  "mistralai/mistral-small-3.1-24b-instruct",
+                  "mistralai/mistral-medium-3",
+                  "meta-llama/llama-4-scout",
+                  "meta-llama/llama-4-maverick",
+                  "meta-llama/llama-3.3-70b-instruct",
                   "openai/o1",
+                  "deepseek/deepseek-r1",
+                  ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
+                  ("qwen/qwen3-30b-a3b-think", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /think"}),
                   ]:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]

@@ -1,0 +1,24 @@
+To ensure the process adheres to the SLA of 48 hours without adding new activities, we can introduce a **timer event** after the `Task_Receive` activity. This timer will trigger an **auto-escalation** event if the claim is not triaged within 48 hours.
+
+1. Add a `bpmn:timerEvent` with a duration of 48 hours after `Task_Receive`.
+2. Create an **auto-escalation** task to handle the escalation.
+3. Connect the timer event to the `auto-escalation` task.
+
+Here's how the XML would look:
+
+```xml
+<bpmn:process id="FastClaimOnboarding" isExecutable="true">
+  <!-- ... existing elements ... -->
+
+  <bpmn:timerEvent id="Timer_48Hours" name="48-Hour Timer" timeDuration="PT48H"/>
+  <bpmn:task id="Task_AutoEscalation" name="Auto Escalate Claim"/>
+
+  <!-- flows -->
+  <bpmn:sequenceFlow id="f1" sourceRef="Start_Claim"   targetRef="Task_Receive"/>
+  <bpmn:sequenceFlow id="f2" sourceRef="Task_Receive"  targetRef="Timer_48Hours"/>
+  <bpmn:sequenceFlow id="f3" sourceRef="Timer_48Hours" targetRef="Task_AutoEscalation"/>
+  <bpmn:sequenceFlow id="f4" sourceRef="Task_AutoEscalation" targetRef="End_Done"/>
+</bpmn:process>
+```
+
+This setup ensures that if the claim is not triaged within 48 hours, it will be automatically escalated, meeting the SLA requirement.
