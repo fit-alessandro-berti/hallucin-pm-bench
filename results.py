@@ -18,11 +18,12 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    patterns = {"qwen3", "llama"}
+    patterns = {"qwen3", "llama", "mistral"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
-            return ":white_check_mark:"
+            if not "medium" in model_name.lower():
+                return ":white_check_mark:"
 
     return ":x:"
 
