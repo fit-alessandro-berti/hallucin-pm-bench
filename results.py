@@ -7,6 +7,16 @@ pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+
 reg_expr = re.compile(pattern)
 
 
+def format_name(llm):
+    patterns = ["anthropic", "x-ai", "openai", "qwen"]
+
+    for p in patterns:
+        if llm.startswith(p):
+            return llm[len(p)+1:]
+
+    return llm
+
+
 def is_open_source(model_name):
     patterns = {"qwen3", "llama"}
 
@@ -127,6 +137,7 @@ def get_agg_results():
     for j in range(len(results)):
         results[j][avg_key] = round(results[j][score_key] / 39.0, 2)
         results[j][score_key] = round(results[j][score_key]/10.0, 1)
+        results[j]["LLM"] = format_name(results[j]["LLM"])
         del results[j][score_key]
 
     return results, dictio
