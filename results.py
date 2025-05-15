@@ -27,10 +27,11 @@ def is_lrm(model_name):
     return ":x:"
 
 
-def format_numb_in_table(score, max_score, good_diff=0.1):
+def format_numb_in_table(score, max_score, good_diff=0.0):
     score1 = round(score/10.0, 1)
     if score == max_score:
-        return ":mage_woman: **%.1f**" % (score1)
+        # :mage_woman:
+        return "**%.1f**" % (score1)
     elif score >= max_score - good_diff:
         return "**%.1f**" % (score1)
     return "%.1f" % (score1)
@@ -96,7 +97,7 @@ def get_agg_results():
     results = []
     for llm in dictio:
         summ = sum(dictio[llm].values())
-        row = {"LLM": llm, "LRM?": is_lrm(llm), "OS?": is_open_source(llm), score_key: summ}
+        row = {"LLM": llm, "LRM?": is_lrm(llm), "OS?": is_open_source(llm), avg_key: 0.0, score_key: summ}
 
         for cat in categories:
             if cat not in max_per_cat:
