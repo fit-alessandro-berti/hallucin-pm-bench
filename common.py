@@ -45,7 +45,15 @@ class Shared:
                   ]
 
     SELECTED_FOR_SELF_EVALUATION = ["mistralai/ministral-3b",
-                                    "mistral/ministral-8b"]
+                                    "mistral/ministral-8b",
+                                    "gpt-4.1-nano",
+                                    "qwen/qwen3-30b-a3b-nothink",
+                                    "qwen/qwen3-14b-nothink",
+                                    "mistralai/mistral-small-3.1-24b-instruct",
+                                    "meta-llama/llama-4-scout",
+                                    "google/gemini-2.0-flash-lite-001",
+                                    "google/gemini-2.0-flash-001",
+                                    "google/gemini-2.5-flash-preview"]
 
 
 def get_response(prompt, model_name, parameters=None):

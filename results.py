@@ -63,6 +63,15 @@ def format_numb_in_table(score, max_score, good_diff=0.0):
     return "%.1f" % (score1)
 
 
+def get_prompts_size():
+    size_dict = {}
+
+    for prompt in os.listdir("prompts"):
+        size_dict[prompt.split(".")[0]] = os.path.getsize(os.path.join("prompts", prompt))
+
+    return size_dict
+
+
 def match_regex(text):
     matches = list(reg_expr.finditer(text))
     matches_numbers_floats = []
@@ -211,11 +220,29 @@ def measure_intra_variation(dictio):
     F.close()
 
 
+def get_best_linear_fit(prompts_size, dictio):
+    X = []
+    Y = []
+
+    for llm in dictio:
+        for key, value in dictio[llm].items():
+            Y.append(value)
+            X.append(prompts_size[key])
+
+    m, b = np.polyfit(X, Y, 1)
+
+    F = open("stats/best_linear_fit.md", "w", encoding="utf-8")
+    F.write("m=%.5f\nb=%.5f\n" % (m ,b))
+    F.close()
+
+
 def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
     results, dictio = get_agg_results(evaluation_folder)
     if write_extra_stats:
         measure_inter_category_correlation(results)
         measure_intra_variation(dictio)
+        prompts_size = get_prompts_size()
+        get_best_linear_fit(prompts_size, dictio)
 
     results = pd.DataFrame(results)
 
