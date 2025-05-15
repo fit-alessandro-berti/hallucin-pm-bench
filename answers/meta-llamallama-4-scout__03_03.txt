@@ -1,0 +1,280 @@
+Below is a BPMN 2.0 XML document that represents the Warranty-Replacement process as described:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/06-02-01.xsd"
+             id="wrc_definitions" name="Warranty Replacement Process">
+
+  <process id="wrc_warranty_replacement_process" name="Warranty Replacement Process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="wrc_start_event" name="Online Warranty Claim">
+      <outgoing>wrc_validate_claim</outgoing>
+    </startEvent>
+
+    <!-- Validate Claim Task -->
+    <serviceTask id="wrc_validate_claim" name="Validate the claim">
+      <outgoing>wrc_exclusive_gateway_1</outgoing>
+    </serviceTask>
+
+    <!-- Exclusive Gateway for Claim Completeness -->
+    <exclusiveGateway id="wrc_exclusive_gateway_1" name="Is Claim Complete?">
+      <incoming>wrc_validate_claim</incoming>
+      <outgoing>wrc_request_info</outgoing>
+      <outgoing>wrc_check_warranty_eligibility</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request Missing Information Task -->
+    <serviceTask id="wrc_request_info" name="Request missing information">
+      <incoming>wrc_exclusive_gateway_1</incoming>
+      <outgoing>wrc_wait_for_info</outgoing>
+    </serviceTask>
+
+    <!-- Wait for Missing Information Task -->
+    <serviceTask id="wrc_wait_for_info" name="Wait until missing information is received">
+      <incoming>wrc_request_info</incoming>
+      <outgoing>wrc_validate_claim_again</outgoing>
+    </serviceTask>
+
+    <!-- Re-validate Claim Task -->
+    <serviceTask id="wrc_validate_claim_again" name="Validate the claim">
+      <incoming>wrc_wait_for_info</incoming>
+      <outgoing>wrc_exclusive_gateway_1_again</outgoing>
+    </serviceTask>
+
+    <!-- Exclusive Gateway for Re-validation -->
+    <exclusiveGateway id="wrc_exclusive_gateway_1_again" name="Is Claim Complete?">
+      <incoming>wrc_validate_claim_again</incoming>
+      <outgoing>wrc_request_info_again</outgoing>
+      <outgoing>wrc_check_warranty_eligibility</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request Missing Information Task (Again) -->
+    <serviceTask id="wrc_request_info_again" name="Request missing information">
+      <incoming>wrc_exclusive_gateway_1_again</incoming>
+      <outgoing>wrc_wait_for_info_again</outgoing>
+    </serviceTask>
+
+    <!-- Wait for Missing Information Task (Again) -->
+    <serviceTask id="wrc_wait_for_info_again" name="Wait until missing information is received">
+      <incoming>wrc_request_info_again</incoming>
+      <outgoing>wrc_validate_claim_again_again</outgoing>
+    </serviceTask>
+
+    <!-- Re-validate Claim Task (Again) -->
+    <serviceTask id="wrc_validate_claim_again_again" name="Validate the claim">
+      <incoming>wrc_wait_for_info_again</incoming>
+      <outgoing>wrc_exclusive_gateway_1_again_again</outgoing>
+    </serviceTask>
+
+    <!-- Exclusive Gateway for Re-validation (Again) -->
+    <exclusiveGateway id="wrc_exclusive_gateway_1_again_again" name="Is Claim Complete?">
+      <incoming>wrc_validate_claim_again_again</incoming>
+      <outgoing>wrc_request_info_again_again</outgoing>
+      <outgoing>wrc_check_warranty_eligibility</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request Missing Information Task (Again, Again) -->
+    <serviceTask id="wrc_request_info_again_again" name="Request missing information">
+      <incoming>wrc_exclusive_gateway_1_again_again</incoming>
+      <outgoing>wrc_wait_for_info_again_again</outgoing>
+    </serviceTask>
+
+    <!-- Wait for Missing Information Task (Again, Again) -->
+    <serviceTask id="wrc_wait_for_info_again_again" name="Wait until missing information is received">
+      <incoming>wrc_request_info_again_again</incoming>
+      <outgoing>wrc_validate_claim_again_again_again</outgoing>
+    </serviceTask>
+
+    <!-- However, let's get back on track -->
+
+    <!-- Check Warranty Eligibility Task -->
+    <serviceTask id="wrc_check_warranty_eligibility" name="Check warranty eligibility">
+      <incoming>wrc_exclusive_gateway_1</incoming>
+      <incoming>wrc_exclusive_gateway_1_again</incoming>
+      <outgoing>wrc_exclusive_gateway_2</outgoing>
+    </serviceTask>
+
+    <!-- Exclusive Gateway for Warranty Decision -->
+    <exclusiveGateway id="wrc_exclusive_gateway_2" name="Is Product Within Warranty?">
+      <incoming>wrc_check_warranty_eligibility</incoming>
+      <outgoing>wrc_within_warranty</outgoing>
+      <outgoing>wrc_out_of_warranty</outgoing>
+    </exclusiveGateway>
+
+    <!-- Send Rejection Notice Task -->
+    <serviceTask id="wrc_send_rejection" name="Send rejection notice">
+      <incoming>wrc_out_of_warranty</incoming>
+      <outgoing>wrc_end_rejection</outgoing>
+    </serviceTask>
+
+    <!-- End Event for Rejection -->
+    <endEvent id="wrc_end_rejection" name="Rejected">
+      <incoming>wrc_send_rejection</incoming>
+    </endEvent>
+
+    <!-- Within Warranty Flow -->
+    <sequenceFlow id="wrc_within_warranty" sourceRef="wrc_exclusive_gateway_2" targetRef="wrc_parallel_gateway_1"/>
+
+    <!-- Parallel Gateway 1 -->
+    <parallelGateway id="wrc_parallel_gateway_1" name="Start Parallel Tasks">
+      <incoming>wrc_within_warranty</incoming>
+      <outgoing>wrc_create_shipment_order</outgoing>
+      <outgoing>wrc_schedule_courier_pickup</outgoing>
+    </parallelGateway>
+
+    <!-- Create Shipment Order Task -->
+    <serviceTask id="wrc_create_shipment_order" name="Create shipment order">
+      <incoming>wrc_parallel_gateway_1</incoming>
+      <outgoing>wrc_parallel_gateway_2</outgoing>
+    </serviceTask>
+
+    <!-- Schedule Courier Pickup Task -->
+    <serviceTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <incoming>wrc_parallel_gateway_1</incoming>
+      <outgoing>wrc_parallel_gateway_2</outgoing>
+    </serviceTask>
+
+    <!-- Parallel Gateway 2 -->
+    <parallelGateway id="wrc_parallel_gateway_2" name="Wait for Parallel Tasks to Complete">
+      <incoming>wrc_create_shipment_order</incoming>
+      <incoming>wrc_schedule_courier_pickup</incoming>
+      <outgoing>wrc_update_inventory_records</outgoing>
+    </parallelGateway>
+
+    <!-- Update Inventory Records Task -->
+    <serviceTask id="wrc_update_inventory_records" name="Update inventory records">
+      <incoming>wrc_parallel_gateway_2</incoming>
+      <outgoing>wrc_close_claim</outgoing>
+    </serviceTask>
+
+    <!-- Close Claim Task -->
+    <serviceTask id="wrc_close_claim" name="Close the claim">
+      <incoming>wrc_update_inventory_records</incoming>
+      <outgoing>wrc_end_success</outgoing>
+    </serviceTask>
+
+    <!-- End Event for Successful Completion -->
+    <endEvent id="wrc_end_success" name="Claim Closed">
+      <incoming>wrc_close_claim</incoming>
+    </endEvent>
+
+  </process>
+
+</definitions>
+```
+
+However, for better readability and reduced redundancy in case we stick closely to provided text:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/06-02-01.xsd"
+             id="wrc_definitions" name="Warranty Replacement Process">
+
+  <process id="wrc_warranty_replacement_process" name="Warranty Replacement Process" isExecutable="true">
+
+    <startEvent id="wrc_start_event" name="Online Warranty Claim">
+      <outgoing>wrc_validate_claim</outgoing>
+    </startEvent>
+
+    <serviceTask id="wrc_validate_claim" name="Validate the claim">
+      <outgoing>wrc_exclusive_gateway_1</outgoing>
+    </serviceTask>
+
+    <exclusiveGateway id="wrc_exclusive_gateway_1" name="Is Claim Complete?">
+      <incoming>wrc_validate_claim</incoming>
+      <outgoing>wrc_request_missing_info</outgoing>
+      <outgoing>wrc_check_warranty_eligibility</outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="wrc_request_missing_info" sourceRef="wrc_exclusive_gateway_1" targetRef="wrc_request_info">
+      <conditionExpression xsi:type="tFormalExpression">not complete</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_check_warranty_eligibility_flow" sourceRef="wrc_exclusive_gateway_1" targetRef="wrc_check_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">complete</conditionExpression>
+    </sequenceFlow>
+
+    <serviceTask id="wrc_request_info" name="Request missing information">
+      <incoming>wrc_request_missing_info</incoming>
+      <outgoing>wrc_wait_for_info</outgoing>
+    </serviceTask>
+
+    <serviceTask id="wrc_wait_for_info" name="Wait until missing information is received">
+      <incoming>wrc_request_info</incoming>
+      <outgoing>wrc_validate_claim</outgoing>
+    </serviceTask>
+
+    <serviceTask id="wrc_check_warranty_eligibility" name="Check warranty eligibility">
+      <incoming>wrc_check_warranty_eligibility_flow</incoming>
+      <outgoing>wrc_warranty_decision</outgoing>
+    </serviceTask>
+
+    <exclusiveGateway id="wrc_warranty_decision" name="Is Product Within Warranty?">
+      <incoming>wrc_check_warranty_eligibility</incoming>
+      <outgoing>wrc_send_rejection</outgoing>
+      <outgoing>wrc_proceed_with_claim</outgoing>
+    </exclusiveGateway>
+
+    <serviceTask id="wrc_send_rejection" name="Send rejection notice">
+      <incoming>wrc_send_rejection_flow</outgoing>
+      <outgoing>wrc_end_rejection</outgoing>
+    </serviceTask>
+
+    <sequenceFlow id="wrc_send_rejection_flow" sourceRef="wrc_warranty_decision" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression">not within warranty</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_proceed_with_claim" sourceRef="wrc_warranty_decision" targetRef="wrc_parallel_gateway_1">
+      <conditionExpression xsi:type="tFormalExpression">within warranty</conditionExpression>
+    </sequenceFlow>
+
+    <parallelGateway id="wrc_parallel_gateway_1" name="Start Parallel Tasks">
+      <incoming>wrc_proceed_with_claim</incoming>
+      <outgoing>wrc_create_shipment_order</outgoing>
+      <outgoing>wrc_schedule_courier_pickup</outgoing>
+    </parallelGateway>
+
+    <serviceTask id="wrc_create_shipment_order" name="Create shipment order">
+      <incoming>wrc_create_shipment_order</incoming>
+      <outgoing>wrc_parallel_gateway_2</outgoing>
+    </serviceTask>
+
+    <serviceTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <incoming>wrc_schedule_courier_pickup</incoming>
+      <outgoing>wrc_parallel_gateway_2</outgoing>
+    </serviceTask>
+
+    <parallelGateway id="wrc_parallel_gateway_2" name="Wait for Parallel Tasks to Complete">
+      <incoming>wrc_create_shipment_order</incoming>
+      <incoming>wrc_schedule_courier_pickup</incoming>
+      <outgoing>wrc_update_inventory_records</outgoing>
+    </parallelGateway>
+
+    <serviceTask id="wrc_update_inventory_records" name="Update inventory records">
+      <incoming>wrc_update_inventory_records</incoming>
+      <outgoing>wrc_close_claim</outgoing>
+    </serviceTask>
+
+    <serviceTask id="wrc_close_claim" name="Close the claim">
+      <incoming>wrc_close_claim</incoming>
+      <outgoing>wrc_end_success</outgoing>
+    </serviceTask>
+
+    <endEvent id="wrc_end_rejection" name="Rejected">
+      <incoming>wrc_send_rejection</incoming>
+    </endEvent>
+
+    <endEvent id="wrc_end_success" name="Claim Closed">
+      <incoming>wrc_close_claim</incoming>
+    </endEvent>
+
+  </process>
+
+</definitions>
+```
+This XML provides the BPMN process that represents the Warranty Replacement v1.3 process based on your detailed requirements. For visualization and further adjustments, using a BPMN editor like Camunda Modeler, Lucidchart, or similar tools is recommended.

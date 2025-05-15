@@ -1,0 +1,226 @@
+```json
+{
+  "processes": [
+    {
+      "id": "Customer Support Ticket Process",
+      "name": "Customer Support Ticket Process",
+      "elements": [
+        {
+          "id": "StartEvent",
+          "type": "bpmn:StartEvent",
+          "name": "Support E-mail Received",
+          "outgoing": ["SequenceFlow_1"]
+        },
+        {
+          "id": "SequenceFlow_1",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "StartEvent",
+          "targetRef": "Task_ParseEmail"
+        },
+        {
+          "id": "Task_ParseEmail",
+          "type": "bpmn:ServiceTask",
+          "name": "Parse E-mail and Create Ticket",
+          "outgoing": ["SequenceFlow_2"]
+        },
+        {
+          "id": "SequenceFlow_2",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_ParseEmail",
+          "targetRef": "Task_InitialClassification"
+        },
+        {
+          "id": "Task_InitialClassification",
+          "type": "bpmn:UserTask",
+          "name": "Initial Classification",
+          "outgoing": ["SequenceFlow_Simple", "SequenceFlow_Complex"]
+        },
+        {
+          "id": "SequenceFlow_Simple",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_InitialClassification",
+          "targetRef": "Task_ProvideResolution",
+          "conditionExpression": {
+            "body": "${classification == 'Simple'}"
+          }
+        },
+        {
+          "id": "SequenceFlow_Complex",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_InitialClassification",
+          "targetRef": "Task_RootCauseAnalysis",
+          "conditionExpression": {
+            "body": "${classification == 'Complex'}"
+          }
+        },
+        {
+          "id": "Task_ProvideResolution",
+          "type": "bpmn:UserTask",
+          "name": "Provide Resolution",
+          "outgoing": ["SequenceFlow_3"]
+        },
+        {
+          "id": "SequenceFlow_3",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_ProvideResolution",
+          "targetRef": "Task_SendResponseToCustomer"
+        },
+        {
+          "id": "Task_RootCauseAnalysis",
+          "type": "bpmn:UserTask",
+          "name": "Root Cause Analysis",
+          "outgoing": ["SequenceFlow_4"]
+        },
+        {
+          "id": "SequenceFlow_4",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_RootCauseAnalysis",
+          "targetRef": "Task_ProvideResolution"
+        },
+        {
+          "id": "Task_SendResponseToCustomer",
+          "type": "bpmn:UserTask",
+          "name": "Send Response to Customer",
+          "outgoing": ["SequenceFlow_5"]
+        },
+        {
+          "id": "SequenceFlow_5",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_SendResponseToCustomer",
+          "targetRef": "ParallelGateway_1"
+        },
+        {
+          "id": "Task_LogSolutionInKnowledgeBase",
+          "type": "bpmn:UserTask",
+          "name": "Log Solution in Knowledge Base",
+          "outgoing": ["SequenceFlow_6"]
+        },
+        {
+          "id": "SequenceFlow_6",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_LogSolutionInKnowledgeBase",
+          "targetRef": "ParallelGateway_2"
+        },
+        {
+          "id": "ParallelGateway_1",
+          "type": "bpmn:ParallelGateway",
+          "name": "",
+          "incoming": ["SequenceFlow_5"],
+          "outgoing": ["SequenceFlow_7"]
+        },
+        {
+          "id": "ParallelGateway_2",
+          "type": "bpmn:ParallelGateway",
+          "name": "",
+          "incoming": ["SequenceFlow_6"],
+          "outgoing": ["SequenceFlow_8"]
+        },
+        {
+          "id": "SequenceFlow_7",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "ParallelGateway_1",
+          "targetRef": "IntermediateEvent_CustomerReply"
+        },
+        {
+          "id": "SequenceFlow_8",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "ParallelGateway_2",
+          "targetRef": "IntermediateEvent_CustomerReply"
+        },
+        {
+          "id": "IntermediateEvent_CustomerReply",
+          "type": "bpmn:IntermediateCatchEvent",
+          "name": "Customer Reply",
+          "incoming": ["SequenceFlow_7", "SequenceFlow_8"],
+          "outgoing": ["SequenceFlow_9"]
+        },
+        {
+          "id": "SequenceFlow_9",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "IntermediateEvent_CustomerReply",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Task_CloseTicket",
+          "type": "bpmn:UserTask",
+          "name": "Close Ticket",
+          "incoming": ["SequenceFlow_9"],
+          "outgoing": ["SequenceFlow_10"]
+        },
+        {
+          "id": "SequenceFlow_10",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_CloseTicket",
+          "targetRef": "EndEvent_1"
+        },
+        {
+          "id": "TimerEvent_24Hours",
+          "type": "bpmn:IntermediateCatchEvent",
+          "name": "24 Hours Passed",
+          "incoming": [],
+          "outgoing": ["SequenceFlow_11"]
+        },
+        {
+          "id": "SequenceFlow_11",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "TimerEvent_24Hours",
+          "targetRef": "Task_SendReminder"
+        },
+        {
+          "id": "Task_SendReminder",
+          "type": "bpmn:ServiceTask",
+          "name": "Send Reminder",
+          "outgoing": ["SequenceFlow_12"]
+        },
+        {
+          "id": "SequenceFlow_12",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Task_SendReminder",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Event_CancelTicket",
+          "type": "bpmn:IntermediateCatchEvent",
+          "name": "Ticket Cancelled",
+          "incoming": [],
+          "outgoing": ["SequenceFlow_13"]
+        },
+        {
+          "id": "SequenceFlow_13",
+          "type": "bpmn:SequenceFlow",
+          "name": "",
+          "sourceRef": "Event_CancelTicket",
+          "targetRef": "EndEvent_Terminate"
+        },
+        {
+          "id": "EndEvent_1",
+          "type": "bpmn:EndEvent",
+          "name": "Ticket Closed",
+          "incoming": ["SequenceFlow_10"]
+        },
+        {
+          "id": "EndEvent_Terminate",
+          "type": "bpmn:EndEvent",
+          "name": "Ticket Terminated",
+          "incoming": ["SequenceFlow_13"]
+        }
+      ],
+      "connections": []
+    }
+  ]
+}
+```

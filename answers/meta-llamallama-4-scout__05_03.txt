@@ -1,0 +1,23 @@
+To enforce the SLA that "**Create Account in Core System**" must complete within 48 hours of finishing "**Verify Identity**", I suggest adding an intermediate timer event with an escalation path to the existing process.
+
+Here are the changed or added XML elements:
+
+```xml
+<bpmn:sequenceFlow id="Flow_09" sourceRef="Activity_VerifyID" targetRef="Timer_48Hours">
+  <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">true</bpmn:conditionExpression>
+</bpmn:sequenceFlow>
+
+<bpmn:intermediateTimerEvent id="Timer_48Hours" name="48 hours elapsed">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:intermediateTimerEvent>
+
+<bpmn:sequenceFlow id="Flow_10" sourceRef="Timer_48Hours" targetRef="End_Rejected_Timeout">
+</bpmn:sequenceFlow>
+
+<bpmn:endEvent id="End_Rejected_Timeout" name="Onboarding failed - SLA timeout">
+</bpmn:endEvent>
+```
+
+Justification: This addition introduces a timer that triggers after 48 hours, escalating the process to a rejection path if the "Create Account in Core System" activity hasn't completed, thereby enforcing the SLA.

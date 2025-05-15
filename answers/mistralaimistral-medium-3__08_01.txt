@@ -1,0 +1,51 @@
+Let's analyze the Petri net to determine whether transition T5 can fire before transition T3 in any reachable marking.
+
+### Initial Marking:
+- p0: 1
+- p1: 0
+- p2: 0
+- p3: 0
+- p4: 0
+- p5: 0
+- p6: 0
+
+### Transitions:
+1. T1: p0 → p1 + p2 (parallel split)
+2. T2: p1 → p3
+3. T3: p2 → p4
+4. T4: p3 + p4 → p5 (synchronizing join)
+5. T5: p3 –|p4 → p6 (inhibitor arc from p4)
+
+### Goal:
+Can T5 fire before T3 in any reachable marking?
+
+### Analysis:
+1. From the initial marking, only T1 is enabled (since p0 has 1 token).
+   - Firing T1: p0 loses 1 token, p1 and p2 each gain 1 token.
+   - New marking: p0: 0, p1: 1, p2: 1, p3: 0, p4: 0, p5: 0, p6: 0.
+
+2. Now, T2 and T3 are enabled (since p1 and p2 each have 1 token).
+   - T5 is not enabled yet because p3 has 0 tokens (T5 requires p3 to have at least 1 token and p4 to have 0 tokens).
+
+3. For T5 to fire before T3, we would need to fire T2 first (to produce a token in p3) and then fire T5 before firing T3.
+   - Fire T2: p1 loses 1 token, p3 gains 1 token.
+     - New marking: p0: 0, p1: 0, p2: 1, p3: 1, p4: 0, p5: 0, p6: 0.
+   - Now, T3 and T5 are enabled:
+     - T3: p2 → p4 (p2 has 1 token).
+     - T5: p3 –|p4 → p6 (p3 has 1 token and p4 has 0 tokens).
+   - If we fire T5 before T3:
+     - Fire T5: p3 loses 1 token, p6 gains 1 token.
+       - New marking: p0: 0, p1: 0, p2: 1, p3: 0, p4: 0, p5: 0, p6: 1.
+     - Now, only T3 is enabled (p2 has 1 token).
+       - Fire T3: p2 loses 1 token, p4 gains 1 token.
+         - New marking: p0: 0, p1: 0, p2: 0, p3: 0, p4: 1, p5: 0, p6: 1.
+
+### Conclusion:
+Yes, it is possible for T5 to fire before T3. Here is one such firing sequence:
+1. T1 (p0 → p1 + p2)
+2. T2 (p1 → p3)
+3. T5 (p3 –|p4 → p6)
+4. T3 (p2 → p4)
+
+### Justification:
+After firing T1 and T2, we reach a marking where p3 has 1 token and p4 has 0 tokens, enabling T5. Firing T5 before T3 is valid because T3 does not require p3 to have any tokens (it only requires p2 to have a token). Thus, T5 can fire before T3 in this sequence.

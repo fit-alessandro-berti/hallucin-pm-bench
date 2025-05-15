@@ -1,0 +1,227 @@
+```json
+{
+  "definitions": {
+    "targetNamespace": "http://example.com/bpmn",
+    "process": {
+      "id": "CustomerSupportProcess",
+      "isExecutable": true,
+      "startEvent": {
+        "id": "StartEvent_1",
+        "name": "Support Email Received",
+        "outgoing": "SequenceFlow_1"
+      },
+      "sequenceFlows": [
+        {
+          "id": "SequenceFlow_1",
+          "sourceRef": "StartEvent_1",
+          "targetRef": "Task_1"
+        },
+        {
+          "id": "SequenceFlow_2",
+          "sourceRef": "Task_1",
+          "targetRef": "Task_2"
+        },
+        {
+          "id": "SequenceFlow_3",
+          "sourceRef": "Task_2",
+          "targetRef": "Gateway_1"
+        },
+        {
+          "id": "SequenceFlow_4",
+          "sourceRef": "Gateway_1",
+          "targetRef": "Task_3",
+          "conditionExpression": {
+            "type": "tFormalExpression",
+            "language": "http://www.w3.org/1999/XPath",
+            "body": "ticketType == 'Simple'"
+          }
+        },
+        {
+          "id": "SequenceFlow_5",
+          "sourceRef": "Gateway_1",
+          "targetRef": "Task_4",
+          "conditionExpression": {
+            "type": "tFormalExpression",
+            "language": "http://www.w3.org/1999/XPath",
+            "body": "ticketType == 'Complex'"
+          }
+        },
+        {
+          "id": "SequenceFlow_6",
+          "sourceRef": "Task_3",
+          "targetRef": "Task_5"
+        },
+        {
+          "id": "SequenceFlow_7",
+          "sourceRef": "Task_4",
+          "targetRef": "Task_5"
+        },
+        {
+          "id": "SequenceFlow_8",
+          "sourceRef": "Task_5",
+          "targetRef": "ParallelGateway_1"
+        },
+        {
+          "id": "SequenceFlow_9",
+          "sourceRef": "ParallelGateway_1",
+          "targetRef": "Task_6"
+        },
+        {
+          "id": "SequenceFlow_10",
+          "sourceRef": "ParallelGateway_1",
+          "targetRef": "Task_7"
+        },
+        {
+          "id": "SequenceFlow_11",
+          "sourceRef": "Task_6",
+          "targetRef": "Event_1"
+        },
+        {
+          "id": "SequenceFlow_12",
+          "sourceRef": "Task_7",
+          "targetRef": "Event_1"
+        },
+        {
+          "id": "SequenceFlow_13",
+          "sourceRef": "Event_1",
+          "targetRef": "Gateway_2"
+        },
+        {
+          "id": "SequenceFlow_14",
+          "sourceRef": "Gateway_2",
+          "targetRef": "Task_8",
+          "conditionExpression": {
+            "type": "tFormalExpression",
+            "language": "http://www.w3.org/1999/XPath",
+            "body": "replyReceived == true"
+          }
+        },
+        {
+          "id": "SequenceFlow_15",
+          "sourceRef": "Gateway_2",
+          "targetRef": "Task_9",
+          "conditionExpression": {
+            "type": "tFormalExpression",
+            "language": "http://www.w3.org/1999/XPath",
+            "body": "replyReceived == false"
+          }
+        },
+        {
+          "id": "SequenceFlow_16",
+          "sourceRef": "Task_9",
+          "targetRef": "Task_8"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "Task_1",
+          "name": "Parse Email and Create Ticket",
+          "incoming": "SequenceFlow_1",
+          "outgoing": "SequenceFlow_2"
+        },
+        {
+          "id": "Task_2",
+          "name": "Initial Classification",
+          "incoming": "SequenceFlow_2",
+          "outgoing": "SequenceFlow_3"
+        },
+        {
+          "id": "Task_3",
+          "name": "Provide Resolution",
+          "incoming": "SequenceFlow_4",
+          "outgoing": "SequenceFlow_6"
+        },
+        {
+          "id": "Task_4",
+          "name": "Root Cause Analysis",
+          "incoming": "SequenceFlow_5",
+          "outgoing": "SequenceFlow_7"
+        },
+        {
+          "id": "Task_5",
+          "name": "Send Response to Customer",
+          "incoming": ["SequenceFlow_6", "SequenceFlow_7"],
+          "outgoing": "SequenceFlow_8"
+        },
+        {
+          "id": "Task_6",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": "SequenceFlow_9",
+          "outgoing": "SequenceFlow_11"
+        },
+        {
+          "id": "Task_7",
+          "name": "Wait for Customer Reply",
+          "incoming": "SequenceFlow_10",
+          "outgoing": "SequenceFlow_12",
+          "timerEventDefinition": {
+            "timeDuration": "PT24H"
+          }
+        },
+        {
+          "id": "Task_8",
+          "name": "Close Ticket",
+          "incoming": ["SequenceFlow_14", "SequenceFlow_16"]
+        },
+        {
+          "id": "Task_9",
+          "name": "Send Reminder",
+          "incoming": "SequenceFlow_15",
+          "outgoing": "SequenceFlow_16"
+        }
+      ],
+      "gateways": [
+        {
+          "id": "Gateway_1",
+          "name": "Exclusive Gateway",
+          "incoming": "SequenceFlow_3",
+          "outgoing": ["SequenceFlow_4", "SequenceFlow_5"],
+          "gatewayDirection": "Diverging"
+        },
+        {
+          "id": "ParallelGateway_1",
+          "name": "Parallel Gateway",
+          "incoming": "SequenceFlow_8",
+          "outgoing": ["SequenceFlow_9", "SequenceFlow_10"],
+          "gatewayDirection": "Diverging"
+        },
+        {
+          "id": "Gateway_2",
+          "name": "Exclusive Gateway",
+          "incoming": "SequenceFlow_13",
+          "outgoing": ["SequenceFlow_14", "SequenceFlow_15"],
+          "gatewayDirection": "Diverging"
+        }
+      ],
+      "intermediateCatchEvents": [
+        {
+          "id": "Event_1",
+          "name": "Customer Reply",
+          "incoming": ["SequenceFlow_11", "SequenceFlow_12"],
+          "outgoing": "SequenceFlow_13",
+          "messageEventDefinition": {
+            "messageRef": "CustomerReply"
+          }
+        }
+      ],
+      "boundaryEvents": [
+        {
+          "id": "BoundaryEvent_1",
+          "name": "Cancel Ticket",
+          "attachedToRef": "CustomerSupportProcess",
+          "outgoing": "SequenceFlow_17",
+          "cancelEventDefinition": {}
+        }
+      ],
+      "endEvents": [
+        {
+          "id": "EndEvent_1",
+          "name": "Terminate",
+          "incoming": "SequenceFlow_17",
+          "terminateEventDefinition": {}
+        }
+      ]
+    }
+  }
+}
+```

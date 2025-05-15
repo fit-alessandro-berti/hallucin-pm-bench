@@ -1,0 +1,83 @@
+Here is the BPMN 2.0 XML representation of the AcmeTech support-ticket process:
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/06-02-01.xsd"
+             id="definitions" name="AcmeTech Support Ticket Process">
+
+  <process id="process" name="Support Ticket Process" isExecutable="true">
+    <startEvent id="start" name="Support Ticket Submitted">
+      <outgoing>seq1</outgoing>
+    </startEvent>
+
+    <sequenceFlow id="seq1" sourceRef="start" targetRef="classify"/>
+
+    <serviceTask id="classify" name="Classify Ticket">
+      <outgoing>gw1</outgoing>
+    </serviceTask>
+
+    <exclusiveGateway id="gw1" name="Classification Result">
+      <incoming>seq1</incoming>
+      <outgoing>seq2</outgoing>
+      <outgoing>seq3</outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="seq2" sourceRef="gw1" targetRef="provideReset" conditionExpression="${classification == 'Password Reset'}"/>
+
+    <sequenceFlow id="seq3" sourceRef="gw1" targetRef="initialDiagnosis" conditionExpression="${classification != 'Password Reset'}"/>
+
+    <serviceTask id="provideReset" name="Provide Reset Instructions">
+      <outgoing>seq4</outgoing>
+    </serviceTask>
+
+    <sequenceFlow id="seq4" sourceRef="provideReset" targetRef="confirm"/>
+
+    <userTask id="initialDiagnosis" name="Initial Diagnosis">
+      <outgoing>gw2</outgoing>
+    </userTask>
+
+    <exclusiveGateway id="gw2" name="Diagnosis Result">
+      <incoming>seq3</incoming>
+      <outgoing>seq5</outgoing>
+      <outgoing>seq6</outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="seq5" sourceRef="gw2" targetRef="resolve" conditionExpression="${resolved}"/>
+
+    <sequenceFlow id="seq6" sourceRef="gw2" targetRef="forward" conditionExpression="${not resolved}"/>
+
+    <userTask id="resolve" name="Resolve Issue">
+      <outgoing>seq7</outgoing>
+    </userTask>
+
+    <userTask id="forward" name="Forward to Specialist">
+      <outgoing>seq8</outgoing>
+    </userTask>
+
+    <sequenceFlow id="seq7" sourceRef="resolve" targetRef="confirm"/>
+    <sequenceFlow id="seq8" sourceRef="forward" targetRef="resolve"/>
+
+    <userTask id="confirm" name="Confirm with Customer">
+      <outgoing>gw3</outgoing>
+    </userTask>
+
+    <exclusiveGateway id="gw3" name="Customer Confirmation">
+      <incoming>seq4</incoming>
+      <incoming>seq7</incoming>
+      <outgoing>seq9</outgoing>
+      <outgoing>seq10</outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="seq9" sourceRef="gw3" targetRef="end" conditionExpression="${confirmed}"/>
+
+    <sequenceFlow id="seq10" sourceRef="gw3" targetRef="initialDiagnosis" conditionExpression="${not confirmed}"/>
+
+    <endEvent id="end" name="Ticket Closed">
+      <incoming>seq9</incoming>
+    </endEvent>
+
+  </process>
+
+</definitions>
+```
+Note that I've used `${classification == 'Password Reset'}` and similar syntax for the conditional expressions, assuming that the classification and resolution results are stored in process variables. If this is not the case, please let me know and I'll adjust the expressions accordingly.
