@@ -1,0 +1,163 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+             id="wrc_Definitions" 
+             targetNamespace="http://example.org/WarrantyReplacement">
+  
+  <process id="wrc_Process" isExecutable="true">
+    
+    <!-- Start Event -->
+    <startEvent id="wrc_start">
+      <outgoing>wrc_flowToValidateClaim</outgoing>
+    </startEvent>
+    
+    <!-- Task: validate the claim -->
+    <task id="wrc_validateClaim" name="validate the claim">
+      <incoming>wrc_flowToValidateClaim</incoming>
+      <incoming>wrc_flowBackToValidateClaim</incoming> <!-- For the loop -->
+      <outgoing>wrc_flowToClaimCompleteGateway</outgoing>
+    </task>
+    
+    <!-- Exclusive Gateway for claim completeness -->
+    <exclusiveGateway id="wrc_gatewayClaimComplete">
+      <incoming>wrc_flowToClaimCompleteGateway</incoming>
+      <outgoing>wrc_flowIncompleteToRequestMissingInfo</outgoing>
+      <outgoing>wrc_flowCompleteToChecksWarranty</outgoing>
+    </exclusiveGateway>
+    
+    <!-- Task: requests missing information -->
+    <task id="wrc_requestsMissingInfo" name="requests missing information">
+      <incoming>wrc_flowIncompleteToRequestMissingInfo</incoming>
+      <outgoing>wrc_flowBackToValidateClaim</outgoing>
+    </task>
+    
+    <!-- Sequence flow with condition for incomplete -->
+    <sequenceFlow id="wrc_flowIncompleteToRequestMissingInfo" sourceRef="wrc_gatewayClaimComplete" targetRef="wrc_requestsMissingInfo">
+      <conditionExpression xsi:type="tFormalExpression">Incomplete</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Sequence flow back to validate -->
+    <sequenceFlow id="wrc_flowBackToValidateClaim" sourceRef="wrc_requestsMissingInfo" targetRef="wrc_validateClaim"/>
+    
+    <!-- Sequence flow with condition for complete -->
+    <sequenceFlow id="wrc_flowCompleteToChecksWarranty" sourceRef="wrc_gatewayClaimComplete" targetRef="wrc_checksWarrantyEligibility">
+      <conditionExpression xsi:type="tFormalExpression">Complete</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Task: checks warranty eligibility -->
+    <task id="wrc_checksWarrantyEligibility" name="checks warranty eligibility">
+      <incoming>wrc_flowCompleteToChecksWarranty</incoming>
+      <outgoing>wrc_flowToWarrantyGateway</outgoing>
+    </task>
+    
+    <!-- Sequence flow to next gateway -->
+    <sequenceFlow id="wrc_flowToWarrantyGateway" sourceRef="wrc_checksWarrantyEligibility" targetRef="wrc_gatewayWarranty"/>
+    
+    <!-- Exclusive Gateway for warranty decision -->
+    <exclusiveGateway id="wrc_gatewayWarranty">
+      <incoming>wrc_flowToWarrantyGateway</incoming>
+      <outgoing>wrc_flowOutOfWarrantyToSendRejection</outgoing>
+      <outgoing>wrc_flowWithinWarrantyToParallelSplit</outgoing>
+    </exclusiveGateway>
+    
+    <!-- Task: send rejection notice -->
+    <task id="wrc_sendRejectionNotice" name="send rejection notice">
+      <incoming>wrc_flowOutOfWarrantyToSendRejection</incoming>
+      <outgoing>wrc_flowToEndRejection</outgoing>
+    </task>
+    
+    <!-- Sequence flow with condition for out of warranty -->
+    <sequenceFlow id="wrc_flowOutOfWarrantyToSendRejection" sourceRef="wrc_gatewayWarranty" targetRef="wrc_sendRejectionNotice">
+      <conditionExpression xsi:type="tFormalExpression">Out of Warranty</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- End Event for rejection -->
+    <endEvent id="wrc_endRejection">
+      <incoming>wrc_flowToEndRejection</incoming>
+    </endEvent>
+    
+    <!-- Sequence flow to end rejection -->
+    <sequenceFlow id="wrc_flowToEndRejection" sourceRef="wrc_sendRejectionNotice" targetRef="wrc_endRejection"/>
+    
+    <!-- Sequence flow with condition for within warranty -->
+    <sequenceFlow id="wrc_flowWithinWarrantyToParallelSplit" sourceRef="wrc_gatewayWarranty" targetRef="wrc_parallelSplit">
+      <conditionExpression xsi:type="tFormalExpression">Within Warranty</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Parallel Gateway Split -->
+    <parallelGateway id="wrc_parallelSplit">
+      <incoming>wrc_flowWithinWarrantyToParallelSplit</incoming>
+      <outgoing>wrc_flowToCreateShipmentOrder</outgoing>
+      <outgoing>wrc_flowToScheduleCourierPickup</outgoing>
+    </parallelGateway>
+    
+    <!-- Task: Create shipment order -->
+    <task id="wrc_createShipmentOrder" name="Create shipment order">
+      <incoming>wrc_flowToCreateShipmentOrder</incoming>
+      <outgoing>wrc_flowToParallelJoin</outgoing>
+    </task>
+    
+    <!-- Sequence flow to Create shipment order -->
+    <sequenceFlow id="wrc_flowToCreateShipmentOrder" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentOrder"/>
+    
+    <!-- Task: Schedule courier pickup -->
+    <task id="wrc_scheduleCourierPickup" name="Schedule courier pickup">
+      <incoming>wrc_flowToScheduleCourierPickup</incoming>
+      <outgoing>wrc_flowToParallelJoin</outgoing>
+    </task>
+    
+    <!-- Sequence flow to Schedule courier pickup -->
+    <sequenceFlow id="wrc_flowToScheduleCourierPickup" sourceRef="wrc_parallelSplit" targetRef="wrc_scheduleCourierPickup"/>
+    
+    <!-- Parallel Gateway Join -->
+    <parallelGateway id="wrc_parallelJoin">
+      <incoming>wrc_flowToParallelJoinFromCreate</incoming>
+      <incoming>wrc_flowToParallelJoinFromSchedule</incoming>
+      <outgoing>wrc_flowToUpdateInventory</outgoing>
+    </parallelGateway>
+    
+    <!-- Sequence flow from Create shipment order to Join -->
+    <sequenceFlow id="wrc_flowToParallelJoinFromCreate" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoin"/>
+    
+    <!-- Sequence flow from Schedule courier pickup to Join -->
+    <sequenceFlow id="wrc_flowToParallelJoinFromSchedule" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoin"/>
+    
+    <!-- Task: update inventory records -->
+    <task id="wrc_updateInventoryRecords" name="update inventory records">
+      <incoming>wrc_flowToUpdateInventory</incoming>
+      <outgoing>wrc_flowToCloseClaim</outgoing>
+    </task>
+    
+    <!-- Sequence flow to update inventory -->
+    <sequenceFlow id="wrc_flowToUpdateInventory" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventoryRecords"/>
+    
+    <!-- Task: close the claim -->
+    <task id="wrc_closeTheClaim" name="close the claim">
+      <incoming>wrc_flowToCloseClaim</incoming>
+      <outgoing>wrc_flowToEndSuccess</outgoing>
+    </task>
+    
+    <!-- Sequence flow to close the claim -->
+    <sequenceFlow id="wrc_flowToCloseClaim" sourceRef="wrc_updateInventoryRecords" targetRef="wrc_closeTheClaim"/>
+    
+    <!-- End Event for successful completion -->
+    <endEvent id="wrc_endSuccess">
+      <incoming>wrc_flowToEndSuccess</incoming>
+    </endEvent>
+    
+    <!-- Sequence flow to end success -->
+    <sequenceFlow id="wrc_flowToEndSuccess" sourceRef="wrc_closeTheClaim" targetRef="wrc_endSuccess"/>
+    
+    <!-- Initial sequence flow from start -->
+    <sequenceFlow id="wrc_flowToValidateClaim" sourceRef="wrc_start" targetRef="wrc_validateClaim"/>
+    
+    <!-- Sequence flow from validate to gateway -->
+    <sequenceFlow id="wrc_flowToClaimCompleteGateway" sourceRef="wrc_validateClaim" targetRef="wrc_gatewayClaimComplete"/>
+    
+  </process>
+  
+</definitions>
+```
