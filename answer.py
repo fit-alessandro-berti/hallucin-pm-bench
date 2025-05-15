@@ -18,7 +18,7 @@ def respond_for_model(model_name, parameters=None):
             print("starting", model_name, prompt, answer_path)
 
             try:
-                answer = get_response(prompt_content, base_model_name)
+                answer = get_response(prompt_content, base_model_name, parameters=parameters)
 
                 if answer:
                     F = open(answer_path, "w", encoding="utf-8")

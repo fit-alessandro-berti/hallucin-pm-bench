@@ -42,11 +42,13 @@ class Shared:
                   ("qwen/qwen3-32b-nothink", {"base_model": "qwen/qwen3-32b", "add_prompt": " /no_think"}),
                   ("qwen/qwen3-32b-think", {"base_model": "qwen/qwen3-32b", "add_prompt": " /think"}),
                   ("qwen/qwen3-235b-a22b-nothink", {"base_model": "qwen/qwen3-235b-a22b", "add_prompt": " /no_think"}),
-                  ("qwen/qwen3-235b-a22b-think", {"base_model": "qwen/qwen3-235b-a22b", "add_prompt": " /think"}),
                   ]
 
 
-def get_response(prompt, model_name):
+def get_response(prompt, model_name, parameters=None):
+    if parameters is None:
+        parameters = {}
+
     complete_url = Shared.API_URL + "chat/completions"
 
     headers = {

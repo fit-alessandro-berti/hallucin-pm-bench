@@ -5,9 +5,13 @@ from common import *
 EVALUATING_MODEL_NAME = "openai/gpt-4.1"
 
 
-def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True):
-    m_name = model_name.replace(":", "").replace("/", "")
+def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, parameters=None):
+    if parameters is None:
+        parameters = {}
+
     modified_something = False
+
+    base_model_name = parameters.get("base_model", model_name)
 
     for answer in os.listdir("answers"):
         evaluation_path = os.path.join(target_directory, answer)
@@ -28,11 +32,12 @@ def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", i
             if include_ground_truth_answer:
                 evaluation_prompt.append("!! <<GROUND TRUTH ANSWER>>:\n"+gt_content)
             evaluation_prompt = "\n\n".join(evaluation_prompt)
+            evaluation_prompt = evaluation_prompt + parameters.get("add_prompt", "")
 
             print("starting", evaluation_path)
 
             try:
-                evaluation = get_response(evaluation_prompt, model_name)
+                evaluation = get_response(evaluation_prompt, base_model_name, parameters=parameters)
 
                 if evaluation:
                     F = open(evaluation_path, "w", encoding="utf-8")
