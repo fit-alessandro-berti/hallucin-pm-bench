@@ -7,6 +7,44 @@ class Shared:
     API_URL = "https://openrouter.ai/api/v1/"
     API_KEY = open("api_key.txt", "r").read().strip()
 
+    MODEL_CATALOGUE = ["openai/gpt-4.1",
+                  "openai/gpt-4.1-mini",
+                  "openai/gpt-4.1-nano",
+                  "openai/gpt-4.5-preview",
+                  ("qwen/qwen3-14b-nothink", {"base_model": "qwen/qwen3-14b", "add_prompt": " /no_think"}),
+                  ("qwen/qwen3-14b-think", {"base_model": "qwen/qwen3-14b", "add_prompt": " /think"}),
+                  "anthropic/claude-3.7-sonnet",
+                  "x-ai/grok-3-beta",
+                  "openai/o4-mini-high",
+                  "openai/o4-mini",
+                  "x-ai/grok-3-mini-beta",
+                  "openai/chatgpt-4o-latest",
+                  "google/gemini-2.5-flash-preview",
+                  "google/gemini-2.5-flash-preview:thinking",
+                  "google/gemini-2.5-pro-preview",
+                  "google/gemini-2.0-flash-lite-001",
+                  "google/gemini-2.0-flash-001",
+                  "anthropic/claude-3.7-sonnet:thinking",
+                  "openai/o3-mini-high",
+                  "openai/o3-mini",
+                  "mistralai/ministral-3b",
+                  "mistral/ministral-8b",
+                  "mistralai/mistral-small-3.1-24b-instruct",
+                  "mistralai/mistral-medium-3",
+                  "meta-llama/llama-4-scout",
+                  "meta-llama/llama-4-maverick",
+                  "meta-llama/llama-3.3-70b-instruct",
+                  #"openai/o3",
+                  "openai/o1",
+                  "deepseek/deepseek-r1",
+                  ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
+                  ("qwen/qwen3-30b-a3b-think", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /think"}),
+                  ("qwen/qwen3-32b-nothink", {"base_model": "qwen/qwen3-32b", "add_prompt": " /no_think"}),
+                  ("qwen/qwen3-32b-think", {"base_model": "qwen/qwen3-32b", "add_prompt": " /think"}),
+                  ("qwen/qwen3-235b-a22b-nothink", {"base_model": "qwen/qwen3-235b-a22b", "add_prompt": " /no_think"}),
+                  ("qwen/qwen3-235b-a22b-think", {"base_model": "qwen/qwen3-235b-a22b", "add_prompt": " /think"}),
+                  ]
+
 
 def get_response(prompt, model_name):
     complete_url = Shared.API_URL + "chat/completions"

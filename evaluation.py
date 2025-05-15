@@ -5,13 +5,12 @@ from common import *
 EVALUATING_MODEL_NAME = "openai/gpt-4.1"
 
 
-def evaluate():
-    model_name = EVALUATING_MODEL_NAME
+def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True):
     m_name = model_name.replace(":", "").replace("/", "")
     modified_something = False
 
     for answer in os.listdir("answers"):
-        evaluation_path = os.path.join("evaluations", answer)
+        evaluation_path = os.path.join(target_directory, answer)
 
         if (not os.path.exists(evaluation_path)) or (os.path.getsize(evaluation_path) == 0):
             prompt = answer.split("__")[1]
@@ -21,11 +20,13 @@ def evaluate():
 
             evaluation_prompt = []
             evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")
-            evaluation_prompt.append("The prompt is accompanied by a ground truth answer, which should be considered to assess the LLM answer. So, the more differences are between the answers and the ground truth answer, the lower is the grade.")
+            if include_ground_truth_answer:
+                evaluation_prompt.append("The prompt is accompanied by a ground truth answer, which should be considered to assess the LLM answer. So, the more differences are between the answers and the ground truth answer, the lower is the grade.")
             evaluation_prompt.append("Please evaluate with the utmost strictness. Also small errors should reflect in significant loss of points.")
             evaluation_prompt.append("!! <<PROMPT>>:\n"+prompt_content)
             evaluation_prompt.append("!! <<LLM ANSWER>>:\n"+answer_content)
-            evaluation_prompt.append("!! <<GROUND TRUTH ANSWER>>:\n"+gt_content)
+            if include_ground_truth_answer:
+                evaluation_prompt.append("!! <<GROUND TRUTH ANSWER>>:\n"+gt_content)
             evaluation_prompt = "\n\n".join(evaluation_prompt)
 
             print("starting", evaluation_path)
@@ -46,7 +47,7 @@ def evaluate():
     return modified_something
 
 
-if __name__ == "__main__":
+def main1():
     while True:
         modified_something = evaluate()
 
@@ -55,3 +56,7 @@ if __name__ == "__main__":
             #break
 
         time.sleep(30)
+
+
+if __name__ == "__main__":
+    main1()
