@@ -17,7 +17,7 @@ def evaluate():
             prompt = answer.split("__")[1]
             prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read()
             gt_content = open(os.path.join("gt_answers", prompt), encoding="utf-8").read()
-            answer_content = open(os.path.join("answers", answer), encoding="utf-8").read()
+            answer_content = open(os.path.join("answers", answer), encoding="utf-8").read().split("</think>")[-1].split("</thought>")[-1]
 
             evaluation_prompt = []
             evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")
