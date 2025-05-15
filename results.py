@@ -23,7 +23,7 @@ MAPPING["C12"] = "C12 Misinformation injection"
 MAPPING["C13"] = "C13 Edge-case / low-support prompts"
 
 def format_name(llm):
-    patterns = ["anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft"]
+    patterns = ["anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft", "deepseek", "meta-llama"]
 
     for p in patterns:
         if llm.startswith(p):
