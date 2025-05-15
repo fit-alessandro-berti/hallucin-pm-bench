@@ -89,6 +89,8 @@ def get_agg_results():
 
     dictio = get_dictio_results()
     score_key = "SCORE"
+    avg_key = "AVG"
+
     max_per_cat = {}
 
     results = []
@@ -118,6 +120,7 @@ def get_agg_results():
                 results[j][cat_name] = format_numb_in_table(results[j][cat_name], max_per_cat[cat_name[1:]])
 
     for j in range(len(results)):
+        results[j][avg_key] = round(results[j][score_key] / 39.0, 2)
         results[j][score_key] = round(results[j][score_key]/10.0, 1)
 
     return results, dictio
@@ -133,7 +136,7 @@ if __name__ == "__main__":
     F = open("leaderboard.md", "w")
 
     F.write("## Overall Leaderboard (gpt-4.1 used as the Judge)\n\n")
-    F.write("The higher the score, the better the model. Maximum attainable score: **39 points**\n\n")
+    F.write("The higher the score, the better the model.\nMaximum attainable score: **39 points**. Maximum attainable score per category: **3 points**.\nThe average is computed over **/10**.\n\n")
     F.write(res)
 
     F.close()

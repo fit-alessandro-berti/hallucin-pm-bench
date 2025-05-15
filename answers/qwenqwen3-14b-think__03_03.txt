@@ -1,0 +1,43 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<process id="wrc_Process_WarrantyReplacement" isExecutable="false" name="Warranty-Replacement v1.3">
+  <startEvent id="wrc_StartEvent_SubmitClaim" name="Customer submits online warranty claim" />
+  <sequenceFlow id="wrc_SequenceFlow_StartToValidate" sourceRef="wrc_StartEvent_SubmitClaim" targetRef="wrc_Task_ValidateClaim" />
+
+  <task id="wrc_Task_ValidateClaim" name="Validate claim" />
+  <exclusiveGateway id="wrc_ExcGateway_CheckClaimCompleteness" name="Check claim completeness" />
+  <sequenceFlow id="wrc_SequenceFlow_ValidateToCheckCompleteness" sourceRef="wrc_Task_ValidateClaim" targetRef="wrc_ExcGateway_CheckClaimCompleteness" />
+
+  <sequenceFlow id="wrc_SequenceFlow_IncompleteToRequest" sourceRef="wrc_ExcGateway_CheckClaimCompleteness" targetRef="wrc_Task_RequestMissingInfo" />
+  <task id="wrc_Task_RequestMissingInfo" name="Request missing information" />
+  <sequenceFlow id="wrc_SequenceFlow_RequestToValidate" sourceRef="wrc_Task_RequestMissingInfo" targetRef="wrc_Task_ValidateClaim" />
+
+  <sequenceFlow id="wrc_SequenceFlow_CompleteToCheckWarranty" sourceRef="wrc_ExcGateway_CheckClaimCompleteness" targetRef="wrc_Task_CheckWarrantyEligibility" />
+  <task id="wrc_Task_CheckWarrantyEligibility" name="Check warranty eligibility" />
+  <exclusiveGateway id="wrc_ExcGateway_CheckWarrantyEligibility" name="Check warranty eligibility" />
+  <sequenceFlow id="wrc_SequenceFlow_CheckWarrantyToEligibilityGateway" sourceRef="wrc_Task_CheckWarrantyEligibility" targetRef="wrc_ExcGateway_CheckWarrantyEligibility" />
+
+  <sequenceFlow id="wrc_SequenceFlow_OutOfWarrantyToRejection" sourceRef="wrc_ExcGateway_CheckWarrantyEligibility" targetRef="wrc_Task_SendRejectionNotice" />
+  <task id="wrc_Task_SendRejectionNotice" name="Send rejection notice" />
+  <endEvent id="wrc_EndEvent_Rejection" name="Rejection" />
+  <sequenceFlow id="wrc_SequenceFlow_RejectionToEnd" sourceRef="wrc_Task_SendRejectionNotice" targetRef="wrc_EndEvent_Rejection" />
+
+  <sequenceFlow id="wrc_SequenceFlow_InWarrantyToSplit" sourceRef="wrc_ExcGateway_CheckWarrantyEligibility" targetRef="wrc_ParallelGateway_Split" />
+  <parallelGateway id="wrc_ParallelGateway_Split" name="Split" />
+  <sequenceFlow id="wrc_SequenceFlow_SplitToCreateShipment" sourceRef="wrc_ParallelGateway_Split" targetRef="wrc_Task_CreateShipmentOrder" />
+  <sequenceFlow id="wrc_SequenceFlow_SplitToSchedulePickup" sourceRef="wrc_ParallelGateway_Split" targetRef="wrc_Task_ScheduleCourierPickup" />
+
+  <task id="wrc_Task_CreateShipmentOrder" name="Create shipment order" />
+  <task id="wrc_Task_ScheduleCourierPickup" name="Schedule courier pickup" />
+  <parallelGateway id="wrc_ParallelGateway_Join" name="Join" />
+  <sequenceFlow id="wrc_SequenceFlow_CreateToJoin" sourceRef="wrc_Task_CreateShipmentOrder" targetRef="wrc_ParallelGateway_Join" />
+  <sequenceFlow id="wrc_SequenceFlow_PickupToJoin" sourceRef="wrc_Task_ScheduleCourierPickup" targetRef="wrc_ParallelGateway_Join" />
+
+  <sequenceFlow id="wrc_SequenceFlow_JoinToUpdateInventory" sourceRef="wrc_ParallelGateway_Join" targetRef="wrc_Task_UpdateInventoryRecords" />
+  <task id="wrc_Task_UpdateInventoryRecords" name="Update inventory records" />
+  <sequenceFlow id="wrc_SequenceFlow_UpdateToClose" sourceRef="wrc_Task_UpdateInventoryRecords" targetRef="wrc_Task_CloseClaim" />
+  <task id="wrc_Task_CloseClaim" name="Close the claim" />
+  <endEvent id="wrc_EndEvent_Success" name="Successful completion" />
+  <sequenceFlow id="wrc_SequenceFlow_CloseToEnd" sourceRef="wrc_Task_CloseClaim" targetRef="wrc_EndEvent_Success" />
+</process>
+```
