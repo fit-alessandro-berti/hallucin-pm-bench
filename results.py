@@ -123,6 +123,7 @@ def get_agg_results():
     for j in range(len(results)):
         results[j][avg_key] = round(results[j][score_key] / 39.0, 2)
         results[j][score_key] = round(results[j][score_key]/10.0, 1)
+        del results[j][score_key]
 
     return results, dictio
 
