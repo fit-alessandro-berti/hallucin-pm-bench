@@ -44,12 +44,13 @@ if __name__ == "__main__":
                   "openai/o4-mini-high",
                   "openai/o4-mini",
                   "x-ai/grok-3-mini-beta",
+                  "openai/chatgpt-4o-latest",
                   "anthropic/claude-3.7-sonnet:thinking",
+                  "google/gemini-2.5-flash-preview",
+                  "google/gemini-2.5-pro-preview",
                   "openai/o3-mini-high",
                   "openai/o3-mini",
-                  "openai/o1"
-                  "google/gemini-2.5-flash-preview"
-                  "google/gemini-2.5-pro-preview",
+                  "openai/o1",
                   ]:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]

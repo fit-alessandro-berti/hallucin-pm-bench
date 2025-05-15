@@ -1,0 +1,129 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="wrc_definitions"
+                  targetNamespace="http://example.com/bpmn/wrc">
+
+  <bpmn:process id="wrc_WarrantyReplacement" name="Warranty-Replacement v1.3" isExecutable="true">
+
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_startEvent" name="Start">
+      <bpmn:outgoing>wrc_flow_start_to_validate</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Task: Validate the claim -->
+    <bpmn:task id="wrc_ValidateClaim" name="Validate the claim">
+      <bpmn:incoming>wrc_flow_start_to_validate</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_validate_to_gateway_completeness</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Claim completeness -->
+    <bpmn:exclusiveGateway id="wrc_Gateway_ClaimCompleteness" name="Is claim complete?">
+      <bpmn:incoming>wrc_flow_validate_to_gateway_completeness</bpmn:incoming>
+      <bpmn:incoming>wrc_flow_receiveinfo_to_validate</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_completeness_yes_to_check_eligibility</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_completeness_no_to_requestinfo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Task: Request missing information -->
+    <bpmn:task id="wrc_RequestMissingInformation" name="Request missing information">
+      <bpmn:incoming>wrc_flow_completeness_no_to_requestinfo</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_requestinfo_to_receiveinfo</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Intermediate Catch Event: Wait for missing information -->
+    <bpmn:intermediateCatchEvent id="wrc_ReceiveMissingInformation" name="Receive missing information">
+      <bpmn:incoming>wrc_flow_requestinfo_to_receiveinfo</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_receiveinfo_to_validate</bpmn:outgoing>
+    </bpmn:intermediateCatchEvent>
+
+    <!-- Task: Check warranty eligibility -->
+    <bpmn:task id="wrc_CheckWarrantyEligibility" name="Check warranty eligibility">
+      <bpmn:incoming>wrc_flow_completeness_yes_to_check_eligibility</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_checkelig_to_gateway_eligible</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Warranty eligibility -->
+    <bpmn:exclusiveGateway id="wrc_Gateway_Eligibility" name="Is product within warranty?">
+      <bpmn:incoming>wrc_flow_checkelig_to_gateway_eligible</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_eligibility_yes_to_parallel</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_eligibility_no_to_rejection</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Task: Send rejection notice -->
+    <bpmn:task id="wrc_SendRejectionNotice" name="Send rejection notice">
+      <bpmn:incoming>wrc_flow_eligibility_no_to_rejection</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_rejection_to_end</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event: Rejected -->
+    <bpmn:endEvent id="wrc_EndRejected" name="End - Rejected">
+      <bpmn:incoming>wrc_flow_rejection_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Parallel Gateway (Split): -->
+    <bpmn:parallelGateway id="wrc_Gateway_ParallelSplit" name="Parallel Activities Start">
+      <bpmn:incoming>wrc_flow_eligibility_yes_to_parallel</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_parallel_to_create_shipment</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_parallel_to_schedule_pickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Task: Create shipment order -->
+    <bpmn:task id="wrc_CreateShipmentOrder" name="Create shipment order">
+      <bpmn:incoming>wrc_flow_parallel_to_create_shipment</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_create_shipment_to_join</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Task: Schedule courier pickup -->
+    <bpmn:task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_flow_parallel_to_schedule_pickup</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_schedule_pickup_to_join</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Parallel Gateway (Join): -->
+    <bpmn:parallelGateway id="wrc_Gateway_ParallelJoin" name="Parallel Activities Join">
+      <bpmn:incoming>wrc_flow_create_shipment_to_join</bpmn:incoming>
+      <bpmn:incoming>wrc_flow_schedule_pickup_to_join</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_join_to_update_inventory</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Task: Update inventory records -->
+    <bpmn:task id="wrc_UpdateInventoryRecords" name="Update inventory records">
+      <bpmn:incoming>wrc_flow_join_to_update_inventory</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_update_inventory_to_close</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Task: Close the claim -->
+    <bpmn:task id="wrc_CloseTheClaim" name="Close the claim">
+      <bpmn:incoming>wrc_flow_update_inventory_to_close</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_close_to_end</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event: Success -->
+    <bpmn:endEvent id="wrc_EndSuccess" name="End - Success">
+      <bpmn:incoming>wrc_flow_close_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_flow_start_to_validate" sourceRef="wrc_startEvent" targetRef="wrc_ValidateClaim"/>
+    <bpmn:sequenceFlow id="wrc_flow_validate_to_gateway_completeness" sourceRef="wrc_ValidateClaim" targetRef="wrc_Gateway_ClaimCompleteness"/>
+    <bpmn:sequenceFlow id="wrc_flow_completeness_no_to_requestinfo" sourceRef="wrc_Gateway_ClaimCompleteness" targetRef="wrc_RequestMissingInformation" />
+    <bpmn:sequenceFlow id="wrc_flow_requestinfo_to_receiveinfo" sourceRef="wrc_RequestMissingInformation" targetRef="wrc_ReceiveMissingInformation" />
+    <bpmn:sequenceFlow id="wrc_flow_receiveinfo_to_validate" sourceRef="wrc_ReceiveMissingInformation" targetRef="wrc_ValidateClaim" />
+    <bpmn:sequenceFlow id="wrc_flow_completeness_yes_to_check_eligibility" sourceRef="wrc_Gateway_ClaimCompleteness" targetRef="wrc_CheckWarrantyEligibility"/>
+    <bpmn:sequenceFlow id="wrc_flow_checkelig_to_gateway_eligible" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_Gateway_Eligibility"/>
+    <bpmn:sequenceFlow id="wrc_flow_eligibility_no_to_rejection" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_SendRejectionNotice"/>
+    <bpmn:sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndRejected"/>
+    <bpmn:sequenceFlow id="wrc_flow_eligibility_yes_to_parallel" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_Gateway_ParallelSplit"/>
+    <bpmn:sequenceFlow id="wrc_flow_parallel_to_create_shipment" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_CreateShipmentOrder"/>
+    <bpmn:sequenceFlow id="wrc_flow_parallel_to_schedule_pickup" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_ScheduleCourierPickup"/>
+    <bpmn:sequenceFlow id="wrc_flow_create_shipment_to_join" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_Gateway_ParallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_flow_schedule_pickup_to_join" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_Gateway_ParallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_flow_join_to_update_inventory" sourceRef="wrc_Gateway_ParallelJoin" targetRef="wrc_UpdateInventoryRecords"/>
+    <bpmn:sequenceFlow id="wrc_flow_update_inventory_to_close" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseTheClaim"/>
+    <bpmn:sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_CloseTheClaim" targetRef="wrc_EndSuccess"/>
+
+  </bpmn:process>
+</bpmn:definitions>
+```
