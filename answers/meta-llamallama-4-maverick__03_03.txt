@@ -1,0 +1,87 @@
+Here is the BPMN 2.0 XML diagram for the Warranty-Replacement v1.3 process:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+             http://www.omg.org/spec/BPMN/20100524/06-02-01.xsd"
+             id="wrc_definitions" name="Warranty-Replacement v1.3">
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="true">
+    <startEvent id="wrc_start_event" name="online warranty claim">
+      <outgoing>wrc_flow_1</outgoing>
+    </startEvent>
+    <sequenceFlow id="wrc_flow_1" sourceRef="wrc_start_event" targetRef="wrc_validate_claim"/>
+    <userTask id="wrc_validate_claim" name="validates the claim">
+      <outgoing>wrc_flow_2</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_claim_complete"/>
+    <exclusiveGateway id="wrc_gateway_claim_complete" name="claim completeness check">
+      <outgoing>wrc_flow_3</outgoing>
+      <outgoing>wrc_flow_4</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="wrc_flow_3" sourceRef="wrc_gateway_claim_complete" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression">${claimIncomplete}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_4" sourceRef="wrc_gateway_claim_complete" targetRef="wrc_check_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">${claimComplete}</conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_request_missing_info" name="requests missing information">
+      <outgoing>wrc_flow_5</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_5" sourceRef="wrc_request_missing_info" targetRef="wrc_validate_claim"/>
+    <userTask id="wrc_check_warranty_eligibility" name="checks warranty eligibility">
+      <outgoing>wrc_flow_6</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_6" sourceRef="wrc_check_warranty_eligibility" targetRef="wrc_gateway_warranty_eligibility"/>
+    <exclusiveGateway id="wrc_gateway_warranty_eligibility" name="warranty eligibility check">
+      <outgoing>wrc_flow_7</outgoing>
+      <outgoing>wrc_flow_8</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="wrc_flow_7" sourceRef="wrc_gateway_warranty_eligibility" targetRef="wrc_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression">${outOfWarranty}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_8" sourceRef="wrc_gateway_warranty_eligibility" targetRef="wrc_parallel_gateway_split">
+      <conditionExpression xsi:type="tFormalExpression">${withinWarranty}</conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_send_rejection_notice" name="send rejection notice">
+      <outgoing>wrc_flow_9</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_9" sourceRef="wrc_send_rejection_notice" targetRef="wrc_end_event_rejected"/>
+    <endEvent id="wrc_end_event_rejected" name="rejected">
+      <incoming>wrc_flow_9</incoming>
+    </endEvent>
+    <parallelGateway id="wrc_parallel_gateway_split" name="parallel split">
+      <outgoing>wrc_flow_10</outgoing>
+      <outgoing>wrc_flow_11</outgoing>
+    </parallelGateway>
+    <sequenceFlow id="wrc_flow_10" sourceRef="wrc_parallel_gateway_split" targetRef="wrc_create_shipment_order"/>
+    <sequenceFlow id="wrc_flow_11" sourceRef="wrc_parallel_gateway_split" targetRef="wrc_schedule_courier_pickup"/>
+    <userTask id="wrc_create_shipment_order" name="Create shipment order">
+      <outgoing>wrc_flow_12</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_12" sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_gateway_join"/>
+    <userTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <outgoing>wrc_flow_13</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_13" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_gateway_join"/>
+    <parallelGateway id="wrc_parallel_gateway_join" name="parallel join">
+      <incoming>wrc_flow_12</incoming>
+      <incoming>wrc_flow_13</incoming>
+      <outgoing>wrc_flow_14</outgoing>
+    </parallelGateway>
+    <sequenceFlow id="wrc_flow_14" sourceRef="wrc_parallel_gateway_join" targetRef="wrc_update_inventory_records"/>
+    <userTask id="wrc_update_inventory_records" name="update inventory records">
+      <outgoing>wrc_flow_15</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_15" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_claim"/>
+    <userTask id="wrc_close_claim" name="close the claim">
+      <outgoing>wrc_flow_16</outgoing>
+    </userTask>
+    <sequenceFlow id="wrc_flow_16" sourceRef="wrc_close_claim" targetRef="wrc_end_event_completed"/>
+    <endEvent id="wrc_end_event_completed" name="completed">
+      <incoming>wrc_flow_16</incoming>
+    </endEvent>
+  </process>
+</definitions>
+```
+This BPMN 2.0 XML diagram represents the Warranty-Replacement v1.3 process as described. It includes the required elements, gateways, and tasks with their corresponding names and IDs prefixed with "wrc_". The process starts with a customer submitting an online warranty claim and ends with either a rejection notice or a successful completion. The diagram includes two end events, one for rejection and one for successful completion.

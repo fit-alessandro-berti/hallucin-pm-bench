@@ -1,0 +1,82 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+            id="wrc_definitions" name="Warranty-Replacement v1.3">
+  <process id="wrc_process" name="Warranty-Replacement v1.3">
+    <startEvent id="wrc_start" name="online warranty claim">
+      <outgoing>wrc_flow1</outgoing>
+    </startEvent>
+    <sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+    <task id="wrc_validate_claim" name="validates the claim">
+      <outgoing>wrc_flow2</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway1"/>
+    <exclusiveGateway id="wrc_gateway1">
+      <outgoing>wrc_flow3</outgoing>
+      <outgoing>wrc_flow4</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="wrc_flow3" sourceRef="wrc_gateway1" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression">claim is incomplete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow4" sourceRef="wrc_gateway1" targetRef="wrc_check_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">claim is complete</conditionExpression>
+    </sequenceFlow>
+    <task id="wrc_request_missing_info" name="requests missing information">
+      <outgoing>wrc_flow5</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow5" sourceRef="wrc_request_missing_info" targetRef="wrc_validate_claim"/>
+    <task id="wrc_check_warranty_eligibility" name="checks warranty eligibility">
+      <outgoing>wrc_flow6</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow6" sourceRef="wrc_check_warranty_eligibility" targetRef="wrc_gateway2"/>
+    <exclusiveGateway id="wrc_gateway2">
+      <outgoing>wrc_flow7</outgoing>
+      <outgoing>wrc_flow8</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="wrc_flow7" sourceRef="wrc_gateway2" targetRef="wrc_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression">product is out of warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow8" sourceRef="wrc_gateway2" targetRef="wrc_parallel_gateway">
+      <conditionExpression xsi:type="tFormalExpression">product is within warranty</conditionExpression>
+    </sequenceFlow>
+    <task id="wrc_send_rejection_notice" name="send rejection notice">
+      <outgoing>wrc_flow9</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow9" sourceRef="wrc_send_rejection_notice" targetRef="wrc_end_rejection"/>
+    <parallelGateway id="wrc_parallel_gateway">
+      <outgoing>wrc_flow10</outgoing>
+      <outgoing>wrc_flow11</outgoing>
+    </parallelGateway>
+    <sequenceFlow id="wrc_flow10" sourceRef="wrc_parallel_gateway" targetRef="wrc_create_shipment_order"/>
+    <sequenceFlow id="wrc_flow11" sourceRef="wrc_parallel_gateway" targetRef="wrc_schedule_courier_pickup"/>
+    <task id="wrc_create_shipment_order" name="Create shipment order">
+      <outgoing>wrc_flow12</outgoing>
+    </task>
+    <task id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <outgoing>wrc_flow13</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow12" sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_join"/>
+    <sequenceFlow id="wrc_flow13" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_join"/>
+    <parallelGateway id="wrc_parallel_join">
+      <outgoing>wrc_flow14</outgoing>
+    </parallelGateway>
+    <sequenceFlow id="wrc_flow14" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory_records"/>
+    <task id="wrc_update_inventory_records" name="update inventory records">
+      <outgoing>wrc_flow15</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow15" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_claim"/>
+    <task id="wrc_close_claim" name="close the claim">
+      <outgoing>wrc_flow16</outgoing>
+    </task>
+    <sequenceFlow id="wrc_flow16" sourceRef="wrc_close_claim" targetRef="wrc_end_completion"/>
+    <endEvent id="wrc_end_rejection" name="end of process (rejection)">
+      <incoming>wrc_flow9</incoming>
+    </endEvent>
+    <endEvent id="wrc_end_completion" name="end of process (completion)">
+      <incoming>wrc_flow16</incoming>
+    </endEvent>
+  </process>
+</definitions>
+```

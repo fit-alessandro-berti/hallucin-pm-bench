@@ -1,0 +1,170 @@
+```json
+{
+  "definitions": {
+    "id": "support-ticket-process",
+    "process": [
+      {
+        "id": "support-ticket-process",
+        "isExecutable": true,
+        "startEvent": [
+          {
+            "id": "receive-support-email",
+            "outgoing": ["create-ticket-sequence-flow"]
+          }
+        ],
+        "sequenceFlow": [
+          {
+            "id": "create-ticket-sequence-flow",
+            "sourceRef": "receive-support-email",
+            "targetRef": "create-ticket-task"
+          },
+          {
+            "id": "initial-classification-sequence-flow",
+            "sourceRef": "create-ticket-task",
+            "targetRef": "initial-classification-task"
+          },
+          {
+            "id": "simple-ticket-sequence-flow",
+            "sourceRef": "initial-classification-task",
+            "targetRef": "provide-resolution-task"
+          },
+          {
+            "id": "complex-ticket-sequence-flow",
+            "sourceRef": "initial-classification-task",
+            "targetRef": "root-cause-analysis-task"
+          },
+          {
+            "id": "root-cause-analysis-to-resolution-sequence-flow",
+            "sourceRef": "root-cause-analysis-task",
+            "targetRef": "provide-resolution-task"
+          },
+          {
+            "id": "resolution-to-send-response-sequence-flow",
+            "sourceRef": "provide-resolution-task",
+            "targetRef": "send-response-to-customer-task"
+          },
+          {
+            "id": "send-response-to-close-ticket-sequence-flow",
+            "sourceRef": "customer-reply-event",
+            "targetRef": "close-ticket-task"
+          },
+          {
+            "id": "reminder-to-close-ticket-sequence-flow",
+            "sourceRef": "wait-for-customer-reply-timer-event",
+            "targetRef": "close-ticket-task"
+          },
+          {
+            "id": "send-response-to-log-solution-sequence-flow",
+            "sourceRef": "send-response-to-customer-task",
+            "targetRef": "log-solution-in-knowledge-base-task"
+          },
+          {
+            "id": "log-solution-to-close-ticket-sequence-flow",
+            "sourceRef": "log-solution-in-knowledge-base-task",
+            "targetRef": "log-solution-done-gateway"
+          }
+        ],
+        "task": [
+          {
+            "id": "create-ticket-task",
+            "name": "Create Ticket"
+          },
+          {
+            "id": "initial-classification-task",
+            "name": "Initial Classification"
+          },
+          {
+            "id": "provide-resolution-task",
+            "name": "Provide Resolution"
+          },
+          {
+            "id": "root-cause-analysis-task",
+            "name": "Root Cause Analysis"
+          },
+          {
+            "id": "send-response-to-customer-task",
+            "name": "Send Response to Customer"
+          },
+          {
+            "id": "log-solution-in-knowledge-base-task",
+            "name": "Log Solution in Knowledge Base"
+          },
+          {
+            "id": "close-ticket-task",
+            "name": "Close Ticket"
+          },
+          {
+            "id": "send-reminder-task",
+            "name": "Send Reminder"
+          }
+        ],
+        "exclusiveGateway": [
+          {
+            "id": "initial-classification-gateway",
+            "name": "Ticket Classification Gateway",
+            "outgoing": ["simple-ticket-sequence-flow", "complex-ticket-sequence-flow"]
+          },
+          {
+            "id": "log-solution-done-gateway",
+            "name": "Log Solution Done Gateway"
+          }
+        ],
+        "parallelGateway": [
+          {
+            "id": "parallelize-response-and-logging",
+            "name": "Parallelize Response and Logging",
+            "outgoing": ["send-response-to-log-solution-sequence-flow", "log-solution-to-close-ticket-sequence-flow"]
+          }
+        ],
+        "boundaryEvent": [
+          {
+            "id": "cancel-ticket-event",
+            "attachedToRef": "support-ticket-process",
+            "cancelActivity": true,
+            "outgoing": ["terminate-process-sequence-flow"]
+          }
+        ],
+        "sequenceFlow": [
+          {
+            "id": "terminate-process-sequence-flow",
+            "sourceRef": "cancel-ticket-event",
+            "targetRef": "terminate-process-end-event"
+          }
+        ],
+        "endEvent": [
+          {
+            "id": "terminate-process-end-event",
+            "name": "Terminate Process"
+          }
+        ],
+        "intermediateCatchEvent": [
+          {
+            "id": "customer-reply-event",
+            "name": "Customer Reply",
+            "outgoing": ["send-response-to-close-ticket-sequence-flow"]
+          }
+        ],
+        "intermediateThrowEvent": [
+          {
+            "id": "cancel-ticket-throw-event",
+            "name": "Cancel Ticket"
+          }
+        ],
+        "timerEventDefinition": [
+          {
+            "id": "wait-for-customer-reply-timer-event",
+            "timeDuration": "PT24H",
+            "outgoing": ["reminder-to-close-ticket-sequence-flow"]
+          }
+        ],
+        "eventBasedGateway": [
+          {
+            "id": "wait-for-customer-reply-gateway",
+            "outgoing": ["customer-reply-event", "wait-for-customer-reply-timer-event"]
+          }
+        ]
+      }
+    ]
+  }
+}
+```

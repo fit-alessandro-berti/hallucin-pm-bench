@@ -1,0 +1,53 @@
+To determine whether Trace 24-EXP is compliant with the rule set P2P-2025.R1, we'll analyze each rule in the context of the given trace.
+
+### Rule 1: Any purchase order (PO) whose total amount exceeds €10,000 must obtain two approvals, first by a *Procurement Officer* and then by the *CFO*, before activity `Issue_PO`.
+
+1. `PO_Amount` = €12,300, which exceeds €10,000.
+2. The trace shows two approvals: 
+   - `Approve_PO` by `Procurement_Officer` (Event #2)
+   - `Approve_PO_CFO` by `CFO` (Event #3)
+   Both approvals occur before `Issue_PO` (Event #5).
+
+**Compliant with Rule 1.**
+
+### Rule 2: If the trace contains activity `Expedite_Flag`, 
+- activity `Quality_Check` becomes optional but 
+- activity `Risk_Assessment` must occur before the first occurrence of `Ship_Goods`.
+
+1. The trace contains `Expedite_Flag` (Event #4).
+2. `Quality_Check` is not present, which is allowed since it becomes optional.
+3. `Risk_Assessment` (Event #9) occurs after `Ship_Goods` (Event #8), not before.
+
+**Non-compliant with Rule 2** because `Risk_Assessment` occurs after `Ship_Goods`.
+
+### Rule 3: After `Goods_Received`, activity `Three_way_match` must be completed within the next two activities (distance ≤ 2).
+
+1. `Goods_Received` (Event #6) is followed by:
+   - `Move_to_Quality` (Event #7)
+   - `Ship_Goods` (Event #8)
+   - `Risk_Assessment` (Event #9)
+   - `Three_way_match` (Event #10)
+2. `Three_way_match` occurs at a distance of 4 from `Goods_Received`, not within 2.
+
+**Non-compliant with Rule 3.**
+
+### Rule 4: No activity executed by the role **Intern** may directly follow an activity executed by the role **CFO**.
+
+1. The last activity executed by `CFO` is `Approve_PO_CFO` (Event #3).
+2. The next activity is `Expedite_Flag` (Event #4) by `System`, not by `Intern`.
+
+**Compliant with Rule 4.**
+
+### Rule 5: The trace must finish with `Archive_Record` and contain nothing after it.
+
+1. The trace ends with `Archive_Record` (Event #11).
+2. There are no events after `Archive_Record`.
+
+**Compliant with Rule 5.**
+
+### Conclusion
+
+The trace is **Non-compliant** with rule set P2P-2025.R1.
+
+1. The trace violates **Rule 2** because `Risk_Assessment` occurs after `Ship_Goods`, not before.
+2. The trace also violates **Rule 3** because `Three_way_match` is not completed within two activities after `Goods_Received`.

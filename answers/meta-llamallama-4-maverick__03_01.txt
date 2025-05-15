@@ -1,0 +1,84 @@
+Here is the BPMN 2.0 XML representation of the AcmeTech's support-ticket process:
+
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/06-02-01.xsd"
+             id="d1" name="AcmeTech Support Ticket Process">
+  <process id="p1" isExecutable="false">
+    <startEvent id="startevent1">
+      <outgoing>t1</outgoing>
+      <triggeredByEvent>false</triggeredByEvent>
+    </startEvent>
+    <sequenceFlow id="t1" sourceRef="startevent1" targetRef="autoClassify"/>
+    <serviceTask id="autoClassify" name="Automatically Classify Ticket">
+      <incoming>t1</incoming>
+      <outgoing>t2</outgoing>
+    </serviceTask>
+    <sequenceFlow id="t2" sourceRef="autoClassify" targetRef="gw1"/>
+    <exclusiveGateway id="gw1" name="Classification Gateway">
+      <incoming>t2</incoming>
+      <outgoing>t3</outgoing>
+      <outgoing>t4</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="t3" name="Password Reset" sourceRef="gw1" targetRef="provideResetInstructions">
+      <conditionExpression xsi:type="tFormalExpression">ticketType = 'Password Reset'</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="t4" name="Other" sourceRef="gw1" targetRef="initialDiagnosis">
+      <conditionExpression xsi:type="tFormalExpression">ticketType != 'Password Reset'</conditionExpression>
+    </sequenceFlow>
+    <userTask id="initialDiagnosis" name="Initial Diagnosis">
+      <incoming>t4</incoming>
+      <outgoing>t5</outgoing>
+    </userTask>
+    <sequenceFlow id="t5" sourceRef="initialDiagnosis" targetRef="gw2"/>
+    <exclusiveGateway id="gw2" name="Resolution Gateway">
+      <incoming>t5</incoming>
+      <outgoing>t6</outgoing>
+      <outgoing>t7</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="t6" name="Resolve" sourceRef="gw2" targetRef="resolveIssue">
+      <conditionExpression xsi:type="tFormalExpression">resolved = true</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="t7" name="Forward" sourceRef="gw2" targetRef="forwardToSpecialist">
+      <conditionExpression xsi:type="tFormalExpression">resolved = false</conditionExpression>
+    </sequenceFlow>
+    <userTask id="provideResetInstructions" name="Provide Reset Instructions">
+      <incoming>t3</incoming>
+      <outgoing>t8</outgoing>
+    </userTask>
+    <sequenceFlow id="t8" sourceRef="provideResetInstructions" targetRef="resolveIssue"/>
+    <userTask id="forwardToSpecialist" name="Forward to Specialist">
+      <incoming>t7</incoming>
+      <outgoing>t9</outgoing>
+    </userTask>
+    <sequenceFlow id="t9" sourceRef="forwardToSpecialist" targetRef="resolveIssue"/>
+    <userTask id="resolveIssue" name="Resolve Issue">
+      <incoming>t6</incoming>
+      <incoming>t8</incoming>
+      <incoming>t9</incoming>
+      <outgoing>t10</outgoing>
+    </userTask>
+    <sequenceFlow id="t10" sourceRef="resolveIssue" targetRef="confirmWithCustomer"/>
+    <userTask id="confirmWithCustomer" name="Confirm with Customer">
+      <incoming>t10</incoming>
+      <outgoing>t11</outgoing>
+    </userTask>
+    <sequenceFlow id="t11" sourceRef="confirmWithCustomer" targetRef="gw3"/>
+    <exclusiveGateway id="gw3" name="Confirmation Gateway">
+      <incoming>t11</incoming>
+      <outgoing>t12</outgoing>
+      <outgoing>t13</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="t12" name="Confirmed" sourceRef="gw3" targetRef="endevent1">
+      <conditionExpression xsi:type="tFormalExpression">confirmed = true</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="t13" name="Not Confirmed" sourceRef="gw3" targetRef="initialDiagnosis">
+      <conditionExpression xsi:type="tFormalExpression">confirmed = false</conditionExpression>
+    </sequenceFlow>
+    <endEvent id="endevent1">
+      <incoming>t12</incoming>
+    </endEvent>
+  </process>
+</definitions>
+```
