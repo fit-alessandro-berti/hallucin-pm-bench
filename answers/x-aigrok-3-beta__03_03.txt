@@ -1,0 +1,135 @@
+Below is the BPMN 2.0 XML document representing the "Warranty-Replacement v1.3" process as described. The model includes only the explicitly mentioned flow elements and adheres to the specified guidelines for gateways, events, and naming conventions.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+             id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="wrc_WarrantyReplacementProcess" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="wrc_StartEvent" name="Online Warranty Claim Submitted">
+      <outgoing>wrc_Flow_1</outgoing>
+    </startEvent>
+    <!-- Sequence Flow from Start to Validate Claim -->
+    <sequenceFlow id="wrc_Flow_1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim" />
+    <!-- Task: Validate Claim -->
+    <task id="wrc_ValidateClaim" name="Validate the claim">
+      <outgoing>wrc_Flow_2</outgoing>
+    </task>
+    <!-- Sequence Flow to Completeness Gateway -->
+    <sequenceFlow id="wrc_Flow_2" sourceRef="wrc_ValidateClaim" targetRef="wrc_CompletenessGateway" />
+    <!-- Exclusive Gateway for Completeness Check -->
+    <exclusiveGateway id="wrc_CompletenessGateway" name="Claim Complete?">
+      <outgoing>wrc_Flow_3</outgoing>
+      <outgoing>wrc_Flow_4</outgoing>
+    </exclusiveGateway>
+    <!-- Sequence Flow to Request Missing Information (if incomplete) -->
+    <sequenceFlow id="wrc_Flow_3" sourceRef="wrc_CompletenessGateway" targetRef="wrc_RequestInfo">
+      <conditionExpression xsi:type="tFormalExpression">Incomplete</conditionExpression>
+    </sequenceFlow>
+    <!-- Task: Request Missing Information -->
+    <task id="wrc_RequestInfo" name="Request missing information">
+      <outgoing>wrc_Flow_5</outgoing>
+    </task>
+    <!-- Sequence Flow back to Validate Claim (after receiving info) -->
+    <sequenceFlow id="wrc_Flow_5" sourceRef="wrc_RequestInfo" targetRef="wrc_ValidateClaim" />
+    <!-- Sequence Flow to Check Warranty (if complete) -->
+    <sequenceFlow id="wrc_Flow_4" sourceRef="wrc_CompletenessGateway" targetRef="wrc_CheckWarranty">
+      <conditionExpression xsi:type="tFormalExpression">Complete</conditionExpression>
+    </sequenceFlow>
+    <!-- Task: Check Warranty Eligibility -->
+    <task id="wrc_CheckWarranty" name="Check warranty eligibility">
+      <outgoing>wrc_Flow_6</outgoing>
+    </task>
+    <!-- Sequence Flow to Warranty Decision Gateway -->
+    <sequenceFlow id="wrc_Flow_6" sourceRef="wrc_CheckWarranty" targetRef="wrc_WarrantyGateway" />
+    <!-- Exclusive Gateway for Warranty Decision -->
+    <exclusiveGateway id="wrc_WarrantyGateway" name="Within Warranty?">
+      <outgoing>wrc_Flow_7</outgoing>
+      <outgoing>wrc_Flow_8</outgoing>
+    </exclusiveGateway>
+    <!-- Sequence Flow to Rejection Notice (if out of warranty) -->
+    <sequenceFlow id="wrc_Flow_7" sourceRef="wrc_WarrantyGateway" targetRef="wrc_SendRejection">
+      <conditionExpression xsi:type="tFormalExpression">Out of Warranty</conditionExpression>
+    </sequenceFlow>
+    <!-- Task: Send Rejection Notice -->
+    <task id="wrc_SendRejection" name="Send rejection notice">
+      <outgoing>wrc_Flow_9</outgoing>
+    </task>
+    <!-- Sequence Flow to Rejection End Event -->
+    <sequenceFlow id="wrc_Flow_9" sourceRef="wrc_SendRejection" targetRef="wrc_RejectionEnd" />
+    <!-- End Event for Rejection -->
+    <endEvent id="wrc_RejectionEnd" name="Process End (Rejected)">
+    </endEvent>
+    <!-- Sequence Flow to Parallel Split (if within warranty) -->
+    <sequenceFlow id="wrc_Flow_8" sourceRef="wrc_WarrantyGateway" targetRef="wrc_ParallelSplit">
+      <conditionExpression xsi:type="tFormalExpression">Within Warranty</conditionExpression>
+    </sequenceFlow>
+    <!-- Parallel Gateway for Split (Fork) -->
+    <parallelGateway id="wrc_ParallelSplit" name="Parallel Split">
+      <outgoing>wrc_Flow_10</outgoing>
+      <outgoing>wrc_Flow_11</outgoing>
+    </parallelGateway>
+    <!-- Sequence Flow to Create Shipment Order -->
+    <sequenceFlow id="wrc_Flow_10" sourceRef="wrc_ParallelSplit" targetRef="wrc_CreateShipment" />
+    <!-- Task: Create Shipment Order -->
+    <task id="wrc_CreateShipment" name="Create shipment order">
+      <outgoing>wrc_Flow_12</outgoing>
+    </task>
+    <!-- Sequence Flow to Parallel Join from Shipment Order -->
+    <sequenceFlow id="wrc_Flow_12" sourceRef="wrc_CreateShipment" targetRef="wrc_ParallelJoin" />
+    <!-- Sequence Flow to Schedule Courier Pickup -->
+    <sequenceFlow id="wrc_Flow_11" sourceRef="wrc_ParallelSplit" targetRef="wrc_SchedulePickup" />
+    <!-- Task: Schedule Courier Pickup -->
+    <task id="wrc_SchedulePickup" name="Schedule courier pickup">
+      <outgoing>wrc_Flow_13</outgoing>
+    </task>
+    <!-- Sequence Flow to Parallel Join from Courier Pickup -->
+    <sequenceFlow id="wrc_Flow_13" sourceRef="wrc_SchedulePickup" targetRef="wrc_ParallelJoin" />
+    <!-- Parallel Gateway for Join (Merge) -->
+    <parallelGateway id="wrc_ParallelJoin" name="Parallel Join">
+      <outgoing>wrc_Flow_14</outgoing>
+    </parallelGateway>
+    <!-- Sequence Flow to Update Inventory -->
+    <sequenceFlow id="wrc_Flow_14" sourceRef="wrc_ParallelJoin" targetRef="wrc_UpdateInventory" />
+    <!-- Task: Update Inventory Records -->
+    <task id="wrc_UpdateInventory" name="Update inventory records">
+      <outgoing>wrc_Flow_15</outgoing>
+    </task>
+    <!-- Sequence Flow to Close Claim -->
+    <sequenceFlow id="wrc_Flow_15" sourceRef="wrc_UpdateInventory" targetRef="wrc_CloseClaim" />
+    <!-- Task: Close Claim -->
+    <task id="wrc_CloseClaim" name="Close the claim">
+      <outgoing>wrc_Flow_16</outgoing>
+    </task>
+    <!-- Sequence Flow to Success End Event -->
+    <sequenceFlow id="wrc_Flow_16" sourceRef="wrc_CloseClaim" targetRef="wrc_SuccessEnd" />
+    <!-- End Event for Successful Completion -->
+    <endEvent id="wrc_SuccessEnd" name="Process End (Completed)">
+    </endEvent>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="wrc_WarrantyReplacementProcess">
+      <!-- Diagram elements can be added here if visual layout is required -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+```
+
+### Notes on the Model:
+1. **Structure**: The XML follows BPMN 2.0 standards with a single process definition and flow elements as specified. It includes a start event, tasks, gateways (exclusive for decisions, parallel for split/join), and two end events.
+2. **Naming**: All element IDs are prefixed with "wrc_", and task names match the verbatim text from the description (e.g., "Validate the claim", "Create shipment order").
+3. **Flow Logic**:
+   - The process starts with an online warranty claim submission.
+   - Validation loops back via "Request missing information" if the claim is incomplete.
+   - Warranty eligibility check splits into rejection (end) or continuation (parallel tasks) based on the decision.
+   - Parallel activities for "Create shipment order" and "Schedule courier pickup" are modeled with parallel gateways.
+   - Final steps update inventory and close the claim before successful termination.
+4. **Gateways**: Two exclusive gateways handle decisions (completeness and warranty status), and parallel gateways manage the split/join for concurrent tasks.
+5. **End Events**: Exactly two end events are included—one for rejection ("Process End (Rejected)") and one for completion ("Process End (Completed)").
+6. **No Additions**: Only explicitly mentioned elements are modeled; no additional error handling or escalations are included.
+7. **Diagram Layout**: The `<bpmndi:BPMNDiagram>` section is left minimal as the focus is on logical flow, not visual placement. It can be expanded with coordinates if needed for rendering.
+
+This XML can be imported into any BPMN 2.0-compatible tool (e.g., Camunda Modeler, Bizagi) for visualization or execution.

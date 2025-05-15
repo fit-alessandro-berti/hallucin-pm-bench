@@ -48,6 +48,7 @@ if __name__ == "__main__":
                   "anthropic/claude-3.7-sonnet:thinking",
                   "openai/o3-mini-high",
                   "openai/o3-mini",
+                  "openai/o1"
                   "google/gemini-2.5-flash-preview"
                   "google/gemini-2.5-pro-preview",
                   ]:

@@ -18,7 +18,7 @@ def is_open_source(model_name):
 
 
 def is_lrm(model_name):
-    patterns = {"-think", "gemini-2.5"}
+    patterns = {"-think", "gemini-2.5", "thinking", "openaio", "grok-3-mini-beta"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
@@ -113,7 +113,7 @@ def get_agg_results():
 
     results.sort(key=lambda x: (x[score_key], x["LLM"]), reverse=True)
 
-    for i in range(1, 13):
+    for i in range(1, 14):
         cat_name = "C" + str(i).zfill(2)
         j = 0
         while j < len(results):

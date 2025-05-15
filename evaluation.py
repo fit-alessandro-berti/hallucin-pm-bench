@@ -51,6 +51,7 @@ if __name__ == "__main__":
         modified_something = evaluate()
 
         if not modified_something:
-            break
+            print("not modified anything in the last 30 seconds!")
+            #break
 
         time.sleep(30)
