@@ -12,7 +12,7 @@ def format_name(llm):
 
     for p in patterns:
         if llm.startswith(p):
-            return llm[len(p)+1:]
+            return llm[len(p):]
 
     return llm
 
