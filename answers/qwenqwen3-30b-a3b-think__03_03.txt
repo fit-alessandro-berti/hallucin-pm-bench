@@ -1,0 +1,47 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn20:xsd:schema xmlns:bpmn20="http://www.omg.org/BPMN/20140128/MODEL" xmlns:flowable="http://flowable.org/bpmn" targetNamespace="http://www.omg.org/BPMN/20140128/MODEL">
+  <bpmn20:definitions id="WarrantyReplacementProcess" namespace="http://www.omg.org/BPMN/20140128/MODEL">
+    <bpmn20:process id="WarrantyReplacementProcess">
+      <bpmn20:startEvent id="wrc_startEvent" name="Online Warranty Claim" />
+      <bpmn20:serviceTask id="wrc_validateClaim" name="Validate the claim" />
+      <bpmn20:exclusiveGateway id="wrc_validateGateway" name="Is claim complete?" />
+      <bpmn20:serviceTask id="wrc_requestMissingInfo" name="Request missing information" />
+      <bpmn20:exclusiveGateway id="wrc_warrantyGateway" name="Is product within warranty?" />
+      <bpmn20:serviceTask id="wrc_sendRejectionNotice" name="Send rejection notice" />
+      <bpmn20:parallelGateway id="wrc_parallelSplit" name="Parallel Split" />
+      <bpmn20:serviceTask id="wrc_createShipmentOrder" name="Create shipment order" />
+      <bpmn20:serviceTask id="wrc_scheduleCourierPickup" name="Schedule courier pickup" />
+      <bpmn20:parallelGateway id="wrc_parallelJoin" name="Parallel Join" />
+      <bpmn20:serviceTask id="wrc_updateInventory" name="Update inventory records" />
+      <bpmn20:serviceTask id="wrc_closeClaim" name="Close the claim" />
+      <bpmn20:endEvent id="wrc_endEventRejection" name="Rejection Notice Sent" />
+      <bpmn20:endEvent id="wrc_endEventSuccess" name="Claim Closed" />
+
+      <bpmn20:sequenceFlow id="flow_start_to_validate" sourceRef="wrc_startEvent" targetRef="wrc_validateClaim" />
+      <bpmn20:sequenceFlow id="flow_validate_to_gateway" sourceRef="wrc_validateClaim" targetRef="wrc_validateGateway" />
+      <bpmn20:sequenceFlow id="flow_gateway_complete" sourceRef="wrc_validateGateway" targetRef="wrc_warrantyGateway">
+        <bpmn20:conditionExpression xsi:type="bpmn20:tFormalExpression">${claimComplete}</bpmn20:conditionExpression>
+      </bpmn20:sequenceFlow>
+      <bpmn20:sequenceFlow id="flow_gateway_incomplete" sourceRef="wrc_validateGateway" targetRef="wrc_requestMissingInfo">
+        <bpmn20:conditionExpression xsi:type="bpmn20:tFormalExpression">${!claimComplete}</bpmn20:conditionExpression>
+      </bpmn20:sequenceFlow>
+      <bpmn20:sequenceFlow id="flow_request_to_validate" sourceRef="wrc_requestMissingInfo" targetRef="wrc_validateClaim" />
+      <bpmn20:sequenceFlow id="flow_warranty_to_send" sourceRef="wrc_warrantyGateway" targetRef="wrc_sendRejectionNotice">
+        <bpmn20:conditionExpression xsi:type="bpmn20:tFormalExpression">${!withinWarranty}</bpmn20:conditionExpression>
+      </bpmn20:sequenceFlow>
+      <bpmn20:sequenceFlow id="flow_warranty_to_parallel" sourceRef="wrc_warrantyGateway" targetRef="wrc_parallelSplit">
+        <bpmn20:conditionExpression xsi:type="bpmn20:tFormalExpression">${withinWarranty}</bpmn20:conditionExpression>
+      </bpmn20:sequenceFlow>
+      <bpmn20:sequenceFlow id="flow_parallel_split_to_create" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentOrder" />
+      <bpmn20:sequenceFlow id="flow_parallel_split_to_pickup" sourceRef="wrc_parallelSplit" targetRef="wrc_scheduleCourierPickup" />
+      <bpmn20:sequenceFlow id="flow_create_to_join" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoin" />
+      <bpmn20:sequenceFlow id="flow_pickup_to_join" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoin" />
+      <bpmn20:sequenceFlow id="flow_join_to_update" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventory" />
+      <bpmn20:sequenceFlow id="flow_update_to_close" sourceRef="wrc_updateInventory" targetRef="wrc_closeClaim" />
+      <bpmn20:sequenceFlow id="flow_close_to_success" sourceRef="wrc_closeClaim" targetRef="wrc_endEventSuccess" />
+      <bpmn20:sequenceFlow id="flow_send_to_rejection" sourceRef="wrc_sendRejectionNotice" targetRef="wrc_endEventRejection" />
+    </bpmn20:process>
+  </bpmn20:definitions>
+</bpmn20:xsd:schema>
+```

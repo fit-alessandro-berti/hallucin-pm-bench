@@ -144,9 +144,51 @@ def get_agg_results():
     return results, dictio
 
 
+def measure_inter_category_correlation(results):
+    from scipy.stats import pearsonr
+
+    vectors = []
+    for cat0 in range(1, 14):
+        cat = "C"+str(cat0).zfill(2)
+        vectors.append([])
+
+        for row in results:
+            vectors[-1].append(float(row[cat].replace("**", "")))
+
+    table = []
+    mapping = {}
+    mapping["C01"] = "C01 Domain-override / Precedence checks"
+    mapping["C02"] = "C02 Event-log fact-extraction"
+    mapping["C03"] = "C03 Text to Model reconstruction"
+    mapping["C04"] = "C04 Compliance / Conformance reasoning"
+    mapping["C05"] = "C05 Counterfactual edits"
+    mapping["C06"] = "C06 Multi-process memory interference"
+    mapping["C07"] = "C07 Change-log diffing"
+    mapping["C08"] = "C08 Temporal / concurrency reasoning"
+    mapping["C09"] = "C09 Unknown-should-remain-unknown"
+    mapping["C10"] = "C10 Domain-synonym enforcement"
+    mapping["C11"] = "C11 Performance analytics commentary"
+    mapping["C12"] = "C12 Misinformation injection"
+    mapping["C13"] = "C13 Edge-case / low-support prompts"
+
+    for cat0 in range(1, 14):
+        table.append({"Category": mapping["C"+str(cat0).zfill(2)]})
+        for cat1 in range(1, 14):
+            table[-1]["C"+str(cat1).zfill(2)] = pearsonr(vectors[cat0-1], vectors[cat1-1]).statistic
+
+    table = pd.DataFrame(table)
+    table_md = table.to_markdown(index=False)
+
+    F = open("stats/inter_correlation.md", "w")
+    F.write("# Inter-Features Correlation\n\n")
+    F.write(table_md)
+    F.close()
+
 
 if __name__ == "__main__":
     results, dictio = get_agg_results()
+    measure_inter_category_correlation(results)
+
     results = pd.DataFrame(results)
 
     res = results.to_markdown(index=False)

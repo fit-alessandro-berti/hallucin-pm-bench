@@ -1,0 +1,198 @@
+We are given a Petri net with the following **places** and **transitions**:
+
+---
+
+### Places:
+- `p0`, `pa`, `pb`, `pc`, `pd`, `pe`, `pf`
+
+---
+
+### Transitions:
+
+- **T1**: input: `p0` → output: `pa`, `pb`  
+  (Parallel split from p0 to pa and pb)
+
+- **T2**: input: `pa` → output: `pc`  
+  (Normal path)
+
+- **T2b**: input: `pa` → output: `pd`  
+  (Shortcut path)
+
+- **T3**: input: `pc` → output: `pd`  
+  (Continuation of normal path to pd)
+
+- **T4**: input: `pb` → output: `pe`  
+  (Path from pb to pe)
+
+- **T5**: input: `pd`, `pe` → output: `pf`  
+  (Synchronizing join)
+
+- **T6**: input: `pf` → output: `pc`  
+  (Feedback loop)
+
+---
+
+### Initial Marking:
+- `p0 = 1`, all other places = 0
+
+---
+
+## Question:
+
+> Is it **possible** for transition **T5** to fire *before* transition **T3** in any reachable marking?
+
+---
+
+## Let's analyze this step by step.
+
+We want to see if a **firing sequence** exists where:
+
+- **T5** fires **before** **T3**
+
+---
+
+### Step 1: Determine the **initial state**
+
+- Only `p0 = 1`  
+- All others = 0
+
+---
+
+### Step 2: Determine the **first possible transition**
+
+Only **T1** has a token in its input place (`p0`):
+
+- T1 fires → `p0` becomes 0, and `pa`, `pb` get 1 token each.
+
+So we now have:
+
+- `pa = 1`, `pb = 1`
+
+---
+
+### Step 3: Possible next transitions
+
+- T2 (input `pa`)  
+- T2b (input `pa`)  
+- T4 (input `pb`)
+
+Let's consider **T2** first:
+
+- T2 fires → `pa = 0`, `pc = 1`
+
+Now we have:
+
+- `pb = 1`, `pc = 1`
+
+---
+
+### Step 4: Possible next transitions
+
+- T3 (input `pc`)  
+- T4 (input `pb`)
+
+Let’s fire **T4**:
+
+- T4 fires → `pb = 0`, `pe = 1`
+
+Now we have:
+
+- `pc = 1`, `pe = 1`
+
+---
+
+### Step 5: Now can T5 fire?
+
+- T5 requires **pd** and **pe**
+
+- `pe = 1` → good  
+- But `pd = 0` → not good
+
+So T5 **cannot** fire yet.
+
+So next, we need to get a token into `pd`.
+
+We could:
+
+- Fire T2 (already done)
+- Fire T2b (input pa → output pd): but `pa = 0` now
+
+So **T2b is not enabled**.
+
+T3: input pc → output pd
+
+Yes! `pc = 1` → T3 is enabled.
+
+So now we fire **T3**:
+
+- T3 fires → `pc = 0`, `pd = 1`
+
+Now all required inputs for **T5** are present:
+
+- `pd = 1`  
+- `pe = 1`
+
+So **T5 can fire**.
+
+Now we have the following sequence:
+
+- T1 → T2 → T4 → T3 → T5
+
+But we are asked whether **T5 can fire before T3**.
+
+Can we make a sequence where **T5 fires before T3**?
+
+Let's try to find such a sequence.
+
+---
+
+### Try this alternative:
+
+After T1 fires:
+
+- `pa = 1`, `pb = 1`
+
+Now, instead of firing T2, fire **T2b**:
+
+- T2b fires → `pa = 0`, `pd = 1`
+
+Now we have:
+
+- `pb = 1`, `pd = 1`
+
+Now fire **T4**:
+
+- T4 fires → `pb = 0`, `pe = 1`
+
+Now we have:
+
+- `pd = 1`, `pe = 1` → **T5 can fire**
+
+So we have this sequence:
+
+- **T1 → T2b → T4 → T5**
+
+Now, **T5 fires before T3**.
+
+In this marking, **T3 is not yet fired**, and **T5 is fired**.
+
+✅ **Yes**, it **is possible** for **T5 to fire before T3**.
+
+---
+
+## ✅ Shortest firing sequence where T5 fires before T3:
+
+```
+T1 → T2b → T4 → T5
+```
+
+This sequence is minimal and valid.
+
+---
+
+## ✅ Final Answer:
+
+**Yes**, it is possible for **T5** to fire before **T3**.
+
+**Shortest firing sequence**:  
+`T1 → T2b → T4 → T5`
