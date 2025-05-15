@@ -4,7 +4,7 @@ The higher the score, the better the model.
 Maximum attainable score: **39 points**. Maximum attainable score per category: **3 points**.
 The average is computed over **/10**.
 
-| LLM                   | LRM?               | OS?                |   AVG | C01     | C02     | C03     | C04     | C05     | C06     | C07     | C08     | C09     | C10     | C11     | C12     |   C13 |
+| LLM                   | LRM                | OS                 |   AVG | C01     | C02     | C03     | C04     | C05     | C06     | C07     | C08     | C09     | C10     | C11     | C12     |   C13 |
 |:----------------------|:-------------------|:-------------------|------:|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|------:|
 | openaigpt-4.1         | :x:                | :x:                |  7.56 | **2.2** | 2.6     | **1.8** | 2.3     | **2.2** | 2.8     | 2.4     | 1.6     | 2.8     | 1.2     | **2.3** | **2.8** |  26.2 |
 | qwenqwen3-14b-think   | :white_check_mark: | :white_check_mark: |  7.42 | 2.1     | 2.9     | 1.5     | **2.4** | 1.1     | 2.7     | 2.4     | 2.2     | 2.7     | 1.5     | 2.2     | 2.5     |  27.5 |

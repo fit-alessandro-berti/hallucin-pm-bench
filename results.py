@@ -97,7 +97,7 @@ def get_agg_results():
     results = []
     for llm in dictio:
         summ = sum(dictio[llm].values())
-        row = {"LLM": llm, "LRM?": is_lrm(llm), "OS?": is_open_source(llm), avg_key: 0.0, score_key: summ}
+        row = {"LLM": llm, "LRM": is_lrm(llm), "OS": is_open_source(llm), avg_key: 0.0, score_key: summ}
 
         for cat in categories:
             if cat not in max_per_cat:
