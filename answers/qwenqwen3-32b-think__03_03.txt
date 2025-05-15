@@ -1,0 +1,86 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="BPMN 2.0 Modeler" exporterVersion="1.0">
+  <bpmn:process id="wrc_Process" isExecutable="false">
+    <bpmn:startEvent id="wrc_StartEvent" name="Customer submits online warranty claim">
+      <bpmn:outgoing>wrc_Flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="wrc_Flow1" sourceRef="wrc_StartEvent" targetRef="wrc_Task1" />
+    <bpmn:task id="wrc_Task1" name="Validate the claim">
+      <bpmn:outgoing>wrc_Flow2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="wrc_Gateway1" name="Is claim complete?">
+      <bpmn:incoming>wrc_Flow2</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow3</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="wrc_Flow2" sourceRef="wrc_Task1" targetRef="wrc_Gateway1" />
+    <bpmn:sequenceFlow id="wrc_Flow3" sourceRef="wrc_Gateway1" targetRef="wrc_Task2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="http://www.w3.org/1999/XPath" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">claimComplete = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="wrc_Task2" name="Request missing information">
+      <bpmn:outgoing>wrc_Flow5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="wrc_Flow5" sourceRef="wrc_Task2" targetRef="wrc_Task1" />
+    <bpmn:sequenceFlow id="wrc_Flow4" sourceRef="wrc_Gateway1" targetRef="wrc_Task3">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="http://www.w3.org/1999/XPath" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">claimComplete = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="wrc_Task3" name="Check warranty eligibility">
+      <bpmn:outgoing>wrc_Flow6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="wrc_Gateway2" name="Is product within warranty?">
+      <bpmn:incoming>wrc_Flow6</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow7</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="wrc_Flow6" sourceRef="wrc_Task3" targetRef="wrc_Gateway2" />
+    <bpmn:sequenceFlow id="wrc_Flow7" sourceRef="wrc_Gateway2" targetRef="wrc_Gateway3">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="http://www.w3.org/1999/XPath" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">withinWarranty = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:parallelGateway id="wrc_Gateway3" name="Parallel split">
+      <bpmn:incoming>wrc_Flow7</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow9</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow10</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="wrc_Task4" name="Create shipment order for the replacement unit">
+      <bpmn:incoming>wrc_Flow9</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow11</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="wrc_Task5" name="Schedule courier pickup of the faulty product">
+      <bpmn:incoming>wrc_Flow10</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow12</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="wrc_Flow9" sourceRef="wrc_Gateway3" targetRef="wrc_Task4" />
+    <bpmn:sequenceFlow id="wrc_Flow10" sourceRef="wrc_Gateway3" targetRef="wrc_Task5" />
+    <bpmn:sequenceFlow id="wrc_Flow11" sourceRef="wrc_Task4" targetRef="wrc_Gateway4" />
+    <bpmn:sequenceFlow id="wrc_Flow12" sourceRef="wrc_Task5" targetRef="wrc_Gateway4" />
+    <bpmn:parallelGateway id="wrc_Gateway4" name="Parallel join">
+      <bpmn:incoming>wrc_Flow11</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow12</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow13</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="wrc_Flow13" sourceRef="wrc_Gateway4" targetRef="wrc_Task6" />
+    <bpmn:task id="wrc_Task6" name="Update inventory records">
+      <bpmn:outgoing>wrc_Flow14</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="wrc_Flow14" sourceRef="wrc_Task6" targetRef="wrc_Task7" />
+    <bpmn:task id="wrc_Task7" name="Close the claim">
+      <bpmn:outgoing>wrc_Flow15</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="wrc_Flow15" sourceRef="wrc_Task7" targetRef="wrc_EndEvent2" />
+    <bpmn:endEvent id="wrc_EndEvent2" name="Process completed">
+      <bpmn:incoming>wrc_Flow15</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="wrc_Flow8" sourceRef="wrc_Gateway2" targetRef="wrc_Task8">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="http://www.w3.org/1999/XPath" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">withinWarranty = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="wrc_Task8" name="Send rejection notice">
+      <bpmn:outgoing>wrc_Flow16</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="wrc_Flow16" sourceRef="wrc_Task8" targetRef="wrc_EndEvent1" />
+    <bpmn:endEvent id="wrc_EndEvent1" name="Process rejected">
+      <bpmn:incoming>wrc_Flow16</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>
+```
