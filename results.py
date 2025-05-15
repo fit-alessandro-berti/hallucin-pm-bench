@@ -195,14 +195,23 @@ def measure_inter_category_correlation(results):
     F.close()
 
 
-def measure_intra_variation(dictio):
+def get_vectors(dictio, get_std=True):
     vectors = [[] for i in range(1, 14)]
     for llm, scores in dictio.items():
         for i in range(1, 14):
             pref = str(i).zfill(2)
             catscor = [y for x, y in scores.items() if x.startswith(pref)]
             if len(catscor) == 3:
-                vectors[i-1].append(np.std(catscor))
+                if get_std:
+                    vectors[i-1].append(np.std(catscor))
+                else:
+                    vectors[i - 1].append(np.mean(catscor))
+    return vectors
+
+
+def measure_intra_variation(dictio):
+    vectors = get_vectors(dictio)
+
     intra_variation = [np.median(vectors[i]) for i in range(len(vectors))]
     table = []
 
@@ -236,11 +245,29 @@ def get_best_linear_fit(prompts_size, dictio):
     F.close()
 
 
+def compute_avg_std_per_category(dictio):
+    vectors = get_vectors(dictio, get_std=False)
+
+    table = []
+    for i in range(1, 14):
+        cat = "C"+str(i).zfill(2)
+        table.append({"Category": MAPPING[cat], "Avg": np.average([y*0.3 for y in vectors[i-1]]), "Std": np.std([y*0.3 for y in vectors[i-1]])})
+
+    table = pd.DataFrame(table)
+    table_md = table.to_markdown(index=False)
+
+    F = open("stats/avg_std_category.md", "w")
+    F.write("# Average/Std per Category\n\n")
+    F.write(table_md)
+    F.close()
+
+
 def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
     results, dictio = get_agg_results(evaluation_folder)
     if write_extra_stats:
         measure_inter_category_correlation(results)
         measure_intra_variation(dictio)
+        compute_avg_std_per_category(dictio)
         prompts_size = get_prompts_size()
         get_best_linear_fit(prompts_size, dictio)
 
