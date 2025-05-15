@@ -1,0 +1,150 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.19.0">
+  <bpmn:process id="Warranty-Replacement_v1.3" isExecutable="true">
+    <bpmn:startEvent id="wrc_StartEvent_1" name="Online Warranty Claim Submitted" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_1" sourceRef="wrc_StartEvent_1" targetRef="wrc_ValidateClaim" />
+    <bpmn:userTask id="wrc_ValidateClaim" name="Validate the claim" />
+    <bpmn:exclusiveGateway id="wrc_ExclusiveGateway_ClaimComplete" name="Claim Complete?" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_2" sourceRef="wrc_ValidateClaim" targetRef="wrc_ExclusiveGateway_ClaimComplete" />
+    <bpmn:userTask id="wrc_RequestMissingInformation" name="Request missing information" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_3" sourceRef="wrc_ExclusiveGateway_ClaimComplete" targetRef="wrc_RequestMissingInformation">
+      <bpmn:conditionExpression id="wrc_ConditionExpression_Incomplete" xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <![CDATA[Claim Incomplete]]>
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_4" sourceRef="wrc_RequestMissingInformation" targetRef="wrc_ValidateClaim" />
+    <bpmn:userTask id="wrc_CheckWarrantyEligibility" name="Check warranty eligibility" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_5" sourceRef="wrc_ExclusiveGateway_ClaimComplete" targetRef="wrc_CheckWarrantyEligibility">
+      <bpmn:conditionExpression id="wrc_ConditionExpression_Complete" xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <![CDATA[Claim Complete]]>
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="wrc_ExclusiveGateway_WarrantyEligible" name="Within Warranty?" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_6" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_ExclusiveGateway_WarrantyEligible" />
+    <bpmn:userTask id="wrc_SendRejectionNotice" name="Send rejection notice" />
+    <bpmn:endEvent id="wrc_EndEvent_Rejection" name="Process Ended - Rejection" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_7" sourceRef="wrc_ExclusiveGateway_WarrantyEligible" targetRef="wrc_SendRejectionNotice">
+      <bpmn:conditionExpression id="wrc_ConditionExpression_OutOfWarranty" xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <![CDATA[Out of Warranty]]>
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_8" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndEvent_Rejection" />
+    <bpmn:parallelGateway id="wrc_ParallelGateway_Fork" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_9" sourceRef="wrc_ExclusiveGateway_WarrantyEligible" targetRef="wrc_ParallelGateway_Fork">
+      <bpmn:conditionExpression id="wrc_ConditionExpression_InWarranty" xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <![CDATA[Within Warranty]]>
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:userTask id="wrc_CreateShipmentOrder" name="Create shipment order" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_10" sourceRef="wrc_ParallelGateway_Fork" targetRef="wrc_CreateShipmentOrder" />
+    <bpmn:userTask id="wrc_ScheduleCourierPickup" name="Schedule courier pickup" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_11" sourceRef="wrc_ParallelGateway_Fork" targetRef="wrc_ScheduleCourierPickup" />
+    <bpmn:parallelGateway id="wrc_ParallelGateway_Join" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_12" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_ParallelGateway_Join" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_13" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_ParallelGateway_Join" />
+    <bpmn:userTask id="wrc_UpdateInventoryRecords" name="Update inventory records" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_14" sourceRef="wrc_ParallelGateway_Join" targetRef="wrc_UpdateInventoryRecords" />
+    <bpmn:userTask id="wrc_CloseClaim" name="Close the claim" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_15" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim" />
+    <bpmn:endEvent id="wrc_EndEvent_Success" name="Process Ended - Successful" />
+    <bpmn:sequenceFlow id="wrc_SequenceFlow_16" sourceRef="wrc_CloseClaim" targetRef="wrc_EndEvent_Success" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Warranty-Replacement_v1.3">
+      <bpmndi:BPMNShape id="BPMNShape_1" bpmnElement="wrc_StartEvent_1">
+        <dc:Bounds x="150" y="81" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="114" y="124" width="109" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_10" bpmnElement="wrc_ValidateClaim">
+        <dc:Bounds x="240" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_2" bpmnElement="wrc_ExclusiveGateway_ClaimComplete" isMarkerVisible="true">
+        <dc:Bounds x="395" y="88" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="374" y="64" width="93" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_3" bpmnElement="wrc_RequestMissingInformation">
+        <dc:Bounds x="240" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_4" bpmnElement="wrc_CheckWarrantyEligibility">
+        <dc:Bounds x="490" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_5" bpmnElement="wrc_ExclusiveGateway_WarrantyEligible" isMarkerVisible="true">
+        <dc:Bounds x="645" y="85" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="626" y="59" width="88" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_6" bpmnElement="wrc_SendRejectionNotice">
+        <dc:Bounds x="740" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_7" bpmnElement="wrc_EndEvent_Rejection">
+        <dc:Bounds x="892" y="81" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="853" y="124" width="115" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_8" bpmnElement="wrc_ParallelGateway_Fork">
+        <dc:Bounds x="740" y="180" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_9" bpmnElement="wrc_CreateShipmentOrder">
+        <dc:Bounds x="850" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_11" bpmnElement="wrc_ScheduleCourierPickup">
+        <dc:Bounds x="850" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_12" bpmnElement="wrc_ParallelGateway_Join">
+        <dc:Bounds x="1000" y="210" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_13" bpmnElement="wrc_UpdateInventoryRecords">
+        <dc:Bounds x="1110" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_14" bpmnElement="wrc_CloseClaim">
+        <dc:Bounds x="1110" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_15" bpmnElement="wrc_EndEvent_Success">
+        <dc:Bounds x="1262" y="301" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1223" y="344" width="114" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_1" bpmnElement="wrc_SequenceFlow_1" />
+      <bpmndi:BPMNEdge id="BPMNEdge_2" bpmnElement="wrc_SequenceFlow_2" />
+      <bpmndi:BPMNEdge id="BPMNEdge_3" bpmnElement="wrc_SequenceFlow_3">
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="402" y="140" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_4" bpmnElement="wrc_SequenceFlow_4" />
+      <bpmndi:BPMNEdge id="BPMNEdge_5" bpmnElement="wrc_SequenceFlow_5">
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="454" y="93" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_6" bpmnElement="wrc_SequenceFlow_6" />
+      <bpmndi:BPMNEdge id="BPMNEdge_7" bpmnElement="wrc_SequenceFlow_7">
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="706" y="103" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_8" bpmnElement="wrc_SequenceFlow_8" />
+      <bpmndi:BPMNEdge id="BPMNEdge_9" bpmnElement="wrc_SequenceFlow_9">
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="696" y="197" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_10" bpmnElement="wrc_SequenceFlow_10" />
+      <bpmndi:BPMNEdge id="BPMNEdge_11" bpmnElement="wrc_SequenceFlow_11" />
+      <bpmndi:BPMNEdge id="BPMNEdge_12" bpmnElement="wrc_SequenceFlow_12" />
+      <bpmndi:BPMNEdge id="BPMNEdge_13" bpmnElement="wrc_SequenceFlow_13" />
+      <bpmndi:BPMNEdge id="BPMNEdge_14" bpmnElement="wrc_SequenceFlow_14" />
+      <bpmndi:BPMNEdge id="BPMNEdge_15" bpmnElement="wrc_SequenceFlow_15" />
+      <bpmndi:BPMNEdge id="BPMNEdge_16" bpmnElement="wrc_SequenceFlow_16" />
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+```

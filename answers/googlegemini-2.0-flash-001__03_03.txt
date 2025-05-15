@@ -1,0 +1,52 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://bpmn.io/schema/bpmn"
+             id="Definitions_1">
+   <process id="WarrantyReplacementProcess" isExecutable="true">
+      <startEvent id="wrc_start" name="Online warranty claim"/>
+      <task id="wrc_validateClaim" name="validate the claim"/>
+      <exclusiveGateway id="wrc_claimCompleteGateway" name="Claim Complete?" default="wrc_flow3"/>
+      <sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validateClaim"/>
+      <sequenceFlow id="wrc_flow2" sourceRef="wrc_validateClaim" targetRef="wrc_claimCompleteGateway"/>
+      <sequenceFlow id="wrc_flow3" sourceRef="wrc_claimCompleteGateway" targetRef="wrc_checkWarranty">
+        <conditionExpression xsi:type="tFormalExpression">claimComplete == true</conditionExpression>
+      </sequenceFlow>
+      <task id="wrc_requestInfo" name="request missing information"/>
+      <sequenceFlow id="wrc_flow4" sourceRef="wrc_claimCompleteGateway" targetRef="wrc_requestInfo">
+        <conditionExpression xsi:type="tFormalExpression">claimComplete == false</conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="wrc_flow5" sourceRef="wrc_requestInfo" targetRef="wrc_validateClaim"/>
+      <task id="wrc_checkWarranty" name="check warranty eligibility"/>
+      <exclusiveGateway id="wrc_warrantyGateway" name="Within Warranty?" default="wrc_flow7"/>
+      <sequenceFlow id="wrc_flow6" sourceRef="wrc_checkWarranty" targetRef="wrc_warrantyGateway"/>
+      <sequenceFlow id="wrc_flow7" sourceRef="wrc_warrantyGateway" targetRef="wrc_parallelGatewaySplit">
+        <conditionExpression xsi:type="tFormalExpression">withinWarranty == true</conditionExpression>
+      </sequenceFlow>
+      <task id="wrc_sendRejection" name="send rejection notice"/>
+      <endEvent id="wrc_endRejected" name="Claim Rejected"/>
+      <sequenceFlow id="wrc_flow8" sourceRef="wrc_warrantyGateway" targetRef="wrc_sendRejection">
+        <conditionExpression xsi:type="tFormalExpression">withinWarranty == false</conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="wrc_flow9" sourceRef="wrc_sendRejection" targetRef="wrc_endRejected"/>
+      <parallelGateway id="wrc_parallelGatewaySplit" name="Parallel Split"/>
+      <task id="wrc_createShipment" name="Create shipment order"/>
+      <task id="wrc_schedulePickup" name="Schedule courier pickup"/>
+      <sequenceFlow id="wrc_flow10" sourceRef="wrc_parallelGatewaySplit" targetRef="wrc_createShipment"/>
+      <sequenceFlow id="wrc_flow11" sourceRef="wrc_parallelGatewaySplit" targetRef="wrc_schedulePickup"/>
+      <parallelGateway id="wrc_parallelGatewayJoin" name="Parallel Join"/>
+      <sequenceFlow id="wrc_flow12" sourceRef="wrc_createShipment" targetRef="wrc_parallelGatewayJoin"/>
+      <sequenceFlow id="wrc_flow13" sourceRef="wrc_schedulePickup" targetRef="wrc_parallelGatewayJoin"/>
+      <task id="wrc_updateInventory" name="update inventory records"/>
+      <task id="wrc_closeClaim" name="close the claim"/>
+      <endEvent id="wrc_endCompleted" name="Claim Completed"/>
+      <sequenceFlow id="wrc_flow14" sourceRef="wrc_parallelGatewayJoin" targetRef="wrc_updateInventory"/>
+      <sequenceFlow id="wrc_flow15" sourceRef="wrc_updateInventory" targetRef="wrc_closeClaim"/>
+      <sequenceFlow id="wrc_flow16" sourceRef="wrc_closeClaim" targetRef="wrc_endCompleted"/>
+   </process>
+</definitions>
+```

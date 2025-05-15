@@ -1,0 +1,282 @@
+```json
+{
+  "bpmn:definitions": {
+    "xmlns:bpmn": "http://www.omg.org/spec/BPMN/2.0",
+    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "targetNamespace": "http://example.org/bpmn",
+    "bpmn:process": {
+      "id": "CustomerSupportTicketProcess",
+      "bpmn:startEvent": {
+        "id": "StartEvent_1",
+        "bpmn:outgoing": "SequenceFlow_1"
+      },
+      "bpmn:task": {
+        "id": "CreateTicket",
+        "name": "Create Ticket",
+        "bpmn:incoming": "SequenceFlow_1",
+        "bpmn:outgoing": "SequenceFlow_2"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_1",
+        "bpmn:sourceRef": "StartEvent_1",
+        "bpmn:targetRef": "CreateTicket"
+      },
+      "bpmn:task": {
+        "id": "InitialClassification",
+        "name": "Initial Classification",
+        "bpmn:incoming": "SequenceFlow_2",
+        "bpmn:outgoing": "SequenceFlow_3"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_2",
+        "bpmn:sourceRef": "CreateTicket",
+        "bpmn:targetRef": "InitialClassification"
+      },
+      "bpmn:exclusiveGateway": {
+        "id": "ExclusiveGateway_1",
+        "bpmn:incoming": "SequenceFlow_3",
+        "bpmn:outgoing": [
+          "SequenceFlow_4",
+          "SequenceFlow_5"
+        ]
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_3",
+        "bpmn:sourceRef": "InitialClassification",
+        "bpmn:targetRef": "ExclusiveGateway_1"
+      },
+      "bpmn:task": {
+        "id": "RootCauseAnalysis",
+        "name": "Root Cause Analysis",
+        "bpmn:incoming": "SequenceFlow_5",
+        "bpmn:outgoing": "SequenceFlow_6"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_5",
+        "bpmn:sourceRef": "ExclusiveGateway_1",
+        "bpmn:targetRef": "RootCauseAnalysis",
+        "bpmn:conditionExpression": {
+          "xsi:type": "bpmn:tFormalExpression",
+          "bpmn:content": "${ticketType == 'Complex'}"
+        }
+      },
+      "bpmn:task": {
+        "id": "ProvideResolution",
+        "name": "Provide Resolution",
+        "bpmn:incoming": [
+          "SequenceFlow_4",
+          "SequenceFlow_6"
+        ],
+        "bpmn:outgoing": "SequenceFlow_7"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_4",
+        "bpmn:sourceRef": "ExclusiveGateway_1",
+        "bpmn:targetRef": "ProvideResolution",
+        "bpmn:conditionExpression": {
+          "xsi:type": "bpmn:tFormalExpression",
+          "bpmn:content": "${ticketType == 'Simple'}"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_6",
+        "bpmn:sourceRef": "RootCauseAnalysis",
+        "bpmn:targetRef": "ProvideResolution"
+      },
+      "bpmn:parallelGateway": {
+        "id": "ParallelGateway_1",
+        "bpmn:incoming": "SequenceFlow_7",
+        "bpmn:outgoing": [
+          "SequenceFlow_8",
+          "SequenceFlow_9"
+        ]
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_7",
+        "bpmn:sourceRef": "ProvideResolution",
+        "bpmn:targetRef": "ParallelGateway_1"
+      },
+      "bpmn:task": {
+        "id": "SendResponseToCustomer",
+        "name": "Send Response to Customer",
+        "bpmn:incoming": "SequenceFlow_8",
+        "bpmn:outgoing": "SequenceFlow_10"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_8",
+        "bpmn:sourceRef": "ParallelGateway_1",
+        "bpmn:targetRef": "SendResponseToCustomer"
+      },
+      "bpmn:task": {
+        "id": "LogSolutionInKnowledgeBase",
+        "name": "Log Solution in Knowledge Base",
+        "bpmn:incoming": "SequenceFlow_9",
+        "bpmn:outgoing": "SequenceFlow_11"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_9",
+        "bpmn:sourceRef": "ParallelGateway_1",
+        "bpmn:targetRef": "LogSolutionInKnowledgeBase"
+      },
+      "bpmn:intermediateCatchEvent": {
+        "id": "TimerEvent_1",
+        "name": "24 hours",
+        "bpmn:incoming": "SequenceFlow_10",
+        "bpmn:outgoing": "SequenceFlow_12",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tTimerEventDefinition",
+          "bpmn:timeDuration": "PT24H"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_10",
+        "bpmn:sourceRef": "SendResponseToCustomer",
+        "bpmn:targetRef": "TimerEvent_1"
+      },
+      "bpmn:intermediateCatchEvent": {
+        "id": "MessageEvent_1",
+        "name": "Customer Reply",
+        "bpmn:incoming": "SequenceFlow_10",
+        "bpmn:outgoing": "SequenceFlow_13",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tMessageEventDefinition"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_11",
+        "bpmn:sourceRef": "LogSolutionInKnowledgeBase",
+        "bpmn:targetRef": "ParallelGateway_2"
+      },
+      "bpmn:parallelGateway": {
+        "id": "ParallelGateway_2",
+        "bpmn:incoming": [
+          "SequenceFlow_11",
+          "SequenceFlow_12",
+          "SequenceFlow_13"
+        ],
+        "bpmn:outgoing": "SequenceFlow_14"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_12",
+        "bpmn:sourceRef": "TimerEvent_1",
+        "bpmn:targetRef": "ParallelGateway_2"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_13",
+        "bpmn:sourceRef": "MessageEvent_1",
+        "bpmn:targetRef": "ParallelGateway_2"
+      },
+      "bpmn:task": {
+        "id": "SendReminder",
+        "name": "Send Reminder",
+        "bpmn:outgoing": "SequenceFlow_18"
+      },
+      "bpmn:endEvent": {
+        "id": "EndEvent_1",
+        "bpmn:incoming": "SequenceFlow_15"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_15",
+        "bpmn:sourceRef": "ExclusiveGateway_2",
+        "bpmn:targetRef": "EndEvent_1"
+      },
+      "bpmn:eventBasedGateway": {
+        "id": "EventBasedGateway_1",
+        "bpmn:incoming": "SequenceFlow_14",
+        "bpmn:outgoing": [
+          "SequenceFlow_16",
+          "SequenceFlow_17"
+        ]
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_14",
+        "bpmn:sourceRef": "ParallelGateway_2",
+        "bpmn:targetRef": "EventBasedGateway_1"
+      },
+      "bpmn:intermediateCatchEvent": {
+        "id": "MessageEvent2",
+        "name": "CustomerReply",
+        "bpmn:incoming": "SequenceFlow_16",
+        "bpmn:outgoing": "SequenceFlow_19",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tMessageEventDefinition"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_16",
+        "bpmn:sourceRef": "EventBasedGateway_1",
+        "bpmn:targetRef": "MessageEvent2"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_17",
+        "bpmn:sourceRef": "EventBasedGateway_1",
+        "bpmn:targetRef": "TimerEvent2"
+      },
+      "bpmn:task": {
+        "id": "CloseTicket",
+        "name": "Close Ticket",
+        "bpmn:incoming": [
+          "SequenceFlow_19",
+          "SequenceFlow_18"
+        ],
+        "bpmn:outgoing": "SequenceFlow_20"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_19",
+        "bpmn:sourceRef": "MessageEvent2",
+        "bpmn:targetRef": "CloseTicket"
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_18",
+        "bpmn:sourceRef": "TimerEvent2",
+        "bpmn:targetRef": "CloseTicket"
+      },
+      "bpmn:timerEventDefinition": {
+        "id": "TimerEventDefinition_1",
+        "bpmn:timeDuration": "PT24H"
+      },
+      "bpmn:intermediateCatchEvent": {
+        "id": "TimerEvent2",
+        "name": "Timer",
+        "bpmn:incoming": "SequenceFlow_17",
+        "bpmn:outgoing": "SequenceFlow_18",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tTimerEventDefinition",
+          "bpmn:timeDuration": "PT24H"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_20",
+        "bpmn:sourceRef": "CloseTicket",
+        "bpmn:targetRef": "EndEvent_2"
+      },
+      "bpmn:endEvent": {
+        "id": "EndEvent_2",
+        "bpmn:incoming": "SequenceFlow_20"
+      },
+      "bpmn:boundaryEvent": {
+        "id": "BoundaryEvent_1",
+        "bpmn:attachedToRef": "SendResponseToCustomer",
+        "bpmn:cancelActivity": true,
+        "bpmn:outgoing": "SequenceFlow_21",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tMessageEventDefinition"
+        }
+      },
+      "bpmn:sequenceFlow": {
+        "id": "SequenceFlow_21",
+        "bpmn:sourceRef": "BoundaryEvent_1",
+        "bpmn:targetRef": "TerminateEndEvent_1"
+      },
+      "bpmn:endEvent": {
+        "id": "TerminateEndEvent_1",
+        "name": "Cancel Ticket",
+        "bpmn:incoming": "SequenceFlow_21",
+        "bpmn:eventDefinition": {
+          "xsi:type": "bpmn:tTerminateEventDefinition"
+        }
+      }
+    }
+  }
+}
+```
