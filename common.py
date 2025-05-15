@@ -44,6 +44,9 @@ class Shared:
                   ("qwen/qwen3-235b-a22b-nothink", {"base_model": "qwen/qwen3-235b-a22b", "add_prompt": " /no_think"}),
                   ]
 
+    SELECTED_FOR_SELF_EVALUATION = ["mistralai/ministral-3b",
+                                    "mistral/ministral-8b"]
+
 
 def get_response(prompt, model_name, parameters=None):
     if parameters is None:
