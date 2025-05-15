@@ -1,0 +1,233 @@
+```json
+{
+  "id": "customer_support_ticket_process",
+  "name": "Customer Support Ticket Process",
+  "elements": [
+    {
+      "id": "start_event",
+      "name": "Support Email Received",
+      "type": "bpmn:StartEvent"
+    },
+    {
+      "id": "task_1",
+      "name": "Parse Email and Create Ticket",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "task_2",
+      "name": "Initial Classification",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "gateway_1",
+      "name": "Ticket Type?",
+      "type": "bpmn:ExclusiveGateway"
+    },
+    {
+      "id": "task_3",
+      "name": "Root Cause Analysis",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "task_4",
+      "name": "Provide Resolution",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "parallel_gateway_1",
+      "type": "bpmn:ParallelGateway"
+    },
+    {
+      "id": "task_5",
+      "name": "Send Response to Customer",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "task_6",
+      "name": "Log Solution in Knowledge Base",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "parallel_gateway_2",
+      "type": "bpmn:ParallelGateway"
+    },
+    {
+      "id": "event_gateway",
+      "type": "bpmn:EventBasedGateway"
+    },
+    {
+      "id": "message_event",
+      "name": "Customer Reply Received",
+      "type": "bpmn:IntermediateCatchEvent",
+      "eventDefinitions": [
+        {
+          "type": "bpmn:MessageEventDefinition"
+        }
+      ]
+    },
+    {
+      "id": "timer_event",
+      "name": "24 Hours Passed",
+      "type": "bpmn:IntermediateCatchEvent",
+      "eventDefinitions": [
+        {
+          "type": "bpmn:TimerEventDefinition",
+          "timeDuration": "P1D"
+        }
+      ]
+    },
+    {
+      "id": "task_7",
+      "name": "Send Reminder",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "task_8",
+      "name": "Close Ticket",
+      "type": "bpmn:Task"
+    },
+    {
+      "id": "end_event",
+      "name": "Process Complete",
+      "type": "bpmn:EndEvent"
+    },
+    {
+      "id": "cancel_subprocess",
+      "name": "Ticket Cancellation",
+      "type": "bpmn:SubProcess",
+      "triggeredByEvent": true,
+      "elements": [
+        {
+          "id": "cancel_start_event",
+          "name": "Customer Cancels Ticket",
+          "type": "bpmn:StartEvent",
+          "isInterrupting": true,
+          "eventDefinitions": [
+            {
+              "type": "bpmn:SignalEventDefinition",
+              "signalRef": "ticketCancellation"
+            }
+          ]
+        },
+        {
+          "id": "terminate_event",
+          "name": "Process Terminated",
+          "type": "bpmn:EndEvent",
+          "eventDefinitions": [
+            {
+              "type": "bpmn:TerminateEventDefinition"
+            }
+          ]
+        }
+      ],
+      "flows": [
+        {
+          "id": "subflow_1",
+          "sourceRef": "cancel_start_event",
+          "targetRef": "terminate_event"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow_1",
+      "sourceRef": "start_event",
+      "targetRef": "task_1"
+    },
+    {
+      "id": "flow_2",
+      "sourceRef": "task_1",
+      "targetRef": "task_2"
+    },
+    {
+      "id": "flow_3",
+      "sourceRef": "task_2",
+      "targetRef": "gateway_1"
+    },
+    {
+      "id": "flow_4",
+      "name": "Complex",
+      "sourceRef": "gateway_1",
+      "targetRef": "task_3"
+    },
+    {
+      "id": "flow_5",
+      "name": "Simple",
+      "sourceRef": "gateway_1",
+      "targetRef": "task_4"
+    },
+    {
+      "id": "flow_6",
+      "sourceRef": "task_3",
+      "targetRef": "task_4"
+    },
+    {
+      "id": "flow_7",
+      "sourceRef": "task_4",
+      "targetRef": "parallel_gateway_1"
+    },
+    {
+      "id": "flow_8",
+      "sourceRef": "parallel_gateway_1",
+      "targetRef": "task_5"
+    },
+    {
+      "id": "flow_9",
+      "sourceRef": "parallel_gateway_1",
+      "targetRef": "task_6"
+    },
+    {
+      "id": "flow_10",
+      "sourceRef": "task_5",
+      "targetRef": "parallel_gateway_2"
+    },
+    {
+      "id": "flow_11",
+      "sourceRef": "task_6",
+      "targetRef": "parallel_gateway_2"
+    },
+    {
+      "id": "flow_12",
+      "sourceRef": "parallel_gateway_2",
+      "targetRef": "event_gateway"
+    },
+    {
+      "id": "flow_13",
+      "sourceRef": "event_gateway",
+      "targetRef": "message_event"
+    },
+    {
+      "id": "flow_14",
+      "sourceRef": "event_gateway",
+      "targetRef": "timer_event"
+    },
+    {
+      "id": "flow_15",
+      "sourceRef": "message_event",
+      "targetRef": "task_8"
+    },
+    {
+      "id": "flow_16",
+      "sourceRef": "timer_event",
+      "targetRef": "task_7"
+    },
+    {
+      "id": "flow_17",
+      "sourceRef": "task_7",
+      "targetRef": "task_8"
+    },
+    {
+      "id": "flow_18",
+      "sourceRef": "task_8",
+      "targetRef": "end_event"
+    }
+  ],
+  "signals": [
+    {
+      "id": "ticketCancellation",
+      "name": "Ticket Cancellation Signal"
+    }
+  ]
+}
+```
