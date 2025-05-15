@@ -1,0 +1,46 @@
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="def1">
+  <process id="supportTicketProcess" isExecutable="true">
+    <startEvent id="start" name="Ticket Submitted"/>
+    <sequenceFlow id="sf1" sourceRef="start" targetRef="t1"/>
+    <task id="t1" name="Classify Ticket"/>
+    <sequenceFlow id="sf2" sourceRef="t1" targetRef="gw1"/>
+    <!-- Gateway 1: Classification decision -->
+    <exclusiveGateway id="gw1" name="Ticket Classification"/>
+    <sequenceFlow id="sf3" sourceRef="gw1" targetRef="t2">
+      <conditionExpression xsi:type="tFormalExpression">ticketType=='Password Reset'</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf4" sourceRef="gw1" targetRef="t4" default="sf4"/>
+    <task id="t2" name="Provide Reset Instructions"/>
+    <sequenceFlow id="sf5" sourceRef="t2" targetRef="t3"/>
+    <!-- Task common to both branches: Resolve Issue -->
+    <task id="t3" name="Resolve Issue"/>
+    <!-- Non-Password Reset branch -->
+    <task id="t4" name="Initial Diagnosis"/>
+    <sequenceFlow id="sf6" sourceRef="gw1" targetRef="t4"/>
+    <!-- Gateway 2: Post-Diagnosis decision -->
+    <exclusiveGateway id="gw2" name="Diagnosis Decision"/>
+    <sequenceFlow id="sf7" sourceRef="t4" targetRef="gw2"/>
+    <sequenceFlow id="sf8" sourceRef="gw2" targetRef="t3">
+      <conditionExpression xsi:type="tFormalExpression">directResolution</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf9" sourceRef="gw2" targetRef="t5">
+      <conditionExpression xsi:type="tFormalExpression">needsSpecialist</conditionExpression>
+    </sequenceFlow>
+    <task id="t5" name="Forward to Specialist"/>
+    <sequenceFlow id="sf10" sourceRef="t5" targetRef="t3"/>
+    <!-- Continue after resolution -->
+    <task id="t6" name="Confirm with Customer"/>
+    <sequenceFlow id="sf11" sourceRef="t3" targetRef="t6"/>
+    <!-- Gateway 3: Customer confirmation decision -->
+    <exclusiveGateway id="gw3" name="Customer Confirmation"/>
+    <sequenceFlow id="sf12" sourceRef="t6" targetRef="gw3"/>
+    <sequenceFlow id="sf13" sourceRef="gw3" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">confirmed</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf14" sourceRef="gw3" targetRef="t4">
+      <conditionExpression xsi:type="tFormalExpression">issuePersists</conditionExpression>
+    </sequenceFlow>
+    <endEvent id="end" name="Ticket Closed"/>
+    <sequenceFlow id="sf15" sourceRef="end" targetRef="end"/>
+  </process>
+</definitions>

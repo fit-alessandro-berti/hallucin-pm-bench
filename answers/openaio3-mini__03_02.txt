@@ -1,0 +1,289 @@
+{
+  "definitions": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "isExecutable": true,
+      "elements": [
+        {
+          "id": "startEvent_1",
+          "type": "startEvent",
+          "name": "Support Email Received",
+          "outgoing": ["flow_1"]
+        },
+        {
+          "id": "task_parseEmail",
+          "type": "task",
+          "name": "Parse Email and Create Ticket",
+          "incoming": ["flow_1"],
+          "outgoing": ["flow_2"]
+        },
+        {
+          "id": "task_initialClassification",
+          "type": "task",
+          "name": "Initial Classification",
+          "incoming": ["flow_2"],
+          "outgoing": ["flow_3"]
+        },
+        {
+          "id": "gateway_classification",
+          "type": "exclusiveGateway",
+          "name": "Classification Gateway",
+          "incoming": ["flow_3"],
+          "outgoing": ["flow_simple", "flow_complex"]
+        },
+        {
+          "id": "task_provideResolution_simple",
+          "type": "task",
+          "name": "Provide Resolution",
+          "incoming": ["flow_simple"],
+          "outgoing": ["flow_4a"]
+        },
+        {
+          "id": "task_rootCauseAnalysis",
+          "type": "task",
+          "name": "Root Cause Analysis",
+          "incoming": ["flow_complex"],
+          "outgoing": ["flow_r2pr"]
+        },
+        {
+          "id": "task_provideResolution_complex",
+          "type": "task",
+          "name": "Provide Resolution",
+          "incoming": ["flow_r2pr"],
+          "outgoing": ["flow_4b"]
+        },
+        {
+          "id": "gateway_mergeResolution",
+          "type": "exclusiveGateway",
+          "name": "Merge Resolution Paths",
+          "incoming": ["flow_4a", "flow_4b"],
+          "outgoing": ["flow_to_parallel"]
+        },
+        {
+          "id": "gateway_parallel_split",
+          "type": "parallelGateway",
+          "name": "Parallel Split",
+          "incoming": ["flow_to_parallel"],
+          "outgoing": ["flow_response", "flow_log"]
+        },
+        {
+          "id": "task_sendResponse",
+          "type": "task",
+          "name": "Send Response to Customer",
+          "incoming": ["flow_response"],
+          "outgoing": ["flow_join_resp"]
+        },
+        {
+          "id": "task_logSolution",
+          "type": "task",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": ["flow_log"],
+          "outgoing": ["flow_join_log"]
+        },
+        {
+          "id": "gateway_parallel_join",
+          "type": "parallelGateway",
+          "name": "Parallel Join",
+          "incoming": ["flow_join_resp", "flow_join_log"],
+          "outgoing": ["flow_eventBasedGateway"]
+        },
+        {
+          "id": "event_based_gateway",
+          "type": "eventBasedGateway",
+          "name": "Wait for Customer Reply",
+          "incoming": ["flow_eventBasedGateway"],
+          "outgoing": ["flow_message", "flow_timer"]
+        },
+        {
+          "id": "intermediate_message",
+          "type": "intermediateCatchEvent",
+          "name": "Customer Reply Received",
+          "incoming": ["flow_message"],
+          "outgoing": ["flow_close_ticket"],
+          "eventDefinition": {
+            "type": "message",
+            "messageRef": "CustomerReply"
+          }
+        },
+        {
+          "id": "intermediate_timer",
+          "type": "intermediateCatchEvent",
+          "name": "24 Hours Timer",
+          "incoming": ["flow_timer"],
+          "outgoing": ["flow_sendReminder"],
+          "eventDefinition": {
+            "type": "timer",
+            "timeDuration": "PT24H"
+          }
+        },
+        {
+          "id": "task_sendReminder",
+          "type": "task",
+          "name": "Send Reminder",
+          "incoming": ["flow_sendReminder"],
+          "outgoing": ["flow_close_ticket_timer"]
+        },
+        {
+          "id": "task_closeTicket",
+          "type": "task",
+          "name": "Close Ticket",
+          "incoming": ["flow_close_ticket", "flow_close_ticket_timer"],
+          "outgoing": ["flow_end"]
+        },
+        {
+          "id": "endEvent_closed",
+          "type": "endEvent",
+          "name": "Ticket Closed",
+          "incoming": ["flow_end"]
+        },
+        {
+          "id": "subProcess_cancellation",
+          "type": "subProcess",
+          "name": "Cancellation SubProcess",
+          "triggeredByEvent": true,
+          "elements": [
+            {
+              "id": "startEvent_cancel",
+              "type": "startEvent",
+              "name": "Ticket Cancel",
+              "interrupting": true,
+              "outgoing": ["flow_cancel"],
+              "eventDefinition": {
+                "type": "message",
+                "messageRef": "TicketCancel"
+              }
+            },
+            {
+              "id": "task_terminate",
+              "type": "task",
+              "name": "Terminate Process",
+              "incoming": ["flow_cancel"],
+              "outgoing": ["flow_end_cancel"]
+            },
+            {
+              "id": "endEvent_cancel",
+              "type": "endEvent",
+              "name": "Cancelled",
+              "incoming": ["flow_end_cancel"]
+            }
+          ]
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "flow_1",
+          "sourceRef": "startEvent_1",
+          "targetRef": "task_parseEmail"
+        },
+        {
+          "id": "flow_2",
+          "sourceRef": "task_parseEmail",
+          "targetRef": "task_initialClassification"
+        },
+        {
+          "id": "flow_3",
+          "sourceRef": "task_initialClassification",
+          "targetRef": "gateway_classification"
+        },
+        {
+          "id": "flow_simple",
+          "sourceRef": "gateway_classification",
+          "targetRef": "task_provideResolution_simple",
+          "condition": "ticket is Simple"
+        },
+        {
+          "id": "flow_complex",
+          "sourceRef": "gateway_classification",
+          "targetRef": "task_rootCauseAnalysis",
+          "condition": "ticket is Complex"
+        },
+        {
+          "id": "flow_r2pr",
+          "sourceRef": "task_rootCauseAnalysis",
+          "targetRef": "task_provideResolution_complex"
+        },
+        {
+          "id": "flow_4a",
+          "sourceRef": "task_provideResolution_simple",
+          "targetRef": "gateway_mergeResolution"
+        },
+        {
+          "id": "flow_4b",
+          "sourceRef": "task_provideResolution_complex",
+          "targetRef": "gateway_mergeResolution"
+        },
+        {
+          "id": "flow_to_parallel",
+          "sourceRef": "gateway_mergeResolution",
+          "targetRef": "gateway_parallel_split"
+        },
+        {
+          "id": "flow_response",
+          "sourceRef": "gateway_parallel_split",
+          "targetRef": "task_sendResponse"
+        },
+        {
+          "id": "flow_log",
+          "sourceRef": "gateway_parallel_split",
+          "targetRef": "task_logSolution"
+        },
+        {
+          "id": "flow_join_resp",
+          "sourceRef": "task_sendResponse",
+          "targetRef": "gateway_parallel_join"
+        },
+        {
+          "id": "flow_join_log",
+          "sourceRef": "task_logSolution",
+          "targetRef": "gateway_parallel_join"
+        },
+        {
+          "id": "flow_eventBasedGateway",
+          "sourceRef": "gateway_parallel_join",
+          "targetRef": "event_based_gateway"
+        },
+        {
+          "id": "flow_message",
+          "sourceRef": "event_based_gateway",
+          "targetRef": "intermediate_message"
+        },
+        {
+          "id": "flow_timer",
+          "sourceRef": "event_based_gateway",
+          "targetRef": "intermediate_timer"
+        },
+        {
+          "id": "flow_close_ticket",
+          "sourceRef": "intermediate_message",
+          "targetRef": "task_closeTicket"
+        },
+        {
+          "id": "flow_sendReminder",
+          "sourceRef": "intermediate_timer",
+          "targetRef": "task_sendReminder"
+        },
+        {
+          "id": "flow_close_ticket_timer",
+          "sourceRef": "task_sendReminder",
+          "targetRef": "task_closeTicket"
+        },
+        {
+          "id": "flow_end",
+          "sourceRef": "task_closeTicket",
+          "targetRef": "endEvent_closed"
+        },
+        {
+          "id": "flow_cancel",
+          "sourceRef": "startEvent_cancel",
+          "targetRef": "task_terminate"
+        },
+        {
+          "id": "flow_end_cancel",
+          "sourceRef": "task_terminate",
+          "targetRef": "endEvent_cancel"
+        }
+      ]
+    }
+  }
+}
