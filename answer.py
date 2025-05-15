@@ -48,6 +48,8 @@ if __name__ == "__main__":
                   "google/gemini-2.5-flash-preview",
                   "google/gemini-2.5-flash-preview:thinking",
                   "google/gemini-2.5-pro-preview",
+                  "google/gemini-2.0-flash-lite-001",
+                  "google/gemini-2.0-flash-001",
                   "anthropic/claude-3.7-sonnet:thinking",
                   "openai/o3-mini-high",
                   "openai/o3-mini",
