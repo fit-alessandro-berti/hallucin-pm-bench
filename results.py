@@ -1,11 +1,26 @@
 import os
 import re
+import numpy as np
 import pandas as pd
 
 
 pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+)/(?P<denominator>\d+))(?!\.)'
 reg_expr = re.compile(pattern)
 
+MAPPING = {}
+MAPPING["C01"] = "C01 Domain-override / Precedence checks"
+MAPPING["C02"] = "C02 Event-log fact-extraction"
+MAPPING["C03"] = "C03 Text to Model reconstruction"
+MAPPING["C04"] = "C04 Compliance / Conformance reasoning"
+MAPPING["C05"] = "C05 Counterfactual edits"
+MAPPING["C06"] = "C06 Multi-process memory interference"
+MAPPING["C07"] = "C07 Change-log diffing"
+MAPPING["C08"] = "C08 Temporal / concurrency reasoning"
+MAPPING["C09"] = "C09 Unknown-should-remain-unknown"
+MAPPING["C10"] = "C10 Domain-synonym enforcement"
+MAPPING["C11"] = "C11 Performance analytics commentary"
+MAPPING["C12"] = "C12 Misinformation injection"
+MAPPING["C13"] = "C13 Edge-case / low-support prompts"
 
 def format_name(llm):
     patterns = ["anthropic", "x-ai", "openai", "qwen"]
@@ -156,23 +171,9 @@ def measure_inter_category_correlation(results):
             vectors[-1].append(float(row[cat].replace("**", "")))
 
     table = []
-    mapping = {}
-    mapping["C01"] = "C01 Domain-override / Precedence checks"
-    mapping["C02"] = "C02 Event-log fact-extraction"
-    mapping["C03"] = "C03 Text to Model reconstruction"
-    mapping["C04"] = "C04 Compliance / Conformance reasoning"
-    mapping["C05"] = "C05 Counterfactual edits"
-    mapping["C06"] = "C06 Multi-process memory interference"
-    mapping["C07"] = "C07 Change-log diffing"
-    mapping["C08"] = "C08 Temporal / concurrency reasoning"
-    mapping["C09"] = "C09 Unknown-should-remain-unknown"
-    mapping["C10"] = "C10 Domain-synonym enforcement"
-    mapping["C11"] = "C11 Performance analytics commentary"
-    mapping["C12"] = "C12 Misinformation injection"
-    mapping["C13"] = "C13 Edge-case / low-support prompts"
 
     for cat0 in range(1, 14):
-        table.append({"Category": mapping["C"+str(cat0).zfill(2)]})
+        table.append({"Category": MAPPING["C"+str(cat0).zfill(2)]})
         for cat1 in range(1, 14):
             table[-1]["C"+str(cat1).zfill(2)] = pearsonr(vectors[cat0-1], vectors[cat1-1]).statistic
 
@@ -185,9 +186,36 @@ def measure_inter_category_correlation(results):
     F.close()
 
 
+def measure_intra_variation(dictio):
+    vectors = [[] for i in range(1, 14)]
+    for llm, scores in dictio.items():
+        for i in range(1, 14):
+            pref = str(i).zfill(2)
+            catscor = [y for x, y in scores.items() if x.startswith(pref)]
+            if len(catscor) == 3:
+                vectors[i-1].append(np.std(catscor))
+    intra_variation = [np.median(vectors[i]) for i in range(len(vectors))]
+    table = []
+
+    for i in range(1, 14):
+        cat = "C"+str(i).zfill(2)
+
+        table.append({"Category": MAPPING[cat], "Median of Std": intra_variation[i-1]})
+
+    table = pd.DataFrame(table)
+    table_md = table.to_markdown(index=False)
+
+    F = open("stats/intra_variation.md", "w")
+    F.write("# Intra-Category Variation\n\n")
+    F.write(table_md)
+    F.close()
+
+
+
 if __name__ == "__main__":
     results, dictio = get_agg_results()
     measure_inter_category_correlation(results)
+    measure_intra_variation(dictio)
 
     results = pd.DataFrame(results)
 
