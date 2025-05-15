@@ -38,7 +38,19 @@ if __name__ == "__main__":
                   "openai/gpt-4.1-nano",
                   "openai/gpt-4.5-preview",
                   ("qwen/qwen3-14b-nothink", {"base_model": "qwen/qwen3-14b", "add_prompt": " /no_think"}),
-                  ("qwen/qwen3-14b-think", {"base_model": "qwen/qwen3-14b", "add_prompt": " /think"})]:
+                  ("qwen/qwen3-14b-think", {"base_model": "qwen/qwen3-14b", "add_prompt": " /think"}),
+                  "anthropic/claude-3.7-sonnet",
+                  "x-ai/grok-3-beta",
+                  "openai/o4-mini-high",
+                  "openai/o4-mini",
+                  "openai/o3",
+                  "x-ai/grok-3-mini-beta",
+                  "anthropic/claude-3.7-sonnet:thinking",
+                  "openai/o3-mini-high",
+                  "openai/o3-mini",
+                  "google/gemini-2.5-flash-preview"
+                  "google/gemini-2.5-pro-preview",
+                  ]:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]
         respond_for_model(model_name, parameters)

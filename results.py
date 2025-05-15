@@ -106,7 +106,8 @@ def get_agg_results():
             this_summ = sum(dictio[llm][x] for x in dictio[llm] if x.startswith(cat))
             max_per_cat[cat] = max(max_per_cat[cat], this_summ)
 
-            row["C"+cat] = this_summ
+            if this_summ > 0:
+                row["C"+cat] = this_summ
 
         results.append(row)
 
@@ -114,11 +115,14 @@ def get_agg_results():
 
     for i in range(1, 13):
         cat_name = "C" + str(i).zfill(2)
-        for j in range(len(results)):
+        j = 0
+        while j < len(results):
             if cat_name not in results[j]:
-                results[j][cat_name] = format_numb_in_table(0.0, max_per_cat[cat_name[1:]])
-            else:
-                results[j][cat_name] = format_numb_in_table(results[j][cat_name], max_per_cat[cat_name[1:]])
+                del results[j]
+                continue
+
+            results[j][cat_name] = format_numb_in_table(results[j][cat_name], max_per_cat[cat_name[1:]])
+            j = j + 1
 
     for j in range(len(results)):
         results[j][avg_key] = round(results[j][score_key] / 39.0, 2)

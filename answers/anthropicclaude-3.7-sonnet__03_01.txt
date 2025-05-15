@@ -1,0 +1,52 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="def1" targetNamespace="http://acmetech.example.com">
+  <process id="supportTicketProcess" name="AcmeTech Support Ticket Process">
+    <startEvent id="start" name="Support Ticket Submitted"/>
+    <sequenceFlow id="sf1" sourceRef="start" targetRef="classifyTicket"/>
+    
+    <serviceTask id="classifyTicket" name="Classify Ticket"/>
+    <sequenceFlow id="sf2" sourceRef="classifyTicket" targetRef="gw1"/>
+    
+    <exclusiveGateway id="gw1" name="Ticket Type?"/>
+    <sequenceFlow id="sf3" sourceRef="gw1" targetRef="resetPassword">
+      <conditionExpression>#{ticketType == "Password Reset"}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf4" sourceRef="gw1" targetRef="initialDiagnosis">
+      <conditionExpression>#{ticketType != "Password Reset"}</conditionExpression>
+    </sequenceFlow>
+    
+    <task id="resetPassword" name="Provide Reset Instructions"/>
+    <sequenceFlow id="sf5" sourceRef="resetPassword" targetRef="confirmWithCustomer"/>
+    
+    <task id="initialDiagnosis" name="Initial Diagnosis"/>
+    <sequenceFlow id="sf6" sourceRef="initialDiagnosis" targetRef="gw2"/>
+    
+    <exclusiveGateway id="gw2" name="Resolution Path"/>
+    <sequenceFlow id="sf7" sourceRef="gw2" targetRef="resolveIssue">
+      <conditionExpression>#{resolvable == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf8" sourceRef="gw2" targetRef="forwardSpecialist">
+      <conditionExpression>#{resolvable == false}</conditionExpression>
+    </sequenceFlow>
+    
+    <task id="forwardSpecialist" name="Forward to Specialist"/>
+    <sequenceFlow id="sf9" sourceRef="forwardSpecialist" targetRef="resolveIssue"/>
+    
+    <task id="resolveIssue" name="Resolve Issue"/>
+    <sequenceFlow id="sf10" sourceRef="resolveIssue" targetRef="confirmWithCustomer"/>
+    
+    <task id="confirmWithCustomer" name="Confirm with Customer"/>
+    <sequenceFlow id="sf11" sourceRef="confirmWithCustomer" targetRef="gw3"/>
+    
+    <exclusiveGateway id="gw3" name="Issue Resolved?"/>
+    <sequenceFlow id="sf12" sourceRef="gw3" targetRef="end">
+      <conditionExpression>#{resolved == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sf13" sourceRef="gw3" targetRef="initialDiagnosis">
+      <conditionExpression>#{resolved == false}</conditionExpression>
+    </sequenceFlow>
+    
+    <endEvent id="end" name="Ticket Closed"/>
+  </process>
+</definitions>
+```
