@@ -1,0 +1,188 @@
+```json
+{
+  "bpmnElement": {
+    "definitions": {
+      "id": "",
+      "targetNamespace": "",
+      "process": {
+        "id": "CustomerSupportTicketProcess",
+        "startEvent": {
+          "id": "start_event",
+          "name": "Receive Support E-mail"
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_1",
+            "sourceRef": "start_event",
+            "targetRef": "task_create_ticket"
+          }
+        ],
+        "task": {
+          "id": "task_create_ticket",
+          "name": "Create Ticket"
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_2",
+            "sourceRef": "task_create_ticket",
+            "targetRef": "task_initial_classification"
+          }
+        ],
+        "task": {
+          "id": "task_initial_classification",
+          "name": "Initial Classification"
+        },
+        "exclusiveGateway": {
+          "id": "gateway_classification",
+          "name": "Ticket Complexity"
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_3",
+            "sourceRef": "task_initial_classification",
+            "targetRef": "gateway_classification"
+          },
+          {
+            "id": "flow_4",
+            "sourceRef": "gateway_classification",
+            "targetRef": "task_provide_resolution",
+            "conditionExpression": "ticketType == 'Simple'"
+          },
+          {
+            "id": "flow_5",
+            "sourceRef": "gateway_classification",
+            "targetRef": "task_root_cause_analysis",
+            "conditionExpression": "ticketType == 'Complex'"
+          }
+        ],
+        "task": {
+          "id": "task_provide_resolution",
+          "name": "Provide Resolution"
+        },
+        "task": {
+          "id": "task_root_cause_analysis",
+          "name": "Root Cause Analysis"
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_6",
+            "sourceRef": "task_provide_resolution",
+            "targetRef": "task_send_response_customer"
+          },
+          {
+            "id": "flow_7",
+            "sourceRef": "task_root_cause_analysis",
+            "targetRef": "task_send_response_customer"
+          }
+        ],
+        "subProcess": {
+          "id": "subprocess_parallel_activities",
+          "name": "Parallel Activities",
+          "isSequential": false,
+          "process": {
+            "startEvent": {},
+            "task": {
+              "id": "task_log_solution_kb",
+              "name": "Log Solution in Knowledge Base"
+            },
+            "endEvent": {}
+          }
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_8",
+            "sourceRef": "task_send_response_customer",
+            "targetRef": "intermediateCatchEvent_wait_for_reply"
+          }
+        ],
+        "intermediateCatchEvent": {
+          "id": "intermediateCatchEvent_wait_for_reply",
+          "name": "Wait for Customer Reply",
+          "timeEventDefinition": {
+            "timeCycle": "PT24H"
+          }
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_9",
+            "sourceRef": "intermediateCatchEvent_wait_for_reply",
+            "targetRef": "task_close_ticket",
+            "name": "Customer Reply Received"
+          },
+          {
+            "id": "flow_10",
+            "sourceRef": "intermediateCatchEvent_wait_for_reply",
+            "targetRef": "task_send_reminder",
+            "conditionEventDefinition": {
+              "eventName": "timeCycle"
+            }
+          },
+          {
+            "id": "flow_11",
+            "sourceRef": "task_send_reminder",
+            "targetRef": "task_close_ticket"
+          }
+        ],
+        "task": {
+          "id": "task_send_response_customer",
+          "name": "Send Response to Customer"
+        },
+        "subProcess": {
+          "id": "subprocess_resp_and_kb",
+          "name": "Response and Knowledge Base Log",
+          "isSequential": false,
+          "process": {
+            "startEvent": {},
+            "sequenceFlow": [
+              {
+                "id": "flow_12",
+                "sourceRef": "task_send_response_customer",
+                "targetRef": "subprocess_parallel_activities"
+              }
+            ],
+            "endEvent": {}
+          }
+        },
+        "task": {
+          "id": "task_send_reminder",
+          "name": "Send Reminder"
+        },
+        "task": {
+          "id": "task_close_ticket",
+          "name": "Close Ticket"
+        },
+        "intermediateCatchEvent": {
+          "id": "event_cancel_ticket",
+          "name": "Customer Cancels Ticket",
+          "cancelActivity": true
+        },
+        "sequenceFlow": [
+          {
+            "id": "flow_13",
+            "sourceRef": "intermediateCatchEvent_wait_for_reply",
+            "targetRef": "event_cancel_ticket"
+          },
+          {
+            "id": "flow_14",
+            "sourceRef": "task_provide_resolution",
+            "targetRef": "subprocess_resp_and_kb"
+          },
+          {
+            "id": "flow_15",
+            "sourceRef": "task_root_cause_analysis",
+            "targetRef": "subprocess_resp_and_kb"
+          },
+          {
+            "id": "flow_16",
+            "sourceRef": "event_cancel_ticket",
+            "targetRef": "end_event"
+          }
+        ],
+        "endEvent": {
+          "id": "end_event"
+        }
+      }
+    }
+  }
+}
+```

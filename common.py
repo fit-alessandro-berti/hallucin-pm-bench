@@ -34,7 +34,7 @@ class Shared:
                   "meta-llama/llama-4-scout",
                   "meta-llama/llama-4-maverick",
                   "meta-llama/llama-3.3-70b-instruct",
-                  #"openai/o3",
+                  "microsoft/phi-4",
                   "openai/o1",
                   "deepseek/deepseek-r1",
                   ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),

@@ -23,7 +23,7 @@ MAPPING["C12"] = "C12 Misinformation injection"
 MAPPING["C13"] = "C13 Edge-case / low-support prompts"
 
 def format_name(llm):
-    patterns = ["anthropic", "x-ai", "openai", "qwen"]
+    patterns = ["anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft"]
 
     for p in patterns:
         if llm.startswith(p):
@@ -33,7 +33,7 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    patterns = {"qwen3", "llama", "mistral"}
+    patterns = {"qwen3", "llama", "mistral", "phi"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
