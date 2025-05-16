@@ -62,10 +62,10 @@ def main1():
         modified_something = evaluate()
 
         if not modified_something:
-            print("not modified anything in the last 30 seconds!")
+            pass
             #break
 
-        time.sleep(30)
+        time.sleep(10)
 
 
 def main2():

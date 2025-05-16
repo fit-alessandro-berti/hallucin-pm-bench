@@ -8,6 +8,7 @@ def respond_for_model(model_name, parameters=None):
 
     m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
+    changed = False
 
     for prompt in os.listdir("prompts"):
         prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read() + parameters.get("add_prompt", "")
@@ -27,13 +28,23 @@ def respond_for_model(model_name, parameters=None):
 
                     bb = time.time_ns()
                     print("completed", round((bb-aa)/10**9, 3), model_name, prompt, answer_path)
+                    changed = True
             except Exception as e:
                 print("except", model_name, prompt, answer_path, str(e))
+    return changed
 
-
-
-if __name__ == "__main__":
+def main():
+    changed = False
     for model in Shared.MODEL_CATALOGUE:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]
-        respond_for_model(model_name, parameters)
+        changed = changed or respond_for_model(model_name, parameters)
+
+    return changed
+
+
+if __name__ == "__main__":
+    changed = True
+    while changed:
+        changed = main()
+        print("round finished")

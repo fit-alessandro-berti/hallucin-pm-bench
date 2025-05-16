@@ -13,7 +13,7 @@ class Shared:
                   "openai/gpt-4.5-preview",
                   ("qwen/qwen3-14b-nothink", {"base_model": "qwen/qwen3-14b", "add_prompt": " /no_think"}),
                   ("qwen/qwen3-14b-think", {"base_model": "qwen/qwen3-14b", "add_prompt": " /think"}),
-                  "anthropic/claude-3.7-sonnet",
+                  "anthropic/claude-3.7-sonnet", "anthropic/claude-3.5-sonnet",
                   "x-ai/grok-3-beta",
                   "openai/o4-mini-high",
                   "openai/o4-mini",
