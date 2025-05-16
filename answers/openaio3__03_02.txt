@@ -1,0 +1,59 @@
+```json
+{
+  "process": {
+    "id": "SupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "elements": [
+      { "id": "start", "type": "startEvent", "name": "Support Email Received", "trigger": "message" },
+      { "id": "taskParse", "type": "task", "name": "Parse Email & Create Ticket" },
+      { "id": "taskClassify", "type": "task", "name": "Initial Classification" },
+      { "id": "gwClassify", "type": "exclusiveGateway" },
+      { "id": "taskProvideResolution", "type": "task", "name": "Provide Resolution" },
+      { "id": "taskRCA", "type": "task", "name": "Root Cause Analysis" },
+      { "id": "gwParallelSplit", "type": "parallelGateway" },
+      { "id": "taskSendResponse", "type": "task", "name": "Send Response to Customer" },
+      { "id": "taskLogKB", "type": "task", "name": "Log Solution in Knowledge Base" },
+      { "id": "gwEvent", "type": "eventBasedGateway" },
+      { "id": "msgCustomerReply", "type": "intermediateCatchEvent", "name": "Customer Reply", "trigger": "message" },
+      { "id": "timer24h", "type": "intermediateCatchEvent", "name": "24h Timer", "trigger": "timer", "duration": "PT24H" },
+      { "id": "taskCloseTicket", "type": "task", "name": "Close Ticket" },
+      { "id": "taskSendReminder", "type": "task", "name": "Send Reminder" },
+      { "id": "gwParallelJoin", "type": "parallelGateway" },
+      { "id": "end", "type": "endEvent", "name": "End" },
+      {
+        "id": "eventSubCancel",
+        "type": "eventSubProcess",
+        "name": "Customer Cancel",
+        "elements": [
+          { "id": "msgCancel", "type": "startEvent", "name": "Cancel Ticket", "trigger": "message", "isInterrupting": true },
+          { "id": "endTerminate", "type": "terminateEndEvent" }
+        ],
+        "flows": [
+          { "id": "f19", "source": "msgCancel", "target": "endTerminate" }
+        ]
+      }
+    ],
+    "flows": [
+      { "id": "f1",  "source": "start",           "target": "taskParse" },
+      { "id": "f2",  "source": "taskParse",       "target": "taskClassify" },
+      { "id": "f3",  "source": "taskClassify",    "target": "gwClassify" },
+      { "id": "f4",  "source": "gwClassify",      "target": "taskProvideResolution", "condition": "Simple" },
+      { "id": "f5",  "source": "gwClassify",      "target": "taskRCA",               "condition": "Complex" },
+      { "id": "f6",  "source": "taskRCA",         "target": "taskProvideResolution" },
+      { "id": "f7",  "source": "taskProvideResolution", "target": "gwParallelSplit" },
+      { "id": "f8",  "source": "gwParallelSplit", "target": "taskSendResponse" },
+      { "id": "f9",  "source": "gwParallelSplit", "target": "taskLogKB" },
+      { "id": "f10", "source": "taskSendResponse","target": "gwEvent" },
+      { "id": "f11", "source": "gwEvent",         "target": "msgCustomerReply" },
+      { "id": "f12", "source": "gwEvent",         "target": "timer24h" },
+      { "id": "f13", "source": "msgCustomerReply","target": "taskCloseTicket" },
+      { "id": "f14", "source": "timer24h",        "target": "taskSendReminder" },
+      { "id": "f15", "source": "taskSendReminder","target": "taskCloseTicket" },
+      { "id": "f16", "source": "taskCloseTicket", "target": "gwParallelJoin" },
+      { "id": "f17", "source": "taskLogKB",       "target": "gwParallelJoin" },
+      { "id": "f18", "source": "gwParallelJoin",  "target": "end" }
+    ]
+  }
+}
+```

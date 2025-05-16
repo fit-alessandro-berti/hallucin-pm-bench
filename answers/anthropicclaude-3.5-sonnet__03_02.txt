@@ -1,0 +1,120 @@
+{
+  "processId": "customer_support_ticket",
+  "elements": {
+    "startEvent": {
+      "id": "start",
+      "name": "Support Email Received"
+    },
+    "tasks": [
+      {
+        "id": "parse_email",
+        "name": "Parse Email and Create Ticket",
+        "type": "serviceTask"
+      },
+      {
+        "id": "initial_classification",
+        "name": "Initial Classification",
+        "type": "userTask"
+      },
+      {
+        "id": "root_cause",
+        "name": "Root Cause Analysis",
+        "type": "userTask"
+      },
+      {
+        "id": "provide_resolution",
+        "name": "Provide Resolution",
+        "type": "userTask"
+      },
+      {
+        "id": "send_response",
+        "name": "Send Response to Customer",
+        "type": "userTask"
+      },
+      {
+        "id": "log_solution",
+        "name": "Log Solution in Knowledge Base",
+        "type": "userTask"
+      },
+      {
+        "id": "send_reminder",
+        "name": "Send Reminder",
+        "type": "serviceTask"
+      },
+      {
+        "id": "close_ticket",
+        "name": "Close Ticket",
+        "type": "userTask"
+      }
+    ],
+    "gateways": [
+      {
+        "id": "complexity_gateway",
+        "name": "Ticket Type?",
+        "type": "exclusiveGateway"
+      },
+      {
+        "id": "parallel_gateway_start",
+        "type": "parallelGateway"
+      },
+      {
+        "id": "parallel_gateway_end",
+        "type": "parallelGateway"
+      },
+      {
+        "id": "timeout_gateway",
+        "type": "eventBasedGateway"
+      }
+    ],
+    "events": [
+      {
+        "id": "customer_reply",
+        "name": "Customer Reply Received",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": "messageEvent"
+      },
+      {
+        "id": "timeout_24h",
+        "name": "24 Hours",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": "timerEvent"
+      },
+      {
+        "id": "cancel_event",
+        "name": "Ticket Cancelled",
+        "type": "boundaryEvent",
+        "attachedTo": "process",
+        "eventDefinition": "messageEvent"
+      },
+      {
+        "id": "end_normal",
+        "type": "endEvent"
+      },
+      {
+        "id": "end_cancelled",
+        "type": "terminateEvent"
+      }
+    ],
+    "sequenceFlows": [
+      {"id": "f1", "sourceRef": "start", "targetRef": "parse_email"},
+      {"id": "f2", "sourceRef": "parse_email", "targetRef": "initial_classification"},
+      {"id": "f3", "sourceRef": "initial_classification", "targetRef": "complexity_gateway"},
+      {"id": "f4", "sourceRef": "complexity_gateway", "targetRef": "root_cause", "condition": "Complex"},
+      {"id": "f5", "sourceRef": "complexity_gateway", "targetRef": "provide_resolution", "condition": "Simple"},
+      {"id": "f6", "sourceRef": "root_cause", "targetRef": "provide_resolution"},
+      {"id": "f7", "sourceRef": "provide_resolution", "targetRef": "parallel_gateway_start"},
+      {"id": "f8", "sourceRef": "parallel_gateway_start", "targetRef": "send_response"},
+      {"id": "f9", "sourceRef": "parallel_gateway_start", "targetRef": "log_solution"},
+      {"id": "f10", "sourceRef": "send_response", "targetRef": "parallel_gateway_end"},
+      {"id": "f11", "sourceRef": "log_solution", "targetRef": "parallel_gateway_end"},
+      {"id": "f12", "sourceRef": "parallel_gateway_end", "targetRef": "timeout_gateway"},
+      {"id": "f13", "sourceRef": "timeout_gateway", "targetRef": "customer_reply"},
+      {"id": "f14", "sourceRef": "timeout_gateway", "targetRef": "timeout_24h"},
+      {"id": "f15", "sourceRef": "customer_reply", "targetRef": "close_ticket"},
+      {"id": "f16", "sourceRef": "timeout_24h", "targetRef": "send_reminder"},
+      {"id": "f17", "sourceRef": "send_reminder", "targetRef": "close_ticket"},
+      {"id": "f18", "sourceRef": "close_ticket", "targetRef": "end_normal"},
+      {"id": "f19", "sourceRef": "cancel_event", "targetRef": "end_cancelled"}
+    ]
+  }
+}

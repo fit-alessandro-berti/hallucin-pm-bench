@@ -2,6 +2,9 @@ import os, time
 from common import *
 
 
+MANUAL = False
+
+
 def respond_for_model(model_name, parameters=None):
     if parameters is None:
         parameters = {}
@@ -19,14 +22,29 @@ def respond_for_model(model_name, parameters=None):
             print("starting", model_name, prompt, answer_path)
 
             try:
-                answer = get_response(prompt_content, base_model_name, parameters=parameters)
+                is_completed = False
 
-                if answer:
-                    F = open(answer_path, "w", encoding="utf-8")
-                    F.write(answer)
+                if MANUAL:
+                    import pyperclip, subprocess
+                    pyperclip.copy(prompt_content)
+
+                    F = open(answer_path, "w")
                     F.close()
 
-                    bb = time.time_ns()
+                    subprocess.run(["notepad.exe", answer_path])
+                    if os.path.getsize(answer_path) > 0:
+                        is_completed = True
+                else:
+                    answer = get_response(prompt_content, base_model_name, parameters=parameters)
+
+                    if answer:
+                        F = open(answer_path, "w", encoding="utf-8")
+                        F.write(answer)
+                        F.close()
+                        is_completed = True
+
+                bb = time.time_ns()
+                if is_completed:
                     print("completed", round((bb-aa)/10**9, 3), model_name, prompt, answer_path)
                     changed = True
             except Exception as e:
