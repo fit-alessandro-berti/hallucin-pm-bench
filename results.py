@@ -37,7 +37,7 @@ def is_open_source(model_name):
 
     for p in patterns:
         if p.lower() in model_name.lower():
-            if not "medium" in model_name.lower():
+            if not "medium" in model_name.lower() and not "ministral" in model_name.lower():
                 return ":white_check_mark:"
 
     return ":x:"
