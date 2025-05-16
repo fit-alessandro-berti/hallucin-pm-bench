@@ -74,7 +74,7 @@ def get_response(prompt, model_name, parameters=None):
         "messages": messages,
     }
 
-    enable_streaming = False
+    enable_streaming = True
 
     if enable_streaming:
         payload["stream"] = True
