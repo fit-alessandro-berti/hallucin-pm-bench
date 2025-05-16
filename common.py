@@ -35,7 +35,7 @@ class Shared:
                   "meta-llama/llama-4-maverick",
                   "meta-llama/llama-3.3-70b-instruct",
                   "microsoft/phi-4",
-                  "openai/o1",
+                  "openai/o1", "openai/o3",
                   "deepseek/deepseek-r1",
                        "google/gemma-3-4b-it", "google/gemma-3-12b-it", "google/gemma-3-27b-it",
                   ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
@@ -74,7 +74,7 @@ def get_response(prompt, model_name, parameters=None):
         "messages": messages,
     }
 
-    enable_streaming = True
+    enable_streaming = False
 
     if enable_streaming:
         payload["stream"] = True
@@ -83,7 +83,10 @@ def get_response(prompt, model_name, parameters=None):
 
         chunk_count = 0
 
-        with requests.post(complete_url, headers=headers, json=payload, stream=True) as resp:
+        with requests.post(complete_url, headers=headers, json=payload, stream=True, timeout=20*60) as resp:
+            if not resp.status_code == 200:
+                print(resp.status_code)
+
             for line in resp.iter_lines():
                 if not line:
                     continue
@@ -124,9 +127,17 @@ def get_response(prompt, model_name, parameters=None):
             response_message = ["<think>", thinking_content, "</think>", response_message]
             response_message = "\n".join(response_message)
     else:
-        with requests.post(complete_url, headers=headers, json=payload) as resp:
+        with requests.post(complete_url, headers=headers, json=payload, timeout=20*60) as resp:
+            if not resp.status_code == 200:
+                print(resp.status_code)
+                print(resp.text)
+
             resp_json = resp.json()
-            message = resp_json["choices"][0]["message"]
+
+            if "choices" not in resp_json:
+                print(resp_json)
+
+            message = resp_json["choices"][-1]["message"]
 
             response_message = message["content"]
             if "reasoning_content" in message:
