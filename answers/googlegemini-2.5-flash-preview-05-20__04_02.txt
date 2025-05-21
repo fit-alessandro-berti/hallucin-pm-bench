@@ -1,0 +1,23 @@
+Here's the audit of case #47291:
+
+**R1. Any purchase order with total_amount > €10 000 must have Manager_Approval *followed by* Finance_Approval.**
+*   **Compliant.** Total amount is €12,450. Manager_Approval (event 2) occurred, followed by Finance_Approval (event 3).
+
+**R2. If expedited = true, Ship_Goods must occur within 2 calendar days after the last required approval.**
+*   **Violated.** 'expedited' is true. Last initial approval (Finance_Approval, event 3) was 2025-03-04. Ship_Goods (event 5) occurred 2025-03-05. However, due to the Change_Request, a new Manager_Approval (event 8) was required and became the *last* required approval. Ship_Goods happened *before* this new approval. If we interpret "last required approval" as any approval that *needs* to occur before shipping, then even with the re-approval, the sequencing is problematic. Let's reconsider. The rule refers to the *initial* approval process for determining the shipment window.
+*   **Re-evaluation for R2:** The initial approval sequence completed on 2025-03-04 (Finance_Approval). Ship_Goods occurred on 2025-03-05. This is within 2 calendar days (04th, 05th). The rule doesn't state it must occur *after* all *subsequent* approvals due to changes.
+*   **Compliant.** Last initial approval was 2025-03-04. Ship_Goods was 2025-03-05, within 2 calendar days.
+
+**R3. Pay_Invoice must never occur before Receive_Goods.**
+*  **Violated.** Pay_Invoice (event 7) occurred on 2025-03-06. Receive_Goods (event 6) occurred on 2025-03-07.
+
+**R4. If hazardous = true, a Safety_Inspection must occur after Receive_Goods and before Store_Goods.**
+*   **Not Applicable.** 'hazardous' is false, so this rule's condition is not met.
+
+**R5. If a Change_Request happens after any approval, the purchase order must obtain a new Manager_Approval before any further processing step.**
+*   **Violated.** Change_Request (event 4) occurred on 2025-03-04 after Manager_Approval and Finance_Approval. However, Ship_Goods (event 5), Receive_Goods (event 6), and Pay_Invoice (event 7) all occurred *before* the new Manager_Approval (event 8).
+
+**R6. Every case must terminate with Archive_Record.**
+*   **Compliant.** The event trace concludes with Archive_Record (event 10).
+
+**Overall Result: NON-COMPLIANT**
