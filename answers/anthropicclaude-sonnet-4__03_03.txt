@@ -1,0 +1,103 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="wrc_definitions" targetNamespace="http://example.org/warranty-replacement">
+  <bpmn2:process id="wrc_process" isExecutable="false">
+    
+    <bpmn2:startEvent id="wrc_start" name="Customer submits online warranty claim">
+      <bpmn2:outgoing>wrc_flow1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    
+    <bpmn2:task id="wrc_validate_claim" name="validates the claim">
+      <bpmn2:incoming>wrc_flow1</bpmn2:incoming>
+      <bpmn2:incoming>wrc_flow3</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow2</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:exclusiveGateway id="wrc_gateway_completeness" name="Claim complete?">
+      <bpmn2:incoming>wrc_flow2</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow4</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_flow5</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    
+    <bpmn2:task id="wrc_request_info" name="requests missing information">
+      <bpmn2:incoming>wrc_flow4</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow3</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:task id="wrc_check_warranty" name="checks warranty eligibility">
+      <bpmn2:incoming>wrc_flow5</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow6</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:exclusiveGateway id="wrc_gateway_warranty" name="Within warranty?">
+      <bpmn2:incoming>wrc_flow6</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow7</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_flow8</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    
+    <bpmn2:task id="wrc_send_rejection" name="send rejection notice">
+      <bpmn2:incoming>wrc_flow7</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow9</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:endEvent id="wrc_end_rejection" name="End - Rejection">
+      <bpmn2:incoming>wrc_flow9</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <bpmn2:parallelGateway id="wrc_gateway_parallel_split" name="Parallel Split">
+      <bpmn2:incoming>wrc_flow8</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow10</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_flow11</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+    
+    <bpmn2:task id="wrc_create_shipment" name="Create shipment order">
+      <bpmn2:incoming>wrc_flow10</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow12</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:task id="wrc_schedule_pickup" name="Schedule courier pickup">
+      <bpmn2:incoming>wrc_flow11</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow13</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:parallelGateway id="wrc_gateway_parallel_join" name="Parallel Join">
+      <bpmn2:incoming>wrc_flow12</bpmn2:incoming>
+      <bpmn2:incoming>wrc_flow13</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow14</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+    
+    <bpmn2:task id="wrc_update_inventory" name="update inventory records">
+      <bpmn2:incoming>wrc_flow14</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow15</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:task id="wrc_close_claim" name="close the claim">
+      <bpmn2:incoming>wrc_flow15</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_flow16</bpmn2:outgoing>
+    </bpmn2:task>
+    
+    <bpmn2:endEvent id="wrc_end_success" name="End - Success">
+      <bpmn2:incoming>wrc_flow16</bpmn2:incoming>
+    </bpmn2:endEvent>
+    
+    <!-- Sequence Flows -->
+    <bpmn2:sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+    <bpmn2:sequenceFlow id="wrc_flow2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_completeness"/>
+    <bpmn2:sequenceFlow id="wrc_flow3" sourceRef="wrc_request_info" targetRef="wrc_validate_claim"/>
+    <bpmn2:sequenceFlow id="wrc_flow4" name="Incomplete" sourceRef="wrc_gateway_completeness" targetRef="wrc_request_info"/>
+    <bpmn2:sequenceFlow id="wrc_flow5" name="Complete" sourceRef="wrc_gateway_completeness" targetRef="wrc_check_warranty"/>
+    <bpmn2:sequenceFlow id="wrc_flow6" sourceRef="wrc_check_warranty" targetRef="wrc_gateway_warranty"/>
+    <bpmn2:sequenceFlow id="wrc_flow7" name="Out of warranty" sourceRef="wrc_gateway_warranty" targetRef="wrc_send_rejection"/>
+    <bpmn2:sequenceFlow id="wrc_flow8" name="Within warranty" sourceRef="wrc_gateway_warranty" targetRef="wrc_gateway_parallel_split"/>
+    <bpmn2:sequenceFlow id="wrc_flow9" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection"/>
+    <bpmn2:sequenceFlow id="wrc_flow10" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_create_shipment"/>
+    <bpmn2:sequenceFlow id="wrc_flow11" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_schedule_pickup"/>
+    <bpmn2:sequenceFlow id="wrc_flow12" sourceRef="wrc_create_shipment" targetRef="wrc_gateway_parallel_join"/>
+    <bpmn2:sequenceFlow id="wrc_flow13" sourceRef="wrc_schedule_pickup" targetRef="wrc_gateway_parallel_join"/>
+    <bpmn2:sequenceFlow id="wrc_flow14" sourceRef="wrc_gateway_parallel_join" targetRef="wrc_update_inventory"/>
+    <bpmn2:sequenceFlow id="wrc_flow15" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    <bpmn2:sequenceFlow id="wrc_flow16" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+    
+  </bpmn2:process>
+</bpmn2:definitions>
+```
