@@ -49,6 +49,8 @@ def respond_for_model(model_name, parameters=None):
                     changed = True
             except Exception as e:
                 print("except", model_name, prompt, answer_path, str(e))
+                time.sleep(20)
+
     return changed
 
 def main():

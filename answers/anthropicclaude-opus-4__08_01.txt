@@ -1,0 +1,34 @@
+I need to analyze whether T5 can fire before T3 in any reachable marking of this Petri net.
+
+Let me trace through the possible states:
+
+**Initial marking:** p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)
+
+From the initial marking:
+- Only T1 is enabled (requires p0)
+- T1 fires: p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)
+
+After T1 fires:
+- T2 is enabled (requires p1)
+- T3 is enabled (requires p2)
+- T4 is NOT enabled (requires both p3 and p4)
+- T5 is NOT enabled (requires p3, and p4 must be empty)
+
+Now I'll check if we can reach a state where T5 is enabled before T3 fires:
+
+**Path 1: Fire T2 first**
+- T2 fires: p0(0), p1(0), p2(1), p3(1), p4(0), p5(0), p6(0)
+- Now T5 IS enabled! (p3 has a token and p4 is empty)
+- T3 is still enabled (requires p2)
+
+So we can fire T5 before T3 with the sequence: T1 → T2 → T5
+
+**Answer: YES**, T5 can fire before T3.
+
+**Concrete firing sequence:** T1 → T2 → T5
+
+**Justification:** After T1 fires (parallel split), both p1 and p2 receive tokens. If we fire T2 first, it produces a token in p3. At this point, T5 becomes enabled because:
+1. p3 contains a token (normal arc requirement satisfied)
+2. p4 contains zero tokens (inhibitor arc requirement satisfied)
+
+Since T3 has not fired yet, p4 remains empty, allowing T5 to fire before T3.
