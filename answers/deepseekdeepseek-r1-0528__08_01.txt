@@ -1,0 +1,38 @@
+### Answer:
+Yes, it is possible for transition T5 to fire before transition T3 in a reachable marking. Below is one concrete firing sequence from the initial marking that demonstrates this, along with a brief justification.
+
+#### Concrete Firing Sequence:
+1. **Initial marking: [p0]: 1, [p1]: 0, [p2]: 0, [p3]: 0, [p4]: 0, [p5]: 0, [p6]: 0**  
+   - T1 is enabled (p0 has a token).  
+   - Fire T1: Consume p0, produce p1 and p2.  
+     **New marking: [p0]: 0, [p1]: 1, [p2]: 1, [p3]: 0, [p4]: 0, [p5]: 0, [p6]: 0**
+
+2. **Current marking: [p0]: 0, [p1]: 1, [p2]: 1, [p3]: 0, [p4]: 0, [p5]: 0, [p6]: 0**  
+   - T2 is enabled (p1 has a token).  
+   - Fire T2: Consume p1, produce p3.  
+     **New marking: [p0]: 0, [p1]: 0, [p2]: 1, [p3]: 1, [p4]: 0, [p5]: 0, [p6]: 0**
+
+3. **Current marking: [p0]: 0, [p1]: 0, [p2]: 1, [p3]: 1, [p4]: 0, [p5]: 0, [p6]: 0**  
+   - T5 is enabled because p3 has a token (normal arc) and p4 has no tokens (inhibitor arc condition satisfied).  
+   - Fire T5: Consume p3, produce p6.  
+     **New marking: [p0]: 0, [p1]: 0, [p2]: 1, [p3]: 0, [p4]: 0, [p5]: 0, [p6]: 1**
+
+   **At this point, T5 has fired.**  
+   - T3 is enabled (p2 has a token), but it has not yet fired.
+
+4. **Current marking: [p0]: 0, [p1]: 0, [p2]: 1, [p3]: 0, [p4]: 0, [p5]: 0, [p6]: 1**  
+   - Fire T3: Consume p2, produce p4.  
+     **New marking: [p0]: 0, [p1]: 0, [p2]: 0, [p3]: 0, [p4]: 1, [p5]: 0, [p6**: 1]  
+   (This step confirms T3 fires after T5, but it is not required for the question.)
+
+**Firing sequence**: T1 → T2 → T5 → T3
+
+#### Justification:
+In this sequence:
+- After firing T1 (Step 1), tokens are placed in p1 and p2.
+- Firing T2 next (Step 2) produces a token in p3 while p4 remains empty (since T3, which produces p4, has not fired).
+- With p3 having a token and p4 empty (0 tokens), T5 is enabled and fires in Step 3. This occurs **before** T3 fires because:
+  - T3 requires a token in p2 to fire, but the inhibitor arc on T5 prevents T5 from firing if p4 has a token (which only T3 can produce).
+  - By firing T2 before T3, we ensure p4 has no tokens, allowing T5 to fire first.
+
+This sequence is reachable because the net is safe (no place ever holds more than one token), and the order of transition firings allows non-synchronized paths (e.g., T2 can fire independently of T3 after T1). Therefore, T5 can fire before T3.

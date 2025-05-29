@@ -1,0 +1,21 @@
+**Improvement Suggestion:**  
+Introduce a non-interrupting **attached timer boundary event** on the [existing `Task_RequestDocs`](#Task_RequestDocs) to enforce the SLA without altering the core flow.  
+Set the timer to `PT48H` (48 hours) relative to process start.  
+1. **If the process naturally progresses to `Task_Triage` within 48 hours**: The timer is ignored.  
+2. **If the timer fires first**: Attach it to an escalation end event (new `End_Escalation`).  
+
+**Why this works**:  
+- `Task_RequestDocs` is guaranteed to be in the critical path if documents are missing, making it reliable for timing SLA violations.  
+- No new tasks or gateways are added—only a boundary event (`BoundaryTimer_48h`), a new end event, and sequence flows.  
+- The process escalates only when stuck pre-triage for >48h, per SLA.  
+
+**XML Snippet (conceptual)**:  
+```xml
+<boundaryEvent id="BoundaryTimer_48h" attachedToRef="Task_RequestDocs" cancelActivity="false">
+  <timerEventDefinition><timeDuration>PT48H</timeDuration></timerEventDefinition>
+  <outgoing>f_timeout</outgoing>
+</boundaryEvent>
+<sequenceFlow id="f_timeout" sourceRef="BoundaryTimer_48h" targetRef="End_Escalation" />
+<endEvent id="End_Escalation"><escalationEventDefinition/></endEvent>
+```  
+**Result**: SLA compliance with minimal changes.
