@@ -41,6 +41,7 @@ class Shared:
                   "microsoft/phi-4",
                   "openai/o1", "openai/o3",
                   "deepseek/deepseek-r1", "deepseek/deepseek-r1-0528",
+                       "deepseek/deepseek-r1-0528-qwen3-8b",
                        "google/gemma-3-4b-it", "google/gemma-3-12b-it", "google/gemma-3-27b-it",
                   ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
                   ("qwen/qwen3-30b-a3b-think", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /think"}),
