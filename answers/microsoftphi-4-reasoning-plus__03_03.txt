@@ -1,0 +1,816 @@
+We are asked to create a "BPMN 2.0 XML document" that meets the requirements from instructions for "Warranty-Replacement v1.3", where we have explicit textual instructions: starting with process start event, validation, parallel tasks, etc.
+
+Process:
+[Titles]
+We have a process with following steps:
+
+1. The process starts when a customer submits an online warranty claim. Starting event: Submit Online Warranty Claim—But instruction said to strictly use provided explicit "flow elements", the text: "Process description – Warranty-Replacement v1.3 (last updated ...)" The document should exactly include textual nodes as tasks.
+
+2. There is then a service agent "validates the claim". If the claim is incomplete, service agent requests missing information and waits for it, then revalidates. Steps: so we have exclusive gateway after a Validate Claim task maybe? We need to do exclusive gate or loop? And instructions: "Model only flow elements mentioned" and "use an exclusive gateway for step 2 completeness", meaning that if claim is complete cycle vs incomplete cycle. So we use an exclusive gateway decision after validation process.
+
+Flow:
+- Customer submits warranty claim (a start event labeled "Online Warranty Claim"?) Actually "online warranty claim", maybe initial start event, then task "Validate Claim" by Service Agent.
+Flow: "Submit online warranty claim" might create a Start event "wrc_start". But the text "submit online warranty claim" maybe not associable directly but we can use start event in BPMN as "Warranty Claim Received".
+- After submission "The process starts when a customer submits an online warranty claim." That means this is "online warranty claim" is start event.
+- Wait for re validation if incomplete.
+
+But must only drop what is specifically arranged: "validate claim" then if incomplete "request missing information" then "wait until received" then revalidate. There's assigned exclusive gateway for step 2 completeness, if not, then re-run validation.
+Maybe structure: "Validate Claim" task that returns to an exclusive gateway that checks "claim is complete" which then goes back to "Validate Claim" if not. Actually tasks: "Request missing information" and then wait until it's received, but the text does not mention tasks, but include a "validate" activity that includes option: if incomplete then "request missing information" and then waits.
+Wait no, the text says: "After validation the agent checks warranty eligibility." But the structure is:
+- submit online warranty claim.
+- A service agent validates claim.
+- If claim is incomplete, agent requests missing information and waits for it and then re-validates.
+So that gate will check claim completeness? So inside "Validate Claim" task if not complete, then a specific exclusive gateway decision: Did we get a complete claim? The difference is that there is an exclusive gateway for "validation completeness" (text says: "Provide an exclusive gateway for step 2 completeness") might be integrated as a Gateway that indicates, "claim incomplete?" But reading "Model only the flow elements explicitly mentioned" means we shouldn't attach additional error-handling or manager approvals, so we only have one revalidate branch. But "if the claim is incomplete, the agent requests missing information and waits until it is received before re-validating." That forms cycle from the exclusive gateway where: branch "complete" leads to parallel tasks, while branch "incomplete" leads to two sequential tasks: "Request missing information" then "Wait for missing info" then go back to verifying? Actually text: "if incomplete, the agent requests missing information and waits until it is received before re-validating." That is a loop pattern. But the BPMN tasks only be unrolled as tasks and gateways. But the instructions: "Flow elements explicitly mentioned" include Task names: "SubmitOnlineWarrantyClaim", "Validate Claim". And also "Request missing information" and "Wait until information is received" probably. But the text said use "online warranty claim" as start event. But careful: They said "Model only the flow elements explicitly mentioned" but we must include appropriate tasks: Online Warranty Claim is not a task, it's a start event. Then "Validate Claim" is a task performed by Service Agent.
+We need then to check "Warranty Eligibility" which then branches: if within warranty then proceed, if out of warranty then send rejection notice, and end process. So that is an exclusive gateway. And for eligible claim must perform two parallel tasks: "Create shipment order" and "Schedule courier pickup". So then also a parallel join then "Update Inventory Records" then "Close the claim" then end process.
+
+We need to assign tasks names exactly: "Online Warranty Claim", "Validate Claim", "Validate Claim" is the re-validation activity? Actually you don't want to label them differently, but it's the same task, repeated? But then we need to add both "Request missing information" and "Wait until it is received" tasks that are only executed if claim is incomplete? We need to check instructions: "If the claim is incomplete, the agent requests missing information and waits until it is received before re-validating." So tasks: "Request Missing Information" and "Wait until information is received" should be included. But instructions say "Model only the flow elements explicitly mentioned", so maybe we should only include explicitly named tasks that appear in description which are "online warranty claim", "Validate Claim", "Check Warranty Eligibility" (though that's not a task, it's an if statement?), "Create Shipment Order", "Schedule Courier Pickup", "Update Inventory Records", "Close Claim", maybe "send rejection notice" is a task? Actually bullet 3 says: "if the product is out of warranty, send rejection notice and end the process". So that means that we must include a task "Send rejection notice" if warranty eligibility fails? But instructions: "no escalations or extra error-handling", so that will be exactly a task that then goes to a end event (the second end event requested is the rejection event).
+
+So tasks:
+
+Start event: "Submit Online Warranty Claim"
+Wait but instructions specify:
+"Starts when a customer submits an online warranty claim." so in BPMN, start event is triggered by message? But we might include a "start event" with "wrc_start" id. It must be "wrc_StartEvent" probably: "wrc_online_warranty_claim".
+"Validate Claim": service agent
+Exclusive gateway for claim completeness: which takes outgoing conditions perhaps "complete" and "incomplete". The branch condition "claim incomplete" triggers "request missing information" and "wait until information is received", then re-enter "Validate Claim" again.
+
+But careful: The instructions: "Use an exclusive gateway for step 2 completeness". This means in our modeling, included in the process after Validate Claim flows, we add an exclusive gateway, then if incomplete goes route then eventually after that, the claim goes back to Validate Claim. But where is the revalidate? The description: "After validation, the agent checks warranty eligibility" which happens after claim is validated and claim is complete. But if incomplete then we add tasks "Request missing information", wait until received, then revalidate claim. So in addition to the "Validate Claim" task, we integrate the exclusive gateway that decides if claim is complete or not (again not error-handling)
+
+Wait a perticular design: 
+- Start: Customer submits a claim [wrc_submitOnlineWarrantyClaim] event.
+- Then immediately it leads to Task "Validate Claim" [wrc_validateClaim].
+- Then we have exclusive gateway: "Claim Complete?"  if yes then go to next step "Check Warranty Eligibility" (maybe actually it's just called "Check Warranty Eligibility", but condition likely "within warranty.or out of warranty" must then be considered, so we might have a second exclusive gateway where outcome decision. But instructions "An exclusive gateway for step2 completeness" refers to validation step. 
+The process of "re-validate" if claim incomplete means the workflow: 
+Task: Validate Claim -> Gateway: Check if claim complete? 
+ Paths:
+    - if yes: continue with checking warranty eligibility.
+    - if no: then tasks: Request Missing Information, Wait until information received, then return to Validate Claim via a connecting link? So need to have a loop: connecting link from the branch "incomplete" after waiting to circle back to "validate claim"? But instructions: "revalidates" The phrase "request missing information" implies a separate task and then waiting.
+
+Double-check instructions bullets: 
+Step 2: "A service agent validates the claim. If the claim is incomplete, the agent requests missing information and waits until it is received before revalidating."
+
+So many BPMN diagrams simply model this as a re-validation loop. But since only explicitly mentioned elements: tasks: "Validate Claim", "Request missing information", "Wait until information is received". Use an exclusive gateway that tests claim completeness.
+
+So after "Validate Claim" we have an Exclusive Gateway that, based on a condition, flows either to "Revalidate" path or to "Check Warranty Eligibility". But then must be a multiplicity: at revalidate branch, after waiting, go to "Validate Claim" again. But then we must update loop? But instructions: "Model only the flow elements explicitly mentioned" so we should not add additional complex patterns, but we must represent loop or cycle. There is not a less structured activity that explicitly mention "Revalidate Claim". But text instructs "before re-validating" means that eventually the agent revalidates the claim. But we would re attach the Validate Claim task after waiting. However, there is a convex cycle. But must "use an exclusive gateway for step2 completeness" suggests that our exclusive gateway is "Decision: Claim Complete?" with two branches: complete and incomplete.
+
+I must define XML elements with id's with prefix "wrc_". Also tasks and gateways must have id with prefix "wrc_". Start events, tasks, gateways, and end events then have same prefix if possible.
+
+Also tasks name must match exactly exactly: "Submit Online Warranty Claim", "Validate Claim", "Request Missing Information", "Wait until information is received", "Check Warranty Eligibility", "Create Shipment Order", "Schedule Courier Pickup", "Update Inventory Records", "Close Claim", "Send rejection notice" etc.
+
+However, "Check Warranty Eligibility" is a description of decision, but instructions "Warranty eligibility" appear explicitly: step 3: "After validation, the agent checks warranty eligibility. - If the product is within warranty, proceed; - If the product is out of warranty, send rejection notice and end the process."
+So we need separate path:
+After validate claim, then there's a gateway for "Warranty Eligibility Criteria"? But instructions say: "Provide an exclusive gateway for step 3 warranty decision" that means that after the validation stage, there is an exclusive gateway that splits: one branch, "Product is within warranty", and branch "Product is out of warranty".
+- "Send Rejection Notice" if out of warranty -> then attach end event (failure one), etc.
+
+Mapping:
+Flow from Validate Claim (assuming claim is complete) -> "Check Warranty Eligibility" gateway. But do we have a task "Check Warranty Eligibility"? The step 3 text: "After validation, the agent checks warranty eligibility." It doesn't define a task by same name, but we can assume a task "Check Warranty Eligibility". But instructions: "Task names must match the text verbatim." The text of step 3 says: "checks warranty eligibility" but then bullet "if within warranty, proceed, if out of warranty, send rejection notice and end the process." There is no explicit task name being used; we need to use the logic. But maybe we are allowed to use "Check Warranty Eligibility" as the name. But instructions might be: "For eligible claims, two activities occur in parallel: Create Shipment Order ... and Schedule Courier Pickup ...". They mention tasks with names "Create Shipment Order" and "Schedule Courier Pickup". For the re-validation process, the text says "validate claim" but then "request missing information" if incomplete.
+
+Step 5: "Once both parallel tasks finish, update inventory records, then close the claim and end process." So tasks "Update Inventory Records" and "Close the Claim" and "end" event. But we might not need a separate end event with marker, because process should end. But the instructions: we need exactly two end events: one for rejection and one for successful completion.
+
+For the parallel tasks: we need a Parallel-Split gateway to branch in parallel to "Create Shipment Order" and "Schedule Courier Pickup", then a parallel join gateway merges them then "Update Inventory Records", then "Close claim", and then successful end event.
+
+Additionally, model the gateway links that join: after the tasks, the join gateway. And then connect to End event "Successful Completion" (which is the success end event) and another end event for rejection: "Send Rejection Notice" -> end.
+
+But one more note: "Model only the flow elements explicitly mentioned." So we should not add a Notify or escalate management, so we drop the error-handling aside from the given instructions.
+
+Let's step structure the diagram:
+
+Process elements, with id placeholders with "wrc_" prefix:
+
+Potential plan:
+<bpmn:process ... id="wrc_process", isExecutable="true" />
+
+Classic: start event, tasks, gateways, etc. We define a start event "wrc_startEvent" with a label "Submit Online Warranty Claim". But note: instruction says process starts when a customer submits an online warranty claim, but we might represent this as start event message event? But perhaps simply a start event with trigger e.g. "wrc_submitOnlineWarrantyClaim".
+
+Define tasks:
+- Service Agent - "Validate Claim": label - but the text says "Validate Claim". So task: "wrc_validateClaim" with text "Validate Claim". The performer attribute could be optional. The process is a Business Process Model and Notation diagram, but we need not declare performer info if not required. But we can include "documentation" or "documentation" if needed.
+
+Now, after "Validate Claim", decision of completeness: need a gateway: "wrc_validateClaimCompletionGateway". That is an exclusive gateway.
+
+Flow from wrc_validateClaim to wrc_validateClaimCompletionGateway.
+
+And from there, if claim incomplete then branch to tasks:
+Task "wrc_requestMissingInformation": the text "Request Missing Information".
+Task "wrc_waitForMissingInformation": label "Wait until information is received".
+Then these tasks go back to the start event for revalidation step. But as a loop, we need to have a connecting link from waiting completion back to the wrc_validateClaim. But careful: The process description: "if the claim is incomplete, the agent requests missing information and waits until it is received before revalidating." This implies we loop back into the "Validate Claim" task. So from "wrc_waitForMissingInformation", we'll have an outgoing sequence flow that links back as a connection from sequential node "wrc_validateClaim" and inside the connection is a sequence flow connection. In BPMN XML, this would be represented as <sequenceFlow> with <xmi:connection handle and id.
+
+Let's consider: the sequence flow from "wrc_waitForMissingInformation" is connecting to a connection where the connection's "targetRef" is wrc_validateClaim. This is a linking element.
+
+So then, if the claim is complete, the flow from the gateway goes to "wrc_checkWarrantyEligibility" which is a task maybe? But the text says check warranty eligibility, but closer reading: Step 3 says: "After validation, the agent checks warranty eligibility." It does not specify a separate task name from "Validate Claim". It might be a task, or might be a decision gateway. But instructions: "Model explicit tasks" so we need to have a task for checking warranty eligibility? Let's check: The instructions for step 3 are: "After validation, the agent checks warranty eligibility."
+Then bullet:
+- If the product is within warranty, proceed.
+- If the product is out of warranty, send rejection notice and end the process.
+And instructions say "provide an exclusive gateway for step 3 warranty decision" So I think we should model an exclusive gateway specifically for warranty eligibility decision. But the textual explicit element "checks warranty eligibility" is not a solid task name. But maybe rephrase "Check Warranty Eligibility" is clarified as the decision such that might result in two outcomes:
+Corresponding tasks after decision:
+If within warranty: then the process goes to parallel tasks:
+Task "wrc_createShipmentOrder"
+Task "wrc_scheduleCourierPickup"
+Then next join gateway after tasks: "wrc_parallelJoin"
+After branch joining then task "wrc_updateInventoryRecords", then "wrc_closeClaim", then end event "wrc_successEndEvent".
+- If out of warranty: then task "wrc_sendRejectionNotice" and then end event "wrc_rejectionEndEvent" two end events.
+
+The instruction says: "There are exactly two end events: one for rejection, one for successful completion."
+
+Now, where is the exclusive gateway for warranty eligibility decision? The instructions says: "Use an exclusive gateway for step 2 completeness" and "another exclusive gateway for step 3 warranty decision." So we need an exclusive gateway for step 2 (the claim completeness evaluation) and an exclusive gateway for step 3 (warranty decision evaluation).
+
+So let's structure the diagram in terms of sequence flows:
+
+1. Start event: wrc_start. Note "Submit Online Warranty Claim" might be start event with event definition message? But instructions just say "when a customer submits an online warranty claim", which is the official trigger. So a start event with a name might be "Submit Online Warranty Claim" (but not a task necessarily)
+
+2. Then immediate Task: "wrc_validateClaim".
+
+3. From wrc_validateClaim, we get out to an exclusive gateway "wrc_claimComplete". That gateway is exclusive.
+We need two outgoing sequence flows from that gateway: one is yes ("complete") and one is no ("incomplete"). But careful: BPMN then also I'm supposed to use an exclusive gateway that distinguishes if claim requires more info.
+Let's denote with condition "complete" and "incomplete". But also instructions: "Model only the flow elements explicitly mentioned" so we should not include error-handling paths. But it's exactly what is needed: the test of completeness.
+
+So from wrc_validateClaim, go to exclusive gateway named "wrc_claimComplete". Then two outgoing flows from the gateway:
+   - Flow condition "complete" goes to "Check Warranty Eligibility" perhaps as a separate gateway? But instruction "validate claim" done, then "After validation, the agent checks warranty eligibility." But tasks: "Check Warranty Eligibility". But instructions: "provide an exclusive gateway for step 3 warranty decision." 
+Should we embed the decision in the process? Likely step 3: "Check Warranty Eligibility" Function and then exclusive gateway "wrc_warrantyEligibility" that splits two flows. But the instructions say: "If the product is within warranty, proceed; if it is out of warranty, send rejection notice and end process." that is an exclusive gateway. So the structure:
+   - complete branch: from the wrc_claimComplete gateway, outflow labeled "complete" that leads to a task "wrc_checkWarrantyEligibility"? But careful because text step 3 is "checks warranty eligibility". It doesn't say task name but we might represent it as a task "wrc_checkWarrantyEligibility" if possible. But then after validation and task check warranty eligibility, an exclusive gateway for decision "wrc_warrantyEligibility" splits.
+But if we separate, then what do we do with the winner branch from wrc_checkWarrantyEligibility? Actually common process: 
+Step 2: Validate Claim -> Gateway (claim complete?) 
+If complete then do "wrc_checkWarrantyEligibility", then do gateway "wrc_warrantyEligibility".
+Wait, the instructions "Use an exclusive gateway for step 3 warranty decision" means that we must have an exclusive gateway that then splits the process flow: either proceed to parallel shipment tasks or to rejection logic. But the direct task could be "wrc_checkWarrantyEligibility" if we want a pure business task that's not a decision. The instructions do not say which is which. The process text "After validation, the agent checks warranty eligibility." In BPMN, we can represent a check as:
+   Task "wrc_checkWarrantyEligibility" that may have a test based on product warranty status.
+   Then a gateway that splits decisions: yes branch (within warranty) and no branch (out-of-warranty).
+But instructions explicitly say "another exclusive gateway for step 3 warranty decision", so we incorporate an exclusive gateway "wrc_warrantyEligibilityDecision" between "wrc_checkWarrantyEligibility" and the parallel tasks.
+However, we have the following text "After validation, the agent checks warranty eligibility. – If the product is within warranty, proceed. – If product is out-of warranty, send rejection notice and end process." That clearly implies that the "check warranty eligibility" step has a binary decision. In BPMN, often that decision is made in an exclusive gateway. But instructions: "Use an exclusive gateway for warranty decision" so definitely, after the task "wrc_checkWarrantyEligibility", an exclusive gateway is needed.
+
+But the instruction says "name every element's id with prefix wrc_" and tasks names must match text verbatim. The text has "validate claim", "check warranty eligibility", "create shipment order", "schedule courier pickup", "update inventory records", "close claim", "send rejection notice". Also "submit online warranty claim" is not said but we assume at start.
+
+We have to also add a parallel-split/parallel-join pair for the two parallel tasks "create shipment order" and "schedule courier pickup".
+
+For incomplete claim branch: After "wrc_validateClaim", and if claim is incomplete then route to: "wrc_requestMissingInformation" then "wrc_waitForMissingInformation", then link back to "wrc_validateClaim".
+
+Now check step 3: "After validation, the agent checks warranty eligibility." 
+Wait, order check: after the revalidation, if complete, then next step is: check warranty eligibility. But we want use an exclusive gateway for the decision: What are the branches from that gateway? 
+- Branch if within warranty: then execute parallel tasks:  "wrc_createShipmentOrder" and "wrc_scheduleCourierPickup". Actually, we must have a parallel-split gateway to execute these concurrently.
+- For branch if not within warranty (like out-of-warranty): then execute "wrc_sendRejectionNotice" and then go to rejection end event.
+So include an exclusive gateway "wrc_isWithinWarranty", maybe with conditions "within warranty" and "out of warranty"? But instructions: "if out of warranty, send rejection notice". Not necessary to use the exact language: "if the product is within warranty, proceed. if product is out of warranty, send rejection notice."
+Thus we need two outgoing flows: one labeled, say, "within warranty" goes to a parallel-split gateway "wrc_parallelSplit" which splits into two tasks concurrently: "wrc_createShipmentOrder" and "wrc_scheduleCourierPickup", which then join at a parallel-join gateway "wrc_parallelJoin", leading to "wrc_updateInventoryRecords" then "wrc_closeClaim", then finally the "wrc_successEndEvent" end event.
+The other branch from "wrc_isWithinWarranty" exclusive gateway for the rejection case goes to "wrc_sendRejectionNotice" task then ends with "wrc_rejectionEndEvent".
+
+The instructions requests exactly two end events: one for rejection (wrc_rejectionEndEvent) and one for success (wrc_successEndEvent). So we can have the rejection branch: "wrc_sendRejectionNotice" then "wrc_rejectionEndEvent", and for successful case: tasks "wrc_updateInventoryRecords", "wrc_closeClaim", then "wrc_successEndEvent."
+
+Double-check instructions regarding end events: "Provide exactly two end events (one for rejection, one for successful completion)."
+
+Double-check check instructions regarding elements:
+• Use a start event.
+• Use an exclusive gateway for step 2 completeness (we call it wrc_claimComplete).
+• Use an exclusive gateway for step 3 warranty decision (we call it wrc_warrantyDecision maybe or wrc_isWithinWarranty? We'll decide naming)
+• Provide exactly two end events (one for rejection, one for successful completion)
+• Prefix every element’s id with "wrc_".
+• Task names must match text exactly.
+
+I need to assign each element's id in BPMN XML. Use complex XML structure with BMPN XML schema. I'll produce a self-contained BPMN 2.0 XML document that defines the flow.
+
+Need to see correct BPMN structure:
+
+I'll produce a minimal BPMN XML document. I'll include BPMN namespace declarations maybe: <definitions ... name="wrc_process">, etc. It must be self-contained.
+
+Plan structure:
+
+<definitions ...>
+  <process id="wrc_process" isExecutable="true">
+    <startEvent id="wrc_submitOnlineWarrantyClaim"> ... label? Use name attribute for start event maybe like "Submit Online Warranty Claim" because instruction says "submit online warranty claim." But instructions say model only the flow elements explicitly mentioned. The start event is not explicitly mentioned as a task, but it's implicitly a start event that is triggered by a customer. But we can label it with "Submit Online Warranty Claim" maybe. However, text said "process starts when a customer submits an online warranty claim". So the start event's attribute (the text used in the combinatorial messages) maybe can be "wrc_submitOnlineWarrantyClaim" and then show label "Submit Online Warranty Claim".
+    But then tasks: "wrc_validateClaim" must follow start event.
+
+But careful: The reconstruction: The submission is already the trigger, but a BPMN start event cannot have outgoing flow. So I'll add sequence flow from start event to "wrc_validateClaim" task. Yes.
+
+- Then tasks: "wrc_validateClaim" (text: Validate Claim)
+- Then exclusive gateway "wrc_claimComplete" from which two sequence flows exit: one for complete, one for incomplete. Condition names: but must be exclusive. So in BPMN element <exclusiveGateway id="wrc_claimComplete"> perhaps add marker "isComplete" and "isIncomplete".
+- From wrc_validateClaim, connect a sequence flow to the exclusive gateway.
+
+- For branch with incomplete claim:
+   - From gateway, outgoing sequence flow with condition "incompleteClaim" leads to task "wrc_requestMissingInformation"
+   - Then from "wrc_requestMissingInformation", sequence flow to task "wrc_waitForMissingInformation"
+   - Then from "wrc_waitForMissingInformation", we need a connecting link (or sequence flow that uses connection reference) that connects back to "wrc_validateClaim". In BPMN 2.0, a connection element is typically modeled as a linkEnd event and a connection element. Instead, we can use a connector with connecting link. The recommended way is using <association> element or <partnerConnection> not exactly. There is a construct "connection" which references a particular sequence flows end.
+
+The "line" that is a connection: if we use a linking element, in BPMN 2.0 XML, we can define the connection point on a sequence flow's outgoing boundary event that then points to a specific node. But I recall that in BPMN 2.0 XML, one links a "connection" within a sequence flow that terminates at a particular participant node. We'll do something like: have a connection element with an "id" and a partnerRef, and then one of the sequence flows will have a "connectionFlow" that references that connection. 
+We need a connection element? Actually, let me recall the correct structure for a cycle linking: To add a "connector" you normally attach an activity "connection", e.g.:
+
+" In BPMN 2.0 XML, if you want to create loop, create a connection element using <connection> element referencing a "wrc_validateClaim". But it's not trivial. 
+I recall that the proper way is to use <sequenceFlow> with a "transition" element is not used. Actually better, let’s use a " pharmacist"? Wait, look up structure: To link two nodes unexpectedly, you can add "connector" in a sequence flow that goes to a "connecting link" (connection element). But I recall that linking elements are declared as follows:
+
+<sequenceFlow id="wrc_seq_...-complete">
+  <sourceRef>...</sourceRef>
+  <targetRef>...</targetRef>
+  <conditionExpression xsi:type="tFormalExpression" language="bpsl">  ... </conditionExpression>
+</sequenceFlow>
+and for the connection, use <association> maybe. But I'm trying to recall the correct BPMN association element that allows linking fluidly.
+
+I recall that in BPMN documents, if you want to connect a sequence flow to a specific point on a task, you define a connecting element as a connection element (that is separate from association). The BPMN 2.0 how to add a connection: 
+Actually, BPMN 2.0 includes the concept of an "unless" activity? No, that's something else.
+
+Wait, let me remember how to add a connecting link properly:
+- Usually a connection is a "connection" element that appears between a sequence flow and a task to indicate a connection to a specific outgoing sequence flow.
+
+We have a cycle: "wrc_waitForMissingInformation" must join back to task "wrc_validateClaim", but specifically to a connection. We typically add connection element with id "wrc_connection_validateClaim" that references the target node "wrc_validateClaim". But how to do that in BPMN 2.0 XML?
+
+I recall that in some BPMN examples, a connection element might look like:
+<connection id="conn_1" sourceRef="wrc_validateClaim" targetRef="wrc_waitForMissingInformation" associationDirection="source" />
+But this is not quite. Instead, BPMN supports connecting an outgoing sequence flow to a gateway connecting element. Let me recall: If you want a connecting link, you define a sequence flow with a connecting element: If an outgoing sequence flow is activated, its targetRef references a connection element, and that connection element has a connection targetRef. 
+I recall the structure for a connection might be along the lines of:
+
+<sequenceFlow id="wrc_missing_info_revalidate" sourceRef="wrc_waitForMissingInformation" targetRef="wrc_validateClaim_connection">
+  <connection id="wrc_validateClaim_connection" connectionDirection="back" connectedToRef="wrc_validateClaim" />
+</sequenceFlow>
+
+But I might need a partner connection, which is to represent connection linking to a node (attributes: "source" or "sourceRef").
+
+I need a small text: "revalidate" that loops back. Let's search memory: In BPMN 2.0, to link back to a task, you use <connection> element, which is described in reference documents. For a connecting link, the element <connector> is not present I think; it's "association" but "connection" in BPMN is available as part of BPMN for linking elements from several land nodes. 
+
+I recall: 
+ "A connecting element is used to define an extension point between two nodes." It is declared as a "connection", and then a sequence flow can specifically target that connection using a <connection> element child.
+
+Given the guidelines: "Do not invent escalations or error-handling paths beyond what is stated." So the revalidation loop is exactly mentioned. I'll produce a connection element with an id "wrc_connection_validateClaim" that connects the "wrc_validateClaim" node (as its position in boundary). And then the outgoing sequence flow from "wrc_waitForMissingInformation" will have an inner <connection> element branch:
+<connection id="wrc_connection_validateClaim" connectingToRef="wrc_validateClaim" />
+ And then sequenceFlow's targetRef is set to that connection id.
+
+Let me produce: I'll create a connection element <connection id="wrc_connection_validateClaim" connectingToRef="wrc_validateClaim"> </connection>
+
+Then the sequence flow from "wrc_waitForMissingInformation" should have <targetRef> assigned as "wrc_connection_validateClaim". And in BPMN XML, also a connecting element, reference that for the connection. But might need to include an arc connecting element inside the sequence flow: Actually, BPMN XML structure: if a sequence flow goes to a connecting element, then the sequence flow's targetRef becomes the id of the connection element.
+
+Wait, from wrc_waitForMissingInformation, we want to return to wrc_validateClaim, but not necessarily connecting to an outgoing sequence flow but to a connection point on the wrc_validateClaim. Wait, I think it's similar to typical cycle pattern. Let me check a well-known pattern: 
+From a waiting task, there is a sequence flow with targetRef equals to a connection element that then attaches to a specific flow node on the original task. But the proper standard procedure: In BPMN, when you connect two separate flows, you add a <connector> element within the sequence flow, like this:
+
+<sequenceFlow id="flowID">
+  <sourceRef>Wrc_task_id</sourceRef>
+  <connection idRef="conn_id" connectionDirection="back" />
+  <targetRef>Next Node</targetRef>
+</sequenceFlow>
+
+While if the target doesn't have multiple incoming connections, you can add connection properties.
+
+I'll find a simplified approach: I'll create a connection element with id "wrc_validateClaim_conn" and then a sequence flow with its targetRef as "wrc_validateClaim_conn" and then in the connection element, I'll reference the node "wrc_validateClaim" as the connection point. 
+
+Wait, let me recall BPMN 2.0 and define connection element with "connectedToRef" attribute? The best approach: <connection id="wrc_returnConnection" connectedToRef="wrc_validateClaim"/></connection> is common notation.
+
+I will assume that the proper BPMN snippet for linking is:
+
+<connection id="wrc_validateClaim_connection" connectedToRef="wrc_validateClaim" />
+
+And then from wrc_waitForMissingInformation, we have a sequenceFlow with targetRef set to "wrc_validateClaim_connection". There is no additional connecting element inside the sequence flow because it's already referencing connection id. That is typically correct.
+
+Let's produce:
+
+<sequenceFlow id="wrc_retryGeneratedValue" sourceRef="wrc_waitForMissingInformation" targetRef="wrc_validateClaim_connection">
+  <extensionElements/>
+</sequenceFlow>
+
+But I'll make unique id for each sequence flow with prefix wrc_ appended accordingly.
+
+I must produce an XML document with BPMN XML root: <definitions> xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" ... 
+
+I can produce something structured:
+
+<definitions ... xmlns:... possibility>
+   <process id="wrc_process" isExecutable="true">
+     <startEvent id="wrc_submitOnlineWarrantyClaim"> 
+         <name>Submit Online Warranty Claim</name>
+     </startEvent>
+     
+     <sequenceFlow id="wrc_flow_startToValidateClaim" sourceRef="wrc_submitOnlineWarrantyClaim" targetRef="wrc_validateClaim"/>
+
+     <task id="wrc_validateClaim">
+         <name>Validate Claim</name>
+     </task>
+     
+     <exclusiveGateway id="wrc_claimComplete">
+         <name>Claim Complete?</name>
+     </exclusiveGateway>
+     
+     <sequenceFlow id="wrc_flow_validateToGateway" sourceRef="wrc_validateClaim" targetRef="wrc_claimComplete"/> 
+     
+     Now two flows from gateway wrc_claimComplete:
+       1. Incomplete branch: Condition "not complete"
+         <sequenceFlow id="wrc_flow_gatewayIncomplete" sourceRef="wrc_claimComplete" targetRef="wrc_requestMissingInformation">
+           <conditionExpression xsi:type="tFormalExpression">
+             <text>!complete</text>
+           </conditionExpression>
+         </sequenceFlow>
+       2. Complete branch: Condition "complete"
+         <sequenceFlow id="wrc_flow_gatewayComplete" sourceRef="wrc_claimComplete" targetRef="wrc_checkWarrantyEligibility">
+           <conditionExpression xsi:type="tFormalExpression">
+             <text>complete</text>
+           </conditionExpression>
+         </sequenceFlow>
+     
+     Now handle incomplete branch tasks:
+         <task id="wrc_requestMissingInformation">
+            <name>Request Missing Information</name>
+         </task>
+         <sequenceFlow id="wrc_flow_requestToWait" sourceRef="wrc_requestMissingInformation" targetRef="wrc_waitForMissingInformation"/>
+         
+         <task id="wrc_waitForMissingInformation">
+            <name>Wait until information is received</name>
+         </task>
+         Use connecting element:
+         <sequenceFlow id="wrc_flow_waitToVerify" sourceRef="wrc_waitForMissingInformation" targetRef="wrc_validateClaim_connection">
+             <extensionElements>
+                <connector>
+                     <!-- Nothing more if needed -->
+                </connector>
+             </extensionElements>
+         </sequenceFlow>
+         
+         <connection id="wrc_validateClaim_connection" connectedToRef="wrc_validateClaim"/>
+     
+     For the complete branch workflow:
+         1. Task "wrc_checkWarrantyEligibility" (if we assume check warranty eligibility is a task)
+         <task id="wrc_checkWarrantyEligibility">
+              <name>Check Warranty Eligibility</name>
+         </task>
+         <sequenceFlow id="wrc_flow_eligibilityToDecision" sourceRef="wrc_checkWarrantyEligibility" targetRef="wrc_warrantyEligibility"/>
+         
+         Now exclusive gateway for decision "wrc_warrantyEligibility":
+         <exclusiveGateway id="wrc_warrantyEligibility">
+            <name>Warranty Eligibility Decision</name>
+         </exclusiveGateway>
+         
+         From this gateway, two sequence flows:
+         Branch 1: Within warranty (we assume condition "within warranty")
+         <sequenceFlow id="wrc_flow_eligibleToParallelSplit" sourceRef="wrc_warrantyEligibility" targetRef="wrc_parallelSplit">
+           <conditionExpression xsi:type="tFormalExpression">
+              <text>within warranty</text>
+           </conditionExpression>
+         </sequenceFlow>
+         
+         Branch 2: Out-of warranty. Then task "wrc_sendRejectionNotice"
+         <sequenceFlow id="wrc_flow_eligibilityToRejection" sourceRef="wrc_warrantyEligibility" targetRef="wrc_sendRejectionNotice">
+           <conditionExpression xsi:type="tFormalExpression">
+              <text>out of warranty</text>
+           </conditionExpression>
+         </sequenceFlow>
+         
+         Now parallel branch: "wrc_parallelSplit", which is a parallel gateway. However BPMN 2.0 doesn't include parallel gateway separately, but it is similar to exclusive gateway. But recall instructions: "Use a parallel-split / parallel-join gateway pair for eligible claims." So we need to add a parallel gateway.
+         In BPMN XML, parallel gateway is similar to exclusive gateway, but its marker is "ParallelGateway". So we need to mark attribute gatewayType with 'Undefined' for exclusive and "ParallelGateway" for parallel gateway, I recall: <gateway> element for exclusive gateway? 
+         Actually, how to denote exclusive vs. parallel in BPMN XML?
+         Gateways have element <exclusiveGateway> and <inclusiveGateway> for inclusive, and <parallelGateway> for parallel gateways.
+         So for parallel split, we use a <parallelGateway> element.
+         So:
+         <parallelGateway id="wrc_parallelSplit">
+             <name>Parallel Split</name>
+         </parallelGateway>
+         And then from parallelGateway, we create two outgoing sequence flows to "wrc_createShipmentOrder" and "wrc_scheduleCourierPickup".
+         <sequenceFlow id="wrc_flow_splitToShipmentOrder" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentOrder"/>
+         <sequenceFlow id="wrc_flow_splitToCourierPickup" sourceRef="wrc_parallelSplit" targetRef="wrc_scheduleCourierPickup"/>
+         
+         Now tasks on parallel branch:
+         <task id="wrc_createShipmentOrder">
+            <name>Create Shipment Order</name>
+         </task>
+         <subProcess> if necessary? But pair as separate tasks.
+         <task id="wrc_scheduleCourierPickup">
+            <name>Schedule Courier Pickup</name>
+         </task>
+         
+         And then after these parallel tasks complete, join using parallel gateway as join.
+         <parallelGateway id="wrc_parallelJoin">
+              <name>Parallel Join</name>
+         </parallelGateway>
+         Then sequence flows from both tasks converge to parallel gateway:
+         <sequenceFlow id="wrc_flow_orderToJoin" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoin"/>
+         <sequenceFlow id="wrc_flow_pickupToJoin" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoin"/>
+         
+         Then after join, we add tasks "wrc_updateInventoryRecords" then "wrc_closeClaim", then success end event "wrc_successEndEvent"
+         
+         <sequenceFlow id="wrc_flow_joinToUpdate" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventoryRecords"/>
+         <task id="wrc_updateInventoryRecords">
+             <name>Update Inventory Records</name>
+         </task>
+         <sequenceFlow id="wrc_flow_updateToClose" sourceRef="wrc_updateInventoryRecords" targetRef="wrc_closeClaim"/>
+         <task id="wrc_closeClaim">
+             <name>Close Claim</name>
+         </task>
+         <sequenceFlow id="wrc_flow_closeToSuccess" sourceRef="wrc_closeClaim" targetRef="wrc_successEndEvent"/>
+         <endEvent id="wrc_successEndEvent">
+             <name>Process Complete</name>
+         </endEvent>
+         
+         Now for rejection branch: After gateway "wrc_warrantyEligibility" going to task "wrc_sendRejectionNotice".
+         <sequenceFlow id="wrc_flow_eligibilityToRejection" already created; now task:
+         <task id="wrc_sendRejectionNotice">
+             <name>Send rejection notice</name>
+         </task>
+         And sequence flow from rejection task to rejection end event:
+         <sequenceFlow id="wrc_flow_rejectionToEnd" sourceRef="wrc_sendRejectionNotice" targetRef="wrc_rejectionEndEvent"/>
+         <endEvent id="wrc_rejectionEndEvent">
+             <name>Rejection Complete</name>
+         </endEvent>
+         
+         Now re-read instructions: "Use exactly two end events (one for rejection, one for successful completion)". We already have two: wrc_successEndEvent and wrc_rejectionEndEvent. No extra end events.
+     
+         Check that we have exclusive gateways: wrc_claimComplete and wrc_warrantyEligibility.
+     
+         In our process, we haven't used the text for the "Check Warranty Eligibility" task. But we can include it or not. The problem statement's requirement explicitly instructs to "Model only the flow elements explicitly mentioned", so maybe we only include tasks that are explicit in description? The description (step 3) says: "After validation, the agent checks warranty eligibility." and then bullet "If product is within warranty, proceed", "If product is out of warranty, send rejection notice and end process." But the text never specifically names a task for checking warranty eligibility, so maybe I should not include an explicit task "Check Warranty Eligibility". Instead, the text explicitly mentions "Send rejection notice" only for out-of-warranty path. And for in warranty, the parallel-split tasks "Create shipment order" and "Schedule courier pickup" follow immediately. 
+
+         But instructions from the problem: "Model only the flow elements explicitly mentioned" so we must model: a start event ("submit online warranty claim"), a "Validate Claim" task, a loop for incomplete claims, a step about "check warranty eligibility" and an exclusive gateway to decide warranty eligibility outcomes, and then tasks "Create Shipment Order", "Schedule Courier Pickup", "Update Inventory Records", "Close Claim" then finish on end event. Also "Send Rejection Notice" for out-of-warranty branch.
+
+         However, the text said "After validation, the agent checks warranty eligibility" before deciding on parallel tasks. It does not explicitly name a task "Check Warranty Eligibility". But maybe I need to include a gateway decision with labels "Warranty Eligibility". The instructions say "Provide an exclusive gateway for step 3 warranty decision", so that must be represented. But text says "After validation, the agent checks warranty eligibility" typically that might be represented as an exclusive gateway "wrc_warrantyEligibility", with two outgoing flows, one labeled "within warranty", one labeled "out of warranty". But then the "within warranty" flows to parallel tasks. So I must include a decision point with condition like "within warranty" and "out of warranty", but no task is specified. But then I must include the steps after that. As per instructions, we do not create a separate "Check Warranty Eligibility" task because that is not "explicitly mentioned" as a separate flow element. The element "Check warranty eligibility" is only mentioned in the description as a check. So maybe I should represent that as an exclusive gateway.
+         
+         And then for the no-warranty branch, the only explicit flow element is "Send rejection notice" and then end. 
+         But form conditions: The process sequence likely is: Validate Claim -> SubmitOnline Warranty Claim Revalidation loop? But then after validation is complete, then decision "Warranty Eligibility" must be modeled as an exclusive gateway that diverges into two paths:
+         Path 1: "Within warranty" vs Path 2: "Out of warranty".
+         
+         So I can omit the "CheckWarrantyEligibility" task. Instead after the "wrc_validateClaim" and chosen branch "complete", then do:
+             <exclusiveGateway id="wrc_warrantyEligibility">
+                 <name>Warranty Eligibility Decision</name>
+             </exclusiveGateway>
+             
+             <sequenceFlow id="wrc_flow_eligibleToParallel" sourceRef="wrc_validateClaim" targetRef="wrc_gateway?" Not exactly. Wait, what's the proper connection? I need a connection from the claim validation to the award decision exclusively or must a separate node be inserted? Possibly the process goes: 
+             Start -> Validate Claim -> Claim Complete Gateway -> if complete: Then go to Warranty Eligibility Decision (explicit exclusive gateway). So that will be:
+             <sequenceFlow id="wrc_flow_completeToWarrantyDecision" sourceRef="wrc_claimComplete" (condition complete) targetRef="wrc_warrantyEligibility"/>
+         But wait, but earlier I had a "wrc_checkWarrantyEligibility" task between "wrc_validateClaim" gateway and "wrc_warrantyEligibility". I originally inserted that because it was "after validation, the agent checks warranty eligibility". But the text: "checks warranty eligibility" is an action, not a separate stage. And then it says: "If product is within warranty, proceed", so maybe the check is embedded in the decision branch. But instructions: "Provide an exclusive gateway for step 3 warranty decision" suggests that we need to insert a gateway as the decision point. But the text "checks warranty eligibility" might be represented as a task. Hmm.
+
+         There is ambiguity on whether the "check warranty eligibility" is represented as a task or a decision node. The text: "After validation, the agent checks warranty eligibility." implies that the agent examines production warranty status. But then the text specifically instructs: "Use a ... gateway for step 3 warranty decision." That implies that that check is done in an exclusive gateway, not a dedicated task. So I'll remove the "wrc_checkWarrantyEligibility" task and instead connect outflow from the evaluation gateway (wrc_claimComplete) to the warranty eligibility decision gateway. But then there is a gap where some check is done, but instructions are not entirely clear. 
+         
+         Possibly the correct flow should be:
+         for complete branch after wrc_validateClaim:
+             if claim is complete then:
+                <exclusiveGateway id="wrc_warrantyEligibility"> -- decision node for warranty.
+                Then branch: if within warranty then go to parallel tasks, else if out-of-warranty then rejection notice.
+         So I'll modify the complete branch from wrc_claimComplete to go directly to wrc_warrantyEligibility.
+         Then from wrc_warrantyEligibility, branch if within warranty then go to a parallel split and join, else branch to rejection.
+         Let me re-read the description:
+         "After validation, the agent checks warranty eligibility. 
+          - If the product is within warranty, proceed.
+          - If the product is out of warranty, send rejection notice and end the process."
+         So indeed, the decision is a must. There is no separate task "Check warranty eligibility". So I need to remove the "wrc_checkWarrantyEligibility" task from earlier.
+         So after wrc_claimComplete, condition "complete" flow should lead directly to wrc_warrantyEligibility.
+         But then what does the "check warranty eligibility" step become? It becomes the process at the exclusive gateway wrc_warrantyEligibility.
+         I can use wrc_warrantyEligibility exclusive gateway with condition expressions "within warranty" and "out of warranty".
+         So flow from wrc_claimComplete complete branch: 
+         <sequenceFlow id="wrc_flow_gatewayCompleteToWarranty" sourceRef="wrc_claimComplete" targetRef="wrc_warrantyEligibility">
+           <conditionExpression xsi:type="tFormalExpression">
+              <text>complete</text>
+           </conditionExpression>
+         </sequenceFlow>
+
+         Then from wrc_warrantyEligibility, two outgoing flows:
+            if within warranty: 
+               <sequenceFlow id="wrc_flow_warrantyWithinToSplit" sourceRef="wrc_warrantyEligibility" targetRef="wrc_parallelSplit">
+                  <conditionExpression xsi:type="tFormalExpression">
+                    <text>within warranty</text>
+                  </conditionExpression>
+               </sequenceFlow>
+            if out-of warranty:
+               <sequenceFlow id="wrc_flow_warrantyOutOfToRejection" sourceRef="wrc_warrantyEligibility" targetRef="wrc_sendRejectionNotice">
+                  <conditionExpression xsi:type="tFormalExpression">
+                    <text>out of warranty</text>
+                  </conditionExpression>
+               </sequenceFlow>
+        
+         Then after the parallel split, after the parallel join, then tasks "update inventory records" and "close claim", and then end event.
+         So then we have tasks: update inventory and close claim tasks which exist in parallel after join.
+         And then the parallel split: must use a parallel gateway to split tasks "create shipment order" and "schedule courier pickup". And then join with a parallel gateway join.
+         
+         So let me restructure the modeling:
+
+         Starting flow:
+           startEvent -> Validate Claim
+           Validate Claim -> exclusive gateway (wrc_claimComplete)
+                 From wrc_claimComplete:
+                     - flow with condition "incomplete": goes to Request Missing Info -> Wait for missing info -> connection back to Validate Claim
+                     - flow with condition "complete": goes to wrc_warrantyEligibility (Warranty Eligibility Decision)
+           
+         Then at wrc_warrantyEligibility exclusive gateway:
+                 Flow: if within warranty: goes to a parallel gateway that splits into tasks: "Create Shipment Order" and "Schedule Courier Pickup", then join at a parallel gateway, then "Update Inventory Records", then "Close Claim" then end event "Process Complete"
+                 Flow: if out of warranty: goes to task "Send rejection notice" then end event "Rejection Complete".
+
+         That covers all explicit text.
+
+         Now we need to add tasks in order:
+
+         Start event: id "wrc_submitOnlineWarrantyClaim"
+         Sequence flow from start to wrc_validateClaim.
+         Task: "wrc_validateClaim" [name: Validate Claim].
+           Gateways:
+             <exclusiveGateway id="wrc_claimComplete"> ...
+         For condition expressions, I'll use something like "complete" and its negative condition "incomplete" or "not complete".
+         I can set conditionExpression text "complete" and "incomplete". 
+         It might look like:
+         <conditionExpression xsi:type="tFormalExpression">
+              <text>complete</text>
+         </conditionExpression>
+         and the other <conditionExpression xsi:type="tFormalExpression">
+              <text>incomplete</text>
+         </conditionExpression>
+         But instructions say "if claim is incomplete", so maybe label expression "incompleteClaim"? But I'll use "incomplete" for simplicity.
+         
+         Then from negative branch:
+             Task: "wrc_requestMissingInformation" [name exactly: Request Missing Information].
+             Then flow to "wrc_waitForMissingInformation" task.
+         Then from "wrc_waitForMissingInformation", we want to connect back to "wrc_validateClaim" via a connection element. 
+             To create connection, I create a <connection id="wrc_validateClaim_connection" connectedToRef="wrc_validateClaim"/>
+             And then sequence flow from wrc_waitForMissingInformation has targetRef set to "wrc_validateClaim_connection".
+
+         Then on the positive branch from wrc_claimComplete:
+             Sequence flow from wrc_claimComplete to wrc_warrantyEligibility exclusive gateway.
+         Now wrc_warrantyEligibility is an exclusive gateway for warranty decision. But note that instructions "use an exclusive gateway for warranty decision" yes:
+             <exclusiveGateway id="wrc_warrantyEligibility"> with maybe a <name>Warranty Eligibility Decision</name>
+         Then two outgoing flows from this gateway:
+             - branch if within warranty: labeled "within warranty" -> sequence flow from wrc_warrantyEligibility to a parallel gateway "wrc_parallelSplit".
+             - branch if out of warranty: labeled "out of warranty" -> sequence flow from wrc_warrantyEligibility to task "wrc_sendRejectionNotice" [name: Send rejection notice].
+         Then for the in warranty branch:
+             From parallel gateway "wrc_parallelSplit":
+                 two outgoing flows:
+                     one to "wrc_createShipmentOrder" task (name exactly: Create shipment order).
+                     one to "wrc_scheduleCourierPickup" task (name exactly: Schedule courier pickup).
+             Then these tasks converge to a parallel join gateway "wrc_parallelJoin":
+                 create sequence flows from wrc_createShipmentOrder to wrc_parallelJoin, and from wrc_scheduleCourierPickup to wrc_parallelJoin.
+             Then sequence flow from wrc_parallelJoin to "wrc_updateInventoryRecords" task (name: Update inventory records).
+             Then sequence flow from there to "wrc_closeClaim" task (name: Close claim).
+             Then sequence flow to "wrc_successEndEvent" which is an end event (maybe name: Process Complete).
+         For the out-of-warranty branch:
+             Sequence flow from wrc_warrantyEligibility outflow with condition "out of warranty" to wrc_sendRejectionNotice task.
+             Then from wrc_sendRejectionNotice sequence flow to wrc_rejectionEndEvent end event (name: Rejection Complete).
+
+         We must ensure exactly two end events, so wrc_successEndEvent and wrc_rejectionEndEvent.
+
+         Also instruction: "Prefix every element's id with 'wrc_'" which means: id of element, the id value should be "wrc_" + some unique identifier. We already did that.
+         However, many BPMN elements have id's like ordered sequence flows, but we must ensure each id has prefix "wrc_".
+
+         Also instruction: "Task names must match text verbatim." So tasks: "Submit Online Warranty Claim", "Validate Claim", "Request Missing Information", "Wait until information is received", "Create Shipment Order", "Schedule Courier Pickup", "Update Inventory Records", "Close Claim", and "Send rejection notice". 
+         Also for the gateway, we might give it names such as "Claim Complete?" and "Warranty Eligibility Decision". Since the text did not specify exact names except for items that are meant to be tasks. But the instructions said "Model only the flow elements explicitly mentioned" so anyway.
+
+         We are not allowed to invent additional tasks, so I assume that "Check Warranty Eligibility" is not a separate explicit task.
+
+         So then process: start event "Submit Online Warranty Claim" is the process trigger. But maybe we label it "Submit Online Warranty Claim" but the text said "customer submits an online warranty claim". The BPMN start event with name "Submit Online Warranty Claim" is fine.
+         
+         Now BPMN namespace: I'll use xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" likely.
+         Add xmlns:xsi and http://www.omg.org/spec/BPMN/20100524/MODEL and possibly	http://www.omg.org/spec/DD/20100524/DI.
+
+         I'll produce a full XML. I'll include header <definitions ...>.
+
+         I'll produce minified correct XML. But instructions: "Return a single self-contained BPMN 2.0 XML document." So I'll provide a complete BPMN 2.0 XML file that contains a <definitions> element with <process> inside, and then inside all elements. Yes.
+
+         We then produce everything as one XML document.
+
+         My XML structure:
+
+         <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/BPMN/20100524/DI" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL">
+         <process id="wrc_process" isExecutable="true">
+            <startEvent id="wrc_submitOnlineWarrantyClaim">
+                <name>Submit Online Warranty Claim</name>
+                <extensionElements>
+                    <item Defence? Possibly a message event? But not required.
+                </extensionElements>
+            </startEvent>
+            <sequenceFlow id="wrc_flow_startToValidateClaim" sourceRef="wrc_submitOnlineWarrantyClaim" targetRef="wrc_validateClaim">
+                <!-- no condition -->
+            </sequenceFlow>
+            <!-- validate claim and then exclusive gateway for claim completeness -->
+            <task id="wrc_validateClaim">
+                <name>Validate Claim</name>
+                <documentation>Service Agent validates the claim.</documentation>
+            </task>
+            <sequenceFlow id="wrc_flow_validateToGateway" sourceRef="wrc_validateClaim" targetRef="wrc_claimComplete">
+                <!-- no condition -->
+            </sequenceFlow>
+            <exclusiveGateway id="wrc_claimComplete">
+                <name>Claim Complete?</name>
+            </exclusiveGateway>
+            <!-- Incomplete branch: If claim is incomplete -->
+            <sequenceFlow id="wrc_flow_gatewayIncomplete" sourceRef="wrc_claimComplete" targetRef="wrc_requestMissingInformation">
+                <conditionExpression xsi:type="tFormalExpression">
+                    <text>incomplete</text>
+                </conditionExpression>
+            </sequenceFlow>
+            <task id="wrc_requestMissingInformation">
+                <name>Request Missing Information</name>
+            </task>
+            <sequenceFlow id="wrc_flow_requestToWait" sourceRef="wrc_requestMissingInformation" targetRef="wrc_waitForMissingInformation">
+                <!-- no condition -->
+            </sequenceFlow>
+            <task id="wrc_waitForMissingInformation">
+                <name>Wait until information is received</name>
+            </task>
+            <!-- connection back to wrc_validateClaim -->
+            <sequenceFlow id="wrc_flow_waitToVerify" sourceRef="wrc_waitForMissingInformation" targetRef="wrc_validateClaim_connection">
+                <!-- no condition -->
+            </sequenceFlow>
+            <connection id="wrc_validateClaim_connection" connectedToRef="wrc_validateClaim">
+                <!-- Optionally, could include defining inbound connection marker -->
+            </connection>
+            <!-- Complete branch: if claim is complete -->
+            <sequenceFlow id="wrc_flow_gatewayComplete" sourceRef="wrc_claimComplete" targetRef="wrc_warrantyEligibility">
+                <conditionExpression xsi:type="tFormalExpression">
+                    <text>complete</text>
+                </conditionExpression>
+            </sequenceFlow>
+            <!-- Now warranty eligibility decision -->
+            <exclusiveGateway id="wrc_warrantyEligibility">
+                <name>Warranty Eligibility Decision</name>
+            </exclusiveGateway>
+            <!-- Branch if within warranty -->
+            <parallelGateway id="wrc_parallelSplit">
+                <name>Parallel Split</name>
+            </parallelGateway>
+            <sequenceFlow id="wrc_flow_eligibilityWithin" sourceRef="wrc_warrantyEligibility" targetRef="wrc_parallelSplit">
+                <conditionExpression xsi:type="tFormalExpression">
+                    <text>within warranty</text>
+                </conditionExpression>
+            </sequenceFlow>
+            <!-- Branch if out of warranty -->
+            <task id="wrc_sendRejectionNotice">
+                <name>Send rejection notice</name>
+            </task>
+            <sequenceFlow id="wrc_flow_eligibilityOutOf" sourceRef="wrc_warrantyEligibility" targetRef="wrc_sendRejectionNotice">
+                <conditionExpression xsi:type="tFormalExpression">
+                    <text>out of warranty</text>
+                </conditionExpression>
+            </sequenceFlow>
+            <!-- Parallel tasks for in warranty branch -->
+            <task id="wrc_createShipmentOrder">
+                <name>Create Shipment Order</name>
+            </task>
+            <task id="wrc_scheduleCourierPickup">
+                <name>Schedule Courier Pickup</name>
+            </task>
+            <parallelGateway id="wrc_parallelJoin">
+                <name>Parallel Join</name>
+            </parallelGateway>
+            <sequenceFlow id="wrc_flow_splitToShipment" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentOrder">
+                <!-- Optionally can include marker: assignment in parallel paths -->
+            </sequenceFlow>
+            <sequenceFlow id="wrc_flow_splitToPickup" sourceRef="wrc_parallelSplit" targetRef="wrc_scheduleCourierPickup">
+            </sequenceFlow>
+            <sequenceFlow id="wrc_flow_shipmentToJoin" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoin">
+            </sequenceFlow>
+            <sequenceFlow id="wrc_flow_pickupToJoin" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoin">
+            </sequenceFlow>
+            <!-- After parallel join -->
+            <task id="wrc_updateInventoryRecords">
+                <name>Update Inventory Records</name>
+            </task>
+            <sequenceFlow id="wrc_flow_joinToUpdate" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventoryRecords">
+            </sequenceFlow>
+            <task id="wrc_closeClaim">
+                <name>Close Claim</name>
+            </task>
+            <sequenceFlow id="wrc_flow_updateToClose" sourceRef="wrc_updateInventoryRecords" targetRef="wrc_closeClaim">
+            </sequenceFlow>
+            <endEvent id="wrc_successEndEvent">
+                <name>Process Complete</name>
+            </endEvent>
+            <sequenceFlow id="wrc_flow_closeToEnd" sourceRef="wrc_closeClaim" targetRef="wrc_successEndEvent">
+            </sequenceFlow>
+            <!-- Rejection branch: after out-of-warranty -->
+            <sequenceFlow id="wrc_flow_rejectionToEnd" sourceRef="wrc_sendRejectionNotice" targetRef="wrc_rejectionEndEvent">
+            </sequenceFlow>
+            <endEvent id="wrc_rejectionEndEvent">
+                <name>Rejection Complete</name>
+            </endEvent>
+         </process>
+         <!-- Optionally, include BPMN diagram definition parts (BPMNDI) if required, but not necessary -->
+         <bpmndi:BPMNDiagram id="wrc_diagram_1">
+             <bpmndi:BPMNPlane id="wrc_plane_1" bpmnElement="wrc_process">
+             </bpmndi:BPMNPlane>
+         </bpmndi:BPMNDiagram>
+         <dc:Diagram id="wrc_diagram_1_dc">
+         </dc:Diagram>
+         </definitions>
+
+         That should be a complete and valid BPMN 2.0 XML document.
+
+         However, the text instructs "Return a single self-contained BPMN 2.0 XML document." So need to include all required namespaces. But I've already added.
+         
+         Check explicit uses of BPMN elements: start event, tasks, exclusive gateway, parallel gateway, connection element, sequence flow, two end events. Attributes in id all begin with wrc_ (check that: 
+             wrc_submitOnlineWarrantyClaim,
+             wrc_flow_startToValidateClaim,
+             wrc_validateClaim,
+             wrc_flow_validateToGateway,
+             wrc_claimComplete,
+             wrc_flow_gatewayIncomplete,
+             wrc_requestMissingInformation,
+             wrc_flow_requestToWait,
+             wrc_waitForMissingInformation,
+             wrc_flow_waitToVerify,
+             wrc_validateClaim_connection,
+             wrc_flow_gatewayComplete,
+             wrc_warrantyEligibility,
+             wrc_parallelSplit,
+             wrc_flow_eligibilityWithin,
+             wrc_sendRejectionNotice,
+             wrc_flow_eligibilityOutOf,
+             wrc_createShipmentOrder,
+             wrc_scheduleCourierPickup,
+             wrc_parallelJoin,
+             wrc_flow_splitToShipment,
+             wrc_flow_splitToPickup,
+             wrc_flow_shipmentToJoin,
+             wrc_flow_pickupToJoin,
+             wrc_updateInventoryRecords,
+             wrc_flow_joinToUpdate,
+             wrc_closeClaim,
+             wrc_flow_updateToClose,
+             wrc_successEndEvent,
+             wrc_flow_closeToEnd,
+             wrc_flow_rejectionToEnd,
+             wrc_rejectionEndEvent,
+             wrc_diagram_1,
+             wrc_plane_1,
+             wrc_diagram_1_dc.
+         Everything is prefixed with "wrc_" except the ones in BPMN DI are maybe correct, but they are for diagram, they might not need prefix but they do? They said "prefix every element's id with wrc_". That might include the entire doc? But the BPMN recommendations might be okay to prefix even the diagram ones? But then instructions file "Provide exactly two end events" I have 2: wrc_successEndEvent and wrc_rejectionEndEvent. But then do I have 2 branch end events? Yes. So it's correct.
+         
+         I'll now produce the final version while re-checking for consistency:
+         
+         - Start event: wrc_submitOnlineWarrantyClaim has text "Submit Online Warranty Claim", matching text since claim is submitted, but it might say "Submit Online Warranty Claim" exactly and not "Online Warranty Claim"? The text "submit online warranty claim" is ambiguous; however, instructions are "submit online warranty claim" in step 1. But I'll label the start event as "Submit Online Warranty Claim" to match the textual description.
+         
+         - Task "wrc_validateClaim": Label matches "Validate Claim".
+         - If claim incomplete: Task "wrc_requestMissingInformation" (matches exact uppercase "Request Missing Information" from text? But text said "Request missing information". But instructions: "Task names must match text verbatim." So check text exactly: "If the claim is incomplete, the agent requests missing information" so the actual text is "Request missing information" (not capitalized) Actually text: "the agent requests missing information". It doesn't specify a capitalization convention. But instructions say the task names must match exactly the text. The text actually says "validate claim", "request missing information", "wait until information is received", "check warranty eligibility", "create shipment order", "schedule courier pickup", "update inventory records", "close claim", "send rejection notice". The names above are slightly altered if we assume CamelCase. But instructions: "Task names must match text verbatim". So they must be exactly as in the text (maybe in all lower case)? But they said: "Process description – Warranty-Replacement v1.3", the actual tasks might be exactly "Submit Online Warranty Claim", "Validate Claim", "Request Missing Information", "Wait until information is received", "Create Shipment Order", "Schedule Courier Pickup", "Update Inventory Records", "Close Claim", "Send rejection notice". The text has "Send rejection notice" but I see in my diagram that I'll label it "Send rejection notice" exactly? Yes, I'll do that. But previously I had "Send rejection notice" with initial capital S? Actually, the text "send rejection notice" (all lowercase except first letter? The text says "send rejection notice and end the process" non cap, but then "if within warranty, proceed. if out of warranty, send rejection notice" might be "Send rejection notice". But instructions: "Task names must match text verbatim" means the text I must use exactly what is in the process description. The process description bullets in the question: 
+            Step 2 "Validate Claim", Step 2 (revalidate if incomplete): "agent requests missing information" and "agent waits until it is received", Step 3: "checks warranty eligibility", then "send rejection notice", step 4: parallel tasks: "Create shipment order" and "Schedule courier pickup", step 5: "update inventory records", then "close the claim". But it's not entirely explicit that the warrant check is a separate flow element? Possibly I should follow the instructions precisely: use the exact text from the bullets that are tasks. That means tasks: "Online Warranty Claim" might come in the submission? But the text "submit" is not in the bullet, it says "when a customer submits", which might not be a task but a start event. And "revalidates" is not listed as a separate task (the revalidation is implicit: it just loops back to validation).
+            So I'll check each:
+            Simplest tasks: 
+            - Submit online warranty claim (start event).
+            - Validate Claim (task).
+            - (loop branch): if incomplete, then "Request Missing Information" (task) and "Wait until information is received" (task) are the activities from step 2.
+            - Check warranty eligibility: possibly an implicit decision made at the exclusive gateway "wrc_warrantyEligibility".
+            - If product within warranty, then tasks: "Create Shipment Order" and "Schedule Courier Pickup" (parallel)
+            - Else, "Send rejection notice" (which is a task in the default branch).
+            - Then update inventory records is a task
+            - Then close claim is a task.
+            - Then end event.
+
+            So I'll set the task names exactly:
+            - Validate Claim (cap V, no change) is good
+            - Request Missing Information: exactly as is "Request Missing Information"
+            - Wait until information is received: maybe "Wait until information is received"
+            - Create Shipment Order: is that exactly as text? bullet 4: "create shipment order" - maybe we might want to use "Create Shipment Order". 
+            - Schedule courier pickup: the text: "schedule courier pickup" (maybe "Schedule Courier Pickup"). 
+            - Update Inventory Records: text says "update inventory records"
+            - Close Claim: text says "close the claim", but maybe task name be "Close Claim".
+            - Send rejection notice: text says "send rejection notice".
+
+            I must check instructions "Task names must match the text verbatim" so I will produce task names exactly as:
+            "Validate Claim"
+            "Submit Online Warranty Claim" for the start event, maybe "Submit Online Warranty Claim" ok.
+            "Request Missing Information"
+            "Wait until information is received"
+            "Create Shipment Order"
+            "Schedule Courier Pickup"
+            "Update Inventory Records"
+            "Close Claim"
+            "Send rejection notice"
+
+            but note pattern: Some tasks use capital letters and some use lower case letters. I'll choose to use plain text matching exact wording if possible. The text "online warranty claim" case? It might be "Submit Online Warranty Claim"? There's no explicit capitalization instructions. I will assume the following names (matching what I already used):
+              wrc_submitOnlineWarrantyClaim (start event)
+              wrc_validateClaim
+              wrc_requestMissingInformation
+              wrc_waitForMissingInformation
+              wrc_createShipmentOrder
+              wrc_scheduleCourierPickup
+              wrc_updateInventoryRecords
+              wrc_closeClaim
+              wrc_sendRejectionNotice
+
+            But I must check: do I have a "Check Warranty Eligibility" task? No, because I replaced it by an exclusive gateway wrc_warrantyEligibility. But maybe I should include it as an empty task? The text "checks warranty eligibility" might be represented in the gateway name. But instructions said "Model only the flow elements explicitly mentioned" So since "Check Warranty Eligibility" is not mentioned explicitly as a separate flow element, I keep only the gateway.
+
+            But the text says "checks warranty eligibility" in step 3. That is the check, but nothing distinct, so I only put a decision node (gateway) to decide:
+                "within warranty" and "out of warranty".
+            But then, if the condition is "within warranty", then flow leads to parallel tasks.
+            Otherwise, if "out of warranty", then it leads to "send rejection notice" and then end.
+
+         So it's consistent.
+
+         Also, the instructions said "revalidate" when claim incomplete. So that cycle is implemented correctly.
+
+         I must check that the BPMN XML structure is well formed and each sequence flow should have:
+         <sourceRef> and <targetRef> elements.
+         The attribute names for conditionExpression in BPMN XML typically require element <conditionExpression xsi:type="tFormalExpression"><text>i</text></conditionExpression>
+         That is acceptable.
+
+         I'll now list all the elements:
+
+         Write final XML document:
+
+         Labeling:
+         -RootElement: definitions ... then <process>.
+         All defined as above.
+
+         Let me check the id prefixes: 
+         startEvent: id "wrc_submitOnlineWarrantyClaim" is a start event so should have an id with wrc_. That is good.
+         Then sequence flows: "wrc_flow_startToValidateClaim", etc.
+         Task: "wrc_validateClaim" is good.
+         exclusiveGateway for claim complete: "wrc_claimComplete".
+         Sequence flow for incomplete branch: "wrc_flow_gatewayIncomplete".
+         Task: "wrc_requestMissingInformation".
+         Sequence flow: "wrc_flow_requestToWait".
+         Task: "wrc_waitForMissingInformation".
+         Sequence flow: "wrc_flow_waitToVerify" uses targetRef "wrc_validateClaim_connection".
+         Then connection: "wrc_validateClaim_connection" with connectedToRef "wrc_validateClaim".
+         Then positive branch: "wrc_flow_gatewayComplete" from claim complete flows to "wrc_warrantyEligibility".
+         Then exclusiveGateway: "wrc_warrantyEligibility".
+         Then for branch within warranty: sequence flow "wrc_flow_eligibilityWithin" to "wrc_parallelSplit".
+         Then for branch out-of warranty: sequence flow "wrc_flow_eligibilityOutOf" to "wrc_sendRejectionNotice" task.
+         For in warranty branch: parallel split gateway "wrc_parallelSplit" must be declared:
+            Actually, I'm using <parallelGateway id="wrc_parallelSplit"> with name "Parallel Split".
+         Then sequence flows: "wrc_flow_splitToShipment" from "wrc_parallelSplit" to "wrc_createShipmentOrder".
+                       "wrc_flow_splitToPickup" from "wrc_parallelSplit" to "wrc_scheduleCourierPickup".
+         Then tasks: "wrc_createShipmentOrder", "wrc_scheduleCourierPickup".
+         Then join gateway "wrc_parallelJoin" declared as parallel gateway.
+         Then sequence flow: "wrc_flow_shipmentToJoin" from "wrc_createShipmentOrder" to "wrc_parallelJoin".
+                       "wrc_flow_pickupToJoin" from "wrc_scheduleCourierPickup" to "wrc_parallelJoin".
+         Then task: "wrc_updateInventoryRecords" then flow to "wrc_closeClaim".
+         Then sequence flow: "wrc_flow_joinToUpdate", "wrc_flow_updateToClose".
+         Then end event "wrc_closeClaim" flows to "wrc_successEndEvent

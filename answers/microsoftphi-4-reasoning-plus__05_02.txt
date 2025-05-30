@@ -1,0 +1,581 @@
+We're given a task: "We are a senior process-architecture consultant hired to fix SLA breaches. We are working for Globex Corp and we have Employee Onboarding process BPMN XML definition.
+
+Rules for the task: 
+- Proposed improvement: exactly ONE SLA-compliance improvement.
+- Do not add or delete any activity element such as <userTask>, <serviceTask>, <subProcess>, etc.
+- Only modify attributes of an existing element or if strictly necessary reverse direction of one <bpmn:sequenceFlow> (thus we are only allowed to modify a sequence flow constraint? Possibly adjusting sequence flow attributes? Eh, anyway, "exactly one" improvement.
+
+Examining BPMN XML: Identify: process has 1 start event, tasks: 
+Task_CreateRecord: camunda:dueDate="P1D"
+Task_PrepareContract: camunda:dueDate="P2D"
+Task_SignContract: camunda:dueDate="P3D"
+Task_CollectEquipment: camunda:dueDate="P5D"
+Task_GrantAccess:  camunda:dueDate="P1D", camunda:type="external"
+
+We have explicit due dates set by camunda:dueDate. The process has ordering flows: Start->Task_CreateRecord->Flow_2 ->Task_PrepareContract->Flow_3 ->Task_SignContract->Flow_4 -> Task_CollectEquipment-> Flow_5 -> Task_GrantAccess-> Flow_6 ->EndEvent.
+
+What is the default inspector:
+
+The SLA breaches solution: perhaps SLA is regarding the allowed completion times for tasks. We want to ensure SLA compliance. We can modify attributes such as due dates to more appropriate deadlines.
+One possibility: For example, adjust the due dates to earlier deadlines.
+
+We can propose: "Shorten the due date on Task_SignContract to ensure a timely contract signing" but maybe the first task Task_CollectEquipment is due in P5D which might be too lenient.
+
+We need provide exactly one improvement suggestion. Our objective is to ensure that the process is completed within SLA thresholds. One suggestion: "Reduce the due date of Task_SignContract from P3D to P2D (or even more strict) if that helps ensure compliance." But careful: Up to now, the user asked "Suggest exactly one improvement."
+
+Also, could adjust due dates of tasks so that all tasks are consistent and strictly enforced timers. Alternatively, we want to "shorten" the due date for Task_CollectEquipment because perhaps equipment delays cause breach. But we must only modify attribute of an existing element, nothing else. However, the due date for Task_CollectEquipment is P5D. That might be too lenient; reducing it might be better to ensure process completion even if tasks are not completing timely.
+
+Additionally, perhaps one improvement: "the grant system access task must be executed faster." But it already has camunda:dueDate="P1D", which is too fast maybe may be left as is.
+
+Alternatively, do we need SLA compliance improvement that may account for process architectural improvement.
+
+Wait, the requirement is: "do exactly one SLA compliance improvement." And I must output a unified diff of XML (single hunk) with exactly one change that is a diff hunk.
+
+We have choices:
+- Option 1: Adjust due date to P0D or lower on first activity tasks? But P0D would represent "immediate"? Not sure if BPMN expects "P1D"? The camunda:dueDate attribute is specifying a time period. So maybe we can short it to P1D for some tasks. But not all tasks require improvement. Since we already see repeated patterns for due dates: first three tasks have due dates of P1D, P2D, and P3D respectively. And Task_CollectEquipment is P5D. Perhaps we need to shorten this to ensure process is complete in a timely manner.
+
+I would propose: "Reduce the due date for Task_CollectEquipment from 'P5D' to 'P3D' ensuring equipment collection is completed faster to avoid SLA breaches."
+
+But wait, check consistency: There are tasks: before Task_CollectEquipment, each tasks have increasing P1D, P2D, and P3D deadlines. And then after that, Task_CollectEquipment is due in P5D. So why would the due date be so much higher? In most onboarding processes, equipment collection might be more variable. But if there is an SLA breach, this might be the task that is delaying the process. We can propose to reduce due date to match previous step? Actually, consider that contracting might have new hire waiting for equipment. We can state that the deadline here is shortened (we have full instructions). Alternatively, we can reverse a sequence flow to ensure parallel iterations that lead to acceleration of the process? Check rule "if strictly necessary, reverse the direction of one <bpmn:sequenceFlow>"? That is probably not needed if we can just update the due date attribute.
+
+Wait, but the process may have a downstream complete event EndEvent_1 has no due date attribute but it's an event. Not sure.
+
+Maybe we need reordering tasks? But the rules say do not delete or add any element, but we can reverse one sequence flow if strictly necessary. But which sequence flow do we reverse if necessary? But the simplest improvement is to update due date. We can propose to set due date for task GrantAccess attribute camunda:dueDate from "P1D" to "PT1H" or "PT30M" if we want faster completion. But when you consider the typical employee onboarding, "Grant System Access" may be automatic external workflow, so its SLA might be revised. But maybe updating due date of Task_GrantAccess ensures faster grant access? But the soft tasks have overly extended P5D due date for equipment collection - but I check: It seems each user task has a camunda:dueDate attribute. a specific number of days. P1D, P2D, and P3D: And Equipment is P5D. And "Grant of Access" (the external service task) is P1D. So these are deadlines to complete the tasks. But are they really SLA compliance improvement? Possibly one improvement: reduce the due date for the "Collect Equipment" task (Task_CollectEquipment) because having a lengthy P5D indicates a weak enforcement which eventually can lead to delays in onboarding if equipment collection isn't prioritized.
+
+Alternatively, maybe we could reverse the sequence flow from the "Grant Access" task? That doesn't make sense.
+
+More improvement possibility: Adjust on the first task, "Create Employee Record" due date is set to P1D, which may be too short if proper data input is not done. But that's not a compliance improvement. But we need SLA compliance improvement. Possibly we want to reduce time assigned to each task to quicken onboarding resulting in better SLA compliance. But then if any of the tasks get shortened, they might not be possible to complete in that time.
+
+Given that SLA breach means that tasks are not completed on time. We want to ensure that tasks are completed before the deadlines. The Due dates are already set but maybe they are not being enforced by the process. Possibly one improvement: Use the "camunda:extensionElements" for timeouts, but rule says only change attributes, not new elements. But maybe we can set "camunda:dueDate" attribute for Task_SignContract and Task_CollectEquipment to a shorter window. Since start event from Employee Onboarding seems fairly straightforward.
+
+We are allowed to only modify dueDate attributes on existing activities. So we must propose one attribute change improvement.
+
+We must output unified diff.
+
+All allowed changes: modify attribute of existing element only or reverse one <bpmn:sequenceFlow> by saying reverse direction of one sequence flow if necessary.
+
+I can consider perhaps reordering the task execution order if parallel processing is beneficial. For example, are there sub-processes? Possibly we can shorten a critical path by reordering tasks.
+
+Given the linear chain, we can shorten deadline for "Collect Equipment" by reducing the due date on that task. But note it is a chain, so if one task is delayed, then others are also delayed.
+
+Alternatively, the process itself is not sequential? Possibly the timeline should be modified not to let deadlines slip. However, the BPMN process is linear and all tasks must be completed sequentially. SLA is presumably measured from start to finish. Changing any attribute on any tasks individually to reduce overall process duration would be an improvement if they are completed in a timely manner. However, the instructions say "exactly one SLA-compliance improvement" and not to add or delete activities. That means we can only change one attribute of an existing element.
+
+I need to pick one element attribute modification.
+
+What if I propose to make the due date for the "Grant System Access" external service task more strict? Currently, it is P1D. If we shorten it to, say, PT4H, that might force the external stakeholder to process the access faster? But then the problem is that tasks should have a due date expressed as a duration? CAMunda's camunda:dueDate attribute expects a temporal expression in ISO-8601 format, which can be days (P1D) or hours (PT1H). But I am not 100% that PT is allowed but likely yes, because "P1D" means period, "PT1H" means time. Could it be beneficial to update tasks due date to a more aggressive timeline to ensure that if processing does not complete within that period, it might result in a SLA breach. But in this scenario, our aim is to "fix SLA breaches" which means our process might be flagged as not meeting SLA (maybe because tasks are not delivered on time). So maybe we need to update due dates to enforce more risk. But then that might shorten the window for tasks to be completed and actually cause further SLA breaches if employees can't do them within the given time. As a consultant, what do you do? You want to suggest a change such that the onboarding process meets SLA (maybe you need to shorten the due date, but it might cause issues, or maybe lengthening it might allow staff to get the tasks done. But what does "fix SLA breaches" mean? Typically, if tasks are taking too long, then the assignment of due dates might be too optimistic. So possibly we want to extend the due dates to allow tasks to meet them. But if tasks are not being completed on time, then maybe service tasks or user tasks are given unrealistic deadlines. So maybe we want to relax deadlines.
+
+Or do we want to tighten tasks' deadlines? Actually, I need to consider: "fix SLA breaches." Typically, SLA breaches occur when tasks are not completed within a deadline, and the process is penalized. But I'd ask: whether the deadlines are too aggressive, or not being enforced. You have a Timers but are they run properly? Possibly the advice is something like "Add a timer event to be sure tasks complete within the due date, so that if not they are escalated."
+
+However, guidelines: I can only modify an attribute of an existing element. Possibly I can add an extension to the due date? I can't add a new timer event, because that would add an element.
+
+Maybe I can adjust the due date of one user task to reflect a more realistic time requirement, achieving better SLA compliance when finished.
+
+Which task is likely a critical path? Possibly Task_SignContract, as it's essential.
+
+Consider each user task due date:
+Task_CreateRecord: P1D, Task_PrepareContract: P2D, Task_SignContract: P3D, Task_CollectEquipment: P5D, that seems increasing, which might represent accumulating tasks. The growth is not consistent. Perhaps they are expecting that tasks get more complex.
+
+Let's consider other attributes. I could update the 'camunda:dueDate' for Task_CollectEquipment to be less than P5D, maybe P3D or P4D, to enforce the onboarding process to complete equipment collection faster, ensuring that the subsequent service task of Grant Access is done in time. Let’s consider the rationale: "Reducing the critical deadline for equipment collection shortens overall onboarding timeline and reduces potential SLA breaches in subsequent stages."
+
+By the way, the sample unified diff format expects one unified diff hunk. For example:
+
+The output of diff might be something like:
+
+---
+bpmn:process id="OnboardingProcess" would probably need to be appended, but which version of unified diff syntax? The old file vs new file difference? We have to output hunk with maybe context lines tracking the changes. But here we have only one XML file snippet. For instance, we can show a diff section beginning with something like:
+`diff --git a/onboarding.bpmn b/onboarding.bpmn
+ index 292e456..9bf4892 100644
+--- a/onboarding.bpmn
++++ b/onboarding.bpmn
+@@ line number, let's check many lines:
+and then do patch.
+
+But we have to output exactly one unified diff as "one hunk", i.e. one block changes.
+
+We can change the camunda:dueDate attribute of Task_CollectEquipment from P5D to maybe P3D. But is that accepted? The instructions: "Modify attributes of an existing element" - yes, that's allowed. And "Do not add or delete any activity element" - nothing added.
+Should we update fully? Yes, change exactly one attribute. But must also produce one sentence rationale.
+
+We need to produce a diff in which the attribute is changed from P5D to some shorter value. But I have to consider which direction that might be. There is a question: Is shortening it likely to cause more SLA breaches? The process can't complete tasks too soon. However, maybe to "fix SLA breaches" might need to be extended deadlines rather than shortened? It depends on what the aim is - "fixing SLA breaches" might require making sure employees complete tasks on time, if due dates are too restrictive, having them not met can lead to delays. But if SLA breaches are being triggered because employees can't meet the due dates, perhaps the due date should be extended to allow more time, ensuring that more tasks complete successfully. Easy. But then why would a longer due date fix SLA breaches? Possibly because tasks are very strict and then the process does not meet the onboarding deadlines? Wait, let me think: if SLA breaches refer to not meeting the deadlines, then making deadlines stricter is less likely to yield compliance improvement; rather, if external vendors are failing to meet deadlines, then the deadlines might be too short and need to be increased.
+
+But the instructions read: "propose exactly one SLA-compliance improvement" which indicates that one improvement is expected in the BPMN process definition. SLA compliance improvement usually means that if tasks are delayed, the deadlines need to be adjusted. Possibly the problem is that the deadlines are too lenient, and SLA breaches occur because tasks are running long beyond what is currently set as the due date.
+
+Examining the BPMN, each task has a camunda:dueDate attribute. I want to check: The "Grant System Access" task is a service task with a due date of P1D, but since it is an external service call, sometimes external services might fail if invoked too soon.
+
+Maybe it's better to relax the due dates, e.g., change them from P1D to something like 2 days? But maybe the improvement is to set a more lenient threshold.
+
+Alternatively, consider that the due date for "Collect Equipment" is set to P5D while all earlier user tasks have a shorter P1D, P2D, P3D which might imply that equipment collection is the step where additional processing delay might be occurring. So by reducing its due date, it might force the equipment collection team to complete their tasks faster.
+
+Alternatively, suggestion: "Based on analysis of real-time workflow data, lowering the due date for equipment collection from 5 days to 3 days ensures that onboarding does not get delayed and helps co< exceed SLA requirements." I think this is the most plausible improvement.
+
+But wait: if we reduce equipment collection due date from P5D to something more aggressive, that might require faster turnaround by employees. But would that help SLA? Actually, it might, since it helps catch any delays earlier, and if equipment is not gathered on time then fail fast triggers a notification, etc. However, because the tasks already have due dates, the difference between tasks may not cause SLA breach since one could be delayed if the previous tasks take too long. But the critical factor is population: if one task does not meet its due date, then SLA is breached.
+
+I need to pick one attribute to modify. I could choose a task with a relatively lenient due date that may be causing a bottleneck. Let's look at each due date:
+- Task_CreateRecord: 1 day. Possibly sufficient.
+- Task_PrepareContract: 2 days. Possibly sufficient.
+- Task_SignContract: 3 days. Possibly sufficient.
+- Task_CollectEquipment: 5 days. Possibly too generous, causing process to be delayed.
+- Task_GrantAccess: 1 day. Possibly acceptable.
+
+Thus, to minimize delays and improve SLA compliance, we can adjust the due date for equipment collection from "P5D" to perhaps "P3D". That is a change from IT may be disallowed because then we do change an attribute on one task.
+Yes, applying that change to the "Task_CollectEquipment" element should satisfy "exactly one SLA-compliance improvement". It is also exactly one attribute change modification.
+
+Alternatively, we could also change "Task_GrantAccess" due date from "P1D" to something more extreme, but I guess the equipment one is a better candidate because P5 days is more slack.
+
+However, is that intended improvement? Let's consider if we want to reduce overall onboarding cycle time. Reducing P5D to P3D would definitely shorten the onboarding cycle time. But would that not put additional pressure on equipment collection? It might violate SLA if equipment collection is dependent on external vendors who require more time, but perhaps that's the point: it is the bottleneck. But at least given constraints, I can propose one SLA improvement.
+
+What is the diff hunk? It's a unified diff of the XML file. The diff should show a change from:
+<userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
+to
+<userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+Thus the diff can be as follows:
+@@
+-      camunda:dueDate="P5D"/>
++      camunda:dueDate="P3D"/>
+I have to include diff markers for unified diff as required by instructions.
+
+But instructions also say: "Output format: 1. Unified diff of the XML (single hunk) 2. One-sentence rationale."
+
+Also, check "reverse the direction of one <bpmn:sequenceFlow>" - "if strictly necessary". We can choose not to.
+
+Need to produce a unified diff text that includes one hunk where we modify the attribute for Task_CollectEquipment.
+
+I must recall that the format for unified diff:
+
+Initially, a diff header line starting with "diff --git ..." then "index" lines. But maybe the unified diff should be produced in a single hunk. But instructions are "start with unified diff of XML". Possibly the diff output should do with "old file" and "new file" differences. I can structure:
+
+---
+--- Original file: not specified?
+But wait, instructions: "Unified diff output" typically has "a/onboarding.bpmn" and "b/onboarding.bpmn" but we don't have file names but I'll call it something.
+
+I want to produce a diff hunk that changes the value of camunda:dueDate in element Task_CollectEquipment.
+
+I can produce a patch text as follows:
+
+diff --git a/process.bpmn b/process.bpmn
+index abc123..def456 100644
+--- a/process.bpmn
++++ b/process.bpmn
+@@ line X, X+ maybe, you'll have new lines
+
+But then I need context lines maybe I'll produce one unified diff hunk referencing the element "Task_CollectEquipment".
+
+The BPMN XML file, in snippet:
+
+Line by line, let's count lines:
+
+<BPMN definitions content. Need to know line numbers maybe:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn">
+  <bpmn:process id="OnboardingProcess" name="Employee Onboarding" isExecutable="1">
+    <bpmn:startEvent id="StartEvent_1" name="New Hire"/>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_CreateRecord"/>
+    <bpmn:userTask id="Task_CreateRecord" name="Create Employee Record" camunda:dueDate="P1D"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_CreateRecord" targetRef="Task_PrepareContract"/>
+    <bpmn:userTask id="Task_PrepareContract" name="Prepare Contract" camunda:dueDate="P2D"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_PrepareContract" targetRef="Task_SignContract"/>
+    <bpmn:userTask id="Task_SignContract" name="Sign Contract" camunda:dueDate="P3D"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+    <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+    <bpmn:serviceTask id="Task_GrantAccess" name="Grant System Access" camunda:dueDate="P1D" camunda:type="external"/>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GrantAccess" targetRef="EndEvent_1"/>
+    <bpmn:endEvent id="EndEvent_1" name="Ready to Work"/>
+  </bpmn:process>
+</bpmn:definitions>
+
+Line numbers approximate: (I can output as a unified diff with context of line containing <userTask id="Task_CollectEquipment"> enough changes.)
+
+The hunk should show the change from "camunda:dueDate="P5D"" to "camunda:dueDate="P3D"". I must output a single hunk.
+
+The unified diff text should be e.g.:
+
+diff --git a/onboarding.bpmn b/onboarding.bpmn
+index xyz... index abc...
+--- a/onboarding.bpmn
++++ b/onboarding.bpmn
+@@ line X line Y
+-      camunda:dueDate="P5D"/>
++      camunda:dueDate="P3D"/>
+
+But have to decide on file names? But instructions don't provide file names; it might not matter.
+
+I can assume "onboarding.bpmn" as file name.
+
+Alternatively, I just produce a hunk with lines changed and output that.
+
+The one-sentence rationale: "Reduced the due date for equipment collection from 5 days to 3 days to ensure faster onboarding and reduce overall SLA breaches."
+
+I must produce a unified diff of the XML (a single hunk) and a one-sentence rationale.
+
+I need to check instructions: "Output format: Unified diff of the XML (single hunk) followed by one-sentence rationale." So instructions: "one hunk and one sentence."
+
+I must produce a unified diff of the XML with a small hunk. But note that BPMN XML tags, they are not seen line endings in short lines. Actually, in a single hunk means the diff is output as one hunk block containing modifications of one file's changes.
+
+Maybe I'll produce:
+
+----- start diff hunk
+## diff --git a/onboarding.bpmn b/onboarding.bpmn
+index 0000000..0000000
+@@
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+...
+But I must be sure to keep the line not modified.
+
+But I must target the specific substring: So the changed line is in the task element "Task_CollectEquipment", so we have something like:
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
+ becomes
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+
+However, I have to produce a unified diff text with context lines before and after the change. Possibly I'll produce a hunk like this:
+
+"@@ <bpmn:userTask id="Task_CreateRecord"... should be computed with context lines"
+
+Maybe simpler: Just produce a hunk that shows only the changed line. But typically unified diff expects that there are context lines, of at least one line before and after the changed one, if available. Possibly I need to include the relevant userTask elements around that change. But instructions "exactly one SLA-compliance improvement" means you only modify one attribute. But I must produce a unified diff hunk that shows that modification.
+
+I can produce unified diff with only the changed line, but that's not a valid hunk if there are no context lines. However, instructions says one hunk of the entire XML file. Possibly it's acceptable to produce the entire file with the modification removed in one hunk. But since we only modified one thing, also we can simply produce a unified diff on the entire XML file with only one change.
+
+I want to produce in the hunk excerpt, I might choose to produce lines prior to and after the changed line. So I'll produce a hunk starting at the start and ending after the changed attribute line.
+
+Let's produce the hunk from BPMN process definition. But it's difficult to produce the entire file's diff. But we must produce a unified diff patch for the whole file. Since it's a small file, we can include the complete file as like a patch but with one changed line. Possibly as "Unified diff of XML (single hunk)" means that I'll produce one hunk that encompasses the whole file, but that's not usual diff style. However, instructions are really ambiguous.
+The instructions say "output unified diff of the XML" and "one hunk" means I'll produce a Hunk that encompasses the entire file with the line change. But usually a unified diff file normally has "diff --git" header plus context lines.
+
+Given the constraint, I'll produce something like:
+
+diff --git a/EmployeeOnboarding.bpmn b/EmployeeOnboarding.bpmn
+index 0000000..0000001 100644
+--- a/EmployeeOnboarding.bpmn
++++ b/EmployeeOnboarding.bpmn
+@@ line 17, line 24 @@
+ <bpmn:process id="OnboardingProcess" name="Employee Onboarding" isExecutable="true">
+   <bpmn:startEvent id="StartEvent_1" name="New Hire"/>
+   <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_CreateRecord"/>
+   <bpmn:userTask id="Task_CreateRecord" name="Create Employee Record" camunda:dueDate="P1D"/>
+   <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_CreateRecord" targetRef="Task_PrepareContract"/>
+   <bpmn:userTask id="Task_PrepareContract" name="Prepare Contract" camunda:dueDate="P2D"/>
+   <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_PrepareContract" targetRef="Task_SignContract"/>
+   <bpmn:userTask id="Task_SignContract" name="Sign Contract" camunda:dueDate="P3D"/>
+   <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+-  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
++  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+   <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+   <bpmn:serviceTask id="Task_GrantAccess" name="Grant System Access" camunda:dueDate="P1D" camunda:type="external"/>
+   <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GrantAccess" targetRef="EndEvent_1"/>
+   <bpmn:endEvent id="EndEvent_1" name="Ready to Work"/>
+ </bpmn:process>
+ </bpmn:definitions>
+
+I have to be careful with XML structure. I don't know if I need to produce a hunk the entire file or just the changed line. But instructions states "exactly one hunk" so I produce a diff output with one changed line, including context.
+
+I must only produce that one changed attribute. Alternatively, I might produce one single line changes. But given diff specification, I can simply do the unified diff that shows only the userTask element containing the attribute changed.
+
+I must be careful: The unified diff info may be like:
+
+diff --git a/EmployeeOnboarding.bpmn b/EmployeeOnboarding.bpmn
+index ...
+--- a/EmployeeOnboarding.bpmn
++++ b/EmployeeOnboarding.bpmn
+@@ line (say, line 15) @@
+
+But then we must produce a hunk with context lines. Since the whole file is small, I can produce the minimal hunk showing the only change.
+
+I can produce text:
+
+--- begin diff
+xxx
+--- end diff.
+
+Alternatively, I could produce diff line:
+
+--- a/process.bpmn
++++ b/process.bpmn
+@@
+-  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+--- skip rest
+
+But instructions require "Unified diff of the XML file" so probably I produce diff diff with the entire file in a hunk. But careful: The problem expects me to output a unified diff, not a patch file.
+
+I can produce a unified diff that looks like:
+
+diff --git a/EmployeeOnboarding.bpmn b/EmployeeOnboarding.bpmn
+index 0000000..0000001 100644
+--- a/EmployeeOnboarding.bpmn
++++ b/EmployeeOnboarding.bpmn
+@@... <context lines> @@
+-<bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
++<bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+
+And then I produce one sentence rationale.
+
+Alternatively, I may fix due date for another task. But perhaps it's more effective to modify the "Grant System Access" which is external; maybe to reduce its dueDate to a tighter specification to avoid SLA delays moment. However, the greatest threat might be the iterated tasks. Considering that Task_CollectEquipment is done by users, so if it is not taken care of in a timely fashion, it might lead to delays. But on the other hand, maybe adjusting the Grant system access due date which is a first P1D for a service task possibly externally controlled can be moved to be called a few hours after contract is ready since it's out of the control of internal employees. But I'm not sure.
+
+Let's analyze each one:
+
+Task_CreateRecord: P1D is fairly short. So if tasks are SLA breaches because tasks aren't completed on time then perhaps the exception is equipment collection, which has allowed P5D, therefore if the equipment is late, the process is delayed. But then SLA can be improved by reducing wait time maybe not only is acceptance of onboarding, but a timely readiness process for work.
+
+But maybe the policy is to transform equipment collection from a user task to a subprocess parallelized? But not allowed.
+
+The guidelines "Propose exactly one improvement" suggests we must choose one unique attribute modification or a sequence flow reversal. Sequence flow reversal is allowed if necessary. But it's likely that attribute modification is the simplest.
+
+Therefore, I'll produce the diff: change attribute camunda:dueDate on Task_CollectEquipment from "P5D" to "P3D".
+
+I am going to produce it in a diff hunk format that follows unified diff. Use the filename "onboarding.bpmn" or "EmployeeOnboarding.bpmn", whichever. Possibly "EmployeeOnboardingProcess.bpmn" as file name. I'll use "employee-onboarding.bpmn" for clarity.
+
+But instructions mention Road rules: "do not add or delete any activity element", so modifying attribute is allowed.
+
+So I'll proceed to produce diff as described. I'll produce the unified diff in plain text. I'll then produce the one sentence rationale in a separate line.
+
+I produce:
+
+Unified diff, one hunk:
+
+--- Begin output ---
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index <sha1>..<sha1> 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@ on location lines "XX" 
+-  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
++  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+
+That's one hunk.
+
+I need to provide line numbers if possible. But I can produce a minimal hunk if necessary.
+
+I might produce the hunk starting with the preceding sequenceFlow line "Flow_4" so context lines like:
+
+<... >
+<bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment" camunda:dueDate="P3D"/>
+<bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+
+Yes, I produce a hunk that lists the changed element in context.
+
+I need to produce a unified diff block. I'll produce one hunk that shows the lines from the `<bpmn:serviceTask id="Task_GrantAccess"` might not be necessary. But I want to include as little context as possible but at least one line before the changed line. A unified diff hunk always requires at least one line context preceding the change. So I'll produce two lines: one with "Flow_4" and then changed line and then "Flow_5" as following. But the change should be in context.
+
+I'll produce simple diff hunk:
+
+@@
+  <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"     camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"     camunda:dueDate="P3D"/>
+  <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+
+I must check spacing: In the provided BPMN, the attribute value of camunda:dueDate in Task_CollectEquipment is "P5D" (it has some leading spaces, but they should not be output in diff in exactly same formatting; however, the diff format would show a difference only if they are not exactly equal. But in XML, attributes might require ordering. But I'll check the provided XML snippet:
+
+```
+<bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
+```
+
+The spacing before "camunda:dueDate" might be relevant to attribute ordering in the file. We must preserve formatting if possible? The instructions said "Do not add or delete any activity element". But reordering attributes might be allowed. But not necessary.
+We are allowed to change an attribute value. The file might not be extremely strict about white-space differences, but it's probably not what I want to produce.
+
+But it might be better to exactly update the due date attribute value to "P3D" without messing up spacing. But I still must preserve the whitespace. In the XML given, around the attribute "camunda:dueDate" there are several spaces.
+
+I can produce minimal unified diff. I might also try to produce my diff in a straightforward manner, preserving the same spacing as in original file.
+
+I'll output like:
+
+diff (the unified diff) with maybe "employee-onboarding.bpmn" as file name.
+
+I need to produce two parts: (1) unified diff with one hunk of the entire file change, with the one modification (the attribute changed in Task_CollectEquipment). And then (2) one sentence rationale.
+
+I'll produce a file name that is plausible, e.g., "employee-onboarding.bpmn".
+
+I produce a unified diff like:
+
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index <hash>..<hash> 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@ ... line numbers ...
+  <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+  <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+
+But need to define line numbers. But I can produce diff hunk lines with some context (I can assume "..." lines). But the XML is provided already, and instructions require a unified diff with one hunk.
+
+Alternatively, I can produce a unified diff covering all lines of file if necessary, but that would be huge. Instead, I can produce one hunk with the changed measure. But instructions want exactly one hunk. I want to produce one hunk containing the difference of modifying Task_CollectEquipment.
+
+I can output it with "..." at the beginning maybe no line numbers. But instructions: "Output format: Unified diff of the XML (single hunk) and one-sentence rationale." Typically, a unified diff is in the form:
+
+-- 
+--- a/file.xml
++++ b/file.xml
+@@ line_number ... line_number @@
+ <element ... attribute="oldvalue"/>
+ <element with change attribute="newvalue"/>
+
+I can produce standard unified diff. I can also produce it as a single unified diff hunk with line numbers if needed.
+
+I can produce something like:
+
+@@ line 17,21 @@
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
+ -> changed to
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+
+But I worry if the diff is not following instructions exactly.
+
+Maybe I'll produce a unified diff similar to:
+
+--- start diff hunk ---
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index 0000000..0000001 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@
+ <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+ <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+--- end hunk
+
+I think that's acceptable.
+
+I must produce one sentence rationale: "Reducing the due date for equipment collection from 5 days to 3 days accelerates onboarding and reduces the risk of SLA breaches caused by delays in provisioning equipment." That's a one sentence rationale.
+
+I must also note: The improvement is to have a stricter deadline on necessary tasks. However, I want to double-check: Usually if employees are tardy in equipment collection, that's a delay and might cause SLA breach, but if we shorten the SLA, this could force tasks to be completed faster. But is that a good idea? Alternatively, if the process is too strict, employees might fail the task due to constraints. But assume that for SLA compliance they need to speed up onboarding process.
+
+Alternatively, I might propose to reverse a sequenceFlow. But that's not necessary.
+
+Alternatively, I can propose to reverse one sequence flow, but then that would cause a re-ordering of the tasks which might lead the contract tasks could be parallelized. But instructions "exactly one improvement." Possibly I can propose that instead of sequential tasks, reversing a sequence flow to let the equipment collection task run in parallel with contract signing might reduce overall onboarding time. But wait, can I modify the workflow by reversing the direction of one sequence flow? Let's consider: The most candidate is "Flow_4": It goes from Task_SignContract to Task_CollectEquipment; if we reverse it, then equipment collection would happen after contract signing? Then tasks become reversed order though but that's not logical, because in employee onboarding, you must prepare contract before equipment collection. But maybe we want to parallelize some tasks so that simultaneously contract is being signed earlier and equipment is collected concurrently. But then the order of tasks is: after contract, we want signing contract and then equipment. If we reverse Flow_4, then Task_CollectEquipment would happen before Task_SignContract. But that logic is subverted. Not logical.
+
+Alternatively, consider reversing Flow_6. But that would reverse the direction from external service of granting access. That doesn't sound like an improvement.
+
+I strongly believe that the simple solution is to update the due date for Task_CollectEquipment. I can produce the diff accordingly.
+
+I'll produce text:
+
+Unified diff output in plain text, with header lines and then a hunk relative to the location of the changed attribute.
+
+I then produce the one sentence rationale.
+
+I'll produce:
+----------------------------------
+"Unified diff: (one hunk) and then rationale sentence."
+
+I'll produce answer accordingly.
+
+I'll produce output as text. I'll produce in plain text: "Diff:" then unified diff block in some code block format, then sentence.
+
+I must output as plain text no Markdown formatting by default. But instructions says "by default do not use markdown formatting (like markdown code blocks)" Actually instructions says: "By default, do not reply with Markdown formatting unless requested." The instructions instruct text output as plain text. But if it's a diff block maybe I'll produce text block without markdown. But then instructions "Output format" is likely plain text.
+
+I'll produce output:
+
+Unified diff output with one hunk:
+
+I'll produce something like:
+
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index abc1234..def5678 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@ line 15,21 @@
+   <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+   <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+
+I must avoid extra extra whitespace. I can produce a consistent change.
+
+And then a one sentence rationale, e.g. "Reducing the equipment collection task deadline from 5 days to 3 days accelerates onboarding and reduces potential SLA breaches."
+
+I'll produce answer: unified diff text then one line "Rationale: short deadline."
+
+Now check guidelines: "exactly one SLA-compliance improvement." with "do not add or delete any activity element." I'm allowed to modify attributes of existing elements. I did modify attributes of one task: task "Task_CollectEquipment" attribute "camunda:dueDate" from "P5D" to "P3D". That qualifies as one attribute modification. So that's valid.
+
+I re-read BPMN XML: 
+Task_CollectEquipment: camunda:dueDate is "P5D" originally. Changing to "P3D" is exactly one change and improvement for SLA compliance.
+
+Now check if this is a recommended improvement from SLA perspective: I assume that if an employee fails to collect equipment in 5 days, then the onboarding process might be delayed. By reducing the window, you force faster completion, thereby shortening the onboarding cycle and reducing costs over delays. Yes, that's likely acceptable.
+
+Alternatively, I might decide to propose a change on the serviceTask "Task_GrantAccess", reducing its camunda:dueDate from "P1D" to "PT1H", but then that might cause external service challenges. But I think the long target container is "Task_CollectEquipment" because it stands as a possible delay.
+
+I wonder if the intended answer might be chain flow reversal, but I find attribute modification is simpler.
+
+However, aside from attribute modification, allowed modification "or if strictly necessary, reverse the direction of one <bpmn:sequenceFlow>" would be a different improvement. But if I reverse a sequence flow, that would re-order the tasks. But that might be extremely radical. So attribute modification seems the proper improvement.
+
+Thus I'll now produce unified diff text.
+
+I produce the unified diff text starting with the header and then the hunk. Possibly I can produce a unified diff with only the changed line. I produce:
+
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index 0000000..0000000 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@ ... location in file ...
+ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+ 
+But I need to produce sufficient context.
+
+Since instructions specify "Unified diff of the XML (single hunk)", I produce a single hunk starting with the modified element.
+
+I'll produce a hunk with context as lines:
+
+I can produce something like this:
+
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@ something,@something @@
+-  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+
+I need to check the exact XML lines (line numbers may not matter if we produce them as hunk context).
+
+We want exactly one SLA improvement, so that is definitely one candidate improvement.
+
+I produce rationale: "Reducing the due date for the Collect Equipment task accelerates onboarding and minimizes SLA breach risks."
+
+Yes, that's my answer.
+
+I'll produce my answer accordingly in plain text with a unified diff hunk and one-sentence rationale.
+
+I'll produce answer text as: 
+
+Unified diff:
+```
+diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index abcdef0..1234567 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@
+-  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++  <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+```
+
+Then one-sentence rationale: "Reducing the Collect Equipment due date from 5 days to 3 days accelerates onboarding and reduces SLA breaches."
+
+This meets the requirement.
+
+Double-check for correctness: "Do not add or delete any activity element" is adhered, we only modify attribute of an existing element.
+"Exactly one SLA-compliance improvement" is provided.
+"Unified diff of the XML (single hunk)" is provided.
+"Propose one-sentence rationale" is provided.
+
+I'll now produce final answer with corrections.
+
+I'll produce final answer accordingly.
+
+I'll produce the answer as:
+
+"Unified diff:" then lines, then "Rationale:" then one sentence.
+
+I'll produce final answer accordingly.diff --git a/employee-onboarding.bpmn b/employee-onboarding.bpmn
+index 0000000..0000001 100644
+--- a/employee-onboarding.bpmn
++++ b/employee-onboarding.bpmn
+@@
+ <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+- <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++ <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P3D"/>
+ <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+
+Reducing the equipment collection task’s deadline from five days to three days accelerates onboarding and minimizes delays that can lead to SLA breaches.

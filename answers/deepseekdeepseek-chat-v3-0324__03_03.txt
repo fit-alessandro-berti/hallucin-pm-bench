@@ -1,0 +1,92 @@
+Here's the BPMN 2.0 XML for the Warranty-Replacement process:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+             id="Definitions_1" 
+             targetNamespace="http://bpmn.io/schema/bpmn">
+  
+  <process id="wrc_Process" isExecutable="false">
+    <!-- Start Event -->
+    <startEvent id="wrc_StartEvent" name="Customer submits online warranty claim"/>
+    
+    <!-- Validation Flow -->
+    <sequenceFlow id="wrc_Flow1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim"/>
+    <task id="wrc_ValidateClaim" name="Validate the claim"/>
+    
+    <sequenceFlow id="wrc_Flow2" sourceRef="wrc_ValidateClaim" targetRef="wrc_GatewayComplete"/>
+    <exclusiveGateway id="wrc_GatewayComplete" name="Is claim complete?"/>
+    
+    <sequenceFlow id="wrc_Flow3" sourceRef="wrc_GatewayComplete" targetRef="wrc_RequestInfo" name="No">
+      <conditionExpression xsi:type="tFormalExpression">${!complete}</conditionExpression>
+    </sequenceFlow>
+    <task id="wrc_RequestInfo" name="Request missing information"/>
+    
+    <sequenceFlow id="wrc_Flow4" sourceRef="wrc_RequestInfo" targetRef="wrc_ValidateClaim"/>
+    
+    <!-- Eligibility Check -->
+    <sequenceFlow id="wrc_Flow5" sourceRef="wrc_GatewayComplete" targetRef="wrc_CheckEligibility" name="Yes">
+      <conditionExpression xsi:type="tFormalExpression">${complete}</conditionExpression>
+    </sequenceFlow>
+    <task id="wrc_CheckEligibility" name="Check warranty eligibility"/>
+    
+    <sequenceFlow id="wrc_Flow6" sourceRef="wrc_CheckEligibility" targetRef="wrc_GatewayEligible"/>
+    <exclusiveGateway id="wrc_GatewayEligible" name="Within warranty?"/>
+    
+    <sequenceFlow id="wrc_Flow7" sourceRef="wrc_GatewayEligible" targetRef="wrc_RejectNotice" name="No">
+      <conditionExpression xsi:type="tFormalExpression">${!eligible}</conditionExpression>
+    </sequenceFlow>
+    <task id="wrc_RejectNotice" name="Send rejection notice"/>
+    
+    <!-- Parallel Activities -->
+    <sequenceFlow id="wrc_Flow8" sourceRef="wrc_GatewayEligible" targetRef="wrc_GatewayParallelSplit" name="Yes">
+      <conditionExpression xsi:type="tFormalExpression">${eligible}</conditionExpression>
+    </sequenceFlow>
+    <parallelGateway id="wrc_GatewayParallelSplit"/>
+    
+    <sequenceFlow id="wrc_Flow9" sourceRef="wrc_GatewayParallelSplit" targetRef="wrc_CreateShipment"/>
+    <task id="wrc_CreateShipment" name="Create shipment order"/>
+    
+    <sequenceFlow id="wrc_Flow10" sourceRef="wrc_GatewayParallelSplit" targetRef="wrc_ScheduleCourier"/>
+    <task id="wrc_ScheduleCourier" name="Schedule courier pickup"/>
+    
+    <sequenceFlow id="wrc_Flow11" sourceRef="wrc_CreateShipment" targetRef="wrc_GatewayParallelJoin"/>
+    <sequenceFlow id="wrc_Flow12" sourceRef="wrc_ScheduleCourier" targetRef="wrc_GatewayParallelJoin"/>
+    <parallelGateway id="wrc_GatewayParallelJoin"/>
+    
+    <!-- Completion -->
+    <sequenceFlow id="wrc_Flow13" sourceRef="wrc_GatewayParallelJoin" targetRef="wrc_UpdateInventory"/>
+    <task id="wrc_UpdateInventory" name="Update inventory records"/>
+    
+    <sequenceFlow id="wrc_Flow14" sourceRef="wrc_UpdateInventory" targetRef="wrc_CloseClaim"/>
+    <task id="wrc_CloseClaim" name="Close the claim"/>
+    
+    <!-- End Events -->
+    <sequenceFlow id="wrc_Flow15" sourceRef="wrc_RejectNotice" targetRef="wrc_EndRejected"/>
+    <endEvent id="wrc_EndRejected" name="Claim rejected"/>
+    
+    <sequenceFlow id="wrc_Flow16" sourceRef="wrc_CloseClaim" targetRef="wrc_EndCompleted"/>
+    <endEvent id="wrc_EndCompleted" name="Claim completed"/>
+  </process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="wrc_Process">
+      <!-- Diagram layout elements would go here in a full implementation -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+```
+
+Key features:
+1. Strictly follows the process description without adding unspecified elements
+2. Uses two exclusive gateways (for claim completeness and warranty eligibility)
+3. Implements parallel activities with parallel gateway pair
+4. Includes exactly two end events as specified
+5. All elements have "wrc_" prefix
+6. Task names match the process description verbatim
+7. Contains no error-handling or escalation paths beyond what's described
+
+The XML is complete but omits detailed diagram layout coordinates for brevity. A full implementation would include these in the BPMNDiagram section.

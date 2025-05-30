@@ -1,0 +1,200 @@
+We are asked: "Helios Insurance has delivered two successive versions of its Claims_Process fragment. The task is: 'Read the XML snippets and summarise all functional changes, grouped under three headings shown below verbatim and in this order:'
+
+- ADDED TASKS  
+- REMOVED TASKS  
+- GATEWAY TYPE CHANGES  
+
+For tasks, give the id followed by name in parentheses. For gateways, give id and the change as «old type → new type»."
+
+Also note: "Do NOT mention elements that are unchanged, and add no commentary." so we need to analyze differences exactly. Also mention "verifiable differences" between the two BPMN versions.
+
+We have two versions: we'll compare BPMN_v1 and BPMN_v2.
+
+We examine tasks speed scanning:
+
+Version BPMN_v1 (older version) XML snippet:
+
+- startEvent: id "StartEvent_1", name "Start" doesn't count as task.
+- Tasks in v1: which are tasks likely include "userTask" or "serviceTask"? All tasks. But XML snippet includes task that are: "Task_ReceiveClaim" (userTask), "Task_ValidateCoverage" (serviceTask), "Task_ManualReview" (userTask), "Task_ApproveClaim" (serviceTask), "Task_RejectClaim" (serviceTask). And gateways: "exclusiveGateway" ones with id "Gateway_ReviewNeeded" and "Gateway_Payment". And subsequent tasks connected? But the specification with possibly "Task_ManualReview" is executed only in one branch between these gateways. So solution says: summarise "all functional changes", grouping under three headings: ADDED TASKS, REMOVED TASKS, GATEWAY TYPE CHANGES. And the instructions: "For tasks, list id and name in parentheses."
+
+So we need to compare BPMN_v1 and BPMN_v2 for tasks and gateways.
+
+We see BPMN_v2 snippet:
+
+- startEvent: id "StartEvent_1", name "Start". It is same as BPMN_v1.
+- tasks: v2 has "Task_ReceiveClaim" (userTask) same as v1. "Task_ValidateCoverage" (serviceTask) same as v1.
+- v2 then has "parallelGateway" id "Gateway_ReviewNeeded", gatewayDirection "Diverging". But in BPMN_v1 was "exclusiveGateway id="Gateway_ReviewNeeded" gatewayDirection="Diverging". So there is gateway type change: old was exclusiveGateway, new is parallelGateway? Actually explicit value: v2: <parallelGateway id="Gateway_ReviewNeeded"…… but check initial spec: Actually original is "exclusiveGateway". And also likely changed task after. v1 after the gateway "Gateway_ReviewNeeded" : after that, v1 includes "userTask" manual review "Task_ManualReview". But BPMN_v2 does not include that same manual review task after the gateway. So the manual review may be replaced in BPMN_v2 by tasks executed post-gateway: they include is: "Task_FraudCheck" (serviceTask) then "Task_FastTrackApproval" (serviceTask); then "Task_ApproveClaim" and "Task_RejectClaim". Additionally, BPMN_v2 has new "sendTask" id "Task_NotifyCustomer" "Notify Customer".
+
+So tasks changes:
+
+Based on v1, tasks from BPMN_v1:
+1) "Task_ReceiveClaim" (userTask) → same in v2? Yes.
+2) "Task_ValidateCoverage" (serviceTask) – same? Yes.
+3) "Task_ManualReview" (userTask) → v2 doesn't include? Let's double-check: after "Gateway_ReviewNeeded" in v1, v1 includes: <userTask id="Task_ManualReview" name="Manual Review"/>. But in v2, after that gateway, a different set of tasks is included:
+- while v1: after gateway "Gateway_ReviewNeeded", it had a single userTask "Task_ManualReview". In v2, right after the new gateway id "Gateway_ReviewNeeded" there is now two tasks perhaps in parallel?
+Let's re-read v2 snippet:
+
+v2 snippet:
+9 lines as it says:
+<startEvent id="StartEvent_1" name="Start"/>
+  <userTask id="Task_ReceiveClaim" name="Receive Claim"/>
+  <serviceTask id="Task_ValidateCoverage" name="Validate Coverage"/>
+  <parallelGateway id="Gateway_ReviewNeeded" gatewayDirection="Diverging"/>
+  <serviceTask id="Task_FraudCheck" name="Automated Fraud Check"/>
+  <serviceTask id="Task_FastTrackApproval" name="Fast-Track Approval"/>
+  <serviceTask id="Task_ApproveClaim" name="Approve Claim"/>
+  <serviceTask id="Task_RejectClaim" name="Reject Claim"/>
+  <sendTask id="Task_NotifyCustomer" name="Notify Customer"/>
+  <parallelGateway id="Gateway_Payment" gatewayDirection="Converging"/>
+  <endEvent id="EndEvent_1" name="End"/>
+
+So what tasks differences:
+
+ADDED TASKS:
+- Added tasks that are not present in v1.
+Which ones are added:
+- New tasks in v2: v2 doesn't have "Task_ManualReview", replaced instead with "Task_FraudCheck" and "Task_FastTrackApproval" and maybe "sendTask"? 
+So added tasks: "Task_FraudCheck" is added? v1 not present; "Task_FastTrackApproval" is added; and "Task_NotifyCustomer" is added.
+What about "Task_RejectClaim" and "Task_ApproveClaim"? They remain same. And "Task_ReceiveClaim" and "Task_ValidateCoverage" are not changed.
+So ADDED TASKS: Task_FraudCheck (serviceTask) will be reported; Task_FastTrackApproval (serviceTask); Task_NotifyCustomer (sendTask).
+
+REMOVE TASKS:
+BPMN_v1 had "Task_ManualReview" (userTask) that v2 doesn't include. So removed tasks: "Task_ManualReview" (userTask).
+
+Now Check: v1 tasks: "Task_ManualReview" is removed, while others are added. Let’s double-check v1/Gateways:
+- "Gateway_ReviewNeeded" is in v1 as "exclusiveGateway" type but v2 is "parallelGateway". 
+- "Gateway_Payment" remains "exclusiveGateway" type in v1 and not changed in v2? Wait, v2: "Gateway_Payment" is <parallelGateway id="Gateway_Payment" gatewayDirection="Converging"/> is that a gateway type change as well? Actually check v2 for Gateway_Payment: It's originally "exclusiveGateway" in v1 and now changed to "parallelGateway".
+
+So gateway changes: Actually we examine gateways with identical id but type changes:
+
+For gateway with id "Gateway_ReviewNeeded": In v1, old type: exclusiveGateway. In v2: parallelGateway. That's change type from exclusiveGateway -> parallelGateway. 
+For gateway with id "Gateway_Payment": In v1, old type: exclusiveGateway. In v2: parallelGateway. So both gateways have been changed to parallel gateway. But the instruction is: "GATEWAY TYPE CHANGES" should list id and change as «old type → new type». But instructions mention: list changes under three headings: ADDED TASKS, REMOVED TASKS, GATEWAY TYPE CHANGES. And for gateways, output with id and the change (open quotes with the arrows inside). But note "Do not mention elements that are unchanged." So obviously we should list only differences in the gateway type if change occurred. For v2, both gateway types changed from exclusive to parallel. So presumably we are to list: "Gateway_ReviewNeeded: exclusive → parallel" and "Gateway_Payment: exclusive → parallel" are changes.
+
+Though re-read question. It says: "Functional changes." So check tasks only: added tasks vs removed tasks. And gateway type changes.
+Let's list them in the same track.
+
+- ADDED TASKS: "Task_FraudCheck (Automated Fraud Check)", "Task_FastTrackApproval (Fast-Track Approval)", "Task_NotifyCustomer (Notify Customer)". The instructions: "For tasks, give the id (and then name in parentheses)", not modifying original task names? They look like that? Yes.
+
+- REMOVED TASKS: That means tasks present in v1 that are not in v2. In v1 there was a task "Task_ManualReview" (Manual Review) that is missing in v2. So "Task_ManualReview (Manual Review)" is removed.
+
+- GATEWAY TYPE CHANGES: They changed both gateways from exclusiveGateway to parallelGateway.
+
+BUT instructions: possibly: "for tasks, give id then name in parentheses" - use standard formatting.
+
+Check thoroughly if any else tasks are removed? Possibly "Task_NotifyCustomer" is new. Notice in v2 service tasks: v2 sequence reordering: in v1, after "Task_ValidateCoverage", then "Gateway_ReviewNeeded", then "Task_ManualReview", then "Task_ApproveClaim", then "Task_RejectClaim", then "Gateway_Payment", then "EndEvent_1"? Actually check v1:
+<startEvent id="StartEvent_1" name="Start"/>
+ <userTask    id="Task_ReceiveClaim" name="Receive Claim"/>
+ <serviceTask id="Task_ValidateCoverage" name="Validate Coverage"/>
+ <exclusiveGateway id="Gateway_ReviewNeeded" gatewayDirection="Diverging"/>
+ <userTask    id="Task_ManualReview" name="Manual Review"/>
+ <serviceTask id="Task_ApproveClaim" name="Approve Claim"/>
+ <serviceTask id="Task_RejectClaim" name="Reject Claim"/>
+ <exclusiveGateway id="Gateway_Payment"  gatewayDirection="Converging"/>
+ <endEvent id="EndEvent_1" name="End"/>
+
+While v2:
+<startEvent id="StartEvent_1" name="Start"/>
+ <userTask    id="Task_ReceiveClaim" name="Receive Claim"/>
+ <serviceTask id="Task_ValidateCoverage" name="Validate Coverage"/>
+ <parallelGateway id="Gateway_ReviewNeeded" gatewayDirection="Diverging"/>
+ <serviceTask id="Task_FraudCheck" name="Automated Fraud Check"/>
+ <serviceTask id="Task_FastTrackApproval" name="Fast-Track Approval"/>
+ <serviceTask id="Task_ApproveClaim" name="Approve Claim"/>
+ <serviceTask id="Task_RejectClaim" name="Reject Claim"/>
+ <sendTask   id="Task_NotifyCustomer" name="Notify Customer"/>
+ <parallelGateway id="Gateway_Payment" gatewayDirection="Converging"/>
+ <endEvent id="EndEvent_1" name="End"/>
+
+We then note: tasks removed in v2: manual review "Task_ManualReview".
+
+Added tasks: "Task_FraudCheck" added, "Task_FastTrackApproval" added, "Task_NotifyCustomer" added.
+
+Additionally, a potential ordering change doesn't count on functional differences. The given headings mandate exactly "ADDED TASKS", "REMOVED TASKS", "GATEWAY TYPE CHANGES". So our answer should consist of three bullet headings or sections:
+
+Heading 1: "ADDED TASKS" then bullet points: "Task_FraudCheck (Automated Fraud Check)", "Task_FastTrackApproval (Fast-Track Approval)", "Task_NotifyCustomer (Notify Customer)" possibly in a list format. 
+Heading 2: "REMOVED TASKS": "Task_ManualReview (Manual Review)".
+Heading 3: "GATEWAY TYPE CHANGES": then list:
+Gateway_ReviewNeeded: exclusive → parallel 
+Gateway_Payment: exclusive → parallel
+
+But then instructions: "For gateways, give the id and the change as «old type → new type» (e.g., 'Gateway_X: exclusive → parallel')." So, using the exact format: Should print exactly:
+
+For ADDED TASKS, ordering: keep each entry as new line: Each line "Task_AddedID (Name)".
+For REMOVED TASKS: "Task_ManualReview (Manual Review)".
+For GATEWAY changes: Actually instructions: For gateways, "give the id and the change as «old type → new type»." 
+Hence we have ""Gateway_ReviewNeeded: exclusive → parallel" and "Gateway_Payment: exclusive → parallel."
+
+Thus answer should not mention any commentary aside from listing these changes in exactly three headings.
+
+Double-check existence of any tasks difference? Not exactly. Perhaps check if "serviceTask id "Task_ApproveClaim" appears with same name "Approve Claim" and same type; "Task_RejectClaim" seems to appear; "Task_ValidateCoverage" is same in both.
+Check if gateway properties. And then tasks in v2 changed: parallelGateway gateway type is changed for "Gateway_ReviewNeeded" and "Gateway_Payment." 
+
+We must check if any tasks were added besides the three mentioned. v2 might be missing any tasks from v1. v1 included "Task_ManualReview" which is not there in v2, so that's removed. Nothing else is added/removed.
+The question requires not include commentary aside the required headings, so just produce three lines in headings.
+
+Let me produce final answer with heading line (ADDED TASKS, with list) then (REMOVED TASKS with list) then (GATEWAY TYPE CHANGES with list). But instructions say: output must contain only the three required headings in that order, and inside only concrete differences for tasks and gateways. So I must produce text like:
+
+ADDED TASKS:
+Task_FraudCheck (Automated Fraud Check)
+Task_FastTrackApproval (Fast-Track Approval)
+Task_NotifyCustomer (Notify Customer)
+
+REMOVED TASKS:
+Task_ManualReview (Manual Review)
+
+GATEWAY TYPE CHANGES:
+Gateway_ReviewNeeded: exclusive → parallel
+Gateway_Payment: exclusive → parallel
+
+No extra commentary.
+
+I have to check instructions "Do not guess intentions or add design advice" thus no commentary.
+
+The answer must include only the three headings and differences.
+
+I check formatting instructions: "ADDED TASKS" is written in the bullet list with heading exactly "ADDED TASKS", "REMOVED TASKS" exactly, and "GATEWAY TYPE CHANGES". 
+And differences must be listed. Use exactly "ADDED TASKS" on one line, then gap. Wait check instructions: "list all functional changes, grouped under the three headings shown below — verbatim and in this order" which means headings exactly as shown: ADDED TASKS, REMOVED TASKS, GATEWAY TYPE CHANGES. I must include exactly those headings and then items in order. And no "list" markers.
+
+Although the text "Do not mention elements that are unchanged, and add no commentary" so we must include only verifiable differences.
+
+I check if all difference is correct. So final answer: I will answer:
+ADDED TASKS:
+Task_FraudCheck (Automated Fraud Check)
+Task_FastTrackApproval (Fast-Track Approval)
+Task_NotifyCustomer (Notify Customer)
+
+REMOVED TASKS:
+Task_ManualReview (Manual Review)
+
+GATEWAY TYPE CHANGES:
+Gateway_ReviewNeeded: exclusive → parallel
+Gateway_Payment: exclusive → parallel
+
+I check if any differences for gateway possibly "gatewayDirection" assignment? But instructions don't mention differences for gatewayDirection, just type. But note "Do not mention elements that are unchanged." So it's not reported. 
+But note that v2 has change in type for Gateway_ReviewNeeded: changed from exclusiveGateway to parallelGateway (giving in our output "Gateway_ReviewNeeded: exclusive → parallel").
+
+Also v1 to v2: Gateway_Payment changed from exclusiveGateway to parallelGateway (giving in our output similarly).
+
+Now every other element is unchanged. So output should include that.
+
+I output final answer with required headings. I must produce answer without additional commentary. Use exact headings and ordering.
+
+I check type for tasks: "userTask", "serviceTask", "sendTask". Their names are formatted accordingly. Task names are same as provided in XML snippet.
+
+Check: "Task_NotifyCustomer" is new, so it is indeed in v2 as "<sendTask id="Task_NotifyCustomer" name="Notify Customer"/>" so that's new. Yes.
+
+I output answer as required.
+
+I'll now produce final answer accordingly in plain text, listing headings and then changes. Use single lines exactly in output as plain text.
+
+I'll produce final answer accordingly.ADDED TASKS  
+Task_FraudCheck (Automated Fraud Check)  
+Task_FastTrackApproval (Fast-Track Approval)  
+Task_NotifyCustomer (Notify Customer)  
+
+REMOVED TASKS  
+Task_ManualReview (Manual Review)  
+
+GATEWAY TYPE CHANGES  
+Gateway_ReviewNeeded: exclusive → parallel  
+Gateway_Payment: exclusive → parallel
