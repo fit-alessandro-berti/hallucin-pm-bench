@@ -1,0 +1,42 @@
+Let's analyze the possibility of transition T5 firing before transition T3.
+
+### Key Observations:
+1. **Inhibitor Arc Constraint for T5**:
+   - T5 requires zero tokens in p4 to be enabled.
+   - However, T3 is the only transition that adds tokens to p4 (by consuming a token from p2). Thus, p4 can only have tokens if T3 has fired.
+
+2. **Dependencies**:
+   - T3’s firing is gated by p2’s token, which comes from T1’s firing (which splits p0 into p1 and p2).
+   - T5’s firing is gated by p4 being empty (which is true initially, but after T3 fires, p4 would have a token, disabling T5).
+
+3. **Precondition for T5:**
+   For T5 to fire before T3, we’d need:
+   - p4 = 0 (which is true initially) and p3 to have a token (for T5 to be enabled).
+   - However, p3 is populated by T2, which consumes a token from p1. p1 itself is populated by T1.
+
+4. Required firing sequence to enable T5:
+   - First, T1 must fire, producing 1 token in p1 and 1 in p2.
+   - Then, T2 must fire (consuming the token from p1) to put a token in p3.
+   Now, p3 has 1 token and p4 has 0 tokens, enabling T5 to fire next.
+   If T5 fires here, we’d have:
+     - T5 consumes from p3 and checks that p4 is empty (true at this point), firing to put a token in p6.
+   - After this, T3 could still fire (using the token still in p2 from T1, since it wasn’t consumed yet), but the question is about firing T5 *before* T3, which we just saw is possible.
+
+### Firing Sequence Leading to T5 Firing Before T3:
+1. Initial marking: p0=1, others=0.
+2. Fire T1: p0 → p1 + p2 → p0=0, p1=1, p2=1.
+3. Fire T2: p1 → p3 → p1=0, p3=1, p2=1.
+   Now: p2=1, p3=1, p4=0 (T5 is enabled).
+4. Fire T5 (before T3): T5: p3 –|p4 → p6 → p3=0, p6=1 (p4 was 0, so the inhibitor arc allowed firing).
+   Now: p2=1 (still untouched), p3=0, p4=0, p6=1.
+   Later, T3 could fire using the remaining p2 token, but this sequence shows T5 fired first.
+
+Thus, it **is possible** for T5 to fire before T3. Here’s the concrete sequence:
+```
+T1 T2 T5
+```
+Explanation: T1 splits the initial token into p1/p2. T2 moves the p1 token to p3. At this point, T5 can fire because p3=1 and p4=0. T3 was avoidable at this step.
+
+Final answer: **Yes**, one such firing sequence is: **T1 → T2 → T5**.
+
+Justification: T1 produces the needed tokens in p1/p2. T2 moves the p1 token to p3, enabling T5 (p3 has a token and p4 is empty). Since T3 wasn’t triggered before T5, the condition holds.

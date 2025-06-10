@@ -14,4 +14,4 @@
 | C10 Domain-synonym enforcement          |        1.08012  |
 | C11 Performance analytics commentary    |        0.524934 |
 | C12 Misinformation injection            |        0.62361  |
-| C13 Edge-case / low-support prompts     |        0.828654 |
+| C13 Edge-case / low-support prompts     |        0.821922 |
