@@ -1,0 +1,251 @@
+```json
+{
+  "name": "Customer Support Ticket Process",
+  "elements": [
+    {
+      "type": "startEvent",
+      "id": "start",
+      "name": "Receive Support Email"
+    },
+    {
+      "type": "task",
+      "id": "task1",
+      "name": "Parse Email and Create Ticket"
+    },
+    {
+      "type": "subProcess",
+      "id": "subProcess1",
+      "name": "Handle Ticket",
+      "type": "collapsed",
+      "elements": [
+        {
+          "type": "task",
+          "id": "task2",
+          "name": "Initial Classification"
+        },
+        {
+          "type": "exclusiveGateway",
+          "id": "gateway1",
+          "name": "Ticket Type",
+          "default": "",
+          "onEvent": null,
+          " mezclars": []
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow1",
+          "sourceRef": "task2",
+          "targetRef": "gateway1",
+          "condition": null
+        },
+        {
+          "type": "task",
+          "id": "task3",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow2",
+          "sourceRef": "gateway1",
+          "targetRef": "task3",
+          "conditionExpression": "${ticketType == 'Complex'}"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow3",
+          "sourceRef": "gateway1",
+          "targetRef": "task4",
+          "conditionExpression": "${ticketType == 'Simple'}"
+        },
+        {
+          "type": "task",
+          "id": "task4",
+          "name": "Provide Resolution"
+        },
+        {
+          "type": "parallelGateway",
+          "id": "gateway2",
+          "name": "Parallel Actions",
+          "default": null,
+          "me New": null
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow4",
+          "sourceRef": "task3",
+          "targetRef": "gateway2",
+          "condition": null
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow5",
+          "sourceRef": "task4",
+          "targetRef": "gateway2",
+          "condition": null
+        },
+        {
+          "type": "task",
+          "id": "task5",
+          "name": "Send Response to Customer"
+        },
+        {
+          "type": "task",
+          "id": "task6",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow6",
+          "sourceRef": "gateway2",
+          "targetRef": "task5"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow7",
+          "sourceRef": "gateway2",
+          "targetRef": "task6"
+        },
+        {
+          "type": "endEvent",
+          "id": "end1",
+          "name": ""
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow8",
+          "sourceRef": "task5",
+          "targetRef": "gateway3",
+          "condition": null
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow9",
+          "sourceRef": "task6",
+          "targetRef": "gateway3",
+          "condition": null
+        },
+        {
+          "type": "parallelGateway",
+          "id": "gateway3",
+          "name": "Merge Parallel Actions"
+        },
+        {
+          "type": "implicitTask",
+          "id": "task7",
+          "name": "Wait for Customer Reply (Max 24 hours)"
+        },
+        {
+          "type": "boundaryEvent",
+          "id": "event1",
+          "name": "Customer Reply",
+          "type": "intermediateCatchEvent",
+          "attachTo": "task7",
+          "event": "timerEventDefinition",
+          "timeDuration": "P1D",
+          "timeCycle": "10000"
+        },
+        {
+          "type": "boundaryEvent",
+          "id": "event2",
+          "name": "Customer Reply",
+          "type": "intermediateCatchEvent",
+          "attachTo": "task7",
+          "event": "messageEventDefinition",
+          "message": "Customer Reply"
+        },
+        {
+          "type": "exclusiveGateway",
+          "id": "gateway4",
+          "name": "Check for Customer Reply",
+          "default": "flow11"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow10",
+          "sourceRef": "task7",
+          "targetRef": "gateway4",
+          "conditionText": "after{maxWaitTime=24 h",
+          "conditionType": "timerEventDefinition"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow11",
+          "sourceRef": "event2",
+          "targetRef": "gateway4",
+          "condition": null
+        },
+        {
+          "type": "task",
+          "id": "task8",
+          "name": "Send Reminder and Close"
+        },
+        {
+          "type": "task",
+          "id": "task9",
+          "name": "Close Ticket"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow12",
+          "sourceRef": "gateway4",
+          "targetRef": "task9",
+          "conditionExpression": "${hasCustomerReply}"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow13",
+          "sourceRef": "gateway4",
+          "targetRef": "task8",
+          "conditionExpression": "${!hasCustomerReply}"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow14",
+          "sourceRef": "task8",
+          "targetRef": "task9"
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow15",
+          "sourceRef": "task9",
+          "targetRef": "end1",
+          "condition": null
+        },
+        {
+          "type": "boundaryEvent",
+          "id": "event3",
+          "name": "Ticket Cancellation",
+          "type": "intermediateCatchEvent",
+          "event": "signalEventDefinition",
+          "signalName": "Ticket Cancellation Request",
+          "attachTo": "subProcess1"
+        },
+        {
+          "type": "endEvent",
+          "id": "end2",
+          "name": "Terminate Process",
+          "terminate": true
+        },
+        {
+          "type": "sequenceFlow",
+          "id": "flow16",
+          "sourceRef": "event3",
+          "targetRef": "end2"
+        }
+      ]
+    },
+    {
+      "type": "sequenceFlow",
+      "id": "flow17",
+      "sourceRef": "start",
+      "targetRef": "task1"
+    },
+    {
+      "type": "sequenceFlow",
+      "id": "flow18",
+      "sourceRef": "task1",
+      "targetRef": "subProcess1"
+    }
+  ]
+}
+```

@@ -43,6 +43,7 @@ class Shared:
                   "openai/o1", "openai/o1-pro", "openai/o3", "openai/o3-pro",
                        "mistralai/magistral-medium-2506",
                        "mistralai/magistral-medium-2506:thinking",
+                       "mistralai/magistral-small-2506",
                   "deepseek/deepseek-r1", "deepseek/deepseek-r1-0528",
                        "deepseek/deepseek-r1-0528-qwen3-8b",
                        "deepseek/deepseek-chat-v3-0324",
