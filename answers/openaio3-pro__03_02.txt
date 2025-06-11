@@ -1,0 +1,171 @@
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "processes": [
+      {
+        "id": "CustomerSupportTicketProcess",
+        "isExecutable": true,
+        "flowElements": [
+          {
+            "id": "SE_EmailReceived",
+            "type": "startEvent",
+            "name": "E-mail Received",
+            "outgoing": ["SF1"]
+          },
+          {
+            "id": "T_ParseCreateTicket",
+            "type": "task",
+            "name": "Parse E-mail & Create Ticket",
+            "incoming": ["SF1"],
+            "outgoing": ["SF2"]
+          },
+          {
+            "id": "T_InitialClassification",
+            "type": "task",
+            "name": "Initial Classification",
+            "incoming": ["SF2"],
+            "outgoing": ["SF3"]
+          },
+          {
+            "id": "G_SimpleComplex",
+            "type": "exclusiveGateway",
+            "name": "Simple or Complex?",
+            "incoming": ["SF3"],
+            "outgoing": ["SF4", "SF5"]
+          },
+          {
+            "id": "T_ProvideResolution",
+            "type": "task",
+            "name": "Provide Resolution",
+            "incoming": ["SF4", "SF6"],
+            "outgoing": ["SF7"]
+          },
+          {
+            "id": "T_RootCauseAnalysis",
+            "type": "task",
+            "name": "Root Cause Analysis",
+            "incoming": ["SF5"],
+            "outgoing": ["SF6"]
+          },
+          {
+            "id": "G_ParallelSplit",
+            "type": "parallelGateway",
+            "name": "Parallel Split",
+            "incoming": ["SF7"],
+            "outgoing": ["SF8", "SF9"]
+          },
+          {
+            "id": "T_SendResponse",
+            "type": "task",
+            "name": "Send Response to Customer",
+            "incoming": ["SF8"],
+            "outgoing": ["SF10"]
+          },
+          {
+            "id": "G_WaitReplyOrTimer",
+            "type": "eventBasedGateway",
+            "name": "Reply or 24h Timer",
+            "incoming": ["SF10"],
+            "outgoing": ["SF11", "SF12"]
+          },
+          {
+            "id": "E_MessageCustomerReply",
+            "type": "intermediateCatchEvent",
+            "eventDefinition": "message",
+            "name": "Customer Reply",
+            "incoming": ["SF11"],
+            "outgoing": ["SF13"]
+          },
+          {
+            "id": "E_Timer24h",
+            "type": "intermediateCatchEvent",
+            "eventDefinition": "timer",
+            "name": "24h Elapsed",
+            "timeDuration": "PT24H",
+            "incoming": ["SF12"],
+            "outgoing": ["SF14"]
+          },
+          {
+            "id": "T_SendReminder",
+            "type": "task",
+            "name": "Send Reminder",
+            "incoming": ["SF14"],
+            "outgoing": ["SF15"]
+          },
+          {
+            "id": "T_CloseTicket",
+            "type": "task",
+            "name": "Close Ticket",
+            "incoming": ["SF13", "SF15"],
+            "outgoing": ["SF16"]
+          },
+          {
+            "id": "T_LogSolution",
+            "type": "task",
+            "name": "Log Solution in Knowledge Base",
+            "incoming": ["SF9"],
+            "outgoing": ["SF17"]
+          },
+          {
+            "id": "G_ParallelJoin",
+            "type": "parallelGateway",
+            "name": "Parallel Join",
+            "incoming": ["SF16", "SF17"],
+            "outgoing": ["SF18"]
+          },
+          {
+            "id": "End_Process",
+            "type": "endEvent",
+            "name": "End",
+            "incoming": ["SF18"]
+          },
+          {
+            "id": "SubProcess_Cancellation",
+            "type": "subProcess",
+            "name": "Cancellation Handler",
+            "triggeredByEvent": true,
+            "flowElements": [
+              {
+                "id": "SE_CancelMessage",
+                "type": "startEvent",
+                "eventDefinition": "message",
+                "name": "Customer Cancels Ticket",
+                "outgoing": ["SF_CANCEL_1"]
+              },
+              {
+                "id": "End_Terminate",
+                "type": "terminateEndEvent",
+                "name": "Terminate",
+                "incoming": ["SF_CANCEL_1"]
+              },
+              {
+                "id": "SF_CANCEL_1",
+                "type": "sequenceFlow",
+                "sourceRef": "SE_CancelMessage",
+                "targetRef": "End_Terminate"
+              }
+            ]
+          },
+          { "id": "SF1",  "type": "sequenceFlow", "sourceRef": "SE_EmailReceived",   "targetRef": "T_ParseCreateTicket" },
+          { "id": "SF2",  "type": "sequenceFlow", "sourceRef": "T_ParseCreateTicket","targetRef": "T_InitialClassification" },
+          { "id": "SF3",  "type": "sequenceFlow", "sourceRef": "T_InitialClassification","targetRef": "G_SimpleComplex" },
+          { "id": "SF4",  "type": "sequenceFlow", "sourceRef": "G_SimpleComplex", "targetRef": "T_ProvideResolution", "conditionExpression": "Simple" },
+          { "id": "SF5",  "type": "sequenceFlow", "sourceRef": "G_SimpleComplex", "targetRef": "T_RootCauseAnalysis", "conditionExpression": "Complex" },
+          { "id": "SF6",  "type": "sequenceFlow", "sourceRef": "T_RootCauseAnalysis", "targetRef": "T_ProvideResolution" },
+          { "id": "SF7",  "type": "sequenceFlow", "sourceRef": "T_ProvideResolution", "targetRef": "G_ParallelSplit" },
+          { "id": "SF8",  "type": "sequenceFlow", "sourceRef": "G_ParallelSplit", "targetRef": "T_SendResponse" },
+          { "id": "SF9",  "type": "sequenceFlow", "sourceRef": "G_ParallelSplit", "targetRef": "T_LogSolution" },
+          { "id": "SF10", "type": "sequenceFlow", "sourceRef": "T_SendResponse", "targetRef": "G_WaitReplyOrTimer" },
+          { "id": "SF11", "type": "sequenceFlow", "sourceRef": "G_WaitReplyOrTimer", "targetRef": "E_MessageCustomerReply" },
+          { "id": "SF12", "type": "sequenceFlow", "sourceRef": "G_WaitReplyOrTimer", "targetRef": "E_Timer24h" },
+          { "id": "SF13", "type": "sequenceFlow", "sourceRef": "E_MessageCustomerReply", "targetRef": "T_CloseTicket" },
+          { "id": "SF14", "type": "sequenceFlow", "sourceRef": "E_Timer24h", "targetRef": "T_SendReminder" },
+          { "id": "SF15", "type": "sequenceFlow", "sourceRef": "T_SendReminder", "targetRef": "T_CloseTicket" },
+          { "id": "SF16", "type": "sequenceFlow", "sourceRef": "T_CloseTicket", "targetRef": "G_ParallelJoin" },
+          { "id": "SF17", "type": "sequenceFlow", "sourceRef": "T_LogSolution", "targetRef": "G_ParallelJoin" },
+          { "id": "SF18", "type": "sequenceFlow", "sourceRef": "G_ParallelJoin", "targetRef": "End_Process" }
+        ]
+      }
+    ]
+  }
+}

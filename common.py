@@ -40,7 +40,7 @@ class Shared:
                   "meta-llama/llama-4-maverick",
                   "meta-llama/llama-3.3-70b-instruct",
                   "microsoft/phi-4",
-                  "openai/o1", "openai/o1-pro", "openai/o3",
+                  "openai/o1", "openai/o1-pro", "openai/o3", "openai/o3-pro",
                        "mistralai/magistral-medium-2506",
                        "mistralai/magistral-medium-2506:thinking",
                   "deepseek/deepseek-r1", "deepseek/deepseek-r1-0528",
