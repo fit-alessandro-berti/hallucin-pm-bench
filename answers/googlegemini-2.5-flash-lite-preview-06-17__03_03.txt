@@ -1,0 +1,116 @@
+```xml
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn2:process id="WarrantyReplacementProcess" isExecutable="true">
+    <bpmn2:startEvent id="wrc_startEvent_1">
+      <bpmn2:outgoing>wrc_sequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:task id="wrc_task_1" name="validates the claim">
+      <bpmn2:incoming>wrc_sequenceFlow_1</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_2</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:exclusiveGateway id="wrc_gateway_1" name="Claim Complete?">
+      <bpmn2:incoming>wrc_sequenceFlow_2</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_3</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sequenceFlow_4</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:task id="wrc_task_2" name="requests missing information">
+      <bpmn2:incoming>wrc_sequenceFlow_4</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_5</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:exclusiveGateway id="wrc_gateway_2" name="Warranty Decision">
+      <bpmn2:incoming>wrc_sequenceFlow_3</bpmn2:incoming>
+      <bpmn2:incoming>wrc_sequenceFlow_5</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_6</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sequenceFlow_7</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:task id="wrc_task_3" name="checks warranty eligibility">
+      <bpmn2:incoming>wrc_sequenceFlow_6</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_8</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:exclusiveGateway id="wrc_gateway_3" name="Warranty Eligibility">
+      <bpmn2:incoming>wrc_sequenceFlow_8</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_9</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sequenceFlow_10</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:parallelGateway id="wrc_parallelSplit_1">
+      <bpmn2:incoming>wrc_sequenceFlow_9</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_11</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sequenceFlow_12</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+    <bpmn2:task id="wrc_task_4" name="Create shipment order">
+      <bpmn2:incoming>wrc_sequenceFlow_11</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_13</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:task id="wrc_task_5" name="Schedule courier pickup">
+      <bpmn2:incoming>wrc_sequenceFlow_12</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_14</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:parallelGateway id="wrc_parallelJoin_1">
+      <bpmn2:incoming>wrc_sequenceFlow_13</bpmn2:incoming>
+      <bpmn2:incoming>wrc_sequenceFlow_14</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_15</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+    <bpmn2:task id="wrc_task_6" name="update inventory records">
+      <bpmn2:incoming>wrc_sequenceFlow_15</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_16</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:task id="wrc_task_7" name="close the claim">
+      <bpmn2:incoming>wrc_sequenceFlow_16</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_17</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:endEvent id="wrc_endEvent_1">
+      <bpmn2:incoming>wrc_sequenceFlow_17</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:task id="wrc_task_8" name="send rejection notice">
+      <bpmn2:incoming>wrc_sequenceFlow_10</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sequenceFlow_18</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:endEvent id="wrc_endEvent_2">
+      <bpmn2:incoming>wrc_sequenceFlow_18</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_1" sourceRef="wrc_startEvent_1" targetRef="wrc_task_1"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_2" sourceRef="wrc_task_1" targetRef="wrc_gateway_1"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_3" name="Claim is complete" sourceRef="wrc_gateway_1" targetRef="wrc_gateway_2">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>claimComplete = true</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_4" name="Claim is incomplete" sourceRef="wrc_gateway_1" targetRef="wrc_task_2">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>claimComplete = false</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_5" sourceRef="wrc_task_2" targetRef="wrc_gateway_2"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_6" name="Claim is validated" sourceRef="wrc_gateway_2" targetRef="wrc_task_3">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>claimValidated = true</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_7" name="Claim validation failed" sourceRef="wrc_gateway_2" targetRef="wrc_task_8">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>claimValidated = false</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_8" sourceRef="wrc_task_3" targetRef="wrc_gateway_3"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_9" name="Within warranty" sourceRef="wrc_gateway_3" targetRef="wrc_parallelSplit_1">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>productInWarranty = true</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_10" name="Out of warranty" sourceRef="wrc_gateway_3" targetRef="wrc_task_8">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">
+        <bpmn2:text>productInWarranty = false</bpmn2:text>
+      </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_11" sourceRef="wrc_parallelSplit_1" targetRef="wrc_task_4"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_12" sourceRef="wrc_parallelSplit_1" targetRef="wrc_task_5"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_13" sourceRef="wrc_task_4" targetRef="wrc_parallelJoin_1"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_14" sourceRef="wrc_task_5" targetRef="wrc_parallelJoin_1"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_15" sourceRef="wrc_parallelJoin_1" targetRef="wrc_task_6"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_16" sourceRef="wrc_task_6" targetRef="wrc_task_7"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_17" sourceRef="wrc_task_7" targetRef="wrc_endEvent_1"/>
+    <bpmn2:sequenceFlow id="wrc_sequenceFlow_18" sourceRef="wrc_task_8" targetRef="wrc_endEvent_2"/>
+  </bpmn2:process>
+  <bpmn2:message id="Message_1"/>
+</bpmn2:definitions>
+```

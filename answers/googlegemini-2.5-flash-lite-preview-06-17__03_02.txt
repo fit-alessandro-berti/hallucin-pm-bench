@@ -1,0 +1,665 @@
+```json
+{
+  "bpmn:process": {
+    "@id": "Process_01",
+    "bpmn:startEvent": {
+      "@id": "StartEvent_1",
+      "documentation": {
+        "@xml:lang": "en",
+        "#text": "Support email received"
+      }
+    },
+    "bpmn:task": [
+      {
+        "@id": "Task_CreateTicket",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Parse e-mail and create Ticket in help-desk system"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_1"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_2"
+        ]
+      },
+      {
+        "@id": "Task_InitialClassification",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Perform Initial Classification (Simple/Complex)"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_2"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_3",
+          "SequenceFlow_4"
+        ]
+      },
+      {
+        "@id": "Task_ProvideResolution",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Provide Resolution"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_4",
+          "SequenceFlow_6"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_7"
+        ]
+      },
+      {
+        "@id": "Task_RootCauseAnalysis",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Perform Root Cause Analysis"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_3"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_6"
+        ]
+      },
+      {
+        "@id": "Task_SendResponseToCustomer",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Send Response to Customer"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_7"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_8"
+        ]
+      },
+      {
+        "@id": "Task_LogSolution",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Log Solution in Knowledge Base"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_7"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_9"
+        ]
+      },
+      {
+        "@id": "Task_SendReminder",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Send Reminder (once)"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_13"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_11"
+        ]
+      },
+      {
+        "@id": "Task_CloseTicket",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Close Ticket"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_10",
+          "SequenceFlow_11"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_14"
+        ]
+      },
+      {
+        "@id": "Task_Terminate",
+        "bpmn:documentation": {
+          "@xml:lang": "en",
+          "#text": "Terminate"
+        },
+        "bpmn:incoming": [
+          "SequenceFlow_15"
+        ]
+      }
+    ],
+    "bpmn:exclusiveGateway": [
+      {
+        "@id": "Gateway_Classification",
+        "bpmn:incoming": [
+          "SequenceFlow_3"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_4",
+          "SequenceFlow_6"
+        ]
+      },
+      {
+        "@id": "Gateway_WaitCustomerReply",
+        "bpmn:incoming": [
+          "SequenceFlow_8",
+          "SequenceFlow_9"
+        ],
+        "bpmn:outgoing": [
+          "SequenceFlow_10",
+          "SequenceFlow_13"
+        ]
+      }
+    ],
+    "bpmn:intermediateCatchEvent": {
+      "@id": "Event_WaitForCustomerReply",
+      "bpmn:documentation": {
+        "@xml:lang": "en",
+        "#text": "Wait 24 hours for Customer Reply"
+      },
+      "bpmn:incoming": [
+        "SequenceFlow_10"
+      ],
+      "bpmn:outgoing": [
+        "SequenceFlow_12"
+      ],
+      "bpmn:messageEventDefinition": {
+        "@id": "MessageEventDefinition_1"
+      }
+    },
+    "bpmn:intermediateThrowEvent": {
+      "@id": "Event_CustomerReplyReceived",
+      "bpmn:documentation": {
+        "@xml:lang": "en",
+        "#text": "Customer Reply Received"
+      },
+      "bpmn:incoming": [
+        "SequenceFlow_12"
+      ],
+      "bpmn:outgoing": [
+        "SequenceFlow_15"
+      ],
+      "bpmn:messageEventDefinition": {
+        "@id": "MessageEventDefinition_2"
+      }
+    },
+    "bpmn:endEvent": {
+      "@id": "EndEvent_ProcessTerminated",
+      "bpmn:documentation": {
+        "@xml:lang": "en",
+        "#text": "Process Finished/Terminated"
+      },
+      "bpmn:incoming": [
+        "SequenceFlow_14",
+        "SequenceFlow_15"
+      ]
+    },
+    "bpmn:sequenceFlow": [
+      {
+        "@id": "SequenceFlow_1",
+        "@sourceRef": "StartEvent_1",
+        "@targetRef": "Task_CreateTicket"
+      },
+      {
+        "@id": "SequenceFlow_2",
+        "@sourceRef": "Task_CreateTicket",
+        "@targetRef": "Task_InitialClassification"
+      },
+      {
+        "@id": "SequenceFlow_3",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Gateway_Classification",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Complex'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_4",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Task_ProvideResolution",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Simple'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_6",
+        "@sourceRef": "Gateway_Classification",
+        "@targetRef": "Task_RootCauseAnalysis",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Complex'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_7",
+        "@sourceRef": "Task_ProvideResolution",
+        "@targetRef": "Task_SendResponseToCustomer"
+      },
+      {
+        "@id": "SequenceFlow_8",
+        "@sourceRef": "Task_SendResponseToCustomer",
+        "@targetRef": "Gateway_WaitCustomerReply"
+      },
+      {
+        "@id": "SequenceFlow_9",
+        "@sourceRef": "Task_LogSolution",
+        "@targetRef": "Gateway_WaitCustomerReply"
+      },
+      {
+        "@id": "SequenceFlow_10",
+        "@sourceRef": "Gateway_WaitCustomerReply",
+        "@targetRef": "Event_WaitForCustomerReply",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "no reply received within 24h"
+        }
+      },
+      {
+        "@id": "SequenceFlow_12",
+        "@sourceRef": "Event_WaitForCustomerReply",
+        "@targetRef": "Event_CustomerReplyReceived",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "24h timeout elapsed"
+        }
+      },
+      {
+        "@id": "SequenceFlow_13",
+        "@sourceRef": "Gateway_WaitCustomerReply",
+        "@targetRef": "Task_SendReminder",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "24h timeout not elapsed"
+        }
+      },
+      {
+        "@id": "SequenceFlow_11",
+        "@sourceRef": "Task_SendReminder",
+        "@targetRef": "Task_CloseTicket"
+      },
+      {
+        "@id": "SequenceFlow_15",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "EndEvent_ProcessTerminated",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "customer not cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_14",
+        "@sourceRef": "Task_CloseTicket",
+        "@targetRef": "EndEvent_ProcessTerminated"
+      },
+      {
+        "@id": "sequenceFlow_16",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "sequenceFlow_17",
+        "@sourceRef": "Task_ProvideResolution",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "sequenceFlow_18",
+        "@sourceRef": "Task_RootCauseAnalysis",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "sequenceFlow_19",
+        "@sourceRef": "Task_SendResponseToCustomer",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "sequenceFlow_20",
+        "@sourceRef": "Task_LogSolution",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "sequenceFlow_21",
+        "@sourceRef": "Task_SendReminder",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_15",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "customer cancelled"
+        }
+      }
+    ],
+    "bpmn:sequenceFlow": [
+      {
+        "@id": "SequenceFlow_1",
+        "@sourceRef": "StartEvent_1",
+        "@targetRef": "Task_CreateTicket"
+      },
+      {
+        "@id": "SequenceFlow_2",
+        "@sourceRef": "Task_CreateTicket",
+        "@targetRef": "Task_InitialClassification"
+      },
+      {
+        "@id": "SequenceFlow_3",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Gateway_Classification",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Complex'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_4",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Task_ProvideResolution",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Simple'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_6",
+        "@sourceRef": "Gateway_Classification",
+        "@targetRef": "Task_RootCauseAnalysis",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$classification = 'Complex'"
+        }
+      },
+      {
+        "@id": "SequenceFlow_7",
+        "@sourceRef": "Task_ProvideResolution",
+        "@targetRef": "Task_SendResponseToCustomer"
+      },
+      {
+        "@id": "SequenceFlow_8",
+        "@sourceRef": "Task_SendResponseToCustomer",
+        "@targetRef": "Gateway_WaitCustomerReply"
+      },
+      {
+        "@id": "SequenceFlow_9",
+        "@sourceRef": "Task_LogSolution",
+        "@targetRef": "Gateway_WaitCustomerReply"
+      },
+      {
+        "@id": "SequenceFlow_10",
+        "@sourceRef": "Gateway_WaitCustomerReply",
+        "@targetRef": "Event_WaitForCustomerReply",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "no reply within 24h"
+        }
+      },
+      {
+        "@id": "SequenceFlow_12",
+        "@sourceRef": "Event_WaitForCustomerReply",
+        "@targetRef": "Event_CustomerReplyReceived",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "24h timeout elapsed"
+        }
+      },
+      {
+        "@id": "SequenceFlow_13",
+        "@sourceRef": "Gateway_WaitCustomerReply",
+        "@targetRef": "Task_SendReminder",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "reply received within 24h"
+        }
+      },
+      {
+        "@id": "SequenceFlow_11",
+        "@sourceRef": "Task_SendReminder",
+        "@targetRef": "Task_CloseTicket"
+      },
+      {
+        "@id": "SequenceFlow_14",
+        "@sourceRef": "Task_CloseTicket",
+        "@targetRef": "EndEvent_ProcessTerminated"
+      },
+      {
+        "@id": "SequenceFlow_15",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "no reply received"
+        }
+      },
+      {
+        "@id": "SequenceFlow_16",
+        "@sourceRef": "Task_InitialClassification",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_17",
+        "@sourceRef": "Task_ProvideResolution",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_18",
+        "@sourceRef": "Task_RootCauseAnalysis",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_19",
+        "@sourceRef": "Task_SendResponseToCustomer",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_20",
+        "@sourceRef": "Task_LogSolution",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_21",
+        "@sourceRef": "Task_SendReminder",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_22",
+        "@sourceRef": "Task_CloseTicket",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "$ticket_cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_23",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "Task_CloseTicket",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "customer reply received"
+        }
+      },
+      {
+        "@id": "SequenceFlow_24",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "customer cancelled"
+        }
+      },
+      {
+        "@id": "SequenceFlow_25",
+        "@sourceRef": "Event_CustomerReplyReceived",
+        "@targetRef": "Task_Terminate",
+        "bpmn:conditionExpression": {
+          "@xsi:type": "bpmn:tFormalExpression",
+          "@language": "urn:jaxb:xpath",
+          "#text": "customer cancelled"
+        }
+      }
+    ],
+    "bpmn:relationship": {
+      "@id": "Relationship_1",
+      "@type": "BPMNEdge",
+      "@bpmnElement": "SequenceFlow_1"
+    },
+    "bpmn:collaboration": {
+      "@id": "Collaboration_1",
+      "bpmn:participant": [
+        {
+          "@id": "Participant_Agent",
+          "@name": "Support Agent",
+          "@processRef": "Process_01"
+        },
+        {
+          "@id": "Participant_System",
+          "@name": "System"
+        }
+      ]
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_Scheduler",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_1",
+        "@sourceRef": "Task_LogSolution",
+        "@targetRef": "Participant_System"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_CustomerReply",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_2",
+        "@sourceRef": "Participant_System",
+        "@targetRef": "Event_CustomerReplyReceived"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_SendReminder",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_3",
+        "@sourceRef": "Participant_System",
+        "@targetRef": "Task_SendReminder"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_SendResponse",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_4",
+        "@sourceRef": "Task_SendResponseToCustomer",
+        "@targetRef": "Participant_System"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_CreateTicket",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_5",
+        "@sourceRef": "Participant_System",
+        "@targetRef": "Task_CreateTicket"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_Timeout",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_6",
+        "@sourceRef": "Participant_System",
+        "@targetRef": "Event_WaitForCustomerReply"
+      }
+    },
+    "bpmn:participantAssociation": {
+      "@id": "ParticipantAssociation_CancelTicket",
+      "bpmn:participantRef": "Participant_System",
+      "bpmn:messageFlow": {
+        "@id": "MessageFlow_7",
+        "@sourceRef": "Participant_System",
+        "@targetRef": "Task_Terminate"
+      }
+    }
+  }
+}
+```
