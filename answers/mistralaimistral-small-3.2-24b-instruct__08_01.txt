@@ -1,0 +1,70 @@
+### Analysis of the Petri Net
+
+Let's carefully analyze the Petri net to determine whether transition **T5** can fire before transition **T3** in any reachable marking.
+
+#### Initial Marking:
+- p0: 1 token
+- All other places (p1, p2, p3, p4, p5, p6): 0 tokens
+
+#### Transitions:
+1. **T1**: p0 → p1 + p2 (parallel split)
+   - Enabled when p0 has a token (initially enabled).
+   - Firing removes 1 token from p0 and adds 1 token to p1 and 1 token to p2.
+   - Resulting marking: p1:1, p2:1, p0:0.
+
+2. **T2**: p1 → p3
+   - Enabled when p1 has a token.
+   - Firing removes 1 token from p1 and adds 1 token to p3.
+   - Resulting marking: p3:1, p2:1, p1:0.
+
+3. **T3**: p2 → p4
+   - Enabled when p2 has a token.
+   - Firing removes 1 token from p2 and adds 1 token to p4.
+   - Resulting marking: p3:1, p4:1, p2:0.
+
+4. **T4**: p3 + p4 → p5 (synchronizing join)
+   - Enabled when both p3 and p4 have tokens.
+   - Firing removes 1 token from p3 and 1 token from p4, and adds 1 token to p5.
+   - Resulting marking: p5:1, p3:0, p4:0.
+
+5. **T5**: p3 –|p4 → p6 (inhibitor arc from p4)
+   - Enabled when p3 has a token and p4 has **zero** tokens.
+   - Firing removes 1 token from p3 and adds 1 token to p6.
+   - Resulting marking: p6:1, p3:0.
+
+#### Question: Can T5 fire before T3?
+
+To answer this, we need to see if there is a sequence where T5 fires before T3 in any reachable marking.
+
+- Initially, only T1 is enabled.
+- After firing T1: p1:1, p2:1.
+  - Now, T2 and T3 are enabled (both require p1 or p2 to have a token).
+  - T5 is not enabled because p3 is empty (needs p3:1 and p4:0).
+- After firing T2: p3:1, p2:1.
+  - Now, T3 is enabled (requires p2:1), but T5 is not enabled because p4 is empty (but T5 requires p4:0, which is true, but also requires p3:1, which is true). Wait, no: T5 is enabled here because p3:1 and p4:0.
+    - If we fire T5 now: p6:1, p3:0.
+    - Now, p2:1 remains, so T3 is still enabled.
+    - Thus, T5 has fired before T3 in this sequence.
+
+#### Concrete Firing Sequence:
+1. T1: p0 → p1 + p2
+   - Marking: p1:1, p2:1, p0:0.
+2. T2: p1 → p3
+   - Marking: p3:1, p2:1, p1:0.
+3. T5: p3 –|p4 → p6 (enabled because p3:1 and p4:0)
+   - Marking: p6:1, p2:1, p3:0.
+4. Now, T3 is enabled (p2:1), and can fire:
+   - T3: p2 → p4
+   - Marking: p6:1, p4:1, p2:0.
+
+In this sequence, T5 fires before T3.
+
+#### Justification:
+- After T1 and T2, the marking is p3:1, p2:1, p1:0.
+- T5 is enabled in this marking because:
+  - p3 has 1 token (required for T5).
+  - p4 has 0 tokens (required for the inhibitor arc on T5).
+- Firing T5 is possible at this point, and T3 has not yet fired.
+- After T5 fires, T3 can still fire (since p2 still has a token).
+
+Thus, **yes, T5 can fire before T3**. The sequence is: T1 → T2 → T5 → T3.

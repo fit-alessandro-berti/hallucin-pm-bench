@@ -41,6 +41,7 @@ class Shared:
                        "mistralai/magistral-medium-2506",
                        "mistralai/magistral-medium-2506:thinking",
                        "mistralai/magistral-small-2506",
+                       "mistralai/mistral-small-3.2-24b-instruct",
                   "deepseek/deepseek-r1", "deepseek/deepseek-r1-0528",
                        "deepseek/deepseek-r1-0528-qwen3-8b",
                        "deepseek/deepseek-chat-v3-0324",
