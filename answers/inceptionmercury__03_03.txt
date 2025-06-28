@@ -1,0 +1,50 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+            xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+            xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/BPMN20.xsd">
+  <process id="wrc_Process" name="Warranty-Replacement v1.3" isExecutable="true">
+    <startEvent id="wrc_StartEvent" name="Online Warranty Claim Submitted"/>
+
+    <task id="wrc_ValidateClaim" name="Validate Claim"/>
+
+    <exclusiveGateway id="wrc_ExclusiveGateway1" name="Is Claim Complete?"/>
+    <sequenceFlow id="wrc_SequenceFlow1" sourceRef="wrc_ValidateClaim" targetRef="wrc_ExclusiveGateway1"/>
+    <sequenceFlow id="wrc_SequenceFlow2" sourceRef="wrc_ExclusiveGateway1" targetRef="wrc_RequestMissingInformation" name="No" />
+    <sequenceFlow id="wrc_SequenceFlow3" sourceRef="wrc_ExclusiveGateway1" targetRef="wrc_CheckWarrantyEligibility" name="Yes" />
+
+    <task id="wrc_RequestMissingInformation" name="Request Missing Information"/>
+    <sequenceFlow id="wrc_SequenceFlow4" sourceRef="wrc_RequestMissingInformation" targetRef="wrc_ValidateClaim" name="Receive Missing Information"/>
+
+    <task id="wrc_CheckWarrantyEligibility" name="Check Warranty Eligibility"/>
+    <exclusiveGateway id="wrc_ExclusiveGateway2" name="Is Product Within Warranty?"/>
+    <sequenceFlow id="wrc_SequenceFlow5" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_ExclusiveGateway2"/>
+    <sequenceFlow id="wrc_SequenceFlow6" sourceRef="wrc_ExclusiveGateway2" targetRef="wrc_SendRejectionNotice" name="No" />
+    <sequenceFlow id="wrc_SequenceFlow7" sourceRef="wrc_ExclusiveGateway2" targetRef="wrc_ParallelSplitGateway" name="Yes" />
+
+    <task id="wrc_SendRejectionNotice" name="Send Rejection Notice"/>
+    <endEvent id="wrc_EndEvent1" name="Process Ended (Rejection)"/>
+    <sequenceFlow id="wrc_SequenceFlow8" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndEvent1"/>
+
+    <parallelSplitGateway id="wrc_ParallelSplitGateway" name="Parallel Activities Start"/>
+    <sequenceFlow id="wrc_SequenceFlow9" sourceRef="wrc_ParallelSplitGateway" targetRef="wrc_CreateShipmentOrder" name="Activity A"/>
+    <sequenceFlow id="wrc_SequenceFlow10" sourceRef="wrc_ParallelSplitGateway" targetRef="wrc_ScheduleCourierPickup" name="Activity B"/>
+
+    <task id="wrc_CreateShipmentOrder" name="Create Shipment Order"/>
+    <task id="wrc_ScheduleCourierPickup" name="Schedule Courier Pickup"/>
+    <parallelJoinGateway id="wrc_ParallelJoinGateway" name="Parallel Activities End"/>
+    <sequenceFlow id="wrc_SequenceFlow11" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_ParallelJoinGateway"/>
+    <sequenceFlow id="wrc_SequenceFlow12" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_ParallelJoinGateway"/>
+
+    <task id="wrc_UpdateInventoryRecords" name="Update Inventory Records"/>
+    <sequenceFlow id="wrc_SequenceFlow13" sourceRef="wrc_ParallelJoinGateway" targetRef="wrc_UpdateInventoryRecords"/>
+    <task id="wrc_CloseClaim" name="Close Claim"/>
+    <sequenceFlow id="wrc_SequenceFlow14" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim"/>
+    <endEvent id="wrc_EndEvent2" name="Process Ended (Success)"/>
+    <sequenceFlow id="wrc_SequenceFlow15" sourceRef="wrc_CloseClaim" targetRef="wrc_EndEvent2"/>
+
+  </process>
+</definitions>
+```
