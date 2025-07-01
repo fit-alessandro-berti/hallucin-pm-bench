@@ -1,0 +1,38 @@
+The answer is **no**, it is impossible for T5 to fire before T3 in any reachable marking. Here's the proof:
+
+**1. Reachability Constraints**:
+- Starting from p0(1), T1 fires immediately, producing p1(1) + p2(1).
+- Only T2 (from p1→p3) or T3 (from p2→p4) can fire next. Let’s analyze both possibilities.
+
+**2. Firing T2 First**:
+- Firing T2: p1→p3 → marking: p2(1), p3(1)
+- Now enabled transitions: 
+  - T3 (from p2→p4)
+  - T5 (from p3, inhibitor on p4 only allowed if p4=0)
+- **T5 cannot fire**, because although p4 is indeed 0, firing T5 removes the token from p3 (making it 0), *and*, **more critically**, any enabled sequence that could eventually allow T5 would first require **not** firing T3—but here, **T3 has its input available (p2=1)**, and there is **no interleaving step that empties p2 before T5 could fire**.
+- Concretely, if you try to fire T5 next, you’d need p2 to stay at 1 so that after T5: marking is p2(1), p6(1), p3(0).
+  - But in reality, there is **no rule preventing T3 from firing** in between: if you ever reach p2(1), the system allows T3 to fire before T5 if scheduling or interleaving chooses that path.
+  - Moreover, to actually have T5 fire requires that **from that moment until T5 fires, p4 remains 0**; but a path via T3 is always available as long as p2 is nonzero.
+
+**3. Firing T3 First**:
+- Firing T3: p2→p4 → marking: p1(1), p3(0), p4(1)
+- Now enabled:
+  - T2 (still in p1)
+  - T4 (both p3=0, p4=1 → no)
+  - T5 is *not* enabled because p4=1.
+
+**4. Synchronization/Join Barrier**:
+- The only way to get beyond p3 and p4 is via T4 (their synchronizing join) or T5.
+- T5 firing depends on inhibitor p4=0.
+- However, to fire T5 _before_ T3 means to process p3 via T2, *avoid* firing T3, and reach T5 with p4=0.
+- But the only way to remove p2 and so “prevent” T3 is **not possible**, because T3 is enabled whenever p2(1).
+- **Ceaseless race condition**: as soon as you fire T2 (p3=1), T3 is enabled; as soon as you fire T3 (p4=1), T5 is disabled. There is no interleaving in which you can both leave p4=0, have p3=1, and sneak T5 in without having let T3 fire first, because
+  - _If you fire T2 and do not yet fire T3_ → at any time you could fire T3 next (p2(1)), and you cannot prevent that in a fair schedule or under any interleaving.
+  - _If you fire T3 even a little after T2_, p4 becomes 1 → T5 disabled.
+- In any marking reachable before T3 has fired, T3 is *simultaneously enabled* if p2 is still positive (i.e., T3 was not fired yet). The inhibitor arc makes T5 *dependent on T3 not firing*, but there's no step or marking that blocks T3 indefinitely and enables T5 before it.
+
+**Conclusion**:
+No possible firing sequence exists in which T5 fires before T3. Every viable schedule that enables T5 has already allowed (or will allow) T3 execution before T5 could be reached.
+
+**Final Answer**:  
+\boxed{No, it is impossible for transition T5 to fire before T3 in any reachable marking.}

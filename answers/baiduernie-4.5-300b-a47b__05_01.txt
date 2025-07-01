@@ -1,0 +1,9 @@
+To enforce the 48-hour SLA for reaching "Triage Claim" without adding new activities, introduce a **boundary timer event** on the "Receive Claim" task (or the initial sequence flow) with a **48-hour duration**. Configure the timer to trigger an **escalation event** that interrupts the process flow if not completed in time. 
+
+Key steps:  
+1. Add `<bpmn:boundaryEvent id="Timer_Escalation" attachedToRef="Task_Receive">`  
+   - Set timer to `<bpmn:timerEventDefinition><bpmn:timeDuration>PT48H</bpmn:timeDuration>`  
+2. Route the escalation event to a **catching escalation event** (intermediary or end event) that skips directly to "Triage Claim" (reconnect `f5` to this event).  
+   - Example: `<bpmn:sequenceFlow id="f_escalate" sourceRef="Timer_Escalation" targetRef="Task_Triage"/>`  
+
+This ensures the SLA is tracked without introducing new tasks. Existing paths remain valid, but timeouts bypass incomplete checks. Reference element IDs: `Timer_Escalation`, `f5`, and `PT48H`.

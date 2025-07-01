@@ -1,0 +1,119 @@
+Here's the BPMN 2.0 XML diagram based on your requirements:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_WarrantyReplacementProcess" name="Warranty Replacement" isExecutable="true">
+    <bpmn:startEvent id="wrc_StartEvent" name="Online warranty claim submitted">
+      <bpmn:outgoing>wrc_Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="wrc_Flow_1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim" />
+    
+    <bpmn:exclusiveGateway id="wrc_Gateway_ClaimComplete" name="Claim complete?">
+      <bpmn:incoming>wrc_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="wrc_Flow_2" sourceRef="wrc_ValidateClaim" targetRef="wrc_Gateway_ClaimComplete" />
+    <bpmn:sequenceFlow id="wrc_Flow_3" name="No" sourceRef="wrc_Gateway_ClaimComplete" targetRef="wrc_RequestMissingInfo" />
+    <bpmn:sequenceFlow id="wrc_Flow_4" name="Yes" sourceRef="wrc_Gateway_ClaimComplete" targetRef="wrc_CheckWarrantyEligibility" />
+    
+    <bpmn:userTask id="wrc_ValidateClaim" name="Validate the claim">
+      <bpmn:incoming>wrc_Flow_1</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow_5</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:userTask id="wrc_RequestMissingInfo" name="Request missing information">
+      <bpmn:incoming>wrc_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="wrc_Flow_5" sourceRef="wrc_RequestMissingInfo" targetRef="wrc_ValidateClaim" />
+    
+    <bpmn:exclusiveGateway id="wrc_Gateway_WarrantyEligible" name="Within warranty?">
+      <bpmn:incoming>wrc_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_7</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="wrc_Flow_6" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_Gateway_WarrantyEligible" />
+    <bpmn:sequenceFlow id="wrc_Flow_7" name="No" sourceRef="wrc_Gateway_WarrantyEligible" targetRef="wrc_SendRejectionNotice" />
+    <bpmn:sequenceFlow id="wrc_Flow_8" name="Yes" sourceRef="wrc_Gateway_WarrantyEligible" targetRef="wrc_Gateway_ParallelSplit" />
+    
+    <bpmn:userTask id="wrc_CheckWarrantyEligibility" name="Check warranty eligibility">
+      <bpmn:incoming>wrc_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_6</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:endEvent id="wrc_EndEvent_Rejection" name="Claim rejected">
+      <bpmn:incoming>wrc_Flow_9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="wrc_Flow_9" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndEvent_Rejection" />
+    
+    <bpmn:serviceTask id="wrc_SendRejectionNotice" name="Send rejection notice">
+      <bpmn:incoming>wrc_Flow_7</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:parallelGateway id="wrc_Gateway_ParallelSplit">
+      <bpmn:incoming>wrc_Flow_8</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_10</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_11</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:serviceTask id="wrc_CreateShipmentOrder" name="Create shipment order">
+      <bpmn:incoming>wrc_Flow_10</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_12</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="wrc_Flow_10" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_CreateShipmentOrder" />
+    
+    <bpmn:serviceTask id="wrc_ScheduleCourierPickup" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_Flow_11</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_13</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="wrc_Flow_11" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_ScheduleCourierPickup" />
+    
+    <bpmn:parallelGateway id="wrc_Gateway_ParallelJoin">
+      <bpmn:incoming>wrc_Flow_12</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow_13</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_14</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="wrc_Flow_12" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_Gateway_ParallelJoin" />
+    <bpmn:sequenceFlow id="wrc_Flow_13" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_Gateway_ParallelJoin" />
+    
+    <bpmn:serviceTask id="wrc_UpdateInventory" name="Update inventory records">
+      <bpmn:incoming>wrc_Flow_14</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_15</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="wrc_Flow_14" sourceRef="wrc_Gateway_ParallelJoin" targetRef="wrc_UpdateInventory" />
+    
+    <bpmn:userTask id="wrc_CloseClaim" name="Close the claim">
+      <bpmn:incoming>wrc_Flow_15</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_16</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="wrc_Flow_15" sourceRef="wrc_UpdateInventory" targetRef="wrc_CloseClaim" />
+    
+    <bpmn:endEvent id="wrc_EndEvent_Success" name="Claim processed">
+      <bpmn:incoming>wrc_Flow_16</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="wrc_Flow_16" sourceRef="wrc_CloseClaim" targetRef="wrc_EndEvent_Success" />
+  </bpmn:process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="wrc_WarrantyReplacementProcess">
+      <!-- Positioning would normally be here, but omitted for brevity -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+```
+
+Key features of this implementation:
+1. Starts with customer submitting online warranty claim
+2. Includes validation loop with exclusive gateway for incomplete claims
+3. Second exclusive gateway for warranty eligibility check
+4. Parallel gateway pair for the two simultaneous activities (shipment order + courier pickup)
+5. Two distinct end events (rejection notice and successful completion)
+6. All IDs prefixed with "wrc_" as required
+7. Task names match requirements verbatim
+8. No additional paths or elements beyond what was specified
+
+The diagram follows the exact process flow described while meeting all formatting requirements. The DI (Diagram Interchange) elements are included but only minimally populated since positions weren't specified.

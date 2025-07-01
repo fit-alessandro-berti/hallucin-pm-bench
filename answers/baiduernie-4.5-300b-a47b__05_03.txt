@@ -1,0 +1,16 @@
+Here's the minimal change to enforce the 48-hour SLA between "Verify Identity" and "Create Account" using a boundary timer event:
+
+```xml
+<bpmn:userTask id="Activity_VerifyID" name="Verify Identity">
+  <bpmn:boundaryEvent id="Timer_Escalation" attachedToRef="Activity_VerifyID">
+    <bpmn:timerEventDefinition id="TimerDefinition_01">
+      <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+    </bpmn:timerEventDefinition>
+    <bpmn:escalationEventDefinition id="EscalationDefinition_01" escalationRef="Escalation_01"/>
+  </bpmn:boundaryEvent>
+</bpmn:userTask>
+
+<bpmn:escalation id="Escalation_01" name="SLA Violation" escalationCode="SLA-48H"/>
+```
+
+**Justification**: The boundary timer automatically triggers an escalation if verification isn't completed within 48 hours, enforcing the SLA without adding new tasks (leveraging the existing unused "Account-Manager Review" path via existing Flow_08, though its trigger would need implementation).
