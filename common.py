@@ -29,6 +29,7 @@ class Shared:
                   "anthropic/claude-3.7-sonnet:thinking",
                   "openai/o3-mini-high",
                   "openai/o3-mini",
+                       "openrouter/cypher-alpha:free",
                   "mistralai/ministral-3b",
                   "mistral/ministral-8b",
                   "mistralai/mistral-small-3.1-24b-instruct",

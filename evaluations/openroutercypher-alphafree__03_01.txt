@@ -1,0 +1,56 @@
+6.0
+
+**Rationale for Scoring**  
+Applying strict comparison and penalizing all deviations:
+
+### Major Differences & Errors
+
+1. **Task Naming**
+   - *Ground truth*: Uses **“Auto-Classification”**, **“Initial Diagnosis”**, **“Forward to Specialist”**, **“Resolve Issue”**.
+   - *LLM*: Uses **“Classify Ticket”** instead of “Auto-Classification”, **“Specialist Investigates”** instead of “Forward to Specialist”.
+   - *Deduct for incorrect or not matching task names as per prompt, since the names must be exactly as in the description.*
+   - **Loss:** -1.0
+
+2. **Gateway Naming**
+   - *Ground truth*: Names gateways (**“Password Reset?”**, **“Resolved Internally?”**, **“Customer Confirms?”**).
+   - *LLM*: None of the gateways are named.
+   - *Deduct for not labeling exclusive gateways as instructed; crucial for clarity and adherence to requirements.*
+   - **Loss:** -1.0
+
+3. **Task Placement and Activities**
+   - *Ground truth*: “Provide Reset Instructions” goes directly after gateway if Password Reset, and THEN directly to “Confirm with Customer”. 
+   - *LLM*: Has "Provide Reset Instructions" followed by a sequence flow to “Resolve Issue”, which is incorrect (should skip directly to confirmation per ground truth).
+   - *Deduct for structural process deviation (incorrect flow).*
+   - **Loss:** -1.0
+
+4. **“Forward to Specialist” vs “Specialist Investigates”**
+   - LLM invents “Specialist Investigates”, which is not in the description; should simply “Forward to Specialist” (task/activity).
+   - *Name and activity change is a significant error (introduces a fabricated activity not named in the requirements!).*
+   - **Loss:** -1.0
+
+5. **“Resolve Issue” Placement**
+   - Ground truth: Both agent’s and specialist’s flows meet at “Resolve Issue”, then go to “Confirm With Customer”.
+   - LLM: Specialist goes *to* “Resolve Issue”. However, in LLM, the Password Reset path leads to "Resolve Issue" (via t2 → t3), but password reset should *skip* "Resolve Issue" entirely and go directly to customer confirmation.
+   - *This mis-routing is a process logic error and changes intent—deduct for structural difference.*
+   - **Loss:** -1.0
+
+6. **Condition Expressions**
+   - *Ground truth*: Uses `xsi:type="tFormalExpression"` and clear yes/no logic for every sequenceFlow leaving a gateway.
+   - *LLM*: Uses `conditionExpression="passwordResetFlag"` instead of full BPMN XML schema; does not use formal expressions or xsi namespace. 
+   - *Not a naming, but a format accuracy error—important at this level of strictness.*
+   - **Loss:** -0.5
+
+7. **Minor Issues**
+   - *End event and start event naming mostly matches intent but slightly off (“Ticket Submitted” vs “Submit Ticket” vs ground truth). Not critical individually, but cumulative with other discrepancies.*
+   - **Loss:** -0.5
+
+---
+
+### Positive Aspects (Credit):
+
+- All required tasks and exclusive gateways *are* present, roughly in correct topological relationship.
+- Loop from "Customer Confirms?" back to "Initial Diagnosis" is present.
+- No major fabricated escalations, timers, or spurious events.
+
+### Final Strict Score: **6.0**  
+Loss of 4.0 points for name inaccuracy, mis-placed logic, lack of gateway names, invented activity (“Specialist Investigates”), incorrect process branch (“Provide Reset Instructions” not going directly to confirmation), and formal XML errors. This is a significant but not catastrophic set of deviations; correct topology and BPMN usage, but not exact as required.
