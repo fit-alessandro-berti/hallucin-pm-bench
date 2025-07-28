@@ -1,0 +1,54 @@
+{
+  "id": "CustomerSupportProcess",
+  "name": "Customer Support Ticket Process",
+  "elements": [
+    {"type": "startEvent", "id": "StartEvent", "name": "Support email received", "eventDefinitions": [{"type": "messageEventDefinition"}]},
+    {"type": "serviceTask", "id": "CreateTicket", "name": "Parse email and create Ticket"},
+    {"type": "userTask", "id": "Classification", "name": "Initial Classification"},
+    {"type": "exclusiveGateway", "id": "RouteGateway"},
+    {"type": "userTask", "id": "RootCause", "name": "Root Cause Analysis"},
+    {"type": "userTask", "id": "ProvideResolution", "name": "Provide Resolution"},
+    {"type": "parallelGateway", "id": "ParallelSplit"},
+    {"type": "userTask", "id": "SendResponse", "name": "Send Response to Customer"},
+    {"type": "eventBasedGateway", "id": "WaitGateway"},
+    {"type": "intermediateCatchEvent", "id": "CustomerReply", "name": "Customer Reply", "eventDefinitions": [{"type": "messageEventDefinition"}]},
+    {"type": "intermediateCatchEvent", "id": "Timer24h", "name": "24 hours", "eventDefinitions": [{"type": "timerEventDefinition", "timeDuration": "PT24H"}]},
+    {"type": "sendTask", "id": "SendReminder", "name": "Send Reminder"},
+    {"type": "userTask", "id": "CloseTicket", "name": "Close Ticket"},
+    {"type": "userTask", "id": "LogSolution", "name": "Log Solution in Knowledge Base"},
+    {"type": "endEvent", "id": "EndMain"},
+    {"type": "endEvent", "id": "EndLog"}
+  ],
+  "sequenceFlows": [
+    {"id": "flow1", "sourceRef": "StartEvent", "targetRef": "CreateTicket"},
+    {"id": "flow2", "sourceRef": "CreateTicket", "targetRef": "Classification"},
+    {"id": "flow3", "sourceRef": "Classification", "targetRef": "RouteGateway"},
+    {"id": "flow4", "sourceRef": "RouteGateway", "targetRef": "ProvideResolution", "conditionExpression": "Simple"},
+    {"id": "flow5", "sourceRef": "RouteGateway", "targetRef": "RootCause", "conditionExpression": "Complex"},
+    {"id": "flow6", "sourceRef": "RootCause", "targetRef": "ProvideResolution"},
+    {"id": "flow7", "sourceRef": "ProvideResolution", "targetRef": "ParallelSplit"},
+    {"id": "flow8", "sourceRef": "ParallelSplit", "targetRef": "SendResponse"},
+    {"id": "flow9", "sourceRef": "ParallelSplit", "targetRef": "LogSolution"},
+    {"id": "flow10", "sourceRef": "SendResponse", "targetRef": "WaitGateway"},
+    {"id": "flow11", "sourceRef": "WaitGateway", "targetRef": "CustomerReply"},
+    {"id": "flow12", "sourceRef": "WaitGateway", "targetRef": "Timer24h"},
+    {"id": "flow13", "sourceRef": "CustomerReply", "targetRef": "CloseTicket"},
+    {"id": "flow14", "sourceRef": "Timer24h", "targetRef": "SendReminder"},
+    {"id": "flow15", "sourceRef": "SendReminder", "targetRef": "CloseTicket"},
+    {"id": "flow16", "sourceRef": "CloseTicket", "targetRef": "EndMain"},
+    {"id": "flow17", "sourceRef": "LogSolution", "targetRef": "EndLog"}
+  ],
+  "eventSubProcesses": [
+    {
+      "id": "CancelSubprocess",
+      "triggeredByEvent": true,
+      "elements": [
+        {"type": "startEvent", "id": "CancelStart", "name": "Customer Cancel", "isInterrupting": true, "eventDefinitions": [{"type": "messageEventDefinition"}]},
+        {"type": "endEvent", "id": "Terminate", "eventDefinitions": [{"type": "terminateEventDefinition"}]}
+      ],
+      "sequenceFlows": [
+        {"id": "flow_cancel", "sourceRef": "CancelStart", "targetRef": "Terminate"}
+      ]
+    }
+  ]
+}
