@@ -1,0 +1,59 @@
+### Decision Points in Contoso Airlines’ Flight-Refund Process
+
+1. **Triage Agent Eligibility Check**  
+   - **Decision**: Is the claim eligible based on the *FlightManifest* and *WeatherReport*?  
+   - **Basis**: Confirm whether the flight was disrupted (e.g., cancellation, significant delay) due to qualifying circumstances.  
+   - **Path Determination**:  
+     - If **ineligible** → Claim is declined (implied termination).  
+     - If **eligible** → Proceed to **Finance_Controller_PreApprove**.
+
+2. **Refund Amount Threshold Check**  
+   - **Decision**: Is the refund amount **greater than €1,000**?  
+   - **Basis**: Determined during or after *EligibilityChecklist* evaluation.  
+   - **Path Determination**:  
+     - If **no** (≤ €1,000) → Proceed directly to **Process_Refund_Payment** after pre-approval.  
+     - If **yes** (> €1,000) → Trigger **Senior_Auditor_Review** (including *AuditTrail*) before payment processing.
+
+3. **Finance Controller Pre-Approval**  
+   - **Decision**: Does the claim meet all criteria on the *EligibilityChecklist*?  
+   - **Basis**: Compliance with internal financial and refund policies.  
+   - **Path Determination**:  
+     - If **not approved** → Claim is declined (implied termination).  
+     - If **approved** → Proceed according to value-based path (standard or high-value).
+
+> Note: There is **no** “CustomerService_Agent_Decide” activity in this process — it is explicitly excluded.
+
+---
+
+### Required Documents (Artifacts)
+
+1. **RefundRequestForm**  
+   - Created during: *Customer_Submit_Claim*  
+   - Purpose: Initiates the refund request with passenger and flight details.
+
+2. **FlightManifest**  
+   - Used in: *Triage_Agent_Validate_Eligibility*  
+   - Purpose: Verifies flight details and confirms operational status.
+
+3. **WeatherReport**  
+   - Used in: *Triage_Agent_Validate_Eligibility*  
+   - Purpose: Assesses whether weather was a factor in flight disruption.
+
+4. **EligibilityChecklist**  
+   - Used in: *Finance_Controller_PreApprove*  
+   - Purpose: Standardized checklist for financial eligibility validation.
+
+5. **AuditTrail**  
+   - Used in: *Senior_Auditor_Review* (only for high-value claims)  
+   - Purpose: Documentation of audit steps and approval for large refunds.
+
+6. **BankTransferAuthorization**  
+   - Required for: *Process_Refund_Payment*  
+   - Purpose: Signed authorization enabling financial execution of the refund.
+
+7. **RefundConfirmationPDF**  
+   - Generated during: *Issue_Confirmation_Letter*  
+   - Purpose: Sent to the passenger to confirm successful refund processing.
+
+---
+✅ All listed documents and decision points are explicitly defined in the provided process variant. No external artefacts or activities introduced.

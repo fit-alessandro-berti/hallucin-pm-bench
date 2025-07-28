@@ -1,0 +1,126 @@
+```json
+{
+  "definitions": {
+    "id": "customerSupportTicketProcess",
+    "process": {
+      "id": "process_customerSupportTicket",
+      "name": "Customer Support Ticket",
+      "isExecutable": true,
+      "startEvent": {
+        "id": "startEmailReceived",
+        "name": "Support e-mail received"
+      },
+      "sequenceFlow": [
+        { "id": "flow1", "sourceRef": "startEmailReceived", "targetRef": "createTicket" },
+        { "id": "flow2", "sourceRef": "createTicket", "targetRef": "classifyTicket" },
+        { "id": "flow3", "sourceRef": "classifyTicket", "targetRef": "parallelGateway1" },
+        { "id": "flow4A", "sourceRef": "exclusiveGateway1", "targetRef": "provideResolution", "name": "Simple" },
+        { "id": "flow4B", "sourceRef": "exclusiveGateway1", "targetRef": "rootCauseAnalysis", "name": "Complex" },
+        { "id": "flow5", "sourceRef": "provideResolution", "targetRef": "exclusiveGateway1" },
+        { "id": "flow6", "sourceRef": "rootCauseAnalysis", "targetRef": "exclusiveGateway1" },
+        { "id": "flow7", "sourceRef": "exclusiveGateway1", "targetRef": "sendResponse" },
+        { "id": "flow8", "sourceRef": "sendResponse", "targetRef": "parallelGateway2" },
+        { "id": "flow9A", "sourceRef": "parallelGateway2", "targetRef": "customerReply" },
+        { "id": "flow9B", "sourceRef": "parallelGateway2", "targetRef": "logSolution" },
+        { "id": "flow10", "sourceRef": "customerReply", "targetRef": "closeTicket" },
+        { "id": "flow11", "sourceRef": "timeoutIntermediateCatch", "targetRef": "sendReminder" },
+        { "id": "flow12", "sourceRef": "sendReminder", "targetRef": "closeTicket2" },
+        { "id": "flow13", "sourceRef": "boundaryCancelParent", "targetRef": "terminateEndEvent" },
+        { "id": "flow14", "sourceRef": "parallelGateway3", "targetRef": "terminateEndEvent" },
+        { "id": "flow15", "sourceRef": "closeTicket", "targetRef": "parallelGateway3" },
+        { "id": "flow16", "sourceRef": "closeTicket2", "targetRef": "parallelGateway3" }
+      ],
+      "tasks": [
+        {
+          "id": "createTicket",
+          "name": "Create Ticket in help-desk system"
+        },
+        {
+          "id": "classifyTicket",
+          "name": "Initial Classification",
+          "type": "userTask"
+        },
+        {
+          "id": "provideResolution",
+          "name": "Provide Resolution",
+          "type": "userTask"
+        },
+        {
+          "id": "rootCauseAnalysis",
+          "name": "Root Cause Analysis",
+          "type": "userTask"
+        },
+        {
+          "id": "sendResponse",
+          "name": "Send Response to Customer",
+          "type": "userTask"
+        },
+        {
+          "id": "logSolution",
+          "name": "Log Solution in Knowledge Base",
+          "type": "userTask"
+        },
+        {
+          "id": "closeTicket",
+          "name": "Close Ticket",
+          "type": "userTask"
+        },
+        {
+          "id": "sendReminder",
+          "name": "Send Reminder",
+          "type": "serviceTask"
+        }
+      ],
+      "gateways": [
+        {
+          "id": "exclusiveGateway1",
+          "type": "exclusiveGateway",
+          "name": "Simple or Complex"
+        },
+        {
+          "id": "parallelGateway1",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "parallelGateway2",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "parallelGateway3",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "inclusiveGateway1",
+          "type": "inclusiveGateway"
+        }
+      ],
+      "events": [
+        {
+          "id": "timeoutIntermediateCatch",
+          "type": "intermediateTimerEvent",
+          "timerDuration": "PT24H"
+        },
+        {
+          "id": "terminateEndEvent",
+          "type": "endEvent",
+          "name": "Terminate"
+        },
+        {
+          "id": "customerReply",
+          "type": "receiveTask",
+          "name": "Customer Reply",
+          "messageRef": "msg_customerReply"
+        }
+      ],
+      "boundaryEvents": [
+        {
+          "id": "boundaryCancelParent",
+          "type": "boundaryEvent",
+          "attachedToRef": "process_customerSupportTicket",
+          "name": "Customer Cancel Ticket"
+        }
+      ]
+    }
+  }
+}
+```
