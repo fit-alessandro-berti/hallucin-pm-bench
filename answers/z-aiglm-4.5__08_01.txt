@@ -1,0 +1,38 @@
+**Yes**, it is possible for transition T5 to fire before transition T3.
+
+### Concrete Firing Sequence
+
+A concrete firing sequence from the initial marking that demonstrates this is: **T1, T2, T5**.
+
+### Justification
+
+Let's trace the state of the Petri net, called the *marking*, step-by-step according to this sequence.
+
+**1. Initial Marking (M0)**
+*   **Tokens:** `p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)`
+*   **Analysis:** Only transition **T1** is enabled because its input place `p0` has a token.
+
+**2. After Firing T1 (Marking M1)**
+*   **Firing Sequence:** `T1`
+*   **Effect:** T1 consumes the token from `p0` and produces one token in `p1` and one token in `p2`.
+*   **New Tokens:** `p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)`
+*   **Analysis:** Now, both **T2** (input `p1` has a token) and **T3** (input `p2` has a token) are enabled. To get T5 to fire before T3, we must choose to fire T2 next.
+
+**3. After Firing T2 (Marking M2)**
+*   **Firing Sequence:** `T1, T2`
+*   **Effect:** T2 consumes the token from `p1` and produces a token in `p3`.
+*   **New Tokens:** `p0(0), p1(0), p2(1), p3(1), p4(0), p5(0), p6(0)`
+*   **Analysis:** This is the critical marking. Let's check the enabling conditions for T5 and T3:
+    *   **T3 is enabled:** It requires a token in `p2`, and `p2` has one token.
+    *   **T5 is enabled:** It has two conditions:
+        1.  A normal arc from `p3`: `p3` has one token, so this condition is met.
+        2.  An inhibitor arc from `p4` (`–|p4`): This requires `p4` to have **zero** tokens. `p4` has zero tokens, so this condition is also met.
+    *   Therefore, at this marking, **both T3 and T5 are enabled**. We can now choose to fire T5.
+
+**4. After Firing T5 (Marking M3)**
+*   **Firing Sequence:** `T1, T2, T5`
+*   **Effect:** T5 consumes the token from `p3` and produces a token in `p6`.
+*   **New Tokens:** `p0(0), p1(0), p2(1), p3(0), p4(0), p5(0), p6(1)`
+*   **Analysis:** In this final marking, **T5 has successfully fired**. However, T3 has not fired, as its input place `p2` still contains a token.
+
+This demonstrates a valid execution path where T5 fires before T3. The parallel nature of the net after T1 allows for this non-deterministic choice between the branches, and the specific structure of T5's inhibitor arc allows it to fire as long as the other branch (leading to p4) has not yet progressed.

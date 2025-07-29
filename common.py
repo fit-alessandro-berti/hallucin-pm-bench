@@ -24,6 +24,8 @@ class Shared:
                        "moonshotai/kimi-k2",
                        "qwen/qwen3-235b-a22b-thinking-2507",
                        "x-ai/grok-4",
+                       "z-ai/glm-4.5",
+                       "z-ai/glm-4.5-air",
                   "google/gemini-2.5-pro",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",

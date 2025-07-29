@@ -1,0 +1,213 @@
+```json
+{
+  "definitions": {
+    "process": {
+      "id": "SupportTicketProcess",
+      "isExecutable": false,
+      "flowElements": [
+        {
+          "id": "startEvent",
+          "name": "Support Email Received",
+          "$type": "bpmn:StartEvent"
+        },
+        {
+          "id": "createTicketTask",
+          "name": "Parse Email and Create Ticket",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "classificationTask",
+          "name": "Initial Classification",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "classificationGateway",
+          "name": "Ticket Classification",
+          "$type": "bpmn:ExclusiveGateway"
+        },
+        {
+          "id": "provideResolutionTask",
+          "name": "Provide Resolution",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "rootCauseTask",
+          "name": "Root Cause Analysis",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "parallelSplit",
+          "$type": "bpmn:ParallelGateway"
+        },
+        {
+          "id": "sendResponseTask",
+          "name": "Send Response to Customer",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "logSolutionTask",
+          "name": "Log Solution in Knowledge Base",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "parallelMerge",
+          "$type": "bpmn:ParallelGateway"
+        },
+        {
+          "id": "customerReplyEvent",
+          "name": "Customer Reply",
+          "$type": "bpmn:IntermediateCatchEvent",
+          "eventDefinitions": [
+            {
+              "$type": "bpmn:MessageEventDefinition",
+              "messageRef": {
+                "id": "customerReplyMessage",
+                "name": "Customer Reply"
+              }
+            }
+          ]
+        },
+        {
+          "id": "timerEvent",
+          "name": "24-Hour Timer",
+          "$type": "bpmn:IntermediateCatchEvent",
+          "eventDefinitions": [
+            {
+              "$type": "bpmn:TimerEventDefinition",
+              "timeDuration": "PT24H"
+            }
+          ]
+        },
+        {
+          "id": "sendReminderTask",
+          "name": "Send Reminder",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "closeTicketTask",
+          "name": "Close Ticket",
+          "$type": "bpmn:Task"
+        },
+        {
+          "id": "cancelEvent",
+          "name": "Customer Cancels Ticket",
+          "$type": "bpmn:IntermediateCatchEvent",
+          "eventDefinitions": [
+            {
+              "$type": "bpmn:MessageEventDefinition",
+              "messageRef": {
+                "id": "cancelMessage",
+                "name": "Customer Cancels Ticket"
+              }
+            }
+          ]
+        },
+        {
+          "id": "terminateEndEvent",
+          "$type": "bpmn:TerminateEndEvent"
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "flow1",
+          "sourceRef": "startEvent",
+          "targetRef": "createTicketTask"
+        },
+        {
+          "id": "flow2",
+          "sourceRef": "createTicketTask",
+          "targetRef": "classificationTask"
+        },
+        {
+          "id": "flow3",
+          "sourceRef": "classificationTask",
+          "targetRef": "classificationGateway"
+        },
+        {
+          "id": "flow4",
+          "sourceRef": "classificationGateway",
+          "targetRef": "provideResolutionTask",
+          "condition": {
+            "$type": "bpmn:FormalExpression",
+            "body": "${ticketType == 'Simple'}"
+          }
+        },
+        {
+          "id": "flow5",
+          "sourceRef": "classificationGateway",
+          "targetRef": "rootCauseTask",
+          "condition": {
+            "$type": "bpmn:FormalExpression",
+            "body": "${ticketType == 'Complex'}"
+          }
+        },
+        {
+          "id": "flow6",
+          "sourceRef": "rootCauseTask",
+          "targetRef": "provideResolutionTask"
+        },
+        {
+          "id": "flow7",
+          "sourceRef": "provideResolutionTask",
+          "targetRef": "parallelSplit"
+        },
+        {
+          "id": "flow8",
+          "sourceRef": "parallelSplit",
+          "targetRef": "sendResponseTask"
+        },
+        {
+          "id": "flow9",
+          "sourceRef": "parallelSplit",
+          "targetRef": "logSolutionTask"
+        },
+        {
+          "id": "flow10",
+          "sourceRef": "sendResponseTask",
+          "targetRef": "parallelMerge"
+        },
+        {
+          "id": "flow11",
+          "sourceRef": "logSolutionTask",
+          "targetRef": "parallelMerge"
+        },
+        {
+          "id": "flow12",
+          "sourceRef": "parallelMerge",
+          "targetRef": "customerReplyEvent"
+        },
+        {
+          "id": "flow13",
+          "sourceRef": "parallelMerge",
+          "targetRef": "timerEvent"
+        },
+        {
+          "id": "flow14",
+          "sourceRef": "customerReplyEvent",
+          "targetRef": "closeTicketTask"
+        },
+        {
+          "id": "flow15",
+          "sourceRef": "timerEvent",
+          "targetRef": "sendReminderTask"
+        },
+        {
+          "id": "flow16",
+          "sourceRef": "sendReminderTask",
+          "targetRef": "closeTicketTask"
+        },
+        {
+          "id": "flow17",
+          "sourceRef": "startEvent",
+          "targetRef": "cancelEvent"
+        },
+        {
+          "id": "flow18",
+          "sourceRef": "cancelEvent",
+          "targetRef": "terminateEndEvent"
+        }
+      ]
+    }
+  }
+}
+```
