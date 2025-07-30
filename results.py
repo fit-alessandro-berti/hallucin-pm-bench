@@ -33,7 +33,7 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    patterns = {"qwen3", "llama", "mistral", "phi"}
+    patterns = {"qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
@@ -44,7 +44,7 @@ def is_open_source(model_name):
 
 
 def is_lrm(model_name):
-    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1"}
+    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
