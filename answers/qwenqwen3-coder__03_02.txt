@@ -1,0 +1,187 @@
+{
+  "process": {
+    "id": "customer-support-ticket",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "startEvent": [
+      {
+        "id": "start-email",
+        "name": "Support Email Received"
+      }
+    ],
+    "task": [
+      {
+        "id": "parse-email",
+        "name": "Parse Email and Create Ticket"
+      },
+      {
+        "id": "initial-classification",
+        "name": "Initial Classification"
+      },
+      {
+        "id": "root-cause-analysis",
+        "name": "Root Cause Analysis"
+      },
+      {
+        "id": "provide-resolution",
+        "name": "Provide Resolution"
+      },
+      {
+        "id": "send-response",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "log-solution",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "close-ticket",
+        "name": "Close Ticket"
+      },
+      {
+        "id": "send-reminder",
+        "name": "Send Reminder"
+      }
+    ],
+    "exclusiveGateway": [
+      {
+        "id": "classification-gateway",
+        "name": "Ticket Type"
+      },
+      {
+        "id": "reply-received-gateway",
+        "name": "Customer Reply Received"
+      }
+    ],
+    "parallelGateway": [
+      {
+        "id": "parallel-start-gateway",
+        "name": "Parallel Execution Start"
+      },
+      {
+        "id": "parallel-end-gateway",
+        "name": "Parallel Execution End"
+      }
+    ],
+    "intermediateCatchEvent": [
+      {
+        "id": "wait-for-reply",
+        "name": "Wait for Customer Reply",
+        "timerEventDefinition": {
+          "timeDuration": "P1D"
+        }
+      }
+    ],
+    "endEvent": [
+      {
+        "id": "end-process",
+        "name": "Process Completed"
+      }
+    ],
+    "boundaryEvent": [
+      {
+        "id": "cancellation-boundary",
+        "name": "Ticket Cancellation",
+        "cancelActivity": true,
+        "attachedToRef": "send-response",
+        "terminateEventDefinition": {}
+      }
+    ],
+    "sequenceFlow": [
+      {
+        "id": "flow1",
+        "sourceRef": "start-email",
+        "targetRef": "parse-email"
+      },
+      {
+        "id": "flow2",
+        "sourceRef": "parse-email",
+        "targetRef": "initial-classification"
+      },
+      {
+        "id": "flow3",
+        "sourceRef": "initial-classification",
+        "targetRef": "classification-gateway"
+      },
+      {
+        "id": "flow4",
+        "sourceRef": "classification-gateway",
+        "targetRef": "provide-resolution",
+        "conditionExpression": "Simple"
+      },
+      {
+        "id": "flow5",
+        "sourceRef": "classification-gateway",
+        "targetRef": "root-cause-analysis",
+        "conditionExpression": "Complex"
+      },
+      {
+        "id": "flow6",
+        "sourceRef": "root-cause-analysis",
+        "targetRef": "provide-resolution"
+      },
+      {
+        "id": "flow7",
+        "sourceRef": "provide-resolution",
+        "targetRef": "parallel-start-gateway"
+      },
+      {
+        "id": "flow8",
+        "sourceRef": "parallel-start-gateway",
+        "targetRef": "send-response"
+      },
+      {
+        "id": "flow9",
+        "sourceRef": "parallel-start-gateway",
+        "targetRef": "log-solution"
+      },
+      {
+        "id": "flow10",
+        "sourceRef": "send-response",
+        "targetRef": "wait-for-reply"
+      },
+      {
+        "id": "flow11",
+        "sourceRef": "wait-for-reply",
+        "targetRef": "reply-received-gateway"
+      },
+      {
+        "id": "flow12",
+        "sourceRef": "reply-received-gateway",
+        "targetRef": "close-ticket",
+        "conditionExpression": "Reply Received"
+      },
+      {
+        "id": "flow13",
+        "sourceRef": "reply-received-gateway",
+        "targetRef": "send-reminder",
+        "conditionExpression": "No Reply (Timeout)"
+      },
+      {
+        "id": "flow14",
+        "sourceRef": "send-reminder",
+        "targetRef": "close-ticket"
+      },
+      {
+        "id": "flow15",
+        "sourceRef": "log-solution",
+        "targetRef": "parallel-end-gateway"
+      },
+      {
+        "id": "flow16",
+        "sourceRef": "close-ticket",
+        "targetRef": "parallel-end-gateway"
+      },
+      {
+        "id": "flow17",
+        "sourceRef": "parallel-end-gateway",
+        "targetRef": "end-process"
+      },
+      {
+        "id": "flow18",
+        "sourceRef": "cancellation-boundary",
+        "targetRef": "end-process"
+      }
+    ]
+  }
+}

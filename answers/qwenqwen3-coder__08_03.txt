@@ -1,0 +1,51 @@
+I need to analyze whether T5 can fire before T3 in any reachable marking.
+
+Let me trace through the possible execution paths:
+
+Starting with p0 = 1 (all other places = 0):
+
+1. T1 fires: p0 → pa, pb
+   Marking: pa = 1, pb = 1
+
+2. From here, I have two paths from pa:
+   - Path 1: T2 fires (pa → pc), then T3 fires (pc → pd)
+   - Path 2: T2b fires (pa → pd) - this is the shortcut
+
+For T5 to fire, I need both pd and pe to be marked.
+- pe can only be marked by T4 firing (pb → pe)
+- pd can be marked either by T3 (pc → pd) or by T2b (pa → pd)
+
+Let me check if T5 can fire before T3:
+
+If I want T5 to fire before T3, I need pd and pe both marked before T3 fires.
+
+From the initial firing of T1, I have pa = 1, pb = 1.
+
+To get pe: T4 must fire (pb → pe)
+To get pd without T3: T2b must fire (pa → pd)
+
+So the sequence would be:
+1. T1 (p0 → pa, pb)
+2. T2b (pa → pd) - this creates pd
+3. T4 (pb → pe) - this creates pe
+4. T5 (pd, pe → pf) - this fires T5 before T3
+
+Let me verify this sequence:
+- Initial: p0 = 1
+- After T1: pa = 1, pb = 1
+- After T2b: pa = 0, pd = 1
+- After T4: pb = 0, pe = 1
+- After T5: pd = 0, pe = 0, pf = 1
+
+This is valid, and T5 fires without T3 ever firing in this sequence.
+
+However, I should check if T3 must fire before T5 can fire. Looking at the dependencies:
+- T3 (pc → pd) can only fire if pc is marked
+- pc can only be marked by T2 (pa → pc)
+- But T2b provides an alternative path to pd directly
+
+Therefore, T5 can indeed fire before T3.
+
+**Yes**, it is possible for T5 to fire before T3.
+
+**Shortest firing sequence**: T1, T2b, T4, T5

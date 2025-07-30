@@ -1,0 +1,40 @@
+I need to analyze whether T5 can fire before T3 in this Petri net.
+
+Let me first understand the structure:
+- T1 splits the process into two parallel branches: p1 and p2
+- T2 processes p1 → p3
+- T3 processes p2 → p4
+- T4 synchronizes both branches: p3 + p4 → p5
+- T5 has a normal arc from p3 and an inhibitor arc from p4 (fires only when p4 is empty)
+
+For T5 to fire before T3, I need:
+1. T5 to be enabled (p3 has token AND p4 has zero tokens)
+2. This must happen before T3 fires
+
+Let me trace possible sequences from initial marking p0(1):
+
+Initial: p0(1) p1(0) p2(0) p3(0) p4(0) p5(0) p6(0)
+
+Step 1: T1 fires
+p0(0) p1(1) p2(1) p3(0) p4(0) p5(0) p6(0)
+
+Now both T2 and T3 are enabled. For T5 to fire, I need p3 to have a token and p4 to be empty.
+
+Step 2: T2 fires (this is key - T2 must fire before T3)
+p0(0) p1(0) p2(1) p3(1) p4(0) p5(0) p6(0)
+
+At this point:
+- p3 has 1 token
+- p4 has 0 tokens (inhibitor condition satisfied)
+- T5 is enabled!
+
+Step 3: T5 fires
+p0(0) p1(0) p2(1) p3(0) p4(0) p5(0) p6(1)
+
+This firing sequence shows T5 firing before T3.
+
+**Answer: Yes**
+
+**Firing sequence:** T1, T2, T5
+
+**Justification:** After T1 fires, both T2 and T3 become enabled. If T2 fires first, it places a token in p3. Since p4 remains empty (T3 hasn't fired yet), the inhibitor condition for T5 is satisfied, allowing T5 to fire before T3.

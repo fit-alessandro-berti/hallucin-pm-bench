@@ -23,6 +23,7 @@ class Shared:
                        "qwen/qwen3-235b-a22b-2507",
                        "moonshotai/kimi-k2",
                        "qwen/qwen3-235b-a22b-thinking-2507",
+                       "qwen/qwen3-coder",
                        "x-ai/grok-4",
                        "z-ai/glm-4.5",
                        "z-ai/glm-4.5-air",
