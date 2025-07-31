@@ -1,0 +1,94 @@
+**Answer: Yes**, it **is possible** for transition **T5 to fire before T3**.
+
+---
+
+### ✅ **Firing Sequence from Initial Marking:**
+
+Initial marking:  
+`p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)`
+
+**Step 1:** Fire **T1**  
+- T1 enabled (p0 has 1 token)
+- Postcondition: p0 → 0, p1 → 1, p2 → 1  
+Current marking:  
+`p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)`
+
+**Step 2:** Fire **T5**  
+- T5 requires: p3 ≥ 1 (normal arc) and p4 = 0 (inhibitor arc)  
+- Currently, p3 = 0 → **T5 is NOT enabled** ❌  
+→ **Cannot fire T5 yet.**
+
+Wait — this suggests we cannot fire T5 before T3, but reconsider: we need to **avoid enabling T3 too early**.
+
+But T3 requires p2 → p4, so we cannot fire T3 unless we fire T2 first (which requires p1 → p3).
+
+So the problem is: **To fire T5, we need p3 ≥ 1 and p4 = 0**  
+But **T5 cannot fire unless p3 has at least one token**  
+→ p3 gets token **only via T2**, which fires only if **p1 has a token**
+
+But **T1** gives token to both **p1 and p2**. So we can fire **T2** (p1 → p3), and then **T5** could possibly fire **if p4 is empty**.
+
+But if we fire **T2**, then p1 → p3 → p3 = 1, p4 = 0 → **T5 enabled**  
+So we can fire **T5 before T3**, as long as we avoid firing **T3** (which is p2 → p4)
+
+But **T3 is not fired yet** — so this is possible.
+
+Let’s try again carefully.
+
+---
+
+### ✅ Correct Firing Sequence:
+
+**Initial marking:**  
+`p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)`
+
+**Step 1:** Fire **T1**  
+- p0 → 0  
+- p1 → 1  
+- p2 → 1  
+Marking: `p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)`
+
+**Step 2:** Fire **T2**  
+- T2: p1 → p3
+- p1 → 0
+- p3 → 1  
+Marking: `p0(0), p1(0), p2(1), p3(1), p4(0), p5(0), p6(0)`
+
+**Now:**
+- T5 is enabled: p3 = 1 (normal arc), p4 = 0 (inhibitor arc) → ✅
+- T3 is enabled: p2 = 1 → but we **do not** fire T3 yet.
+
+**Step 3:** Fire **T5**  
+- p3 → 0 (normal arc)
+- p4 unchanged (inhibitor arc doesn’t consume)
+- p6 → 1  
+Marking: `p0(0), p1(0), p2(1), p3(0), p4(0), p5(0), p6(1)`
+
+✅ So **T5 fired**, and **T3 has not fired yet**.
+
+Thus, **T5 fired before T3**.
+
+---
+
+### ✅ Conclusion:
+
+**Yes**, it is possible for **T5 to fire before T3**.
+
+### 🔍 Justification:
+- T5 requires **p3 ≥ 1** and **p4 = 0**
+- T2 can be fired (via T1) to place a token in p3
+- T3 is *not* fired yet (we keep p2 with 1 token)
+- Hence, T5 can fire as long as p4 is empty (which it is)
+- So T5 can fire **before** T3, even though T3 is enabled (but not fired)
+
+> ❗ Note: The fact that T3 is enabled does *not* prevent T5 from firing — they are independent **unless** T3 fires and places a token in p4 (which disables T5). We avoid that by **not firing T3**.
+
+---
+
+### ✅ Final Answer:
+**Yes**, it is possible.
+
+**Firing sequence:**  
+**T1 → T2 → T5**
+
+**Justification:** After T1 and T2, p3 = 1 and p4 = 0 → T5 is enabled and can fire. T3 is not yet fired, so it occurs after T5.

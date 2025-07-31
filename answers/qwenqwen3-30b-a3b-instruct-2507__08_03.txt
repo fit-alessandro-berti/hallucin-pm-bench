@@ -1,0 +1,177 @@
+We are given a Petri net with the following structure and initial marking:
+
+---
+
+### **Places**:  
+`p0, pa, pb, pc, pd, pe, pf`
+
+### **Transitions**:
+- **T1**: input: `p0` → output: `pa, pb` (parallel split)
+- **T2**: input: `pa` → output: `pc` (normal path)
+- **T2b**: input: `pa` → output: `pd` (shortcut, skips `pc`)
+- **T3**: input: `pc` → output: `pd` (continuation of normal path)
+- **T4**: input: `pb` → output: `pe`
+- **T5**: input: `pd, pe` → output: `pf` (synchronising join)
+- **T6**: input: `pf` → output: `pc` (feedback loop)
+
+### **Initial Marking**:  
+`p0 = 1`, all others = 0
+
+---
+
+### **Question**:  
+> Is it **possible** for transition **T5** to fire *before* transition **T3** in any reachable marking?  
+> If **yes**, give one **shortest** firing sequence.  
+> If **no**, give a formal explanation.
+
+---
+
+We analyze the **dependencies** required for T5 and T3 to fire, and their **order constraints**.
+
+---
+
+### Step 1: Understand what is needed for T5 to fire
+
+**T5** requires:  
+- One token in `pd`  
+- One token in `pe`
+
+→ So, both `pd` and `pe` must be marked.
+
+- `pe` comes from **T4**, which needs a token in `pb`.
+- `pb` is produced by **T1** (which consumes `p0`).
+- So: `T1 → T4 → T5` is one path to fire T5.
+
+- `pd` arises from two sources:
+  - **T2b**: `pa → pd` (shortcut)
+  - **T3**: `pc → pd` (after `T2`)
+
+So, to get `pd`, we need either:
+- `pa` to be consumed via **T2b**, or
+- `pc` to be present, consumed via **T3**
+
+But T3 **requires** `pc`, and `pc` comes from **T2** (which consumes `pa`).
+
+So:  
+- T2 → T3 → pd → T5  
+- Or T2b → pd → T5  
+→ Both can contribute to `pd`
+
+But T5 requires **both pd and pe**
+
+Thus, **T5** can only fire **after**:
+- `pd` has been produced (via T2b or T3)
+- `pe` has been produced (via T4)
+
+---
+
+### Step 2: When can T3 fire?
+
+T3 requires:
+- One token in `pc`
+
+`pc` is produced only by **T2**, which requires `pa`
+
+`pa` is produced by **T1**, which consumes `p0`
+
+So:  
+`T1 → T2 → T3` is the only way to fire T3
+
+Thus: T3 **cannot fire before T1 and T2** are executed.
+
+---
+
+### Step 3: Can T5 fire before T3?
+
+We now ask: **Is there a way to have T5 fire, using pd from T2b (not T3), while T3 has not fired yet?**
+
+Let’s try to construct such a sequence.
+
+---
+
+### Attempt: Use **T2b** to produce `pd` **before** T3.
+
+**Sequence:**
+
+1. **T1**  
+   - Input: p0 (1 → 0)  
+   - Output: pa (0 → 1), pb (0 → 1)  
+   → Marking: pa=1, pb=1
+
+2. **T2b**  
+   - Input: pa (1 → 0)  
+   - Output: pd (0 → 1)  
+   → Marking: pd=1, pb=1
+
+3. **T4**  
+   - Input: pb (1 → 0)  
+   - Output: pe (0 → 1)  
+   → Marking: pd=1, pe=1
+
+4. **T5**  
+   - Input: pd=1, pe=1  
+   - Output: pf (0 → 1)  
+   → Marking: pf=1
+
+→ **T5 has fired, and T3 has NOT fired at any point**
+
+Now check: **Has T3 fired?**  
+No. T3 requires `pc`, but `pc` was never produced.
+
+`pc` would come from T2, but we used T2b instead.
+
+So T3 never fired.
+
+✔️ So, **T5 can fire before T3**.
+
+---
+
+### Is this the shortest sequence?
+
+We used 4 transitions:  
+**T1 → T2b → T4 → T5**
+
+Can we do it in fewer?
+
+- T5 requires both `pd` and `pe`
+- `pe` needs `pb`, `pb` from `T1`
+- `pd` needs `pa`, `pa` from `T1`
+- So T1 is needed first.
+
+After T1: we have pa and pb.
+
+Then, we can fire **T2b** and **T4** (in any order).
+
+So sequences:
+
+- T1 → T2b → T4 → T5  
+- T1 → T4 → T2b → T5
+
+Both valid.
+
+In both cases, **T3 never fires**.
+
+So both are valid and **length 4**.
+
+We can pick one.
+
+---
+
+### ✅ Answer:
+
+Yes, it is possible for **T5** to fire **before** **T3**.
+
+One **shortest** firing sequence is:
+
+> **T1, T2b, T4, T5**
+
+This sequence reaches a marking where T5 fires (with pd and pe both present), and T3 **never fires** — because `pc` is never produced (T2 is not used), so T3 has no chance.
+
+---
+
+### Final Answer:
+
+**Yes**
+
+**Shortest firing sequence**:  
+**T1 → T2b → T4 → T5**

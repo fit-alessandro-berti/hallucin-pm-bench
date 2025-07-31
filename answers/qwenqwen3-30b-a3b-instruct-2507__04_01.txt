@@ -1,0 +1,68 @@
+**Non-compliant**
+
+1. **Rule 1 is violated**: The PO amount is €12,300 (exceeding €10,000), so **two approvals** are required—first by a *Procurement Officer*, then by the *CFO*—**before** `Issue_PO`. While the trace shows `Approve_PO` (Procurement Officer) at step 2 and `Approve_PO_CFO` (CFO) at step 3, the sequence violates the *ordering* in the rule: **the CFO approval must occur *after* the Procurement Officer’s approval**, which it does. However, **the issue arises in the timeline**: `Issue_PO` (step 5) occurs at 12:05, but the CFO’s approval (`Approve_PO_CFO`) is at 12:02, and the `Expedite_Flag` (step 4) is issued *after* the CFO approval. But critically, **both approvals pre-date `Issue_PO`**, which is acceptable. So this part is **compliant**.
+
+Wait—no error in Rule 1 yet.
+
+But: **Rule 2 is violated**.
+
+2. **Rule 2 is violated**: The trace contains `Expedite_Flag` (step 4). This makes `Quality_Check` optional, but **`Risk_Assessment` must occur BEFORE the first occurrence of `Ship_Goods`**.  
+- `Ship_Goods` occurs at step 8 (12:05)  
+- `Risk_Assessment` occurs at step 9 (11:52) → **after** `Ship_Goods`  
+→ This violates Rule 2: `Risk_Assessment` must occur **before** the first `Ship_Goods`.
+
+Even though `Risk_Assessment` eventually happens, it occurs *after* `Ship_Goods`, which is not allowed under Rule 2 when `Expedite_Flag` is present. Thus, **non-compliant**.
+
+3. **Rule 3**: After `Goods_Received` (step 6), `Three_way_match` must occur within the next two activities.  
+- `Goods_Received` at step 6  
+- `Three_way_match` at step 10 → that’s 4 steps later (steps 7, 8, 9, 10), so **distance = 4**, violating Rule 3.
+
+So **Rule 3 is also violated**.
+
+4. **Rule 4**: No activity by an *Intern* may directly follow an activity by a *CFO*.  
+- `Move_to_Quality` (Intern) is at step 7  
+- Previous activity is `Ship_Goods` (Logistics) at step 8 → so not preceded by CFO  
+- The CFO last acted at step 3  
+- Step 7 is not directly after CFO → this is **compliant**
+
+5. **Rule 5**: The trace must **end with `Archive_Record`** and contain nothing after.  
+- Step 11 is `Archive_Record` and no further activities → **compliant**
+
+**Summary of violations**:
+
+- **Rule 2**: `Risk_Assessment` occurs after `Ship_Goods`, but must be before it (due to `Expedite_Flag`)
+- **Rule 3**: `Three_way_match` occurs 4 activities after `Goods_Received`, but must be within 2 (≤2)
+
+Thus, multiple violations.
+
+However, the question asks for one justification. We must choose the **first** (in order) violation.
+
+The earliest violation in the trace is **Rule 3**: After `Goods_Received` (step 6), `Three_way_match` must be within the next 2 activities. But:
+- Step 7: `Move_to_Quality` (Intern) → not `Three_way_match`
+- Step 8: `Ship_Goods` → not `Three_way_match`
+- Step 9: `Risk_Assessment` → not `Three_way_match`
+- Step 10: `Three_way_match` → 4 steps after `Goods_Received`
+
+This is **violated at step 10**, but the violation is detectable at step 10.
+
+But the **earlier** violation is Rule 2: `Risk_Assessment` occurs *after* `Ship_Goods`, which violates the requirement that it must occur **before** `Ship_Goods` — and that happens at step 9.
+
+Let’s sequence:
+
+- Step 6: `Goods_Received`
+- Step 7: `Move_to_Quality`
+- Step 8: `Ship_Goods` → **first occurrence**
+- Step 9: `Risk_Assessment` → **after** `Ship_Goods`
+
+So **Rule 2 violation happens at step 9**.
+
+But Rule 3 violation is **also** at step 10.
+
+So **both are present**, but **Rule 2 violation occurs earlier** (step 9 vs. step 10).
+
+Therefore, the **first violation** is Rule 2.
+
+Thus:
+
+**Non-compliant**  
+1. Rule 2 is violated: The trace contains `Expedite_Flag`, which makes `Risk_Assessment` required to occur **before** the first `Ship_Goods`. However, `Risk_Assessment` (step 9) occurs after `Ship_Goods` (step 8), violating the temporal requirement.
