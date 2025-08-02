@@ -29,6 +29,7 @@ class Shared:
                        "z-ai/glm-4.5-air",
                        "qwen/qwen3-30b-a3b-instruct-2507",
                        "openrouter/horizon-alpha",
+                       "openrouter/horizon-beta",
                   "google/gemini-2.5-pro",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",

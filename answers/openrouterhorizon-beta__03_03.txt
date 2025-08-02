@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/warranty-replacement">
+  <process id="wrc_WarrantyReplacement_v1_3" name="Warranty-Replacement v1.3" isExecutable="true">
+    <startEvent id="wrc_start" name="Customer submits online warranty claim"/>
+    <task id="wrc_validate_claim" name="validates the claim"/>
+    <exclusiveGateway id="wrc_gw_completeness" name="Claim complete?"/>
+    <task id="wrc_request_missing_info" name="requests missing information"/>
+    <exclusiveGateway id="wrc_gw_revalidate" name="Re-validate after info received"/>
+    <task id="wrc_check_warranty" name="checks warranty eligibility"/>
+    <exclusiveGateway id="wrc_gw_warranty_decision" name="Within warranty?"/>
+    <task id="wrc_send_rejection_notice" name="send rejection notice"/>
+    <endEvent id="wrc_end_rejected" name="Rejected"/>
+    <parallelGateway id="wrc_gw_parallel_split" name="Parallel work starts"/>
+    <task id="wrc_create_shipment_order" name="Create shipment order"/>
+    <task id="wrc_schedule_courier_pickup" name="Schedule courier pickup"/>
+    <parallelGateway id="wrc_gw_parallel_join" name="Parallel work completes"/>
+    <task id="wrc_update_inventory_records" name="update inventory records"/>
+    <task id="wrc_close_the_claim" name="close the claim"/>
+    <endEvent id="wrc_end_success" name="Completed"/>
+
+    <sequenceFlow id="wrc_sf_1" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+    <sequenceFlow id="wrc_sf_2" sourceRef="wrc_validate_claim" targetRef="wrc_gw_completeness"/>
+    <sequenceFlow id="wrc_sf_3_complete" sourceRef="wrc_gw_completeness" targetRef="wrc_check_warranty">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[complete == true]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_4_incomplete" sourceRef="wrc_gw_completeness" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[complete == false]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_5" sourceRef="wrc_request_missing_info" targetRef="wrc_gw_revalidate"/>
+    <sequenceFlow id="wrc_sf_6" sourceRef="wrc_gw_revalidate" targetRef="wrc_validate_claim"/>
+    <sequenceFlow id="wrc_sf_7" sourceRef="wrc_check_warranty" targetRef="wrc_gw_warranty_decision"/>
+    <sequenceFlow id="wrc_sf_8_within" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_gw_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[withinWarranty == true]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_9_out" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[withinWarranty == false]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_10" sourceRef="wrc_send_rejection_notice" targetRef="wrc_end_rejected"/>
+    <sequenceFlow id="wrc_sf_11" sourceRef="wrc_gw_parallel_split" targetRef="wrc_create_shipment_order"/>
+    <sequenceFlow id="wrc_sf_12" sourceRef="wrc_gw_parallel_split" targetRef="wrc_schedule_courier_pickup"/>
+    <sequenceFlow id="wrc_sf_13" sourceRef="wrc_create_shipment_order" targetRef="wrc_gw_parallel_join"/>
+    <sequenceFlow id="wrc_sf_14" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_gw_parallel_join"/>
+    <sequenceFlow id="wrc_sf_15" sourceRef="wrc_gw_parallel_join" targetRef="wrc_update_inventory_records"/>
+    <sequenceFlow id="wrc_sf_16" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_the_claim"/>
+    <sequenceFlow id="wrc_sf_17" sourceRef="wrc_close_the_claim" targetRef="wrc_end_success"/>
+  </process>
+
+  <bpmndi:BPMNDiagram id="wrc_diagram">
+    <bpmndi:BPMNPlane id="wrc_plane" bpmnElement="wrc_WarrantyReplacement_v1_3">
+      <bpmndi:BPMNShape id="wrc_shape_start" bpmnElement="wrc_start">
+        <omgdc:Bounds x="100" y="180" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_validate" bpmnElement="wrc_validate_claim">
+        <omgdc:Bounds x="160" y="170" width="150" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_gw_completeness" bpmnElement="wrc_gw_completeness" isMarkerVisible="true">
+        <omgdc:Bounds x="340" y="180" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_request_info" bpmnElement="wrc_request_missing_info">
+        <omgdc:Bounds x="340" y="280" width="200" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_gw_revalidate" bpmnElement="wrc_gw_revalidate" isMarkerVisible="true">
+        <omgdc:Bounds x="580" y="290" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_check_warranty" bpmnElement="wrc_check_warranty">
+        <omgdc:Bounds x="430" y="170" width="180" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_gw_warranty" bpmnElement="wrc_gw_warranty_decision" isMarkerVisible="true">
+        <omgdc:Bounds x="640" y="180" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_rejection" bpmnElement="wrc_send_rejection_notice">
+        <omgdc:Bounds x="720" y="260" width="170" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_end_rejected" bpmnElement="wrc_end_rejected">
+        <omgdc:Bounds x="920" y="270" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_pg_split" bpmnElement="wrc_gw_parallel_split" isMarkerVisible="true">
+        <omgdc:Bounds x="720" y="180" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_create_shipment" bpmnElement="wrc_create_shipment_order">
+        <omgdc:Bounds x="800" y="120" width="190" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_schedule_pickup" bpmnElement="wrc_schedule_courier_pickup">
+        <omgdc:Bounds x="800" y="220" width="190" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_pg_join" bpmnElement="wrc_gw_parallel_join" isMarkerVisible="true">
+        <omgdc:Bounds x="1020" y="180" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_update_inventory" bpmnElement="wrc_update_inventory_records">
+        <omgdc:Bounds x="1100" y="170" width="200" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_close_claim" bpmnElement="wrc_close_the_claim">
+        <omgdc:Bounds x="1320" y="170" width="150" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wrc_shape_end_success" bpmnElement="wrc_end_success">
+        <omgdc:Bounds x="1500" y="180" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="wrc_edge_sf_1" bpmnElement="wrc_sf_1">
+        <omgdi:waypoint x="136" y="198"/>
+        <omgdi:waypoint x="160" y="198"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_2" bpmnElement="wrc_sf_2">
+        <omgdi:waypoint x="310" y="198"/>
+        <omgdi:waypoint x="340" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_3_complete" bpmnElement="wrc_sf_3_complete">
+        <omgdi:waypoint x="390" y="205"/>
+        <omgdi:waypoint x="430" y="198"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_4_incomplete" bpmnElement="wrc_sf_4_incomplete">
+        <omgdi:waypoint x="365" y="230"/>
+        <omgdi:waypoint x="365" y="280"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_5" bpmnElement="wrc_sf_5">
+        <omgdi:waypoint x="540" y="308"/>
+        <omgdi:waypoint x="580" y="315"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_6" bpmnElement="wrc_sf_6">
+        <omgdi:waypoint x="630" y="315"/>
+        <omgdi:waypoint x="655" y="315"/>
+        <omgdi:waypoint x="655" y="198"/>
+        <omgdi:waypoint x="610" y="198"/>
+        <omgdi:waypoint x="610" y="198"/>
+        <omgdi:waypoint x="430" y="198"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_7" bpmnElement="wrc_sf_7">
+        <omgdi:waypoint x="610" y="198"/>
+        <omgdi:waypoint x="640" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_8_within" bpmnElement="wrc_sf_8_within">
+        <omgdi:waypoint x="690" y="205"/>
+        <omgdi:waypoint x="720" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_9_out" bpmnElement="wrc_sf_9_out">
+        <omgdi:waypoint x="665" y="230"/>
+        <omgdi:waypoint x="665" y="288"/>
+        <omgdi:waypoint x="720" y="288"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_10" bpmnElement="wrc_sf_10">
+        <omgdi:waypoint x="890" y="288"/>
+        <omgdi:waypoint x="920" y="288"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_11" bpmnElement="wrc_sf_11">
+        <omgdi:waypoint x="745" y="205"/>
+        <omgdi:waypoint x="800" y="148"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_12" bpmnElement="wrc_sf_12">
+        <omgdi:waypoint x="770" y="205"/>
+        <omgdi:waypoint x="800" y="248"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_13" bpmnElement="wrc_sf_13">
+        <omgdi:waypoint x="990" y="148"/>
+        <omgdi:waypoint x="1020" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_14" bpmnElement="wrc_sf_14">
+        <omgdi:waypoint x="990" y="248"/>
+        <omgdi:waypoint x="1020" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_15" bpmnElement="wrc_sf_15">
+        <omgdi:waypoint x="1070" y="205"/>
+        <omgdi:waypoint x="1100" y="198"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_16" bpmnElement="wrc_sf_16">
+        <omgdi:waypoint x="1300" y="198"/>
+        <omgdi:waypoint x="1320" y="198"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="wrc_edge_sf_17" bpmnElement="wrc_sf_17">
+        <omgdi:waypoint x="1470" y="198"/>
+        <omgdi:waypoint x="1500" y="198"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
