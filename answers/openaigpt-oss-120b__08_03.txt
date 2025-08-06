@@ -1,0 +1,64 @@
+**Answer: Yes – T5 can fire before T3.**  
+
+The shortest firing sequence that makes this happen is  
+
+```
+T1 → T2b → T4 → T5
+```
+
+*(the order of T2b and T4 can be swapped; both give the same length)*  
+
+---
+
+### Why this works  
+
+1. **Initial marking** M₀ :  p0 = 1, all other places = 0  
+
+2. **Fire T1** (parallel split)  
+
+   - consumes the token from *p0*  
+   - produces one token in *pa* and one token in *pb*  
+
+   Marking M₁ : pa = 1 , pb = 1  
+
+3. **Fire T2b** (shortcut)  
+
+   - consumes the token from *pa*  
+   - produces a token in *pd* (no token ever reaches *pc* or *pc → pd* yet)  
+
+   Marking M₂ : pd = 1 , pb = 1  
+
+4. **Fire T4**  
+
+   - consumes the token from *pb*  
+   - produces a token in *pe*  
+
+   Marking M₃ : pd = 1 , pe = 1  
+
+5. **Fire T5** (synchronising join)  
+
+   - consumes the token from *pd* and the token from *pe*  
+   - produces a token in *pf*  
+
+   Marking M₄ : pf = 1  
+
+At the moment **T5 fires**, the transition **T3** has never been enabled nor fired; the only way the token arrived in *pd* was via **T2b**, the shortcut that bypasses *pc* and therefore bypasses **T3**.
+
+---
+
+### Minimality argument  
+
+* To enable **T5** we need a token in **pd** *and* a token in **pe**.  
+* Tokens in **pd** can only be produced by **T2b** (shortcut) or by **T3** (which we want to avoid).  
+* Tokens in **pe** can only be produced by **T4**.  
+
+Both **T2b** and **T4** require the tokens created by **T1** (the only transition that puts tokens into *pa* and *pb*). Consequently any run that lets **T5** fire before **T3** must contain at least:
+
+1. **T1** – to create *pa* and *pb*  
+2. **T2b** – to create *pd* without using **T3**  
+3. **T4** – to create *pe*  
+4. **T5** – the target transition  
+
+Thus four transition firings are the **minimum** possible; any shorter sequence would lack either the required token in *pd* or the required token in *pe*.  
+
+Hence the sequence `T1, T2b, T4, T5` (or `T1, T4, T2b, T5`) is the shortest one that lets **T5** fire before **T3**.

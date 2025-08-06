@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"  
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+              targetNamespace="http://example.com/WarrantyReplacement"  
+              xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"  
+              xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"  
+              xmlns:di="http://www.omg.org/spec/DD/20100524/DI">  
+
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="true">  
+
+    <!-- Start -->
+    <startEvent id="wrc_start" name="Online warranty claim submission"/>
+    
+    <!-- 1. Validation -->
+    <task id="wrc_validate_claim" name="Validate the claim"/>
+    
+    <!-- 2. Completeness check -->
+    <exclusiveGateway id="wrc_gateway_validate" default="flow_incomplete"/>
+    
+    <!-- 2a. Incomplete path -->
+    <sequenceFlow id="flow_complete" sourceRef="wrc_gateway_validate" targetRef="wrc_validate_claim" name="Complete"/>
+    <sequenceFlow id="flow_incomplete" sourceRef="wrc_gateway_validate" targetRef="wrc_request_missing_info" name="Incomplete"/>
+    
+    <!-- 2b. Request missing data -->
+    <task id="wrc_request_missing_info" name="Request missing information"/>
+    
+    <!-- Loop back to validation -->
+    <sequenceFlow id="flow_loop_back" sourceRef="wrc_request_missing_info" targetRef="wrc_validate_claim"/>
+    
+    <!-- 3. Warranty eligibility check -->
+    <task id="wrc_check_warranty" name="Check warranty eligibility"/>
+    
+    <!-- 3. Warranty decision gateway -->
+    <exclusiveGateway id="wrc_gateway_warranty" default="flow_out_of_warranty"/>
+    
+    <!-- 3a. Within warranty -->
+    <sequenceFlow id="flow_within_warranty" sourceRef="wrc_gateway_warranty" targetRef="wrc_parallel_split" name="Within warranty"/>
+    
+    <!-- 3b. Out of warranty -->
+    <sequenceFlow id="flow_out_of_warranty" sourceRef="wrc_gateway_warranty" targetRef="wrc_send_rejection" name="Out of warranty"/>
+    
+    <!-- 4. Parallel branch: shipment and courier scheduling -->
+    <parallelGateway id="wrc_parallel_split"/>
+    
+    <task id="wrc_create_shipment" name="Create shipment order"/>
+    <task id="wrc_schedule_courier" name="Schedule courier pickup"/>
+    
+    <!-- Parallel join -->
+    <parallelGateway id="wrc_parallel_join"/>
+    
+    <!-- 5. Close claim -->
+    <task id="wrc_update_inventory" name="Update inventory records"/>
+    <task id="wrc_close_claim" name="Close the claim"/>
+    
+    <!-- 5a. Successful completion end -->
+    <sequenceFlow id="flow_success_start" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory"/>
+    <sequenceFlow id="flow_success_update" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    <sequenceFlow id="flow_success_end" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+    <endEvent id="wrc_end_success" name="Claim closed"/>
+    
+    <!-- 3b. Rejection path end -->
+    <task id="wrc_send_rejection" name="Send rejection notice"/>
+    <sequenceFlow id="flow_rejection_end" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection"/>
+    <endEvent id="wrc_end_rejection" name="Rejection sent"/>
+    
+    <!-- Sequence flows from start -->
+    <sequenceFlow id="start_to_validate" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+
+    <!-- Connections for parallel split -->
+    <sequenceFlow id="split_to_shipment" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment"/>
+    <sequenceFlow id="split_to_courier" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_courier"/>
+    
+    <!-- Connections for parallel join -->
+    <sequenceFlow id="join_shipment" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join"/>
+    <sequenceFlow id="join_courier" sourceRef="wrc_schedule_courier" targetRef="wrc_parallel_join"/>
+
+    <!-- Connections from warranty gateway -->
+    <sequenceFlow id="gateway_warranty_to_split" sourceRef="wrc_gateway_warranty" targetRef="wrc_parallel_split"/>
+    <sequenceFlow id="gateway_warranty_to_send" sourceRef="wrc_gateway_warranty" targetRef="wrc_send_rejection"/>
+
+    <!-- Connections from validation gateway -->
+    <sequenceFlow id="gateway_validate_to_check" sourceRef="wrc_gateway_validate" targetRef="wrc_check_warranty"/>
+
+  </process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_wrc_process">
+    <bpmndi:BPMNPlane id="BPMNPlane_wrc_process" bpmnElement="wrc_process">
+      <!-- Diagram nodes and edges can be omitted for brevity -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

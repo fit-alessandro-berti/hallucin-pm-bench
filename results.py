@@ -33,7 +33,7 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    patterns = {"qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot"}
+    patterns = {"qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
