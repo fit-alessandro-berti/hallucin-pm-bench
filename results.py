@@ -44,11 +44,12 @@ def is_open_source(model_name):
 
 
 def is_lrm(model_name):
-    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5"}
+    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
-            return ":white_check_mark:"
+            if not "chat" in model_name.lower():
+                return ":white_check_mark:"
 
     return ":x:"
 
