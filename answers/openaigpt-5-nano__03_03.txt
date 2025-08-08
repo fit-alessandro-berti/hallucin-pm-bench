@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             id="Definitions_wrc"
+             targetNamespace="http://example.com/bpmn/warranty"
+             exporter="System: Business-process architect"
+             exporterVersion="1.0">
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="true">
+
+    <!-- 1. Start when customer submits an online warranty claim -->
+    <startEvent id="wrc_start" name="Start" />
+
+    <!-- 1/2. Task: submits an online warranty claim -->
+    <task id="wrc_submit_claim" name="submits an online warranty claim" />
+
+    <!-- 2. A service agent validates the claim -->
+    <task id="wrc_validate_claim" name="validates the claim" />
+
+    <!-- Exclusive gateway for step 2 completeness -->
+    <exclusiveGateway id="wrc_gw_complete" name="Step 2 completeness" />
+
+    <!-- 2. If incomplete -> requests missing information and waits, then re-validates -->
+    <task id="wrc_request_info" name="requests missing information" />
+
+    <!-- 3. After validation, agent checks warranty eligibility -->
+    <task id="wrc_check_warranty" name="checks warranty eligibility" />
+
+    <!-- Exclusive gateway for step 3 warranty decision -->
+    <exclusiveGateway id="wrc_gw_warranty" name="Warranty eligibility decision" />
+
+    <!-- If out of warranty -> send rejection notice and end -->
+    <task id="wrc_send_rejection" name="send rejection notice" />
+    <endEvent id="wrc_end_rejection" name="End - Rejection" />
+
+    <!-- If within warranty -> parallel activities: Create shipment order, Schedule courier pickup -->
+    <parallelGateway id="wrc_pg_split" name="Parallel split" />
+    <task id="wrc_create_shipment" name="Create shipment order" />
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup" />
+    <parallelGateway id="wrc_pg_join" name="Parallel join" />
+    <task id="wrc_update_inventory" name="update inventory records" />
+    <task id="wrc_close_claim" name="close the claim" />
+    <endEvent id="wrc_end_success" name="End - Successful completion" />
+
+    <!-- Sequence Flows -->
+    <!-- Start to first claim submission -->
+    <sequenceFlow id="wrc_flow_start_to_submit" sourceRef="wrc_start" targetRef="wrc_submit_claim"/>
+
+    <!-- Submit claim to first validation -->
+    <sequenceFlow id="wrc_flow_submit_to_validate" sourceRef="wrc_submit_claim" targetRef="wrc_validate_claim"/>
+
+    <!-- Validation to gateway (decision point for completeness) -->
+    <sequenceFlow id="wrc_flow_validate_to_gateway" sourceRef="wrc_validate_claim" targetRef="wrc_gw_complete"/>
+
+    <!-- Gateway (Step 2 completeness) outcomes -->
+    <sequenceFlow id="wrc_flow_complete" name="complete" sourceRef="wrc_gw_complete" targetRef="wrc_check_warranty"/>
+    <sequenceFlow id="wrc_flow_incomplete" name="incomplete" sourceRef="wrc_gw_complete" targetRef="wrc_request_info"/>
+
+    <!-- After information is received, re-validate -->
+    <sequenceFlow id="wrc_flow_info_to_validate" sourceRef="wrc_request_info" targetRef="wrc_validate_claim"/>
+
+    <!-- After validation again, route to gateway again (loop) -->
+    <sequenceFlow id="wrc_flow_validate_to_gateway_again" sourceRef="wrc_validate_claim" targetRef="wrc_gw_complete"/>
+
+    <!-- Warranty decision gateway to within / out of warranty -->
+    <sequenceFlow id="wrc_flow_warranty_to_gateway" sourceRef="wrc_check_warranty" targetRef="wrc_gw_warranty"/>
+
+    <!-- Within warranty leads to parallel activities -->
+    <sequenceFlow id="wrc_flow_within" name="within warranty" sourceRef="wrc_gw_warranty" targetRef="wrc_pg_split"/>
+    <!-- Out of warranty leads to rejection path -->
+    <sequenceFlow id="wrc_flow_out_of_warranty" sourceRef="wrc_gw_warranty" targetRef="wrc_send_rejection"/>
+
+    <!-- Parallel split to two activities -->
+    <sequenceFlow id="wrc_flow_split_to_create" sourceRef="wrc_pg_split" targetRef="wrc_create_shipment"/>
+    <sequenceFlow id="wrc_flow_split_to_schedule" sourceRef="wrc_pg_split" targetRef="wrc_schedule_pickup"/>
+
+    <!-- Join parallel activities -->
+    <sequenceFlow id="wrc_flow_join_from_create" sourceRef="wrc_create_shipment" targetRef="wrc_pg_join"/>
+    <sequenceFlow id="wrc_flow_join_from_schedule" sourceRef="wrc_schedule_pickup" targetRef="wrc_pg_join"/>
+
+    <!-- Join to inventory update, then close, then end -->
+    <sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_pg_join" targetRef="wrc_update_inventory"/>
+    <sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    <sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+
+    <!-- Rejection path to end -->
+    <sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_end_rejection" targetRef="wrc_end_success"/>
+
+  </process>
+
+  <!-- Optional: Diagram information omitted to keep output self-contained focusing on flow elements -->
+</definitions>

@@ -1,0 +1,114 @@
+Alright — let's reason this through carefully.
+
+---
+
+## Step 1 – Understand the flow
+
+We have:
+
+- **Initial marking:**  
+  p0 = 1, others = 0.
+
+- **Transitions:**
+
+```
+T1: p0 → pa, pb
+T2: pa → pc
+T2b: pa → pd  -- shortcut
+T3: pc → pd
+T4: pb → pe
+T5: pd + pe → pf
+T6: pf → pc   -- feedback loop
+```
+
+---
+
+## Step 2 – Read the question
+We want to know:  
+Is it possible for **T5** to fire *before* **T3** ever fires?
+
+That means:
+
+- We reach a marking enabling **T5** and we execute it (consuming pd and pe)  
+- **Prior to that**, **T3** has not fired in the entire run from M₀ to that T5.
+
+---
+
+## Step 3 – Check structural possibilities
+
+From the transition definitions:
+
+- **T5** requires:  
+  - 1 token in **pd**
+  - 1 token in **pe**
+
+- Ways to get those:
+
+  - **pd** can come from:
+    1. **T2b**: pa → pd (direct)
+    2. **T3**: pc → pd (normal path)
+
+  - **pe** can only come from:
+    - **T4**: pb → pe
+
+So for T5’s **pd** input, we don’t strictly need T3 – we could use T2b.
+
+---
+
+## Step 4 – Possible way to reach T5 without T3
+
+Let's try to construct:
+
+- Start: p0=1
+- Fire **T1**: p0 → pa & pb  
+  Now: pa=1, pb=1.
+
+- Fire **T4**: pb → pe  
+  Now: pa=1, pe=1.
+
+- Fire **T2b**: pa → pd (shortcut)  
+  Now: pe=1, pd=1.
+
+We have both **pd**=1 and **pe**=1 ⇒ **T5** is enabled without ever firing T3.
+
+---
+
+## Step 5 – Shortest sequence
+
+From above:
+
+1. **T1** (p0 → pa, pb)
+2. **T4** (pb → pe)
+3. **T2b** (pa → pd)
+4. **T5** fires — and T3 has not fired at any point.
+
+That’s 3 steps to enable T5, then firing T5 in step 4.
+
+---
+
+## Step 6 – Conclusion
+
+**Yes**, it is possible.
+
+---
+
+### One *shortest* firing sequence from the initial marking to the first firing of **T5** (before any T3):
+
+**T1 , T4 , T2b , T5**
+
+---
+
+**Marking trace:**
+
+| Step | Fired | p0 | pa | pb | pc | pd | pe | pf |
+|------|-------|----|----|----|----|----|----|----|
+| M₀   | —     | 1  | 0  | 0  | 0  | 0  | 0  | 0  |
+| M₁   | T1    | 0  | 1  | 1  | 0  | 0  | 0  | 0  |
+| M₂   | T4    | 0  | 1  | 0  | 0  | 0  | 1  | 0  |
+| M₃   | T2b   | 0  | 0  | 0  | 0  | 1  | 1  | 0  |
+| M₄   | T5    | 0  | 0  | 0  | 0  | 0  | 0  | 1  |
+
+---
+
+**Answer:** ✅  
+Possible, shortest sequence: **T1 → T4 → T2b → T5**

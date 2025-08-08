@@ -1,0 +1,35 @@
+Below are the decision points in Contoso Airlines’ refund process, with the condition tested at each point, the possible outcomes, and the documents required to make that decision.
+
+1) Triage eligibility decision (during Triage_Agent_Validate_Eligibility)
+- Condition: Is the claim eligible for refund?
+- Required documents: RefundRequestForm, FlightManifest, WeatherReport
+- Outcomes: If eligible → proceed to Finance_Controller_PreApprove. If not eligible → case is not advanced (refund denied).
+
+2) Finance pre-approval decision (during Finance_Controller_PreApprove)
+- Condition: Does the finance controller pre-approve the claim?
+- Required documents: EligibilityChecklist (and the RefundRequestForm as source of claim details)
+- Outcomes: If pre-approved → continue to next steps (subject to high-value branch). If not pre-approved → refund is not authorized.
+
+3) High-value threshold decision (high-value branch)
+- Condition: Is the refund amount greater than €1 000?
+- Required documents: RefundRequestForm (amount)
+- Outcomes: If > €1 000 → case proceeds to Senior_Auditor_Review (AuditTrail must be included). If ≤ €1 000 → no senior-audit step required.
+
+4) Senior auditor decision (during Senior_Auditor_Review) — applies only for high-value claims
+- Condition: Does the senior auditor complete/approve the review?
+- Required documents: AuditTrail (must be included); the EligibilityChecklist/RefundRequestForm will be used as supporting material
+- Outcomes: If completed/approved → allows Process_Refund_Payment (subject to BankTransferAuthorization). If not → refund is not authorized.
+
+5) Payment gating decision (before Process_Refund_Payment executes)
+- Condition: Are all required approvals completed and is the signed BankTransferAuthorization present so payment can be executed?
+- Required documents: BankTransferAuthorization, evidence of Finance_Controller_PreApprove (EligibilityChecklist); for high-value claims also evidence of completed Senior_Auditor_Review (AuditTrail)
+- Outcomes: If approvals and BankTransferAuthorization are present → Process_Refund_Payment may proceed. If not → payment cannot be executed.
+
+Complete list of all documents/artifacts referenced in the process
+- RefundRequestForm
+- FlightManifest
+- WeatherReport
+- EligibilityChecklist
+- AuditTrail
+- BankTransferAuthorization
+- RefundConfirmationPDF (issued after payment; not a gating document but part of the flow)

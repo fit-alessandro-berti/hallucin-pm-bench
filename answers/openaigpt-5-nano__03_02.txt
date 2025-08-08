@@ -1,0 +1,54 @@
+{
+  "process": {
+    "id": "Process_Ticket",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "subProcess": {
+      "id": "SubProcess_TicketProcessing",
+      "name": "Ticket Processing",
+      "flowElements": [
+        {"id": "StartEvent_Ticket", "type": "startEvent", "name": "Email Received"},
+        {"id": "Task_ParseEmail", "type": "task", "name": "Parse Email"},
+        {"id": "Task_CreateTicket", "type": "task", "name": "Create Ticket in Help-Desk System"},
+        {"id": "Task_InitialClassification", "type": "task", "name": "Initial Classification"},
+        {"id": "Gateway_SimpleComplex", "type": "exclusiveGateway", "name": "Simple or Complex"},
+        {"id": "Task_ProvideResolution", "type": "task", "name": "Provide Resolution"},
+        {"id": "Task_RootCauseAnalysis", "type": "task", "name": "Root Cause Analysis"},
+        {"id": "Fork_AfterResolution", "type": "parallelGateway", "name": "Fork: Send Response and Log KB"},
+        {"id": "Task_SendResponse", "type": "task", "name": "Send Response to Customer"},
+        {"id": "Task_LogKB", "type": "task", "name": "Log Solution in Knowledge Base"},
+        {"id": "Join_AfterResolution", "type": "parallelGateway", "name": "Join: After Resolution"},
+        {"id": "Event_WaitReplyOrTimeout", "type": "eventBasedGateway", "name": "Wait for Customer Reply or 24h Timeout"},
+        {"id": "Event_CustomerReply", "type": "intermediateCatchEvent", "name": "Customer Reply", "definition": {"type": "message", "messageRef": "Message_CustomerReply"}},
+        {"id": "Event_Timer24h", "type": "intermediateCatchEvent", "name": "24 Hours Timeout", "definition": {"type": "timer", "timeDuration": "PT24H"}},
+        {"id": "Task_SendReminder", "type": "task", "name": "Send Reminder"},
+        {"id": "Task_CloseTicket", "type": "task", "name": "Close Ticket"},
+        {"id": "EndEvent_TicketClosed", "type": "endEvent", "name": "Ticket Closed"}
+      ],
+      "sequenceFlows": [
+        {"id": "Flow_StartToParse", "sourceRef": "StartEvent_Ticket", "targetRef": "Task_ParseEmail"},
+        {"id": "Flow_ParseToCreate", "sourceRef": "Task_ParseEmail", "targetRef": "Task_CreateTicket"},
+        {"id": "Flow_CreateToClassification", "sourceRef": "Task_CreateTicket", "targetRef": "Task_InitialClassification"},
+        {"id": "Flow_ClassificationToGateway", "sourceRef": "Task_InitialClassification", "targetRef": "Gateway_SimpleComplex"},
+        {"id": "Flow_SimpleToProvide", "sourceRef": "Gateway_SimpleComplex", "targetRef": "Task_ProvideResolution", "condition": "Simple"},
+        {"id": "Flow_ComplexToRoot", "sourceRef": "Gateway_SimpleComplex", "targetRef": "Task_RootCauseAnalysis", "condition": "Complex"},
+        {"id": "Flow_RootToProvide", "sourceRef": "Task_RootCauseAnalysis", "targetRef": "Task_ProvideResolution"},
+        {"id": "Flow_ProvideToFork", "sourceRef": "Task_ProvideResolution", "targetRef": "Fork_AfterResolution"},
+        {"id": "Flow_ForkToSend", "sourceRef": "Fork_AfterResolution", "targetRef": "Task_SendResponse"},
+        {"id": "Flow_ForkToLog", "sourceRef": "Fork_AfterResolution", "targetRef": "Task_LogKB"},
+        {"id": "Flow_SendToJoin", "sourceRef": "Task_SendResponse", "targetRef": "Join_AfterResolution"},
+        {"id": "Flow_LogToJoin", "sourceRef": "Task_LogKB", "targetRef": "Join_AfterResolution"},
+        {"id": "Flow_JoinToWait", "sourceRef": "Join_AfterResolution", "targetRef": "Event_WaitReplyOrTimeout"},
+        {"id": "Flow_WaitToCustomer", "sourceRef": "Event_WaitReplyOrTimeout", "targetRef": "Event_CustomerReply"},
+        {"id": "Flow_WaitToTimer", "sourceRef": "Event_WaitReplyOrTimeout", "targetRef": "Event_Timer24h"},
+        {"id": "Flow_CustomerReplyToClose", "sourceRef": "Event_CustomerReply", "targetRef": "Task_CloseTicket"},
+        {"id": "Flow_TimerToReminder", "sourceRef": "Event_Timer24h", "targetRef": "Task_SendReminder"},
+        {"id": "Flow_ReminderToClose", "sourceRef": "Task_SendReminder", "targetRef": "EndEvent_TicketClosed"},
+        {"id": "Flow_CloseToEnd", "sourceRef": "Task_CloseTicket", "targetRef": "EndEvent_TicketClosed"}
+      ]
+    },
+    "boundaryEvents": [
+      {"id": "Boundary_Cancel", "type": "boundaryEvent", "name": "Cancel Ticket", "attachedToRef": "SubProcess_TicketProcessing", "eventDefinition": {"type": "message", "messageRef": "Message_CancelTicket"}}
+    ]
+  }
+}

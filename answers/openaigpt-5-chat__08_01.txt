@@ -1,0 +1,124 @@
+Alright, let’s go step-by-step.
+
+---
+
+## 1. Restating the question in Petri-net terms
+
+We have a **safe** Petri net, meaning each place can hold at most one token in any reachable marking. The starting marking is:
+
+```
+M₀: p0=1, p1=0, p2=0, p3=0, p4=0, p5=0, p6=0
+```
+
+Transitions:
+
+1. **T1:**  p0 → p1 + p2  (parallel split: consumes p0 token, produces tokens simultaneously in p1 and p2)
+2. **T2:**  p1 → p3
+3. **T3:**  p2 → p4
+4. **T4:**  p3 + p4 → p5  (synchronising join: both tokens required at p3 & p4)
+5. **T5:**  p3 –|p4 → p6  (*normal arc* from p3, *inhibitor arc* from p4; consumes p3 and only enabled if p4 is empty)
+
+---
+
+## 2. Understanding the condition “T5 before T3”
+
+We want:  
+Is there a reachable marking where **T5 fires first (i.e. before any T3 firing)**?
+
+Formally: in a firing sequence from M₀, the first appearance of T5 should occur strictly before the first occurrence of T3.
+
+---
+
+## 3. Check enabling rules
+
+Let’s see what must hold for T5 to fire:
+
+- Normal arc from *p3*: p3 must have a token.
+- Inhibitor arc from *p4*: p4 must be **empty**.
+
+To have p3=1, either:
+- T2 fires (p1→p3).
+And for empty p4, T3 must **not have fired** yet (because T3: p2→p4).
+
+---
+
+## 4. Step-by-step exploration
+
+**Initial state** M₀:
+```
+p0=1
+```
+Only **T1** is enabled (since it needs p0).
+
+---
+
+### Step 1: Fire T1:
+```
+M₁: p0=0, p1=1, p2=1, others=0
+```
+Enabled now:
+- T2 (p1→p3) possible
+- T3 (p2→p4) possible
+
+---
+
+To get T5 before T3, we must **not** fire T3 yet.  
+Instead, fire T2 to get p3=1.
+
+---
+
+### Step 2: Fire T2:
+```
+M₂: p1=0, p2=1, p3=1, p4=0
+```
+Now:
+- T3 is enabled (p2 token → p4) but we don't want it yet if we want T5 before T3.
+- **T5** is enabled: p3=1, inhibitor from p4 satisfied (p4=0).
+
+---
+
+**Thus, we can fire T5 immediately, before touching T3.**
+
+### Step 3 (the point of interest): Fire T5:
+```
+M₃: p2=1, p3=0, p4=0, p6=1
+```
+At this point, T5 has fired and T3 has not yet fired.
+
+---
+
+### Step 4: Later we can fire T3 (optional now), etc.
+
+---
+
+## 5. Example firing sequence
+
+From M₀:
+```
+M₀ —T1→ M₁ —T2→ M₂ —T5→ M₃ —T3→ …
+```
+Symbolically: **T1, T2, T5, T3, …**
+
+---
+
+## 6. Conclusion
+
+✅ **Yes** — It is possible for T5 to fire before T3.
+
+**Concrete sequence:**
+```
+T1: p0 → p1+p2
+T2: p1 → p3
+T5: p3 –|p4 → p6
+T3: p2 → p4    (comes later)
+```
+
+**Justification:**  
+After T1 then T2, p3=1 and p4=0. The inhibitor condition for T5 is satisfied, enabling it before T3 has been fired.
+
+---
+
+**Answer:**
+> **Yes.** Example firing sequence from the initial marking: `T1, T2, T5, T3, …`. After `T1` and `T2`, place p3 has a token and p4 is empty, enabling T5 before T3 fires.
+
+Would you like me to also **enumerate all reachable markings** to verify no subtle constraints prevent this?

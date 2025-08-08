@@ -1,0 +1,58 @@
+Here are the decision points in Contoso’s flight-refund process, with the relevant supporting documents called out, followed by a consolidated list of all required documents.
+
+Decision Point A: Triage_Agent_Validate_Eligibility (eligibility check)
+- What happens: The triage agent checks the claim against the FlightManifest and the WeatherReport to determine if the refund request is eligible.
+- Outcomes:
+  - Eligible → proceed to Finance_Controller_PreApprove
+  - Not Eligible → (path not defined in the description)
+- Documents involved:
+  - RefundRequestForm (provided by the passenger)
+  - FlightManifest
+  - WeatherReport
+
+Decision Point B: Finance_Controller_PreApprove (pre-approval)
+- What happens: The finance controller signs off on the claim using the EligibilityChecklist.
+- Outcomes:
+  - PreApproved → proceed to the high-value decision and payment gating
+  - Not PreApproved → (path not defined in the description)
+- Documents involved:
+  - EligibilityChecklist
+  - RefundRequestForm (context for eligibility)
+
+Decision Point C: High-value determination
+- What happens: The system decides whether the refund amount is greater than €1,000.
+- Outcomes:
+  - Yes (amount > €1,000) → requires Senior_Auditor_Review that must include the AuditTrail
+  - No (amount ≤ €1,000) → proceed without Auditor involvement
+- Documents involved:
+  - RefundRequestForm (to determine the amount)
+
+Decision Point D: Payment readiness (gating for Process_Refund_Payment)
+- What happens: The system checks that payment can begin only if prerequisites are met.
+- Outcomes:
+  - Yes → Process_Refund_Payment can begin
+  - No → payment is not started
+- Prerequisites (as defined):
+  - Finance_Controller_PreApprove has succeeded
+  - For high-value claims, Senior_Auditor_Review has completed (which must include AuditTrail)
+  - BankTransferAuthorization is present (signed) before payment
+- Documents involved:
+  - BankTransferAuthorization (must be present)
+  - AuditTrail (present as part of Senior_Auditor_Review, if applicable)
+  - (Implicit) Senior_Auditor_Review documentation itself, via the AuditTrail
+  - RefundRequestForm (as the source of the amount and claim)
+
+Notes on paths and constraints
+- The process explicitly states that payment may begin only after Finance_Controller_PreApprove has succeeded and, for high-value claims, after Senior_Auditor_Review is completed. This gating is reflected in Decision Point D.
+- The legacy activity CustomerService_Agent_Decide is not part of Contoso’s process, per the constraint.
+
+All defined documents (required artifacts in the process)
+- RefundRequestForm
+- FlightManifest
+- WeatherReport
+- EligibilityChecklist
+- AuditTrail
+- BankTransferAuthorization
+- RefundConfirmationPDF
+
+If you’d like, I can map these decision points to a simple flow diagram using only these artifacts.

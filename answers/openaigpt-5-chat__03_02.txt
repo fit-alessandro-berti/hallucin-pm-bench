@@ -1,0 +1,259 @@
+```json
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "targetNamespace": "http://example.com/bpmn",
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "isExecutable": true,
+      "laneSet": {
+        "id": "LaneSet_1",
+        "lanes": [
+          {
+            "id": "Lane_Agent",
+            "name": "Support Agent"
+          },
+          {
+            "id": "Lane_System",
+            "name": "System"
+          },
+          {
+            "id": "Lane_Customer",
+            "name": "Customer"
+          }
+        ]
+      },
+      "flowElements": [
+        {
+          "id": "StartEvent_EmailReceived",
+          "name": "Support Email Received",
+          "type": "startEvent",
+          "outgoing": ["Flow_Start_ParseEmail"]
+        },
+        {
+          "id": "Task_ParseEmail",
+          "name": "Parse Email and Create Ticket",
+          "type": "task",
+          "lane": "Lane_System",
+          "incoming": ["Flow_Start_ParseEmail"],
+          "outgoing": ["Flow_Parse_Classification"]
+        },
+        {
+          "id": "Task_InitialClassification",
+          "name": "Initial Classification",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_Parse_Classification"],
+          "outgoing": ["Flow_Classification_Simple", "Flow_Classification_Complex"],
+          "gatewayDirection": "Diverging",
+          "gatewayType": "exclusiveGateway"
+        },
+        {
+          "id": "Task_ProvideResolution",
+          "name": "Provide Resolution",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_ComplexToResolution", "Flow_Classification_Simple"],
+          "outgoing": ["Flow_Resolution_Parallel"]
+        },
+        {
+          "id": "Task_RootCauseAnalysis",
+          "name": "Root Cause Analysis",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_Classification_Complex"],
+          "outgoing": ["Flow_ComplexToResolution"]
+        },
+        {
+          "id": "ParallelGateway_Start",
+          "name": "Parallel Split",
+          "type": "parallelGateway",
+          "incoming": ["Flow_Resolution_Parallel"],
+          "outgoing": ["Flow_SendResponse", "Flow_LogSolution"]
+        },
+        {
+          "id": "Task_SendResponse",
+          "name": "Send Response to Customer",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_SendResponse"],
+          "outgoing": ["Flow_WaitForReply"]
+        },
+        {
+          "id": "Task_LogSolutionKB",
+          "name": "Log Solution in Knowledge Base",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_LogSolution"],
+          "outgoing": ["Flow_LogSolutionJoin"]
+        },
+        {
+          "id": "IntermediateCatchEvent_WaitForReply",
+          "name": "Wait up to 24h for Customer Reply",
+          "type": "intermediateCatchEvent",
+          "eventDefinitions": [
+            {
+              "type": "timerEventDefinition",
+              "timeDuration": "PT24H"
+            },
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerReply"
+            }
+          ],
+          "incoming": ["Flow_WaitForReply"],
+          "outgoing": ["Flow_Reply_Close", "Flow_Timer_SendReminder"]
+        },
+        {
+          "id": "Task_CloseTicket",
+          "name": "Close Ticket",
+          "type": "userTask",
+          "lane": "Lane_Agent",
+          "incoming": ["Flow_Reply_Close", "Flow_Reminder_Close"],
+          "outgoing": ["Flow_Close_End"]
+        },
+        {
+          "id": "Task_SendReminder",
+          "name": "Send Reminder",
+          "type": "serviceTask",
+          "lane": "Lane_System",
+          "incoming": ["Flow_Timer_SendReminder"],
+          "outgoing": ["Flow_Reminder_Close"]
+        },
+        {
+          "id": "EndEvent_Closure",
+          "name": "End - Ticket Closed",
+          "type": "endEvent",
+          "incoming": ["Flow_Close_End"]
+        },
+        {
+          "id": "TerminateEvent_Cancelled",
+          "name": "Terminate - Ticket Cancelled",
+          "type": "terminateEndEvent"
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_Parse",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_ParseEmail",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_Parse"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_Classify",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_InitialClassification",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_Classify"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_RCA",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_RootCauseAnalysis",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_RCA"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_Resolution",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_ProvideResolution",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_Resolution"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_SendResponse",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_SendResponse",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_SendResponse"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_LogSolution",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "Task_LogSolutionKB",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_LogSolution"]
+        },
+        {
+          "id": "BoundaryEvent_CustomerCancel_Wait",
+          "name": "Customer Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "IntermediateCatchEvent_WaitForReply",
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Message_CustomerCancel"
+            }
+          ],
+          "outgoing": ["Flow_CancelTerminate_Wait"]
+        },
+        {
+          "id": "SequenceFlowElements",
+          "sequenceFlows": [
+            { "id": "Flow_Start_ParseEmail", "sourceRef": "StartEvent_EmailReceived", "targetRef": "Task_ParseEmail" },
+            { "id": "Flow_Parse_Classification", "sourceRef": "Task_ParseEmail", "targetRef": "Task_InitialClassification" },
+            { "id": "Flow_Classification_Simple", "sourceRef": "Task_InitialClassification", "targetRef": "Task_ProvideResolution", "conditionExpression": "Simple" },
+            { "id": "Flow_Classification_Complex", "sourceRef": "Task_InitialClassification", "targetRef": "Task_RootCauseAnalysis", "conditionExpression": "Complex" },
+            { "id": "Flow_ComplexToResolution", "sourceRef": "Task_RootCauseAnalysis", "targetRef": "Task_ProvideResolution" },
+            { "id": "Flow_Resolution_Parallel", "sourceRef": "Task_ProvideResolution", "targetRef": "ParallelGateway_Start" },
+            { "id": "Flow_SendResponse", "sourceRef": "ParallelGateway_Start", "targetRef": "Task_SendResponse" },
+            { "id": "Flow_LogSolution", "sourceRef": "ParallelGateway_Start", "targetRef": "Task_LogSolutionKB" },
+            { "id": "Flow_WaitForReply", "sourceRef": "Task_SendResponse", "targetRef": "IntermediateCatchEvent_WaitForReply" },
+            { "id": "Flow_Reply_Close", "sourceRef": "IntermediateCatchEvent_WaitForReply", "targetRef": "Task_CloseTicket", "conditionExpression": "Message_CustomerReply" },
+            { "id": "Flow_Timer_SendReminder", "sourceRef": "IntermediateCatchEvent_WaitForReply", "targetRef": "Task_SendReminder", "conditionExpression": "TimerExpired" },
+            { "id": "Flow_Reminder_Close", "sourceRef": "Task_SendReminder", "targetRef": "Task_CloseTicket" },
+            { "id": "Flow_Close_End", "sourceRef": "Task_CloseTicket", "targetRef": "EndEvent_Closure" },
+            { "id": "Flow_LogSolutionJoin", "sourceRef": "Task_LogSolutionKB", "targetRef": "EndEvent_Closure" },
+            { "id": "Flow_CancelTerminate_Parse", "sourceRef": "BoundaryEvent_CustomerCancel_Parse", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_Classify", "sourceRef": "BoundaryEvent_CustomerCancel_Classify", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_RCA", "sourceRef": "BoundaryEvent_CustomerCancel_RCA", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_Resolution", "sourceRef": "BoundaryEvent_CustomerCancel_Resolution", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_SendResponse", "sourceRef": "BoundaryEvent_CustomerCancel_SendResponse", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_LogSolution", "sourceRef": "BoundaryEvent_CustomerCancel_LogSolution", "targetRef": "TerminateEvent_Cancelled" },
+            { "id": "Flow_CancelTerminate_Wait", "sourceRef": "BoundaryEvent_CustomerCancel_Wait", "targetRef": "TerminateEvent_Cancelled" }
+          ]
+        }
+      ]
+    },
+    "messages": [
+      { "id": "Message_CustomerReply", "name": "Customer Reply" },
+      { "id": "Message_CustomerCancel", "name": "Customer Cancel" }
+    ]
+  }
+}
+```

@@ -1,0 +1,163 @@
+{
+  "process": {
+    "id": "process_support_ticket",
+    "name": "Customer Support Ticket",
+    "isExecutable": true,
+    "messages": [
+      { "id": "msg_support_email", "name": "Support E-mail" },
+      { "id": "msg_customer_reply", "name": "Customer Reply" },
+      { "id": "msg_customer_cancellation", "name": "Customer Cancellation" }
+    ],
+    "data": {
+      "ticketClosed": false
+    },
+    "nodes": [
+      {
+        "id": "start_msg_support_email",
+        "type": "startEvent",
+        "name": "Support E-mail Received",
+        "eventDefinition": { "type": "message", "messageRef": "msg_support_email" }
+      },
+      {
+        "id": "t_parse_email",
+        "type": "serviceTask",
+        "name": "Parse E-mail"
+      },
+      {
+        "id": "t_create_ticket",
+        "type": "serviceTask",
+        "name": "Create Ticket"
+      },
+      {
+        "id": "t_initial_classification",
+        "type": "userTask",
+        "name": "Initial Classification"
+      },
+      {
+        "id": "g_classification",
+        "type": "exclusiveGateway",
+        "name": "Simple or Complex?"
+      },
+      {
+        "id": "t_root_cause_analysis",
+        "type": "userTask",
+        "name": "Root Cause Analysis"
+      },
+      {
+        "id": "t_provide_resolution",
+        "type": "userTask",
+        "name": "Provide Resolution"
+      },
+      {
+        "id": "g_parallel_split",
+        "type": "parallelGateway",
+        "name": "Parallel Split"
+      },
+      {
+        "id": "t_send_response",
+        "type": "sendTask",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "g_event_based",
+        "type": "eventBasedGateway",
+        "name": "Wait for Reply up to 24h"
+      },
+      {
+        "id": "ev_customer_reply",
+        "type": "intermediateCatchEvent",
+        "name": "Customer Reply",
+        "eventDefinition": { "type": "message", "messageRef": "msg_customer_reply" }
+      },
+      {
+        "id": "ev_24h_timer",
+        "type": "intermediateCatchEvent",
+        "name": "24h Timeout",
+        "eventDefinition": { "type": "timer", "timeDuration": "PT24H" }
+      },
+      {
+        "id": "t_send_reminder",
+        "type": "sendTask",
+        "name": "Send Reminder"
+      },
+      {
+        "id": "t_close_ticket",
+        "type": "userTask",
+        "name": "Close Ticket",
+        "outputs": { "ticketClosed": true }
+      },
+      {
+        "id": "t_log_kb",
+        "type": "userTask",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "g_parallel_join",
+        "type": "parallelGateway",
+        "name": "Parallel Join"
+      },
+      {
+        "id": "end_process",
+        "type": "endEvent",
+        "name": "End"
+      }
+    ],
+    "sequenceFlows": [
+      { "id": "f1", "source": "start_msg_support_email", "target": "t_parse_email" },
+      { "id": "f2", "source": "t_parse_email", "target": "t_create_ticket" },
+      { "id": "f3", "source": "t_create_ticket", "target": "t_initial_classification" },
+      { "id": "f4", "source": "t_initial_classification", "target": "g_classification" },
+      { "id": "f5", "source": "g_classification", "target": "t_provide_resolution", "conditionExpression": "classification == 'Simple'" },
+      { "id": "f6", "source": "g_classification", "target": "t_root_cause_analysis", "conditionExpression": "classification == 'Complex'" },
+      { "id": "f7", "source": "t_root_cause_analysis", "target": "t_provide_resolution" },
+      { "id": "f8", "source": "t_provide_resolution", "target": "g_parallel_split" },
+      { "id": "f9", "source": "g_parallel_split", "target": "t_send_response" },
+      { "id": "f10", "source": "g_parallel_split", "target": "t_log_kb" },
+      { "id": "f11", "source": "t_send_response", "target": "g_event_based" },
+      { "id": "f12", "source": "g_event_based", "target": "ev_customer_reply" },
+      { "id": "f13", "source": "g_event_based", "target": "ev_24h_timer" },
+      { "id": "f14", "source": "ev_customer_reply", "target": "t_close_ticket" },
+      { "id": "f15", "source": "ev_24h_timer", "target": "t_send_reminder" },
+      { "id": "f16", "source": "t_send_reminder", "target": "t_close_ticket" },
+      { "id": "f17", "source": "t_close_ticket", "target": "g_parallel_join" },
+      { "id": "f18", "source": "t_log_kb", "target": "g_parallel_join" },
+      { "id": "f19", "source": "g_parallel_join", "target": "end_process" }
+    ],
+    "eventSubprocesses": [
+      {
+        "id": "es_cancel",
+        "name": "Customer Cancellation",
+        "startEvent": {
+          "id": "es_cancel_start",
+          "type": "startEvent",
+          "name": "Customer Cancellation",
+          "isInterrupting": true,
+          "eventDefinition": { "type": "message", "messageRef": "msg_customer_cancellation" }
+        },
+        "nodes": [
+          {
+            "id": "gw_cancel_check",
+            "type": "exclusiveGateway",
+            "name": "Ticket Closed?"
+          },
+          {
+            "id": "end_ignore",
+            "type": "endEvent",
+            "name": "Ignore (Already Closed)"
+          },
+          {
+            "id": "end_terminate",
+            "type": "endEvent",
+            "name": "Terminate",
+            "eventDefinition": { "type": "terminate" }
+          }
+        ],
+        "sequenceFlows": [
+          { "id": "esf1", "source": "es_cancel_start", "target": "gw_cancel_check" },
+          { "id": "esf2", "source": "gw_cancel_check", "target": "end_terminate", "conditionExpression": "ticketClosed == false" },
+          { "id": "esf3", "source": "gw_cancel_check", "target": "end_ignore", "conditionExpression": "ticketClosed == true" }
+        ]
+      }
+    ]
+  }
+}
