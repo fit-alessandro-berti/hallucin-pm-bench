@@ -1,0 +1,253 @@
+{
+  "type": "startEvent",
+  "id": "Start",
+  "name": "Process Start"
+},
+{
+  "type": "receiveTask",
+  "id": "ReceiveEmail",
+  "name": "Receive E-mail",
+  "asynchronous": true
+},
+{
+  "type": "serviceTask",
+  "id": "ParseEmail",
+  "name": "Parse E-mail"
+},
+{
+  "type": "businessRuleTask",
+  "id": "CreateTicket",
+  "name": "Create Ticket"
+},
+{
+  "type": "usertask",
+  "id": "InitialClassification",
+  "name": "Initial Classification",
+  "assignment": "AssignedAgents"
+},
+{
+  "type": "exclusiveGateway",
+  "id": "ClassifyTicket",
+  "name": "Classify Ticket"
+},
+{
+  "type": "usertask",
+  "id": "SimpleTicket",
+  "name": "Provide Resolution",
+  "assignment": "AssignedAgents",
+  "alternatives": {
+    "edge": "SimpleToResolution",
+    "conditionExpression": "classify = 'Simple'"
+  }
+},
+{
+  "type": "usertask",
+  "id": "ComplexTicket",
+  "name": "Root Cause Analysis",
+  "assignment": "AssignedAgents",
+  "alternatives": {
+    "edge": "ComplexToResolution",
+    "conditionExpression": "classify = 'Complex'"
+  }
+},
+{
+  "type": "usertask",
+  "id": "DraftResolution",
+  "name": "Draft Resolution",
+  "assignment": "AssignedAgents",
+  "alternatives": [
+    {
+      "edge": "SimpleToResolution",
+      "conditionExpression": "classify = 'Simple'"
+    },
+    {
+      "edge": "ComplexToResolution",
+      "conditionExpression": "classify = 'Complex'"
+    }
+  ]
+},
+{
+  "type": "sendTask",
+  "id": "SendResponse",
+  "name": "Send Response to Customer"
+},
+{
+  "type": "parallelGateway",
+  "id": "ParResolutionAndKnowledge",
+  "name": "Knowledge Base Logging"
+},
+{
+  "type": "serviceTask",
+  "id": "LogSolution",
+  "name": "Log Solution in Knowledge Base"
+},
+{
+  "type": "usertask",
+  "id": "WaitForReply",
+  "name": "Wait for Customer Reply",
+  "assignment": "AssignedAgents",
+  "timer": "PT24H"
+},
+{
+  "type": "endEvent",
+  "id": "CustomerReply",
+  "name": "Customer Reply Received",
+  "defaultEdge": {
+    "edge": "CloseTicket"
+  }
+},
+{
+  "type": "sendTask",
+  "id": "SendReminder",
+  "name": "Send Reminder"
+},
+{
+  "type": "endEvent",
+  "id": "CloseTicket",
+  "name": "Close Ticket"
+},
+{
+  "type": "endEvent",
+  "id": "CancelTicket",
+  "name": "Cancel Ticket"
+},
+{
+  "type": "sequenceFlow",
+  "id": "StartToParseEmail",
+  "name": "Start to Parse E-mail",
+  "sourceRef": "Start",
+  "targetRef": "ReceiveEmail"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ParseEmailToClassifyTicket",
+  "name": "Parse E-mail to Classify Ticket",
+  "sourceRef": "ReceiveEmail",
+  "targetRef": "ParseEmail"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ClassifyTicketToSimpleTicket",
+  "name": "Classify Ticket to Simple Ticket",
+  "sourceRef": "ClassifyTicket",
+  "targetRef": "SimpleTicket"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ClassifyTicketToComplexTicket",
+  "name": "Classify Ticket to Complex Ticket",
+  "sourceRef": "ClassifyTicket",
+  "targetRef": "ComplexTicket"
+},
+{
+  "type": "sequenceFlow",
+  "id": "SimpleToResolution",
+  "name": "Simple to Resolution",
+  "sourceRef": "ClassifyTicket",
+  "targetRef": "DraftResolution"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ComplexToResolution",
+  "name": "Complex to Resolution",
+  "sourceRef": "ClassifyTicket",
+  "targetRef": "DraftResolution"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ResolutionToSendResponse",
+  "name": "Resolution to Send Response",
+  "sourceRef": "DraftResolution",
+  "targetRef": "SendResponse"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ResolutionToKnowledgeBase",
+  "name": "Resolution to Knowledge Base",
+  "sourceRef": "DraftResolution",
+  "targetRef": "LogSolution"
+},
+{
+  "type": "sequenceFlow",
+  "id": "KnowledgeBaseToCloseTicket",
+  "name": "Knowledge Base to Close Ticket",
+  "sourceRef": "LogSolution",
+  "targetRef": "CloseTicket"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ReminderToCloseTicket",
+  "name": "Reminder to Close Ticket",
+  "sourceRef": "SendReminder",
+  "targetRef": "CloseTicket"
+},
+{
+  "type": "sequenceFlow",
+  "id": "CloseTicketToEnd",
+  "name": "Close Ticket to End",
+  "sourceRef": "CloseTicket",
+  "targetRef": "CancelTicket"
+},
+{
+  "type": "messageEventDefinition",
+  "id": "CancelTicketEvent"
+},
+{
+  "type": "sequenceFlow",
+  "id": "EmailReceivedToCancelTicket",
+  "name": "Email Received to Cancel Ticket",
+  "sourceRef": "ReceiveEmail",
+  "targetRef": "CancelTicketEvent"
+},
+{
+  "type": "sequenceFlow",
+  "id": "CancelTicketEventToCancelTicket",
+  "name": "CancelTicketEvent to Cancel Ticket",
+  "sourceRef": "CancelTicketEvent",
+  "targetRef": "CancelTicket"
+},
+{
+  "type": "eventBasedGateway",
+  "id": "ReplyOrReminder",
+  "name": "Reply or Reminder"
+},
+{
+  "type": "sequenceFlow",
+  "id": "CustomerReplyToClose",
+  "name": "Customer Reply to Close",
+  "sourceRef": "ReplyOrReminder",
+  "targetRef": "CustomerReply"
+},
+{
+  "type": "sequenceFlow",
+  "id": "NoReplyToSendReminder",
+  "name": "No Reply to Send Reminder",
+  "sourceRef": "ReplyOrReminder",
+  "targetRef": "SendReminder"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ReminderToCloseTicket",
+  "name": "Reminder to Close Ticket",
+  "sourceRef": "SendReminder",
+  "targetRef": "CloseTicket"
+},
+{
+  "type": "parallelGateway",
+  "id": "EndJoin",
+  "name": "End Join"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ReplyToClose",
+  "name": "Reply to Close",
+  "sourceRef": "CustomerReply",
+  "targetRef": "EndJoin"
+},
+{
+  "type": "sequenceFlow",
+  "id": "ReminderToClose",
+  "name": "Reminder to Close",
+  "sourceRef": "CloseTicket",
+  "targetRef": "EndJoin"
+}

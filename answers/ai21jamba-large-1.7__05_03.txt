@@ -1,0 +1,27 @@
+### Suggested XML Changes for SLA Compliance
+
+```xml
+<!-- Add Timer Intermediate Event to enforce 48-hour SLA -->
+<bpmn:intermediateCatchEvent id="Timer_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:intermediateCatchEvent>
+
+<!-- Modify Create Account task to include the Timer Event -->
+<bpmn:boundaryEvent id="Boundary_Timer_CreateAccount" attachedToRef="Activity_CreateAccount" cancelActivity="true">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<!-- Sequence Flow from Timer Event -->
+<bpmn:sequenceFlow id="Flow_09" sourceRef="Boundary_Timer_CreateAccount" targetRef="Activity_AMReview"/>
+
+<!-- Update the "Account-Manager Review" task to connect to the activation step -->
+<bpmn:sequenceFlow id="Flow_10" sourceRef="Activity_AMReview" targetRef="Activity_ActivateAccount"/>
+```
+
+### Justification
+
+Adding a **boundary timer event** around the **"Create Account in Core System"** task ensures that the process escalates to **"Account-Manager Review"** if the SLA of 48 hours is breached, thus helping to maintain SLA compliance without introducing new activities.

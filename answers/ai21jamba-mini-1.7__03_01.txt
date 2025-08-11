@@ -1,0 +1,40 @@
+```xml
+<definitions id="Definitions_1" targetNamespace="" name="">
+  <process id="SupportTicketProcess" name="Support Ticket Process" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="StartEvent_1" />
+    <!-- Automatic Classification -->
+    <serviceTask id="ST_ClassifyTicket" name="Automatically Classify Ticket" />
+    <sequenceFlow id="SQ_StartToClassify" sourceRef="StartEvent_1" targetRef="ST_ClassifyTicket" />
+    <!-- Exclusion Gateway: Password Reset -->
+    <exclusiveGateway id="GW_PasswordReset" name="Password Reset" />
+    <sequenceFlow id="SQ_ClassifyToPasswordReset" sourceRef="ST_ClassifyTicket" targetRef="GW_PasswordReset" />
+    <sequenceFlow id="SQ_PasswordResetToResolve" sourceRef="GW_PasswordReset" targetRef="TC_ProvideResetInstructions" id="SQ_PasswordResetToResolve_1" />
+    <!-- Otherwise: Initial Diagnosis -->
+    <exclusiveGateway id="GW_InitialDiagnosis" name="Initial Diagnosis" />
+    <sequenceFlow id="SQ_ClassifyToInitialDiagnosis" sourceRef="ST_ClassifyTicket" targetRef="GW_InitialDiagnosis" />
+    <sequenceFlow id="SQ_InitialDiagnosisToSpecialist" sourceRef="GW_InitialDiagnosis" targetRef="TC_ForwardToSpecialist" id="SQ_InitialDiagnosisToSpecialist_1" />
+    <!-- Loop End -->
+    <endEvent id="EndEvent_1" />
+    <sequenceFlow id="SQ_ResolveTicketToEnd" sourceRef="TC_ConfirmWithCustomer" targetRef="EndEvent_1" />
+    <!-- Issue Not Resolved -->
+    <sequenceFlow id="SQ_ConfirmNoResolution" sourceRef="TC_ConfirmWithCustomer" targetRef="GW_InitialDiagnosis" />
+    <!-- Tasks -->
+    <task id="TC_ProvideResetInstructions" name="Provide Reset Instructions" />
+    <task id="TC_ResolveIssue" name="Resolve Issue" />
+    <task id="TC_ForwardToSpecialist" name="Forward to Specialist" />
+    <task id="TC_ConfirmWithCustomer" name="Confirm with Customer" />
+    <!-- Embedded Sub-Process for Re-work -->
+    <subProcess id="SP_ReWork" triggeredByEvent="false">
+      <startEvent id="StartEvent_2" />
+      <sequenceFlow id="SQ_LoopBackToInitialDiagnosis" sourceRef="StartEvent_2" targetRef="TC_InitialDiagnosis" />
+      <task id="TC_InitialDiagnosis" name="Initial Diagnosis" />
+      <exclusiveGateway id="GW_ReWorkDecision" name="Re-work Decision" />
+      <sequenceFlow id="SQ_ReWorkToResolve" sourceRef="GW_ReWorkDecision" targetRef="TC_ResolveIssue" id="SQ_ReWorkToResolve_1" />
+      <sequenceFlow id="SQ_ReWorkToEnd" sourceRef="GW_ReWorkDecision" targetRef="EndEvent_2" id="SQ_ReWorkToEnd_1" />
+      <endEvent id="EndEvent_2" />
+    </subProcess>
+    <!-- End of Embedded Sub-Process -->
+  </process>
+</definitions>
+```

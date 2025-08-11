@@ -1,0 +1,115 @@
+Here’s the BPMN 2.0 XML diagram for **Warranty-Replacement v1.3** based on the specification you provided.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             targetNamespace="http://example.com/bpmn">
+
+    <!-- Start Event -->
+    <startEvent id="wrc_start_event" name="Customer Submits Online Warranty Claim">
+        <outgoing>wrc_to_validate</outgoing>
+    </startEvent>
+
+    <!-- Validate Claim -->
+    <task id="wrc_validate_claim" name="Validate the Claim">
+        <incoming>wrc_to_validate</incoming>
+        <outgoing>wrc_to_check_completeness</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway: Completeness Check -->
+    <exclusiveGateway id="wrc_gateway_completeness" name="Claim Completeness Check">
+        <incoming>wrc_to_check_completeness</incoming>
+        <outgoing>wrc_to_request_info</outgoing>
+        <outgoing>wrc_to_eligibility</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request Missing Information -->
+    <task id="wrc_request_info" name="Request Missing Information">
+        <incoming>wrc_to_request_info</incoming>
+        <outgoing>wrc_back_to_validate</outgoing>
+    </task>
+
+    <!-- Revalidate After Completeness -->
+    <task id="wrc_revalidate_claim" name="Validate the Claim">
+        <incoming>wrc_back_to_validate</incoming>
+        <outgoing>wrc_to_eligibility</outgoing>
+    </task>
+
+    <!-- Check Warranty Eligibility -->
+    <task id="wrc_check_eligibility" name="Check Warranty Eligibility">
+        <incoming>wrc_to_eligibility</incoming>
+        <outgoing>wrc_to_gateway_eligibility</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway: Warranty Decision -->
+    <exclusiveGateway id="wrc_gateway_eligibility" name="Warranty Eligibility Decision">
+        <incoming>wrc_to_gateway_eligibility</incoming>
+        <outgoing>wrc_to_rejection</outgoing>
+        <outgoing>wrc_to_parallel_split</outgoing>
+    </exclusiveGateway>
+
+    <!-- Rejection Notice -->
+    <endEvent id="wrc_rejection_notice" name="Send Rejection Notice">
+        <incoming>wrc_to_rejection</incoming>
+    </endEvent>
+
+    <!-- Parallel Split -->
+    <parallelGateway id="wrc_parallel_split" name="Parallel Flow Initiation">
+        <incoming>wrc_to_parallel_split</incoming>
+        <outgoing>wrc_to_create_shipment</outgoing>
+        <outgoing>wrc_to_schedule_pickup</outgoing>
+    </parallelGateway>
+
+    <!-- Create Shipment Order -->
+    <task id="wrc_create_shipment" name="Create Shipment Order for Replacement Unit">
+        <incoming>wrc_to_create_shipment</incoming>
+        <outgoing>wrc_to_join_gateway</outgoing>
+    </task>
+
+    <!-- Schedule Courier Pickup -->
+    <task id="wrc_schedule_pickup" name="Schedule Courier Pickup for Faulty Product">
+        <incoming>wrc_to_schedule_pickup</incoming>
+        <outgoing>wrc_to_join_gateway</outgoing>
+    </task>
+
+    <!-- Parallel Join -->
+    <parallelGateway id="wrc_parallel_join" name="Parallel Flow Completion">
+        <incoming>wrc_to_join_gateway</incoming>
+        <outgoing>wrc_to_update_inventory</outgoing>
+    </parallelGateway>
+
+    <!-- Update Inventory Records -->
+    <task id="wrc_update_inventory" name="Update Inventory Records">
+        <incoming>wrc_to_update_inventory</incoming>
+        <outgoing>wrc_to_close_claim</outgoing>
+    </task>
+
+    <!-- Close Claim -->
+    <task id="wrc_close_claim" name="Close the Claim">
+        <incoming>wrc_to_close_claim</incoming>
+        <outgoing>wrc_to_successful_end</outgoing>
+    </task>
+
+    <!-- Successful Completion -->
+    <endEvent id="wrc_successful_end" name="Successful Claim Completion">
+        <incoming>wrc_to_successful_end</incoming>
+    </endEvent>
+
+    <!-- Process Flow (Sequence Flows) -->
+    <sequenceFlow id="wrc_to_validate" sourceRef="wrc_start_event" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_to_check_completeness" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_completeness" />
+    <sequenceFlow id="wrc_to_request_info" sourceRef="wrc_gateway_completeness" targetRef="wrc_request_info" />
+    <sequenceFlow id="wrc_back_to_validate" sourceRef="wrc_request_info" targetRef="wrc_revalidate_claim" />
+    <sequenceFlow id="wrc_to_eligibility" sourceRef="wrc_validate_claim" targetRef="wrc_check_eligibility" />
+    <sequenceFlow id="wrc_to_gateway_eligibility" sourceRef="wrc_check_eligibility" targetRef="wrc_gateway_eligibility" />
+    <sequenceFlow id="wrc_to_rejection" sourceRef="wrc_gateway_eligibility" targetRef="wrc_rejection_notice" />
+    <sequenceFlow id="wrc_to_parallel_split" sourceRef="wrc_gateway_eligibility" targetRef="wrc_parallel_split" />
+    <sequenceFlow id="wrc_to_create_shipment" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment" />
+    <sequenceFlow id="wrc_to_schedule_pickup" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_pickup" />
+    <sequenceFlow id="wrc_to_join_gateway" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_to_join_gateway_pickup" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_to_update_inventory" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory" />
+    <sequenceFlow id="wrc_to_close_claim" sourceRef
+```

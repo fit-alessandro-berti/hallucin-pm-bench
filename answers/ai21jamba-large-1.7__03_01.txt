@@ -1,0 +1,56 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="def" targetNamespace="AcmeTech">
+  <process id="supportProcess" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="start" />
+    <!-- Automatic Classification -->
+    <task id="classify" name="Classify Ticket" />
+    <sequenceFlow sourceRef="start" targetRef="classify" />
+    <!-- Gateway - Decision -->
+    <exclusiveGateway id="gw1" />
+    <sequenceFlow sourceRef="classify" targetRef="gw1" />
+    <!-- Password Reset Path -->
+    <task id="reset" name="Provide Reset Instructions" />
+    <sequenceFlow sourceRef="gw1" targetRef="reset">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[class == "Password Reset"]]></conditionExpression>
+    </sequenceFlow>
+    <!-- Non-Password Path -->
+    <task id="diagnose" name="Initial Diagnosis" />
+    <sequenceFlow sourceRef="gw1" targetRef="diagnose">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[class != "Password Reset"]]></conditionExpression>
+    </sequenceFlow>
+    <!-- Agent Decision -->
+    <exclusiveGateway id="gw2" />
+    <sequenceFlow sourceRef="diagnose" targetRef="gw2" />
+    <!-- Resolve/Forward Path -->
+    <task id="resolve" name="Resolve Issue" />
+    <sequenceFlow sourceRef="gw2" targetRef="resolve" />
+    <task id="forward" name="Forward to Specialist" />
+    <task id="specialist" name="Specialist Work" />
+    <sequenceFlow sourceRef="forward" targetRef="specialist" />
+    <sequenceFlow sourceRef="specialist" targetRef="resolve" />
+    <!-- Confirmation -->
+    <task id="confirm" name="Confirm with Customer" />
+    <sequenceFlow sourceRef="resolve" targetRef="confirm" />
+    <!-- Confirm or Loop -->
+    <exclusiveGateway id="gw3" />
+    <sequenceFlow sourceRef="confirm" targetRef="gw3" />
+    <sequenceFlow sourceRef="gw3" targetRef="diagnose">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[persists == true]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow sourceRef="gw3" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[persists != true]]></conditionExpression>
+    </sequenceFlow>
+    <!-- End Event -->
+    <endEvent id="end" />
+    <sequenceFlow sourceRef="confirm" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[confirmed == true]]></conditionExpression>
+    </sequenceFlow>
+  </process>
+</definitions>
+```

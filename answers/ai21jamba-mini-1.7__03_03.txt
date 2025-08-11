@@ -1,0 +1,119 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  id="Definitions_0rftefr" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_warranty_replacement_process" isExecutable="true">
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_start_event" name="starts when a customer submits an online warranty claim">
+      <bpmn:outgoing>wrc_claim_validation</bpmn:outgoing>
+    </bpmn:startEvent>
+    <!-- Claim Validation -->
+    <bpmn:exclusiveGateway id="wrc_claim_validation" name="validates the claim">
+      <bpmn:incoming>wrc_start_event</bpmn:incoming>
+      <bpmn:outgoing>wrc_claim_complete</bpmn:outgoing>
+      <bpmn:outgoing>wrc_request_missing_info</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="wrc_request_missing_info" name="the agent requests missing information">
+      <bpmn:incoming>wrc_claim_complete</bpmn:incoming>
+      <bpmn:outgoing>wrc_claim_complete</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="wrc_validate_claim" name="the agent validates the claim">
+      <bpmn:incoming>wrc_claim_complete</bpmn:incoming>
+      <bpmn:outgoing>wrc_claim_complete</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="wrc_claim_complete" name="claims completeness check">
+      <bpmn:incoming>wrc_claim_validation</bpmn:incoming>
+      <bpmn:incoming>wrc_request_missing_info</bpmn:incoming>
+      <bpmn:outgoing>wrc_warranty_check</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <!-- Warranty Check -->
+    <bpmn:exclusiveGateway id="wrc_warranty_check" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_claim_complete</bpmn:incoming>
+      <bpmn:outgoing>wrc_warranty_eligible</bpmn:outgoing>
+      <bpmn:outgoing>wrc_warranty_rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="wrc_warranty_eligible" name="the agent checks warranty eligibility">
+      <bpmn:incoming>wrc_warranty_eligible</bpmn:incoming>
+      <bpmn:outgoing>wrc_create_shipment</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="wrc_warranty_rejected" name="sends rejection notice and ends the process">
+      <bpmn:incoming>wrc_warranty_rejected</bpmn:incoming>
+    </bpmn:endEvent>
+    <!-- Parallel Activities -->
+    <bpmn:parallelGateway id="wrc_parallel_gateway" name="two activities occur in parallel">
+      <bpmn:incoming>wrc_warranty_eligible</bpmn:incoming>
+      <bpmn:outgoing>wrc_create_shipment</bpmn:outgoing>
+      <bpmn:outgoing>wrc_schedule_courier_pickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="wrc_create_shipment" name="creates shipment order for the replacement unit">
+      <bpmn:incoming>wrc_parallel_gateway</bpmn:incoming>
+      <bpmn:outgoing>wrc_parallel_complete</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="wrc_schedule_courier_pickup" name="schedules courier pickup of the faulty product">
+      <bpmn:incoming>wrc_parallel_gateway</bpmn:incoming>
+      <bpmn:outgoing>wrc_parallel_complete</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="wrc_parallel_complete" name="completes both parallel activities">
+      <bpmn:incoming>wrc_create_shipment</bpmn:incoming>
+      <bpmn:incoming>wrc_schedule_courier_pickup</bpmn:incoming>
+      <bpmn:outgoing>wrc_update_inventory</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <!-- Final Steps -->
+    <bpmn:task id="wrc_update_inventory" name="updates inventory records">
+      <bpmn:incoming>wrc_parallel_complete</bpmn:incoming>
+      <bpmn:outgoing>wrc_close_claim</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="wrc_close_claim" name="closes the claim and ends the process">
+      <bpmn:incoming>wrc_update_inventory</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_0qo7n6z">
+    <bpmndi:BPMNPlane id="BPMNPlane_06h0l5k" bpmnElement="wrc_warranty_replacement_process">
+      <!-- Start Event -->
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="wrc_start_event">
+        <dc:Bounds x="100" y="50" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <!-- Claim Validation -->
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_2" bpmnElement="wrc_claim_validation">
+        <dc:Bounds x="180" y="70" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_Task_4" bpmnElement="wrc_request_missing_info">
+        <dc:Bounds x="300" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_Task_6" bpmnElement="wrc_validate_claim">
+        <dc:Bounds x="300" y="20" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="_BPMNEdge_SequenceFlow_8" bpmnElement="wrc_claim_complete">
+        <dc:Bounds x="256" y="74" xsi:type="dc:Point" />
+      </bpmndi:BPMNEdge>
+      <!-- Claim Completeness Check -->
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_4" bpmnElement="wrc_claim_complete">
+        <dc:Bounds x="200" y="150" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <!-- Warranty Check -->
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_6" bpmnElement="wrc_warranty_check">
+        <dc:Bounds x="400" y="90" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_8" bpmnElement="wrc_warranty_rejected">
+        <dc:Bounds x="600" y="50" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <!-- Parallel Activities -->
+      <bpmndi:BPMNShape id="_BPMNShape_ParallelGateway_6" bpmnElement="wrc_parallel_gateway">
+        <dc:Bounds x="300" y="280" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_10" bpmnElement="wrc_close_claim">
+        <dc:Bounds x="800" y="180" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <!-- Final Steps -->
+      <bpmndi:BPMNShape id="_BPMNShape_Task_12" bpmnElement="wrc_update_inventory">
+        <dc:Bounds x="600" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="_BPMNEdge_SequenceFlow_14" bpmnElement="wrc_update_inventory">
+        <dc:Bounds x="576" y="214" xsi:type="dc:Point" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+```

@@ -7,11 +7,11 @@
 | C03 Text to Model reconstruction        |        0.849837 |
 | C04 Compliance / Conformance reasoning  |        1.17851  |
 | C05 Counterfactual edits                |        1.43372  |
-| C06 Multi-process memory interference   |        0.471405 |
+| C06 Multi-process memory interference   |        0.62361  |
 | C07 Change-log diffing                  |        1.0274   |
 | C08 Temporal / concurrency reasoning    |        1.41421  |
 | C09 Unknown-should-remain-unknown       |        0.471405 |
-| C10 Domain-synonym enforcement          |        1.17851  |
+| C10 Domain-synonym enforcement          |        1.08012  |
 | C11 Performance analytics commentary    |        0.524934 |
 | C12 Misinformation injection            |        0.62361  |
 | C13 Edge-case / low-support prompts     |        0.816497 |
