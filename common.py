@@ -40,6 +40,7 @@ class Shared:
                        "google/gemini-2.5-pro",
                        "ai21/jamba-mini-1.7",
                        "ai21/jamba-large-1.7",
+                       "mistralai/mistral-medium-3.1",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

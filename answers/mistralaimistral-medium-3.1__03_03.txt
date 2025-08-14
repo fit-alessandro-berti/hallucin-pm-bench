@@ -1,0 +1,135 @@
+Here is the BPMN 2.0 XML for the *Warranty-Replacement v1.3* process:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             id="Definitions_wrc"
+             targetNamespace="http://example.com/warranty-replacement/v1.3">
+  <process id="wrc_process" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Online warranty claim submitted">
+      <outgoing>wrc_flow1</outgoing>
+    </startEvent>
+
+    <!-- Tasks -->
+    <task id="wrc_validate_claim" name="validate the claim">
+      <incoming>wrc_flow1</incoming>
+      <outgoing>wrc_flow2</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway (Claim Completeness) -->
+    <exclusiveGateway id="wrc_gw_completeness" name="">
+      <incoming>wrc_flow2</incoming>
+      <outgoing>wrc_flow3</outgoing>
+      <outgoing>wrc_flow4</outgoing>
+    </exclusiveGateway>
+
+    <!-- Request Missing Info Path -->
+    <task id="wrc_request_info" name="requests missing information">
+      <incoming>wrc_flow3</incoming>
+      <outgoing>wrc_flow5</outgoing>
+    </task>
+    <intermediateCatchEvent id="wrc_wait_for_info" name="">
+      <incoming>wrc_flow5</incoming>
+      <outgoing>wrc_flow6</outgoing>
+    </intermediateCatchEvent>
+    <sequenceFlow id="wrc_flow5" sourceRef="wrc_request_info" targetRef="wrc_wait_for_info" />
+    <sequenceFlow id="wrc_flow6" sourceRef="wrc_wait_for_info" targetRef="wrc_validate_claim" />
+
+    <!-- Warranty Eligibility Check -->
+    <task id="wrc_check_eligibility" name="checks warranty eligibility">
+      <incoming>wrc_flow4</incoming>
+      <outgoing>wrc_flow7</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway (Warranty Decision) -->
+    <exclusiveGateway id="wrc_gw_eligibility" name="">
+      <incoming>wrc_flow7</incoming>
+      <outgoing>wrc_flow8</outgoing>
+      <outgoing>wrc_flow9</outgoing>
+    </exclusiveGateway>
+
+    <!-- Rejection Path -->
+    <task id="wrc_send_rejection" name="send rejection notice">
+      <incoming>wrc_flow8</incoming>
+      <outgoing>wrc_flow10</outgoing>
+    </task>
+    <endEvent id="wrc_end_rejected" name="Rejected">
+      <incoming>wrc_flow10</incoming>
+    </endEvent>
+
+    <!-- Parallel Split -->
+    <parallelGateway id="wrc_gw_parallel_split" name="">
+      <incoming>wrc_flow9</incoming>
+      <outgoing>wrc_flow11</outgoing>
+      <outgoing>wrc_flow12</outgoing>
+    </parallelGateway>
+
+    <!-- Parallel Tasks -->
+    <task id="wrc_create_shipment" name="Create shipment order">
+      <incoming>wrc_flow11</incoming>
+      <outgoing>wrc_flow13</outgoing>
+    </task>
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup">
+      <incoming>wrc_flow12</incoming>
+      <outgoing>wrc_flow14</outgoing>
+    </task>
+
+    <!-- Parallel Join -->
+    <parallelGateway id="wrc_gw_parallel_join" name="">
+      <incoming>wrc_flow13</incoming>
+      <incoming>wrc_flow14</incoming>
+      <outgoing>wrc_flow15</outgoing>
+    </parallelGateway>
+
+    <!-- Completion Path -->
+    <task id="wrc_update_inventory" name="update inventory records">
+      <incoming>wrc_flow15</incoming>
+      <outgoing>wrc_flow16</outgoing>
+    </task>
+    <task id="wrc_close_claim" name="close the claim">
+      <incoming>wrc_flow16</incoming>
+      <outgoing>wrc_flow17</outgoing>
+    </task>
+    <endEvent id="wrc_end_completed" name="Completed">
+      <incoming>wrc_flow17</incoming>
+    </endEvent>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_flow2" sourceRef="wrc_validate_claim" targetRef="wrc_gw_completeness" />
+    <sequenceFlow id="wrc_flow3" sourceRef="wrc_gw_completeness" targetRef="wrc_request_info" name="incomplete" />
+    <sequenceFlow id="wrc_flow4" sourceRef="wrc_gw_completeness" targetRef="wrc_check_eligibility" name="complete" />
+    <sequenceFlow id="wrc_flow7" sourceRef="wrc_check_eligibility" targetRef="wrc_gw_eligibility" />
+    <sequenceFlow id="wrc_flow8" sourceRef="wrc_gw_eligibility" targetRef="wrc_send_rejection" name="out of warranty" />
+    <sequenceFlow id="wrc_flow9" sourceRef="wrc_gw_eligibility" targetRef="wrc_gw_parallel_split" name="within warranty" />
+    <sequenceFlow id="wrc_flow10" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejected" />
+    <sequenceFlow id="wrc_flow11" sourceRef="wrc_gw_parallel_split" targetRef="wrc_create_shipment" />
+    <sequenceFlow id="wrc_flow12" sourceRef="wrc_gw_parallel_split" targetRef="wrc_schedule_pickup" />
+    <sequenceFlow id="wrc_flow13" sourceRef="wrc_create_shipment" targetRef="wrc_gw_parallel_join" />
+    <sequenceFlow id="wrc_flow14" sourceRef="wrc_schedule_pickup" targetRef="wrc_gw_parallel_join" />
+    <sequenceFlow id="wrc_flow15" sourceRef="wrc_gw_parallel_join" targetRef="wrc_update_inventory" />
+    <sequenceFlow id="wrc_flow16" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim" />
+    <sequenceFlow id="wrc_flow17" sourceRef="wrc_close_claim" targetRef="wrc_end_completed" />
+  </process>
+
+  <!-- BPMN DI (minimal layout) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_wrc">
+    <bpmndi:BPMNPlane id="BPMNPlane_wrc" bpmnElement="wrc_process">
+      <!-- Layout omitted for brevity -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+```
+
+### Key Features:
+- **Strict adherence to requirements**: Only modeled elements explicitly mentioned (no invented paths).
+- **Gateways**:
+  - Exclusive for claim completeness (`wrc_gw_completeness`).
+  - Exclusive for warranty decision (`wrc_gw_eligibility`).
+  - Parallel split/join for concurrent tasks (`wrc_gw_parallel_split`/`wrc_gw_parallel_join`).
+- **Two end events**: Rejection (`wrc_end_rejected`) and completion (`wrc_end_completed`).
+- **IDs prefixed**: All elements use `wrc_` prefix.
+- **Task names**: Verbatim matches (e.g., `"requests missing information"`).

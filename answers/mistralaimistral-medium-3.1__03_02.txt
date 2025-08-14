@@ -1,0 +1,171 @@
+```json
+{
+  "definitions": {
+    "targetNamespace": "http://example.com/support-ticket-process",
+    "process": {
+      "id": "SupportTicketProcess",
+      "isExecutable": true,
+      "processType": "Private",
+      "startEvent": {
+        "id": "StartEvent_1",
+        "name": "Support E-mail Received",
+        "outgoing": ["Flow_1"]
+      },
+      "tasks": [
+        {
+          "id": "Task_1",
+          "name": "Parse E-mail and Create Ticket",
+          "type": "ServiceTask",
+          "incoming": ["Flow_1"],
+          "outgoing": ["Flow_2"]
+        },
+        {
+          "id": "Task_2",
+          "name": "Initial Classification",
+          "type": "UserTask",
+          "incoming": ["Flow_2"],
+          "outgoing": ["Flow_3"]
+        },
+        {
+          "id": "Task_3a",
+          "name": "Provide Resolution (Simple)",
+          "type": "UserTask",
+          "incoming": ["Flow_4a"],
+          "outgoing": ["Flow_5a"]
+        },
+        {
+          "id": "Task_3b",
+          "name": "Root Cause Analysis (Complex)",
+          "type": "UserTask",
+          "incoming": ["Flow_4b"],
+          "outgoing": ["Flow_5b"]
+        },
+        {
+          "id": "Task_4",
+          "name": "Provide Resolution (Complex)",
+          "type": "UserTask",
+          "incoming": ["Flow_5b"],
+          "outgoing": ["Flow_5c"]
+        },
+        {
+          "id": "Task_5",
+          "name": "Send Response to Customer",
+          "type": "ServiceTask",
+          "incoming": ["Flow_5a", "Flow_5c"],
+          "outgoing": ["Flow_6"]
+        },
+        {
+          "id": "Task_6",
+          "name": "Log Solution in Knowledge Base",
+          "type": "UserTask",
+          "incoming": ["Flow_6"],
+          "outgoing": ["Flow_7"]
+        },
+        {
+          "id": "Task_7",
+          "name": "Send Reminder",
+          "type": "ServiceTask",
+          "incoming": ["Flow_10"],
+          "outgoing": ["Flow_11"]
+        },
+        {
+          "id": "Task_8",
+          "name": "Close Ticket",
+          "type": "ServiceTask",
+          "incoming": ["Flow_9", "Flow_11", "Flow_12"]
+        }
+      ],
+      "gateways": [
+        {
+          "id": "Gateway_1",
+          "name": "Classification Decision",
+          "type": "ExclusiveGateway",
+          "incoming": ["Flow_3"],
+          "outgoing": ["Flow_4a", "Flow_4b"]
+        },
+        {
+          "id": "Gateway_2",
+          "name": "Parallel Fork",
+          "type": "ParallelGateway",
+          "incoming": ["Flow_6"],
+          "outgoing": ["Flow_7", "Flow_8"]
+        },
+        {
+          "id": "Gateway_3",
+          "name": "Reply Timer Check",
+          "type": "EventBasedGateway",
+          "incoming": ["Flow_8"],
+          "outgoing": ["Flow_9", "Flow_10"],
+          "default": "Flow_10"
+        },
+        {
+          "id": "Gateway_4",
+          "name": "Parallel Join",
+          "type": "ParallelGateway",
+          "incoming": ["Flow_7", "Flow_12"],
+          "outgoing": ["Flow_13"]
+        }
+      ],
+      "events": [
+        {
+          "id": "IntermediateCatchEvent_1",
+          "name": "Customer Reply",
+          "type": "IntermediateCatchEvent",
+          "eventDefinition": "MessageEventDefinition",
+          "incoming": ["Flow_10"],
+          "outgoing": ["Flow_9"]
+        },
+        {
+          "id": "BoundaryEvent_1",
+          "name": "Customer Cancellation",
+          "type": "BoundaryEvent",
+          "eventDefinition": "MessageEventDefinition",
+          "attachedToRef": "SupportTicketProcess",
+          "outgoing": ["Flow_14"]
+        },
+        {
+          "id": "IntermediateCatchEvent_2",
+          "name": "24-Hour Timer",
+          "type": "IntermediateCatchEvent",
+          "eventDefinition": "TimerEventDefinition",
+          "timeDuration": "PT24H",
+          "incoming": ["Flow_8"],
+          "outgoing": ["Flow_10"]
+        },
+        {
+          "id": "EndEvent_1",
+          "name": "Process Terminated",
+          "type": "EndEvent",
+          "eventDefinition": "TerminateEventDefinition",
+          "incoming": ["Flow_14"]
+        },
+        {
+          "id": "EndEvent_2",
+          "name": "Ticket Closed",
+          "type": "EndEvent",
+          "incoming": ["Flow_13"]
+        }
+      ],
+      "sequenceFlows": [
+        {"id": "Flow_1", "sourceRef": "StartEvent_1", "targetRef": "Task_1"},
+        {"id": "Flow_2", "sourceRef": "Task_1", "targetRef": "Task_2"},
+        {"id": "Flow_3", "sourceRef": "Task_2", "targetRef": "Gateway_1"},
+        {"id": "Flow_4a", "sourceRef": "Gateway_1", "targetRef": "Task_3a", "conditionExpression": "${ticket.type == 'Simple'}"},
+        {"id": "Flow_4b", "sourceRef": "Gateway_1", "targetRef": "Task_3b", "conditionExpression": "${ticket.type == 'Complex'}"},
+        {"id": "Flow_5a", "sourceRef": "Task_3a", "targetRef": "Task_5"},
+        {"id": "Flow_5b", "sourceRef": "Task_3b", "targetRef": "Task_4"},
+        {"id": "Flow_5c", "sourceRef": "Task_4", "targetRef": "Task_5"},
+        {"id": "Flow_6", "sourceRef": "Task_5", "targetRef": "Gateway_2"},
+        {"id": "Flow_7", "sourceRef": "Gateway_2", "targetRef": "Task_6"},
+        {"id": "Flow_8", "sourceRef": "Gateway_2", "targetRef": "Gateway_3"},
+        {"id": "Flow_9", "sourceRef": "IntermediateCatchEvent_1", "targetRef": "Task_8"},
+        {"id": "Flow_10", "sourceRef": "Gateway_3", "targetRef": "Task_7", "conditionExpression": "${replyTimer.expired}"},
+        {"id": "Flow_11", "sourceRef": "Task_7", "targetRef": "Task_8"},
+        {"id": "Flow_12", "sourceRef": "Task_8", "targetRef": "Gateway_4"},
+        {"id": "Flow_13", "sourceRef": "Gateway_4", "targetRef": "EndEvent_2"},
+        {"id": "Flow_14", "sourceRef": "BoundaryEvent_1", "targetRef": "EndEvent_1"}
+      ]
+    }
+  }
+}
+```
