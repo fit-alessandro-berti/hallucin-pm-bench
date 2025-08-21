@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://bpmn.io/schema/bpmn" id="Definitions_1">
+  <process id="wrc_process" isExecutable="false">
+    <startEvent id="wrc_start" name="Warranty Claim Submitted"/>
+    
+    <userTask id="wrc_validate_claim" name="Validate the claim"/>
+    <sequenceFlow id="wrc_flow_1" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+    
+    <exclusiveGateway id="wrc_gateway_completeness" name="Claim Complete?"/>
+    <sequenceFlow id="wrc_flow_2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_completeness"/>
+    
+    <userTask id="wrc_request_missing_info" name="Request missing information"/>
+    <sequenceFlow id="wrc_flow_3_incomplete" sourceRef="wrc_gateway_completeness" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression">incomplete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_4" sourceRef="wrc_request_missing_info" targetRef="wrc_validate_claim"/>
+    
+    <userTask id="wrc_check_eligibility" name="Check warranty eligibility"/>
+    <sequenceFlow id="wrc_flow_3_complete" sourceRef="wrc_gateway_completeness" targetRef="wrc_check_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">complete</conditionExpression>
+    </sequenceFlow>
+    
+    <exclusiveGateway id="wrc_gateway_eligibility" name="Within Warranty?"/>
+    <sequenceFlow id="wrc_flow_5" sourceRef="wrc_check_eligibility" targetRef="wrc_gateway_eligibility"/>
+    
+    <task id="wrc_send_rejection" name="Send rejection notice"/>
+    <endEvent id="wrc_end_rejection" name="Claim Rejected"/>
+    <sequenceFlow id="wrc_flow_6_reject" sourceRef="wrc_gateway_eligibility" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression">out of warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_7" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection"/>
+    
+    <parallelGateway id="wrc_gateway_parallel_split" name="Parallel Split"/>
+    <sequenceFlow id="wrc_flow_6_accept" sourceRef="wrc_gateway_eligibility" targetRef="wrc_gateway_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression">within warranty</conditionExpression>
+    </sequenceFlow>
+    
+    <task id="wrc_create_shipment" name="Create shipment order"/>
+    <sequenceFlow id="wrc_flow_8" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_create_shipment"/>
+    
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup"/>
+    <sequenceFlow id="wrc_flow_9" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_schedule_pickup"/>
+    
+    <parallelGateway id="wrc_gateway_parallel_join" name="Parallel Join"/>
+    <sequenceFlow id="wrc_flow_10" sourceRef="wrc_create_shipment" targetRef="wrc_gateway_parallel_join"/>
+    <sequenceFlow id="wrc_flow_11" sourceRef="wrc_schedule_pickup" targetRef="wrc_gateway_parallel_join"/>
+    
+    <task id="wrc_update_inventory" name="Update inventory records"/>
+    <sequenceFlow id="wrc_flow_12" sourceRef="wrc_gateway_parallel_join" targetRef="wrc_update_inventory"/>
+    
+    <task id="wrc_close_claim" name="Close the claim"/>
+    <sequenceFlow id="wrc_flow_13" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    
+    <endEvent id="wrc_end_success" name="Claim Completed"/>
+    <sequenceFlow id="wrc_flow_14" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="wrc_process">
+      <bpmndi:BPMNShape id="BPMNShape_wrc_start" bpmnElement="wrc_start">
+        <dc:Bounds x="100" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_validate_claim" bpmnElement="wrc_validate_claim">
+        <dc:Bounds x="200" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_gateway_completeness" bpmnElement="wrc_gateway_completeness">
+        <dc:Bounds x="350" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_request_missing_info" bpmnElement="wrc_request_missing_info">
+        <dc:Bounds x="450" y="200" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_check_eligibility" bpmnElement="wrc_check_eligibility">
+        <dc:Bounds x="450" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_gateway_eligibility" bpmnElement="wrc_gateway_eligibility">
+        <dc:Bounds x="600" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_send_rejection" bpmnElement="wrc_send_rejection">
+        <dc:Bounds x="700" y="200" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_end_rejection" bpmnElement="wrc_end_rejection">
+        <dc:Bounds x="850" y="218" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_gateway_parallel_split" bpmnElement="wrc_gateway_parallel_split">
+        <dc:Bounds x="700" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_create_shipment" bpmnElement="wrc_create_shipment">
+        <dc:Bounds x="800" y="20" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_schedule_pickup" bpmnElement="wrc_schedule_pickup">
+        <dc:Bounds x="800" y="140" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_gateway_parallel_join" bpmnElement="wrc_gateway_parallel_join">
+        <dc:Bounds x="950" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_update_inventory" bpmnElement="wrc_update_inventory">
+        <dc:Bounds x="1050" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_close_claim" bpmnElement="wrc_close_claim">
+        <dc:Bounds x="1200" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_wrc_end_success" bpmnElement="wrc_end_success">
+        <dc:Bounds x="1350" y="96" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

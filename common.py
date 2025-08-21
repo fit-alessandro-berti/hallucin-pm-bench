@@ -42,6 +42,7 @@ class Shared:
                        "ai21/jamba-large-1.7",
                        "mistralai/mistral-medium-3.1",
                        "baidu/ernie-4.5-21b-a3b",
+                       "deepseek/deepseek-chat-v3.1",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
