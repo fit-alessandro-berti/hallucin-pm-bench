@@ -39,6 +39,7 @@ class Shared:
                        "openai/gpt-5-chat",
                        ("gpt-5-high", {"base_model": "openai/gpt-5", "payload": {"reasoning_effort": "high"}}),
                        ("openai/gpt-oss-120b-high", {"base_model": "openai/gpt-oss-120b", "payload": {"reasoning_effort": "high"}}),
+                       ("openai/o3-pro-high", {"base_model": "openai/o3-pro", "payload": {"reasoning_effort": "high"}}),
                        "google/gemini-2.5-pro",
                        "ai21/jamba-mini-1.7",
                        "ai21/jamba-large-1.7",

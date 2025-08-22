@@ -1,0 +1,226 @@
+{
+  "definitions": {
+    "id": "support_ticket_def",
+    "process": {
+      "id": "support_ticket_process",
+      "name": "Customer Support Ticket",
+      "isExecutable": true,
+      "flowElements": [
+        {
+          "id": "start_email",
+          "name": "Support Email Received",
+          "type": "startEvent",
+          "eventDefinition": { "type": "message" }
+        },
+        {
+          "id": "task_create_ticket",
+          "name": "Parse Email and Create Ticket",
+          "type": "serviceTask"
+        },
+        {
+          "id": "task_classify",
+          "name": "Initial Classification",
+          "type": "userTask"
+        },
+        {
+          "id": "gw_classification",
+          "name": "Simple or Complex?",
+          "type": "exclusiveGateway"
+        },
+        {
+          "id": "task_provide_resolution",
+          "name": "Provide Resolution",
+          "type": "userTask"
+        },
+        {
+          "id": "task_root_cause",
+          "name": "Root Cause Analysis",
+          "type": "userTask"
+        },
+        {
+          "id": "gw_parallel_fork",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "task_send_response",
+          "name": "Send Response to Customer",
+          "type": "userTask"
+        },
+        {
+          "id": "task_log_solution",
+          "name": "Log Solution in Knowledge Base",
+          "type": "userTask"
+        },
+        {
+          "id": "gw_wait_reply",
+          "type": "eventBasedGateway"
+        },
+        {
+          "id": "ev_customer_reply",
+          "name": "Customer Reply",
+          "type": "intermediateCatchEvent",
+          "eventDefinition": { "type": "message" }
+        },
+        {
+          "id": "ev_timer_24h",
+          "name": "24h Limit",
+          "type": "intermediateCatchEvent",
+          "eventDefinition": { "type": "timer", "timeDuration": "PT24H" }
+        },
+        {
+          "id": "task_send_reminder",
+          "name": "Send Reminder",
+          "type": "serviceTask"
+        },
+        {
+          "id": "task_close_ticket",
+          "name": "Close Ticket",
+          "type": "serviceTask"
+        },
+        {
+          "id": "gw_parallel_join",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "end_process",
+          "type": "endEvent"
+        },
+        {
+          "id": "event_subprocess_cancel",
+          "type": "subProcess",
+          "triggeredByEvent": true,
+          "flowElements": [
+            {
+              "id": "cancel_start",
+              "name": "Customer Cancels Ticket",
+              "type": "startEvent",
+              "isInterrupting": true,
+              "eventDefinition": { "type": "message" }
+            },
+            {
+              "id": "terminate_cancel",
+              "name": "Terminate Process",
+              "type": "terminateEndEvent"
+            },
+            {
+              "id": "flow_cancel",
+              "type": "sequenceFlow",
+              "sourceRef": "cancel_start",
+              "targetRef": "terminate_cancel"
+            }
+          ]
+        },
+        {
+          "id": "flow_1",
+          "type": "sequenceFlow",
+          "sourceRef": "start_email",
+          "targetRef": "task_create_ticket"
+        },
+        {
+          "id": "flow_2",
+          "type": "sequenceFlow",
+          "sourceRef": "task_create_ticket",
+          "targetRef": "task_classify"
+        },
+        {
+          "id": "flow_3",
+          "type": "sequenceFlow",
+          "sourceRef": "task_classify",
+          "targetRef": "gw_classification"
+        },
+        {
+          "id": "flow_4",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_classification",
+          "targetRef": "task_provide_resolution",
+          "conditionExpression": "Simple"
+        },
+        {
+          "id": "flow_5",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_classification",
+          "targetRef": "task_root_cause",
+          "conditionExpression": "Complex"
+        },
+        {
+          "id": "flow_6",
+          "type": "sequenceFlow",
+          "sourceRef": "task_root_cause",
+          "targetRef": "task_provide_resolution"
+        },
+        {
+          "id": "flow_7",
+          "type": "sequenceFlow",
+          "sourceRef": "task_provide_resolution",
+          "targetRef": "gw_parallel_fork"
+        },
+        {
+          "id": "flow_8",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_parallel_fork",
+          "targetRef": "task_send_response"
+        },
+        {
+          "id": "flow_9",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_parallel_fork",
+          "targetRef": "task_log_solution"
+        },
+        {
+          "id": "flow_10",
+          "type": "sequenceFlow",
+          "sourceRef": "task_send_response",
+          "targetRef": "gw_wait_reply"
+        },
+        {
+          "id": "flow_11",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_wait_reply",
+          "targetRef": "ev_customer_reply"
+        },
+        {
+          "id": "flow_12",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_wait_reply",
+          "targetRef": "ev_timer_24h"
+        },
+        {
+          "id": "flow_13",
+          "type": "sequenceFlow",
+          "sourceRef": "ev_customer_reply",
+          "targetRef": "task_close_ticket"
+        },
+        {
+          "id": "flow_14",
+          "type": "sequenceFlow",
+          "sourceRef": "ev_timer_24h",
+          "targetRef": "task_send_reminder"
+        },
+        {
+          "id": "flow_15",
+          "type": "sequenceFlow",
+          "sourceRef": "task_send_reminder",
+          "targetRef": "task_close_ticket"
+        },
+        {
+          "id": "flow_16",
+          "type": "sequenceFlow",
+          "sourceRef": "task_close_ticket",
+          "targetRef": "gw_parallel_join"
+        },
+        {
+          "id": "flow_17",
+          "type": "sequenceFlow",
+          "sourceRef": "task_log_solution",
+          "targetRef": "gw_parallel_join"
+        },
+        {
+          "id": "flow_18",
+          "type": "sequenceFlow",
+          "sourceRef": "gw_parallel_join",
+          "targetRef": "end_process"
+        }
+      ]
+    }
+  }
+}
