@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions id="wrc_definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" targetNamespace="http://example.com/warranty-replacement">
+  <bpmn2:process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="true">
+    <bpmn2:startEvent id="wrc_start" name="Online warranty claim submitted">
+      <bpmn2:outgoing>wrc_sf_start_to_validate</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <bpmn2:task id="wrc_task_validate" name="validates the claim">
+      <bpmn2:incoming>wrc_sf_start_to_validate</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_validate_to_gw_complete</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:exclusiveGateway id="wrc_gw_completeness" name="Claim complete?">
+      <bpmn2:incoming>wrc_sf_validate_to_gw_complete</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_complete_yes_to_check</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sf_complete_no_to_request</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+
+    <bpmn2:task id="wrc_task_request_missing_info" name="requests missing information">
+      <bpmn2:incoming>wrc_sf_complete_no_to_request</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_request_to_validate</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:task id="wrc_task_check_warranty" name="checks warranty eligibility">
+      <bpmn2:incoming>wrc_sf_complete_yes_to_check</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_check_to_gw_warranty</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:exclusiveGateway id="wrc_gw_warranty_decision" name="Warranty decision">
+      <bpmn2:incoming>wrc_sf_check_to_gw_warranty</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_warranty_within_to_split</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sf_warranty_out_to_reject</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+
+    <bpmn2:task id="wrc_task_send_rejection" name="send rejection notice">
+      <bpmn2:incoming>wrc_sf_warranty_out_to_reject</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_reject_to_end</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:endEvent id="wrc_end_rejected" name="Rejected">
+      <bpmn2:incoming>wrc_sf_reject_to_end</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <bpmn2:parallelGateway id="wrc_gw_parallel_split" name="Parallel split">
+      <bpmn2:incoming>wrc_sf_warranty_within_to_split</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_split_to_create</bpmn2:outgoing>
+      <bpmn2:outgoing>wrc_sf_split_to_schedule</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+
+    <bpmn2:task id="wrc_task_create_shipment_order" name="Create shipment order for the replacement unit">
+      <bpmn2:incoming>wrc_sf_split_to_create</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_create_to_join</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:task id="wrc_task_schedule_courier_pickup" name="Schedule courier pickup of the faulty product">
+      <bpmn2:incoming>wrc_sf_split_to_schedule</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_schedule_to_join</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:parallelGateway id="wrc_gw_parallel_join" name="Parallel join">
+      <bpmn2:incoming>wrc_sf_create_to_join</bpmn2:incoming>
+      <bpmn2:incoming>wrc_sf_schedule_to_join</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_join_to_update</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+
+    <bpmn2:task id="wrc_task_update_inventory" name="update inventory records">
+      <bpmn2:incoming>wrc_sf_join_to_update</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_update_to_close</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:task id="wrc_task_close_claim" name="close the claim">
+      <bpmn2:incoming>wrc_sf_update_to_close</bpmn2:incoming>
+      <bpmn2:outgoing>wrc_sf_close_to_end_success</bpmn2:outgoing>
+    </bpmn2:task>
+
+    <bpmn2:endEvent id="wrc_end_success" name="Completed">
+      <bpmn2:incoming>wrc_sf_close_to_end_success</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <bpmn2:sequenceFlow id="wrc_sf_start_to_validate" sourceRef="wrc_start" targetRef="wrc_task_validate"/>
+    <bpmn2:sequenceFlow id="wrc_sf_validate_to_gw_complete" sourceRef="wrc_task_validate" targetRef="wrc_gw_completeness"/>
+    <bpmn2:sequenceFlow id="wrc_sf_complete_yes_to_check" sourceRef="wrc_gw_completeness" targetRef="wrc_task_check_warranty"/>
+    <bpmn2:sequenceFlow id="wrc_sf_complete_no_to_request" sourceRef="wrc_gw_completeness" targetRef="wrc_task_request_missing_info"/>
+    <bpmn2:sequenceFlow id="wrc_sf_request_to_validate" sourceRef="wrc_task_request_missing_info" targetRef="wrc_task_validate"/>
+    <bpmn2:sequenceFlow id="wrc_sf_check_to_gw_warranty" sourceRef="wrc_task_check_warranty" targetRef="wrc_gw_warranty_decision"/>
+    <bpmn2:sequenceFlow id="wrc_sf_warranty_out_to_reject" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_task_send_rejection"/>
+    <bpmn2:sequenceFlow id="wrc_sf_reject_to_end" sourceRef="wrc_task_send_rejection" targetRef="wrc_end_rejected"/>
+    <bpmn2:sequenceFlow id="wrc_sf_warranty_within_to_split" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_gw_parallel_split"/>
+    <bpmn2:sequenceFlow id="wrc_sf_split_to_create" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_create_shipment_order"/>
+    <bpmn2:sequenceFlow id="wrc_sf_split_to_schedule" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_schedule_courier_pickup"/>
+    <bpmn2:sequenceFlow id="wrc_sf_create_to_join" sourceRef="wrc_task_create_shipment_order" targetRef="wrc_gw_parallel_join"/>
+    <bpmn2:sequenceFlow id="wrc_sf_schedule_to_join" sourceRef="wrc_task_schedule_courier_pickup" targetRef="wrc_gw_parallel_join"/>
+    <bpmn2:sequenceFlow id="wrc_sf_join_to_update" sourceRef="wrc_gw_parallel_join" targetRef="wrc_task_update_inventory"/>
+    <bpmn2:sequenceFlow id="wrc_sf_update_to_close" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim"/>
+    <bpmn2:sequenceFlow id="wrc_sf_close_to_end_success" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success"/>
+  </bpmn2:process>
+</bpmn2:definitions>

@@ -37,6 +37,7 @@ class Shared:
                        "openai/gpt-5-mini",
                        "openai/gpt-5",
                        "openai/gpt-5-chat",
+                       ("gpt-5-high", {"base_model": "gpt-5", "payload": {"reasoning_effort": "high"}}),
                        "google/gemini-2.5-pro",
                        "ai21/jamba-mini-1.7",
                        "ai21/jamba-large-1.7",
@@ -107,6 +108,9 @@ def get_response(prompt, model_name, parameters=None):
         "model": model_name,
         "messages": messages,
     }
+
+    if "payload" in parameters:
+        payload.update(parameters["payload"])
 
     enable_streaming = False
 
