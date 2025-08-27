@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="wrc_WarrantyReplacement" targetNamespace="http://nousresearch.com/bpmn" exporter="Hermes" exporterVersion="1.0">
+  <process id="wrc_WarrantyReplacementProcess" isExecutable="false">
+    <startEvent id="wrc_StartEvent" name="Online warranty claim">
+      <outgoing>startToValidate</outgoing>
+    </startEvent>
+    <task id="wrc_ValidateClaim" name="validate the claim">
+      <incoming>startToValidate</incoming>
+      <incoming>requestInfoLoopback</incoming>
+      <outgoing>validateToGateway</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_ClaimCompletenessGateway" name="Claim complete?">
+      <incoming>validateToGateway</incoming>
+      <outgoing>gatewayToRequestInfo</outgoing>
+      <outgoing>gatewayToEligibilityCheck</outgoing>
+    </exclusiveGateway>
+    <task id="wrc_RequestMissingInformation" name="request missing information">
+      <incoming>gatewayToRequestInfo</incoming>
+      <outgoing>requestInfoToValidateLoopback</outgoing>
+    </task>
+    <sequenceFlow id="requestInfoToValidateLoopback" sourceRef="wrc_RequestMissingInformation" targetRef="wrc_ValidateClaim"/>
+    <task id="wrc_CheckWarrantyEligibility" name="check warranty eligibility">
+      <incoming>gatewayToEligibilityCheck</incoming>
+      <outgoing>eligibilityToWarrantyGateway</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_WarrantyDecisionGateway" name="Within warranty?">
+      <incoming>eligibilityToWarrantyGateway</incoming>
+      <outgoing>gatewayToCreateShipment</outgoing>
+      <outgoing>gatewayToRejection</outgoing>
+    </exclusiveGateway>
+    <task id="wrc_SendRejectionNotice" name="send rejection notice">
+      <incoming>gatewayToRejection</incoming>
+      <outgoing>rejectionToEndEvent</outgoing>
+    </task>
+    <endEvent id="wrc_EndEvent_Rejection" name="Claim rejected">
+      <incoming>rejectionToEndEvent</incoming>
+    </endEvent>
+    <parallelGateway id="wrc_ParallelSplit" gatewayDirection="Diverging">
+      <incoming>gatewayToCreateShipment</incoming>
+      <outgoing>splitToCreateShipmentOrder</outgoing>
+      <outgoing>splitToSchedulePickup</outgoing>
+    </parallelGateway>
+    <task id="wrc_CreateShipmentOrder" name="Create shipment order">
+      <incoming>splitToCreateShipmentOrder</incoming>
+      <outgoing>shipmentOrderToJoin</outgoing>
+    </task>
+    <task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup">
+      <incoming>splitToSchedulePickup</incoming>
+      <outgoing>pickupToJoin</outgoing>
+    </task>
+    <parallelGateway id="wrc_ParallelJoin" gatewayDirection="Converging">
+      <incoming>shipmentOrderToJoin</incoming>
+      <incoming>pickupToJoin</incoming>
+      <outgoing>joinToUpdateInventory</outgoing>
+    </parallelGateway>
+    <task id="wrc_UpdateInventoryRecords" name="update inventory records">
+      <incoming>joinToUpdateInventory</incoming>
+      <outgoing>inventoryToCloseClaim</outgoing>
+    </task>
+    <task id="wrc_CloseClaim" name="close the claim">
+      <incoming>inventoryToCloseClaim</incoming>
+      <outgoing>closeClaimToEndEvent</outgoing>
+    </task>
+    <endEvent id="wrc_EndEvent_Success" name="Claim completed">
+      <incoming>closeClaimToEndEvent</incoming>
+    </endEvent>
+    <sequenceFlow id="startToValidate" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim"/>
+    <sequenceFlow id="validateToGateway" sourceRef="wrc_ValidateClaim" targetRef="wrc_ClaimCompletenessGateway"/>
+    <sequenceFlow id="gatewayToRequestInfo" name="no" sourceRef="wrc_ClaimCompletenessGateway" targetRef="wrc_RequestMissingInformation"/>
+    <sequenceFlow id="gatewayToEligibilityCheck" name="yes" sourceRef="wrc_ClaimCompletenessGateway" targetRef="wrc_CheckWarrantyEligibility"/>
+    <sequenceFlow id="eligibilityToWarrantyGateway" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_WarrantyDecisionGateway"/>
+    <sequenceFlow id="gatewayToCreateShipment" name="yes" sourceRef="wrc_WarrantyDecisionGateway" targetRef="wrc_ParallelSplit"/>
+    <sequenceFlow id="gatewayToRejection" name="no" sourceRef="wrc_WarrantyDecisionGateway" targetRef="wrc_SendRejectionNotice"/>
+    <sequenceFlow id="rejectionToEndEvent" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndEvent_Rejection"/>
+    <sequenceFlow id="splitToCreateShipmentOrder" sourceRef="wrc_ParallelSplit" targetRef="wrc_CreateShipmentOrder"/>
+    <sequenceFlow id="splitToSchedulePickup" sourceRef="wrc_ParallelSplit" targetRef="wrc_ScheduleCourierPickup"/>
+    <sequenceFlow id="shipmentOrderToJoin" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_ParallelJoin"/>
+    <sequenceFlow id="pickupToJoin" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_ParallelJoin"/>
+    <sequenceFlow id="joinToUpdateInventory" sourceRef="wrc_ParallelJoin" targetRef="wrc_UpdateInventoryRecords"/>
+    <sequenceFlow id="inventoryToCloseClaim" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim"/>
+    <sequenceFlow id="closeClaimToEndEvent" sourceRef="wrc_CloseClaim" targetRef="wrc_EndEvent_Success"/>
+  </process>
+</definitions>

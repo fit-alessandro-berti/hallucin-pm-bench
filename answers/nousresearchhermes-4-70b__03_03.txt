@@ -1,0 +1,66 @@
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdi="http://www.omg.org/spec/DD-20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD-20100524/DC" targetNamespace="http://www.nousresearch.com/warranty-replacement" exporter="Warranty-Replacement v1.3">
+  <process id="WarrantyReplacementProcess" name="Warranty Replacement" isExecutable="true">
+    <!-- Start Event -->
+    <startEvent id="wrc_event_start" name="Customer submits online warranty claim"/>
+    
+    <!-- Task: Validate claim -->
+    <task id="wrc_task_validate_claim" name="Validate claim"/>
+    
+    <!-- Exclusive Gateway: Is claim complete? -->
+    <exclusiveGateway id="wrc_gateway_claim_complete" name="Is claim complete?"/>
+    
+    <!-- Task: Request missing information -->
+    <task id="wrc_task_request_missing_info" name="Request missing information"/>
+    
+    <!-- End Event after missing info received -->
+    <endEvent id="wrc_event_after_missing_info"/>
+    
+    <!-- Exclusive Gateway: Warranty Eligibility -->
+    <exclusiveGateway id="wrc_gateway_eligibility" name="Warranty Eligibility"/>
+    
+    <!-- Task: Send rejection notice -->
+    <task id="wrc_task_send_rejection" name="Send rejection notice"/>
+    
+    <!-- End Event: Process ends (rejection) -->
+    <endEvent id="wrc_event_rejection"/>
+    
+    <!-- Parallel Gateway: Split -->
+    <parallelGateway id="wrc_gateway_split"/>
+    
+    <!-- Task: Create shipment order -->
+    <task id="wrc_task_shipment_order" name="Create shipment order"/>
+    
+    <!-- Task: Schedule courier pickup -->
+    <task id="wrc_task_schedule_pickup" name="Schedule courier pickup"/>
+    
+    <!-- Parallel Gateway: Join -->
+    <parallelGateway id="wrc_gateway_join"/>
+    
+    <!-- Task: Update inventory records -->
+    <task id="wrc_task_update_inventory" name="Update inventory records"/>
+    
+    <!-- End Event: Process ends (completion) -->
+    <endEvent id="wrc_event_completed"/>
+    
+    <!-- Sequence Flow Connections -->
+    <sequenceFlow id="flow_1" sourceRef="wrc_event_start" targetRef="wrc_task_validate_claim"/>
+    <sequenceFlow id="flow_2" sourceRef="wrc_task_validate_claim" targetRef="wrc_gateway_claim_complete"/>
+    <sequenceFlow id="flow_3" sourceRef="wrc_gateway_claim_complete" targetRef="wrc_gateway_eligibility"/>
+    <sequenceFlow id="flow_4" sourceRef="wrc_gateway_claim_complete" targetRef="wrc_task_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression" language="JavaScript" evaluationLanguage="JavaScript">Is claim incomplete?</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_5" sourceRef="wrc_task_request_missing_info" targetRef="wrc_event_after_missing_info"/>
+    <sequenceFlow id="flow_6" sourceRef="wrc_event_after_missing_info" targetRef="wrc_task_validate_claim"/>
+    <sequenceFlow id="flow_7" sourceRef="wrc_gateway_eligibility" targetRef="wrc_gateway_split"/>
+    <sequenceFlow id="flow_8" sourceRef="wrc_gateway_eligibility" targetRef="wrc_task_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression" language="JavaScript">Product is out of warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_9" sourceRef="wrc_task_send_rejection" targetRef="wrc_event_rejection"/>
+    <sequenceFlow id="flow_10" sourceRef="wrc_gateway_split" targetRef="wrc_task_shipment_order"/>
+    <sequenceFlow id="flow_11" sourceRef="wrc_gateway_split" targetRef="wrc_task_schedule_pickup"/>
+    <sequenceFlow id="flow_12" sourceRef="wrc_task_shipment_order" targetRef="wrc_gateway_join"/>
+    <sequenceFlow id="flow_13" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gateway_join"/>
+    <sequenceFlow id="flow_14" sourceRef="wrc_gateway_join" targetRef="wrc_task_update_inventory"/>
+    <sequenceFlow id="flow_15" sourceRef="wrc_task_update_inventory" targetRef="wrc_event_completed"/>
+  </process>
+</definitions>
