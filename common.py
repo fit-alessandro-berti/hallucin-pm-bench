@@ -37,6 +37,7 @@ class Shared:
                        "openai/gpt-5-mini",
                        "openai/gpt-5",
                        "openai/gpt-5-chat",
+                       "qwen/qwen3-30b-a3b-thinking-2507",
                        ("gpt-5-high", {"base_model": "openai/gpt-5", "payload": {"reasoning_effort": "high"}}),
                        ("openai/gpt-oss-120b-high", {"base_model": "openai/gpt-oss-120b", "payload": {"reasoning_effort": "high"}}),
                        ("openai/o3-pro-high", {"base_model": "openai/o3-pro", "payload": {"reasoning_effort": "high"}}),

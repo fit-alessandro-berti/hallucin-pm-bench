@@ -1,0 +1,225 @@
+
+
+{
+  "id": "CustomerSupportProcess",
+  "name": "Customer Support Ticket Process",
+  "flowElements": [
+    {
+      "id": "start",
+      "type": "startEvent",
+      "name": "Support Email Received"
+    },
+    {
+      "id": "mainProcess",
+      "type": "subProcess",
+      "name": "Ticket Processing",
+      "flowElements": [
+        {
+          "id": "createTicket",
+          "type": "task",
+          "name": "Parse Email and Create Ticket"
+        },
+        {
+          "id": "classification",
+          "type": "gateway",
+          "name": "Initial Classification",
+          "gatewayType": "exclusive"
+        },
+        {
+          "id": "provideResSimple",
+          "type": "task",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "rootCause",
+          "type": "task",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "provideResComplex",
+          "type": "task",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "parallelSplit",
+          "type": "gateway",
+          "name": "Parallel Split",
+          "gatewayType": "parallel"
+        },
+        {
+          "id": "sendResponse",
+          "type": "task",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "logKnowledge",
+          "type": "task",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "parallelJoin",
+          "type": "gateway",
+          "name": "Parallel Join",
+          "gatewayType": "parallel"
+        },
+        {
+          "id": "waitGateway",
+          "type": "gateway",
+          "name": "Wait for Customer Reply or Timeout",
+          "gatewayType": "eventBased"
+        },
+        {
+          "id": "waitForReply",
+          "type": "receiveTask",
+          "name": "Wait for Customer Reply"
+        },
+        {
+          "id": "timer24h",
+          "type": "timerEvent",
+          "name": "Timer for 24 Hours",
+          "timer": {
+            "duration": "PT24H"
+          }
+        },
+        {
+          "id": "sendReminder",
+          "type": "task",
+          "name": "Send Reminder"
+        },
+        {
+          "id": "closeTicket",
+          "type": "task",
+          "name": "Close Ticket"
+        },
+        {
+          "id": "endNormal",
+          "type": "endEvent",
+          "name": "Normal Close"
+        }
+      ]
+    },
+    {
+      "id": "cancelBoundary",
+      "type": "boundaryEvent",
+      "name": "Cancel Ticket",
+      "attachedToRef": "mainProcess",
+      "cancelActivity": true,
+      "eventDefinitions": [
+        {
+          "type": "message",
+          "name": "Cancel Ticket"
+        }
+      ]
+    },
+    {
+      "id": "cancelEnd",
+      "type": "endEvent",
+      "name": "Terminate",
+      "terminate": true
+    }
+  ],
+  "sequenceFlows": [
+    {
+      "id": "sf1",
+      "sourceRef": "start",
+      "targetRef": "mainProcess"
+    },
+    {
+      "id": "sf2",
+      "sourceRef": "mainProcess",
+      "targetRef": "createTicket"
+    },
+    {
+      "id": "sf3",
+      "sourceRef": "createTicket",
+      "targetRef": "classification"
+    },
+    {
+      "id": "sf4",
+      "sourceRef": "classification",
+      "targetRef": "provideResSimple",
+      "conditionExpression": "Simple"
+    },
+    {
+      "id": "sf5",
+      "sourceRef": "classification",
+      "targetRef": "rootCause",
+      "conditionExpression": "Complex"
+    },
+    {
+      "id": "sf6",
+      "sourceRef": "rootCause",
+      "targetRef": "provideResComplex"
+    },
+    {
+      "id": "sf7",
+      "sourceRef": "provideResSimple",
+      "targetRef": "parallelSplit"
+    },
+    {
+      "id": "sf8",
+      "sourceRef": "provideResComplex",
+      "targetRef": "parallelSplit"
+    },
+    {
+      "id": "sf9",
+      "sourceRef": "parallelSplit",
+      "targetRef": "sendResponse"
+    },
+    {
+      "id": "sf10",
+      "sourceRef": "parallelSplit",
+      "targetRef": "logKnowledge"
+    },
+    {
+      "id": "sf11",
+      "sourceRef": "sendResponse",
+      "targetRef": "parallelJoin"
+    },
+    {
+      "id": "sf12",
+      "sourceRef": "logKnowledge",
+      "targetRef": "parallelJoin"
+    },
+    {
+      "id": "sf13",
+      "sourceRef": "parallelJoin",
+      "targetRef": "waitGateway"
+    },
+    {
+      "id": "sf14",
+      "sourceRef": "waitGateway",
+      "targetRef": "waitForReply"
+    },
+    {
+      "id": "sf15",
+      "sourceRef": "waitForReply",
+      "targetRef": "closeTicket"
+    },
+    {
+      "id": "sf16",
+      "sourceRef": "waitGateway",
+      "targetRef": "timer24h"
+    },
+    {
+      "id": "sf17",
+      "sourceRef": "timer24h",
+      "targetRef": "sendReminder"
+    },
+    {
+      "id": "sf18",
+      "sourceRef": "sendReminder",
+      "targetRef": "closeTicket"
+    },
+    {
+      "id": "sf19",
+      "sourceRef": "closeTicket",
+      "targetRef": "endNormal"
+    },
+    {
+      "id": "sf20",
+      "sourceRef": "cancelBoundary",
+      "targetRef": "cancelEnd"
+    }
+  ]
+}
