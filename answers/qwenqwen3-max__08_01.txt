@@ -1,0 +1,104 @@
+**No**, it is impossible for transition T5 to fire before transition T3.
+
+---
+
+### Proof of Impossibility:
+
+Recall the inhibitor condition for T5:  
+> T5 is enabled **only if** p4 has **zero tokens**.
+
+Let’s trace what must happen for T5 to become enabled:
+
+1. Initially, only p0 has a token: `M₀ = [1,0,0,0,0,0,0]`.
+
+2. To enable T5, we must have a token in p3 (since T5 consumes from p3) and **zero tokens in p4** (inhibitor condition).
+
+3. Token in p3 can only come from firing T2, which requires a token in p1.
+
+4. Token in p1 comes only from firing T1 (which also puts a token in p2).
+
+5. Once T1 fires, p2 gets a token → this enables T3.
+
+   Now, if T3 fires, it consumes p2 and puts a token in **p4**.
+
+   But if p4 gets a token → T5 becomes **disabled** (because of the inhibitor arc from p4).
+
+6. Therefore, to keep p4 empty (so that T5 is enabled), we must **NOT fire T3**.
+
+   But if we don’t fire T3, then p2 remains marked, and p4 remains empty — good for T5’s inhibitor condition.
+
+   However, is p3 marked yet? Only if T2 has fired.
+
+   Can T2 fire before T3? Yes — they are independent after T1.
+
+   So suppose we do: **T1 → T2**
+
+   Then marking becomes: p0=0, p1=0, p2=1, p3=1, p4=0, p5=0, p6=0 → `[0,0,1,1,0,0,0]`
+
+   Now T5 is **enabled**: p3 has token, p4 has zero → inhibitor condition satisfied.
+
+   Wait — is this a counterexample?
+
+   🔴 **NO** — because **T3 is still enabled** (p2 has a token), and crucially, **T5 firing does not require T3 to have fired**, but the question is:
+
+   > “Is it possible for T5 to fire *before* T3?”
+
+   So in this marking `[0,0,1,1,0,0,0]`, we can fire **T5 before T3**.
+
+   T5 firing consumes p3, leaves p2 untouched, and puts a token in p6.
+
+   Resulting marking: `[0,0,1,0,0,0,1]`
+
+   T3 can still fire afterward.
+
+---
+
+❌ Wait — this contradicts my initial “No”. Let me reevaluate.
+
+---
+
+✅ **CORRECTION: YES — it IS possible.**
+
+---
+
+### ✅ Concrete Firing Sequence:
+
+Start: `M₀ = [p0:1, p1:0, p2:0, p3:0, p4:0, p5:0, p6:0]`
+
+1. **Fire T1**: consumes p0 → produces p1 and p2  
+   → `M1 = [0,1,1,0,0,0,0]`
+
+2. **Fire T2**: consumes p1 → produces p3  
+   → `M2 = [0,0,1,1,0,0,0]`
+
+   ➤ Now p3=1, p4=0 → **T5 is enabled** (inhibitor condition satisfied).
+
+3. **Fire T5**: consumes p3 (normal), ignores p4 (inhibitor), produces p6  
+   → `M3 = [0,0,1,0,0,0,1]`
+
+   ➤ T5 has now fired — and **T3 has not yet fired**.
+
+   (T3 is still enabled and can fire next, but hasn’t.)
+
+---
+
+### ✅ Answer: **Yes**
+
+**Firing sequence: T1 → T2 → T5**
+
+At this point, T5 has fired, and T3 has not.
+
+This is valid because:
+- T5’s inhibitor arc from p4 only requires p4 to be empty — which it is, since T3 hasn’t fired yet.
+- T5 does *not* depend on T3; it only depends on p3 (from T2) and absence of token in p4 (ensured by *not yet* firing T3).
+
+---
+
+### Final Answer:
+
+**Yes**, it is possible for T5 to fire before T3.
+
+**Firing sequence**: `T1 → T2 → T5`
+
+At marking `[0,0,1,0,0,0,1]`, T5 has fired and T3 has not.  
+The inhibitor arc condition (p4=0) is satisfied because T3 — the only transition that can put a token into p4 — has not yet fired.
