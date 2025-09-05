@@ -1,0 +1,185 @@
+I need to convert the warranty replacement process into BPMN 2.0 XML based on the specifications.
+
+Let me break down the requirements:
+
+1. Process starts with customer submitting an online warranty claim
+2. Service agent validates the claim 
+   - If incomplete: request missing info -> wait -> re-validate
+   - If complete: proceed to check warranty
+3. Check warranty eligibility
+   - Within warranty: proceed
+   - Out of warranty: send rejection -> end process
+4. For eligible claims, two parallel activities:
+   a. Create shipment order
+   b. Schedule courier pickup
+5. After both complete: update inventory -> close claim -> end
+
+Required elements:
+- Start event
+- Two exclusive gateways (one for validation, one for warranty check)
+- Parallel gateway pair for parallel activities
+- Two end events (one success, one rejection)
+- All IDs prefixed with "wrc_"
+
+Let me structure the XML accordingly:
+
+1. Define the process with id="wrc_warranty_replacement_process"
+2. Start event: wrc_start
+3. Task: wrc_validate_claim for validation
+4. Exclusive gateway: wrc_is_claim_complete
+   - Outgoing sequence flows: complete? yes/no
+5. If no: 
+   - Task: wrc_request_missing_information
+   - Wait event
+   - Loop back to validation
+6. If yes:
+   - Task: wrc_check_warranty_eligibility
+   - Exclusive gateway: wrc_warranty_decision
+     - If out of warranty:
+       - Task: wrc_send_rejection_notice
+       - End event: wrc_rejection_end
+     - If within warranty:
+       - Parallel gateway: wrc_split
+       - Parallel tasks (without order):
+         - wrc_create_shipment_order
+         - wrc_schedule_courier_pickup
+       - Join gateway: wrc_join
+       - Task: wrc_update_inventory_records
+       - Task: wrc_close_the_claim
+       - End event: wrc_success_end
+
+I'll make sure all elements have unique IDs with "wrc_" prefix and labels match the requirements verbatim.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions 
+    xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omp.org/eeeee/20003/ebabe" 
+    id="definitions_1" 
+    targetNamespace="http://bpmn.io/schema/bpmn"
+    exporter="bpmn-js (https://demo.bpmn.io)" 
+    exporterVersion="7.3.0">
+
+  <process id="wrc_warranty_replacement_process" isExecutable="false">
+    <!-- Start Event -->
+    <startEvent id="wrc_start">
+      <outgoing>wrc_start_to_validate</outgoing>
+    </startEvent>
+
+    <!-- Step 1: Online Warranty Claim Submission -->
+    <sequenceFlow id="wrc_start_to_validate" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+
+    <!-- Step 2: Validate Claim -->
+    <serviceTask id="wrc_validate_claim" name="Validate the claim">
+      <incoming>wrc_start_to_validate</incoming>
+      <outgoing>wrc_validate_to_gateway</outgoing>
+      <incoming>wrc_retry_validation</incoming>
+    </serviceTask>
+    <sequenceFlow id="wrc_validate_to_gateway" sourceRef="wrc_validate_claim" targetRef="wrc_is_claim_complete" />
+
+    <!-- Is Claim Complete? -->
+    <exclusiveGateway id="wrc_is_claim_complete">
+      <incoming>wrc_validate_to_gateway</incoming>
+      <outgoing>wrc_complete_yes</outgoing>
+      <outgoing>wrc_complete_no</outgoing>
+    </exclusiveGateway>
+
+    <!-- No: Request Missing Information -->
+    <sequenceFlow id="wrc_complete_no" sourceRef="wrc_is_claim_complete" targetRef="wrc_request_missing_information"/>
+    <userTask id="wrc_request_missing_information" name="Request missing information">
+      <incoming>wrc_complete_no</incoming>
+      <outgoing>wrc_wait_for_info</outgoing>
+    </userTask>
+
+    <!-- Wait for Information -->
+    <intermediateCatchEvent id="wrc_wait_for_event">
+      <incoming>wrc_wait_for_info</incoming>
+      <outgoing>wrc_retry_validation</outgoing>
+    </intermediateCatchEvent>
+    <sequenceFlow id="wrc_wait_for_info" sourceRef="wrc_request_missing_information" targetRef="wrc_wait_for_event" />
+    <sequenceFlow id="wrc_retry_validation" sourceRef="wrc_wait_for_event" targetRef="wrc_validate_claim" />
+
+    <!-- Yes: Check Warranty Eligibility -->
+    <sequenceFlow id="wrc_complete_yes" sourceRef="wrc_is_claim_complete" targetRef="wrc_check_warranty_eligibility" />
+    <serviceTask id="wrc_check_warranty_eligibility" name="Check warranty eligibility">
+      <incoming>wrc_complete_yes</incoming>
+      <outgoing>wrc_to_warranty_decision</outgoing>
+    </serviceTask>
+
+    <!-- Is Product Under Warranty? -->
+    <exclusiveGateway id="wrc_warranty_decision">
+      <incoming>wrc_to_warranty_decision</incoming>
+      <outgoing>wrc_under_warranty</outgoing>
+      <outgoing>wrc_out_of_warranty</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="wrc_to_warranty_decision" sourceRef="wrc_check_warranty_eligibility" targetRef="wrc_warranty_decision" />
+
+    <!-- If NOT Under Warranty: Send Rejection -->
+    <sequenceFlow id="wrc_out_of_warranty" sourceRef="wrc_warranty_decision" targetRef="wrc_send_rejection_notice" />
+    <serviceTask id="wrc_send_rejection_notice" name="Send rejection notice">
+      <incoming>wrc_out_of_warranty</incoming>
+      <outgoing>wrc_to_rejection_end</outgoing>
+    </serviceTask>
+    <endEvent id="wrc_rejection_end">
+      <incoming>wrc_to_rejection_end</incoming>
+    </endEvent>
+    <sequenceFlow id="wrc_to_rejection_end" sourceRef="wrc_send_rejection_notice" targetRef="wrc_rejection_end" />
+
+    <!-- If Under Warranty: Proceed -->
+    <sequenceFlow id="wrc_under_warranty" sourceRef="wrc_warranty_decision" targetRef="wrc_parallel_split" />
+
+    <!-- Parallel Gateway - Fork -->
+    <parallelGateway id="wrc_parallel_split">
+      <incoming>wrc_under_warranty</incoming>
+      <outgoing>wrc_to_create_shipment</outgoing>
+      <outgoing>wrc_to_schedule_pickup</outgoing>
+    </parallelGateway>
+
+    <!-- Parallel Path 1: Create Shipment Order -->
+    <sequenceFlow id="wrc_to_create_shipment" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment_order" />
+    <serviceTask id="wrc_create_shipment_order" name="Create shipment order">
+      <incoming>wrc_to_create_shipment</incoming>
+      <outgoing>wrc_shipment_to_join</outgoing>
+    </serviceTask>
+    <sequenceFlow id="wrc_shipment_to_join" sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_join" />
+
+    <!-- Parallel Path 2: Schedule Courier Pickup -->
+    <sequenceFlow id="wrc_to_schedule_pickup" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_courier_pickup" />
+    <serviceTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <incoming>wrc_to_schedule_pickup</incoming>
+      <outgoing>wrc_pickup_to_join</outgoing>
+    </serviceTask>
+    <sequenceFlow id="wrc_pickup_to_join" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_join" />
+
+    <!-- Parallel Gateway - Join -->
+    <parallelGateway id="wrc_parallel_join">
+      <incoming>wrc_shipment_to_join</incoming>
+      <incoming>wrc_pickup_to_join</incoming>
+      <outgoing>wrc_to_update_inventory</outgoing>
+    </parallelGateway>
+
+    <!-- Update Inventory -->
+    <sequenceFlow id="wrc_to_update_inventory" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory_records" />
+    <serviceTask id="wrc_update_inventory_records" name="Update inventory records">
+      <incoming>wrc_to_update_inventory</incoming>
+      <outgoing>wrc_to_close_claim</outgoing>
+    </serviceTask>
+
+    <!-- Close the Claim -->
+    <sequenceFlow id="wrc_to_close_claim" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_the_claim" />
+    <serviceTask id="wrc_close_the_claim" name="Close the claim">
+      <incoming>wrc_to_close_claim</incoming>
+      <outgoing>wrc_to_process_end</outgoing>
+    </serviceTask>
+
+    <!-- Successful Completion -->
+    <sequenceFlow id="wrc_to_process_end" sourceRef="wrc_close_the_claim" targetRef="wrc_success_end" />
+    <endEvent id="wrc_success_end">
+      <incoming>wrc_to_process_end</incoming>
+    </endEvent>
+
+  </process>
+  
+</definitions>
+```

@@ -1,0 +1,22 @@
+Okay, let me try to figure this out. The problem is that the "Create Account in Core System" service task needs to complete within 48 hours after "Verify Identity" is done. The current model doesn't have any timer or escalation, which is causing SLA breaches. So, I need to add a timer without introducing new activities.
+
+Hmm, how can I enforce a 48-hour deadline in BPMN? Oh right, a timer event. Specifically, a boundary timer event attached to the "Create Account in Core System" task. That way, if the task takes longer than 48 hours, the timer will trigger an escalation.
+
+Wait, the task is a service task, so I should add a boundary timer event around it. The timer should be set for a duration of 48 hours. When the timer fires, it should lead to an escalation. Since the task "Activity_AMReview" is already there but unused, maybe I can use it as the escalation activity. That way, no new activities are added.
+
+So, I'll add a boundary timer event attached to "Activity_CreateAccount" with a duration of 48 hours. The timer's flow should go to "Activity_AMReview", which then proceeds to "Activity_ActivateAccount". That ensures that if the account creation takes too long, it escalates to account manager review without adding any new activities.
+
+Let me check the existing XML. The "Activity_AMReview" is a user task already present but not connected. The sequence flow "Flow_08" from it to "Activity_ActivateAccount" exists. So I just need to add the boundary timer event and connect it properly.
+
+The boundary timer event should have an ID, say "Timer_Escalation". The timer duration element would be something like "P2D" for 2 days. The target of the timer's sequence flow would be "Activity_AMReview".
+
+So the XML addition would be the boundary timer event with the timer duration and the sequence flow connecting it to the existing "Activity_AMReview".
+```xml
+<bpmn:boundaryEvent id="Timer_Escalation" attachedToRef="Activity_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+```
+
+**Justification:** The boundary timer event enforces the 48-hour SLA by automatically triggering the existing `Activity_AMReview` escalation path if account creation exceeds the deadline, without requiring any new activities.

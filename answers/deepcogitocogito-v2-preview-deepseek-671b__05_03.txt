@@ -1,0 +1,44 @@
+I've been given a BPMN XML model of Acme Telecom's customer onboarding process. My task is to add SLA compliance for the "Create Account in Core System" activity without introducing new activities. Specifically, this service task must complete within 48 hours of finishing "Verify Identity".
+
+Looking at the current model:
+1. The flow is: Start → Collect Documents → Verify Identity → [Gateway] → Create Account → Activate Account → End
+2. The "Verify Identity" task (Activity_VerifyID) is followed by a gateway that checks if identity was approved
+3. Only when approved, it proceeds to "Create Account in Core System" (Activity_CreateAccount)
+4. There's currently no timer or SLA mechanism in place
+
+The requirement is to ensure that between completing "Verify Identity" and completing "Create Account," no more than 48 hours pass. Since we cannot add new activities, we need to use BPMN's boundary events.
+
+The best solution would be to add a boundary timer event to the "Create Account in Core System" task that triggers after 48 hours if the task isn't completed. This timer would then lead to the existing "Account-Manager Review" (Activity_AMReview) task, which currently isn't connected in the main flow.
+
+The existing "Activity_AMReview" task is described as "unused but existing" and has a flow back to "Activate Account", so we can leverage this as our escalation path.
+
+In the XML, we need to:
+1. Add a boundary timer event element to Activity_CreateAccount
+2. Set its timer definition to "PT48H" (48 hours)
+3. Connect this event to the existing Activity_AMReview
+4. Make sure the regular flow continues if the timer doesn't trigger
+
+The changes will be:
+1. Add the boundary event definition
+2. Add the sequence flow from the timer to the review task
+3. Make sure Activity_CreateAccount continues to Activity_ActivateAccount when it completes normally
+
+We don't need to add any new tasks - we're reusing the existing Activity_AMReview as our time-out handler.
+
+For the boundary event, I'll need to add:
+- A boundary event definition attached to Activity_CreateAccount
+- A timer event definition with timeDuration of PT48H
+- A sequence flow from this event to Activity_AMReview
+
+The justification is that this adds an SLA timer that escalates to management review if the account creation takes longer than 48 hours, without adding any new tasks or significantly changing the process flow.
+```xml
+<bpmn:boundaryEvent id="Timer_01" name="SLA Breached" cancelActivity="true" attachedToRef="Activity_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+  <bpmn:outgoing>Flow_New1</bpmn:outgoing>
+</bpmn:boundaryEvent>
+
+<bpmn:sequenceFlow id="Flow_New1" sourceRef="Timer_01" targetRef="Activity_AMReview"/>
+```
+Justification: This adds a timer boundary event to "Create Account in Core System" that triggers after 48 hours, escalating to the existing Account-Manager Review if the SLA is breached, while reusing existing elements and maintaining the current process structure.

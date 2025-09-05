@@ -1,0 +1,209 @@
+Let me analyze the support-ticket process and convert it into BPMN 2.0 XML.
+
+Key elements from the description:
+1. Start event: Customer submits a support ticket
+2. Automatic activity: Ticket classification
+3. Exclusive gateway based on classification result
+   - Path A: If "Password Reset" -> Provide Reset Instructions
+   - Path B: Otherwise -> Initial Diagnosis
+4. Sequence of activities after Path B:
+   - Initial Diagnosis
+   - Resolve Issue OR Forward to Specialist
+   - If Forwarded to Specialist: Specialist resolves
+   - Resolve Issue (same activity name in different contexts)
+5. Confirm with Customer
+6. Exclusive gateway based on customer confirmation
+   - Path A: Confirmed -> End event (Close ticket)
+   - Path B: Issue persists -> Loop back to Initial Diagnosis
+
+Now, I'll create the BPMN 2.0 XML. I'll use concise IDs and focus on:
+
+- Start event
+- Activities
+- Two exclusive gateways
+- The loop structure
+- End event
+
+The XML structure will contain:
+- Process definition
+- Pool and Lane (for organization)
+- Flow elements (events, activities, gateways)
+- Sequence flows
+- Exclusive gateway decision logic
+
+Here's the BPMN 2.0 XML:
+
+```xml
+<definitions id="def1" xmlns="http://www.omg.org/spec/DD/20110524/DC" xmlns:bpmndi="http://www.omg.org/spec/DD/20110524/DI" xmlns:omgdi="http://www.omg.org/spec/DD/20110524" xmlns:omgdc="http://www.omg.org/spec/DD/20110524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/20-bpmn.xsd" targetNamespace="http://www.ti">
+  <process id="process1" isExecutable="true">
+    <startEvent id="start1">
+      <outgoing>out1</outgoing>
+    </startEvent>
+    <automaticTask id="t1" name="Ticket Classification">
+      <outgoing>out2</outgoing>
+    </automaticTask>
+    <exclusiveGateway id="gw1" name="Is Password Reset?">
+      <outgoing>out3</outgoing>
+      <outgoing>out5</outgoing>
+    </exclusiveGateway>
+    <userTask id="t2" name="Provide Reset Instructions">
+      <incoming>out3</incoming>
+      <outgoing>out4</outgoing>
+    </userTask>
+    <sequenceFlow id="out3" sourceRef="gw1" targetRef="t2"/>
+    <userTask id="t3" name="Initial Diagnosis">
+      <incoming>out5</incoming>
+      <outgoing>out6</outgoing>
+    </userTask>
+    <sequenceFlow id="out5" sourceRef="gw1" targetRef="t3"/>
+    <exclusiveGateway id="gw2" name="Resolution Path?">
+      <outgoing>out7</outgoing>
+      <outgoing>out8</outgoing>
+    </exclusiveGateway>
+    <userTask id="t4" name="Resolve Issue">
+      <incoming>out6</incoming>
+      <incoming>out9</incoming>
+      <outgoing>out10</outgoing>
+    </userTask>
+    <userTask id="t5" name="Forward to Specialist">
+      <incoming>out8</incoming>
+      <outgoing>out9</outgoing>
+    </userTask>
+    <userTask id="t6" name="Confirm with Customer">
+      <incoming>out10</incoming>
+      <outgoing>out11</outgoing>
+    </userTask>
+    <exclusiveGateway id="gw3" name="Customer Confirmation?">
+      <outgoing>out12</outgoing>
+      <outgoing>out13</outgoing>
+    </exclusiveGateway>
+    <endEvent id="end1">
+      <incoming>out12</incoming>
+    </endEvent>
+    <sequenceFlow id="out12" sourceRef="gw3" targetRef="end1"/>
+    <sequenceFlow id="out13" sourceRef="gw3" targetRef="t3"/>
+    <sequenceFlow id="out1" sourceRef="start1" targetRef="t1"/>
+    <sequenceFlow id="out2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="out4" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="out6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="out7" sourceRef="gw2" targetRef="t4"/>
+    <sequenceFlow id="out8" sourceRef="gw2" targetRef="t5"/>
+    <sequenceFlow id="out9" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="out10" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="out11" sourceRef="t6" targetRef="gw3"/>
+  </process>
+</definitions>
+```
+
+Let me review this against the requirements:
+
+1. Start event when customer submits ticket: ✓ (start1)
+2. Automatic ticket classification: ✓ (t1)
+3. "Password Reset" leads to "Provide Reset Instructions": ✓ (gw1 -> t2)
+4. Otherwise -> Initial Diagnosis: ✓ (gw1 -> t3)
+5. After diagnosis, either Resolve Issue or Forward to Specialist: ✓ (gw2)
+6. Specialist's work leads to Resolve Issue: ✓ (t5 -> t4)
+7. Resolved ticket goes to Confirm with Customer: ✓ (t4 -> t6)
+8. Customer confirms -> ticket closed: ✓ (gw3 -> end1)
+9. Customer reports issue persists -> loop to Initial Diagnosis: ✓ (gw3 -> t3)
+10. Process ends when ticket is closed: ✓ (end1)
+
+The XML has two exclusive gateways (gw1 and gw2), and the re-work loop is implemented as per line 9. No additional elements were added beyond what was described in the textual description.
+
+I think this meets all the requirements. Let me clean it up a bit to fit within 40 lines, as requested:
+
+```xml
+<definitions id="def1" xmlns="http://www.omg.org/spec/DD/20110524/DC" xmlns:bpmndi="http://www.omg.org/spec/DD/20110524/DI" xmlns:omgdi="http://www.omg.org/spec/DD/20110524" xmlns:omgdc="http://www.omg.org/spec/DD/20110524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/20-bpmn.xsd" targetNamespace="http://www.ti">
+  <process id="process1" isExecutable="true">
+    <startEvent id="start1"><outgoing>out1</outgoing></startEvent>
+    <automaticTask id="t1" name="Ticket Classification"><outgoing>out2</outgoing></automaticTask>
+    <exclusiveGateway id="gw1" name="Is Password Reset?"><outgoing>out3</outgoing><outgoing>out5</outgoing></exclusiveGateway>
+    <userTask id="t2" name="Provide Reset Instructions"><incoming>out3</incoming><outgoing>out4</outgoing></userTask>
+    <sequenceFlow id="out3" sourceRef="gw1" targetRef="t2"/>
+    <userTask id="t3" name="Initial Diagnosis"><incoming>out5</incoming><outgoing>out6</outgoing></userTask>
+    <sequenceFlow id="out5" sourceRef="gw1" targetRef="t3"/>
+    <exclusiveGateway id="gw2" name="Resolution Path?"><outgoing>out7</outgoing><outgoing>out8</outgoing></exclusiveGateway>
+    <userTask id="t4" name="Resolve Issue"><incoming>out6</incoming><incoming>out9</incoming><outgoing>out10</outgoing></userTask>
+    <userTask id="t5" name="Forward to Specialist"><incoming>out8</incoming><outgoing>out9</outgoing></userTask>
+    <userTask id="t6" name="Confirm with Customer"><incoming>out10</incoming><outgoing>out11</outgoing></userTask>
+    <exclusiveGateway id="gw3" name="Customer Confirmation?"><outgoing>out12</outgoing><outgoing>out13</outgoing></exclusiveGateway>
+    <endEvent id="end1"><incoming>out12</incoming></endEvent>
+    <sequenceFlow id="out12" sourceRef="gw3" targetRef="end1"/>
+    <sequenceFlow id="out13" sourceRef="gw3" targetRef="t3"/>
+    <sequenceFlow id="out1" sourceRef="start1" targetRef="t1"/>
+    <sequenceFlow id="out2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="out4" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="out6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="out7" sourceRef="gw2" targetRef="t4"/>
+    <sequenceFlow id="out8" sourceRef="gw2" targetRef="t5"/>
+    <sequenceFlow id="out9" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="out10" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="out11" sourceRef="t6" targetRef="gw3"/>
+  </process>
+</definitions>
+```
+
+I think this is close to 40 lines. Let me trim it a bit more:
+
+```xml
+<definitions id="def1" xmlns="http://www.omg.org/spec/DD/20110524/DC" xmlns:bpmndi="http://www.omg.org/spec/DD/20110524/DI" xmlns:omgdi="http://www.omg.org/spec/DD/20110524" xmlns:omgdc="http://www.omg.org/spec/DD/20110524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/20-bpmn.xsd" targetNamespace="http://www.ti">
+  <process id="process1" isExecutable="true">
+    <startEvent id="start1"><outgoing>out1</outgoing></startEvent>
+    <automaticTask id="t1" name="Ticket Classification"><outgoing>out2</outgoing></automaticTask>
+    <exclusiveGateway id="gw1" name="Is Password Reset?"><outgoing>out3</outgoing><outgoing>out5</outgoing></exclusiveGateway>
+    <userTask id="t2" name="Provide Reset Instructions"><incoming>out3</incoming><outgoing>out4</outgoing></userTask>
+    <sequenceFlow id="out3" sourceRef="gw1" targetRef="t2"/>
+    <userTask id="t3" name="Initial Diagnosis"><incoming>out5</incoming><outgoing>out6</outgoing></userTask>
+    <sequenceFlow id="out5" sourceRef="gw1" targetRef="t3"/>
+    <exclusiveGateway id="gw2" name="Resolution Path?"><outgoing>out7</outgoing><outgoing>out8</outgoing></exclusiveGateway>
+    <userTask id="t4" name="Resolve Issue"><incoming>out6</incoming><incoming>out9</incoming><outgoing>out10</outgoing></userTask>
+    <userTask id="t5" name="Forward to Specialist"><incoming>out8</incoming><outgoing>out9</outgoing></userTask>
+    <userTask id="t6" name="Confirm with Customer"><incoming>out10</incoming><outgoing>out11</outgoing></userTask>
+    <exclusiveGateway id="gw3" name="Customer Confirmation?"><outgoing>out12</outgoing><outgoing>out13</outgoing></exclusiveGateway>
+    <endEvent id="end1"><incoming>out12</incoming></endEvent>
+    <sequenceFlow id="out12" sourceRef="gw3" targetRef="end1"/>
+    <sequenceFlow id="out13" sourceRef="gw3" targetRef="t3"/>
+    <sequenceFlow id="out1" sourceRef="start1" targetRef="t1"/>
+    <sequenceFlow id="out2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="out4" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="out6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="out7" sourceRef="gw2" targetRef="t4"/>
+    <sequenceFlow id="out8" sourceRef="gw2" targetRef="t5"/>
+    <sequenceFlow id="out9" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="out10" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="out11" sourceRef="t6" targetRef="gw3"/>
+  </process>
+</definitions>
+```
+
+Actually, I'm already within the 40-line limit. This should be good to go!
+```xml
+<definitions id="def1" xmlns="http://www.omg.org/spec/DD/20110524/DC" xmlns:bpmndi="http://www.omg.org/spec/DD/20110524/DI" xmlns:omgdi="http://www.omg.org/spec/DD/20110524" xmlns:omgdc="http://www.omg.org/spec/DD/20110524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/20100524/20-bpmn.xsd" targetNamespace="http://www.ti">
+  <process id="process1" isExecutable="true">
+    <startEvent id="start1"><outgoing>out1</outgoing></startEvent>
+    <automaticTask id="t1" name="Ticket Classification"><outgoing>out2</outgoing></automaticTask>
+    <exclusiveGateway id="gw1" name="Is Password Reset?"><outgoing>out3</outgoing><outgoing>out5</outgoing></exclusiveGateway>
+    <userTask id="t2" name="Provide Reset Instructions"><incoming>out3</incoming><outgoing>out4</outgoing></userTask>
+    <sequenceFlow id="out3" sourceRef="gw1" targetRef="t2"/>
+    <userTask id="t3" name="Initial Diagnosis"><incoming>out5</incoming><outgoing>out6</outgoing></userTask>
+    <sequenceFlow id="out5" sourceRef="gw1" targetRef="t3"/>
+    <exclusiveGateway id="gw2" name="Resolution Path?"><outgoing>out7</outgoing><outgoing>out8</outgoing></exclusiveGateway>
+    <userTask id="t4" name="Resolve Issue"><incoming>out6</incoming><incoming>out9</incoming><outgoing>out10</outgoing></userTask>
+    <userTask id="t5" name="Forward to Specialist"><incoming>out8</incoming><outgoing>out9</outgoing></userTask>
+    <userTask id="t6" name="Confirm with Customer"><incoming>out10</incoming><outgoing>out11</outgoing></userTask>
+    <exclusiveGateway id="gw3" name="Customer Confirmation?"><outgoing>out12</outgoing><outgoing>out13</outgoing></exclusiveGateway>
+    <endEvent id="end1"><incoming>out12</incoming></endEvent>
+    <sequenceFlow id="out12" sourceRef="gw3" targetRef="end1"/>
+    <sequenceFlow id="out13" sourceRef="gw3" targetRef="t3"/>
+    <sequenceFlow id="out1" sourceRef="start1" targetRef="t1"/>
+    <sequenceFlow id="out2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="out4" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="out6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="out7" sourceRef="gw2" targetRef="t4"/>
+    <sequenceFlow id="out8" sourceRef="gw2" targetRef="t5"/>
+    <sequenceFlow id="out9" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="out10" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="out11" sourceRef="t6" targetRef="gw3"/>
+  </process>
+</definitions>
+```

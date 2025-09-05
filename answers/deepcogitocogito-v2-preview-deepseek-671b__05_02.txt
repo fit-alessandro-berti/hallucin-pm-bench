@@ -1,0 +1,38 @@
+First, I need to analyze the employee onboarding process to find the best SLA improvement while respecting the constraints.
+
+The current process is a simple sequential flow with these due dates:
+1. Create Employee Record: P1D
+2. Prepare Contract: P2D
+3. Sign Contract: P3D
+4. Collect Equipment: P5D
+5. Grant System Access: P1D
+Total time for completion: 1 + 2 + 3 + 5 + 1 = 12 days
+
+The biggest opportunity for improvement appears to be the "Collect Equipment" step, which currently takes 5 days. This is the longest single task in the process. Let me evaluate options:
+
+1. Can we safely reduce the collection time? Since we can't change task types, only modify attributes, changing the dueDate from P5D to a shorter duration (e.g., P3D) could be the solution.
+
+2. Are there any parallelization opportunities? The current flow is strictly sequential. If we could run some steps in parallel, that would help, but the rules explicitly say we can only modify attributes or change one sequenceFlow direction. Since there are no gateways, adding parallelism isn't possible without structural changes.
+
+3. The user tasks for creating the record, preparing the contract, and signing are all sequential but might have some flexibility to overlap with later steps like equipment collection.
+
+After examining the sequence, the "Collect Equipment" task at 5 days is the most significant bottleneck. Organizations often pre-stage standard equipment, so reducing this duration seems realistic. Changing it from P5D to P2D would free up 3 days from the critical path.
+
+This change would achieve the goal of reducing the overall duration while adhering to the strict rule of only modifying attributes of existing elements.
+
+Therefore, I propose modifying the dueDate of the "Collect Equipment" user task from "P5D" to "P2D" to improve the SLA compliance by reducing the process duration.
+```diff
+--- Current BPMN
++++ Proposed BPMN
+@@ -13,7 +13,7 @@
+     <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_PrepareContract" targetRef="Task_SignContract"/>
+     <bpmn:userTask id="Task_SignContract"     name="Sign Contract"          camunda:dueDate="P3D"/>
+     <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+-    <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++    <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P2D"/>
+     <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+     <bpmn:serviceTask id="Task_GrantAccess"   name="Grant System Access"    camunda:dueDate="P1D" camunda:type="external"/>
+     <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GrantAccess" targetRef="EndEvent_1"/>
+```
+
+Strategic pre-staging of standard onboarding packages and implementing digital pre-check for equipment allocation enables reducing the collection window from 5 days to 2 days, significantly improving the process's SLA compliance while maintaining work quality.

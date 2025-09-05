@@ -1,0 +1,134 @@
+Okay, let's break down how to model the Warranty-Replacement process using BPMN 2.0 XML.
+
+1. **Start Event**: This is straightforward since the process begins with a customer submitting an online warranty claim.
+
+2. **Validate Claim**: The first activity after the start event. Since the claim validation might require multiple iterations (if incomplete), we need an exclusive gateway to handle the incompleteness loop.
+
+3. **Exclusive Gateway for Completeness (wrc_gw_validity)**: Two paths here:
+   - Yes: Proceed to warranty eligibility check.
+   - No: Request missing information and loop back to validation.
+
+4. **Warranty Eligibility Check**: An exclusive gateway here too:
+   - Within warranty: Proceed to parallel tasks.
+   - Out of warranty: Send rejection notice and end with one end event.
+
+5. **Parallel Gateway Pair**: For steps 4a and 4b happening in parallel:
+   - Part 1: Create shipment order.
+   - Part 2: Schedule courier pickup.
+   - A parallel join gate to synchronize both.
+
+6. **Update Inventory Records**: After both parallel tasks complete.
+
+7. **Close Claim**: Finally, close the claim and end the process with the successful end event.
+
+8. **End Events**: Two end events as specified; one for rejection and one for successful closure.
+
+Ids are prefixed with “wrc_” for all elements, and task names remain verbatim as per the instructions.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+             id="wrc_definitions"
+             targetNamespace="http://example.org/bpmn">
+
+  <process id="wrc_process" isExecutable="true">
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_se_1">
+      <bpmn:outgoing>wrc_se_1_to_validate</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Validate Claim -->
+    <bpmn:task id="wrc_task_validate" name="Validate claim">
+      <bpmn:outgoing>wrc_validate_to_gateway</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Gateway for Claim Completeness -->
+    <bpmn:exclusiveGateway id="wrc_gw_validity">
+      <bpmn:incoming>wrc_validate_to_gateway</bpmn:incoming>
+      <bpmn:outgoing>wrc_gw_complete_yes</bpmn:outgoing>
+      <bpmn:outgoing>wrc_gw_complete_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Request Missing Info -->
+    <bpmn:task id="wrc_task_request" name="Request missing information">
+      <bpmn:ingoing>wrc_gw_complete_no</bpmn:ingoing>
+      <bpmn:outgoing>wrc_request_back_to_validate</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Loop back to Validate Claim -->
+    <bpmn:sequenceFlow id="wrc_request_back_to_validate" sourceRef="wrc_task_request" targetRef="wrc_task_validate"/>
+
+    <!-- Check Warranty Eligibility -->
+    <bpmn:task id="wrc_task_eligibility" name="Check warranty eligibility">
+      <bpmn:ingoing>wrc_gw_complete_yes</bpmn:ingoing>
+      <bpmn:outgoing>wrc_eligibility_to_gateway</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Gateway for Warranty Decision -->
+    <bpmn:exclusiveGateway id="wrc_gw_eligibility">
+      <bpmn:incoming>wrc_eligibility_to_gateway</bpmn:incoming>
+      <bpmn:outgoing>wrc_gw_eligible_yes</bpmn:outgoing>
+      <bpmn:outgoing>wrc_gw_eligible_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Rejection Path -->
+    <bpmn:task id="wrc_task_reject" name="Send rejection notice">
+      <bpmn:ingoing>wrc_gw_eligible_no</bpmn:ingoing>
+    </bpmn:task>
+    <bpmn:endEvent id="wrc_e_reject">
+      <bpmn:ingoing>wrc_task_reject</bpmn:ingoing>
+    </bpmn:endEvent>
+
+    <!-- Parallel Tasks Gateway -->
+    <bpmn:parallelGateway id="wrc_gw_parallel_split">
+      <bpmn:ingoing>wrc_gw_eligible_yes</bpmn:ingoing>
+      <bpmn:outgoing>wrc_to_shipment</bpmn:outgoing>
+      <bpmn:outgoing>wrc_to_pickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Create Shipment Order -->
+    <bpmn:task id="wrc_task_shipment" name="Create shipment order">
+      <bpmn:ingoing>wrc_to_shipment</bpmn:ingoing>
+    </bpmn:task>
+
+    <!-- Schedule Courier Pickup -->
+    <bpmn:task id="wrc_task_pickup" name="Schedule courier pickup">
+      <bpmn:ingoing>wrc_to_pickup</bpmn:ingoing>
+    </bpmn:task>
+
+    <!-- Parallel Join Gateway -->
+    <bpmn:parallelGateway id="wrc_gw_parallel_join">
+      <bpmn:ingoing>wrc_task_shipment</bpmn:ingoing>
+      <bpmn:ingoing>wrc_task_pickup</bpmn:ingoing>
+      <bpmn:outgoing>wrc_to_inventory</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Update Inventory and Close -->
+    <bpmn:task id="wrc_task_inventory" name="Update inventory records">
+      <bpmn:ingoing>wrc_to_inventory</bpmn:ingoing>
+    </bpmn:task>
+
+    <bpmn:task id="wrc_task_close" name="Close the claim">
+      <bpmn:ingoing>wrc_task_inventory</bpmn:ingoing>
+    </bpmn:task>
+
+    <bpmn:endEvent id="wrc_e_complete">
+      <bpmn:ingoing>wrc_task_close</bpmn:ingoing>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="wrc_se_1_to_validate" sourceRef="wrc_se_1" targetRef="wrc_task_validate"/>
+    <bpmn:sequenceFlow id="wrc_validate_to_gateway" sourceRef="wrc_task_validate" targetRef="wrc_gw_validity"/>
+    <bpmn:sequenceFlow id="wrc_gw_complete_yes" sourceRef="wrc_gw_validity" targetRef="wrc_task_eligibility"/>
+    <bpmn:sequenceFlow id="wrc_gw_complete_no" sourceRef="wrc_gw_validity" targetRef="wrc_task_request"/>
+    <bpmn:sequenceFlow id="wrc_eligibility_to_gateway" sourceRef="wrc_task_eligibility" targetRef="wrc_gw_eligibility"/>
+    <bpmn:sequenceFlow id="wrc_gw_eligible_no" sourceRef="wrc_gw_eligibility" targetRef="wrc_task_reject"/>
+    <bpmn:sequenceFlow id="wrc_gw_eligible_yes" sourceRef="wrc_gw_eligibility" targetRef="wrc_gw_parallel_split"/>
+    <bpmn:sequenceFlow id="wrc_to_shipment" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_shipment"/>
+    <bpmn:sequenceFlow id="wrc_to_pickup" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_pickup"/>
+    <bpmn:sequenceFlow id="wrc_to_inventory" sourceRef="wrc_gw_parallel_join" targetRef="wrc_task_inventory"/>
+   </bpmn:parallelGateway>
+
+  </process>
+</definitions>
+```

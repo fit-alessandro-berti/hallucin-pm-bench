@@ -1,0 +1,63 @@
+Let me analyze the given Petri net to determine if T5 can fire before T3.
+
+First, let me understand the structure of the net:
+
+- Initial marking: p0(1), all other places 0
+- Transitions:
+  - T1: p0 → p1 + p2 (parallel split)
+  - T2: p1 → p3
+  - T3: p2 → p4
+  - T4: p3 + p4 → p5 (synchronizing join)
+  - T5: p3 → p6 but with an inhibitor arc from p4 (meaning p4 must be empty for T5 to fire)
+
+Now, let's simulate from the initial marking:
+
+1. Only T1 is enabled initially (p0 has a token).
+After firing T1, we have: p0=0, p1=1, p2=1, others=0.
+
+2. Now both T2 (consuming from p1) and T3 (consuming from p2) are enabled.
+   Let's consider the case where we want T5 to fire before T3.
+
+3. For T5 to fire, we need:
+   - p3 must have a token (to consume)
+   - p4 must have 0 tokens (inhibitor arc condition)
+
+   But currently p3=0 and p4=0. We need p3 to get a token.
+
+4. To get a token in p3, we need to fire T2, which requires p1 (which we have after T1 fires).
+
+5. If we fire T2 at this point:
+   - Consume p1 → p3 produced
+   Marking becomes: p2=1, p3=1, others=0.
+
+6. Now, let's check T5's enabling condition:
+   - p3 has a token (satisfies the positive input)
+   - p4 has 0 tokens (satisfies the inhibitor arc)
+   So yes, T5 is enabled and can fire before T3.
+
+Firing sequence: T1 → T2 → T5
+
+After this sequence, T3 can still fire later if needed, but T5 was fired before T3.
+
+Therefore, yes, it is possible for T5 to fire before T3. The sequence is:
+1. Fire T1: consumes p0, produces p1 and p2
+2. Fire T2: consumes p1, produces p3
+3. Now T5 is enabled (p3 has token, p4 has 0 tokens), so fire T5
+
+After this, T3 could still fire if needed (consuming p2 and producing p4).
+Yes, it is possible. Here's a concrete firing sequence from the initial marking:
+
+Firing sequence: T1 → T2 → T5
+
+1. Initial marking: p0(1), others(0)
+2. Fire T1: consumes p0, produces p1+p2
+   New marking: p1(1), p2(1), others(0)
+3. Fire T2: consumes p1, produces p3
+   New marking: p2(1), p3(1), others(0)
+4. Now T5 is enabled because:
+   - p3 has a token (required by normal arc)
+   - p4 has 0 tokens (required by inhibitor arc)
+   
+At this point, transition T3 (which requires p2) has not fired yet, but T5 is already enabled and can fire before T3.
+
+The sequence demonstrates that it's possible for T5 to fire before T3, as the inhibitor arc from p4 allows T5 to be enabled when p4 is empty, which occurs naturally before any firing of T3.

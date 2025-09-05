@@ -1,0 +1,75 @@
+Alright, let's tackle this step by step. I need to figure out if transition T5 can fire before T3 in the given Petri net.
+
+First, let's understand the initial state and the transitions:
+- Initial marking M0 has a token in P0 only.
+- Transitions available to fire initially: T1 (since it requires P0 and nothing else).
+  
+After firing T1, we get:
+- P1 and P2 both have a token. T1 acts as an AND-split.
+
+Now, with tokens in P1 and P2, what transitions are enabled?
+- T2 (needs P1)
+- T3 (needs P2)
+- Also, T5 requires both P2 and P5, but P5 is empty right after T1 fires, so T5 is not enabled yet.
+
+If I fire T3 at this point, it consumes P2 and deposits a token in P4, which then enables T4. Firing T4 would put a token in P5. However, once T3 fires, P2 is gone, so T3 can only fire once unless there's another token produced in P2 at some point. But in this sequence, T1 only produces one token in P2, so after T3 fires, P2 is consumed.
+
+Alternatively, say instead of firing T3 right away, we process the other branch (via P1). From P1, we can fire T2, which would put a token in P3. Then firing T7 would put a token in P4. After that, T4 would be enabled once P4 has a token (from either T7 or T3), putting a token in P5. But if T3 hasn't fired yet, there's no token in P4 yet. 
+
+Hmm, but after processing T1, if we process the P1 branch first:
+1. Fire T1: P0 is consumed, P1 & P2 get tokens.
+2. Fire T2: consumes P1, produces P3.
+3. Fire T7: consumes P3, produces P4.
+   
+At this point, P4 has a token. But T4 requires P4 (which we have), so we can fire T4 to get P5. However, T5 requires both P2 and P5. P2 is still there (since we haven't fired T3 yet) and now we have P5 via T4 firing.
+
+So sequence: T1, T2, T7, T4. After these, P2 (from T1) and P5 (from T4) are both present. Thus, T5 is enabled and can fire before T3 has fired. But T3 is still enabled because T3 requires P2, which is still present.
+
+Therefore, yes, T5 can fire before T3 with a firing sequence like T1, T2, T7, T4, T5.
+
+Let me double-check:
+- T1 fires: P1, P2.
+- T2 fires: consumes P1, P2 is still there, P3 is produced.
+- T7 fires: consumes P3, P4 produced.
+- T4 fires: consumes P4, P5 produced.
+- Now P2 and P5 are present, so T5 is enabled. 
+
+Yes, T3 hasn't fired yet, so T5 is firing before T3. This seems valid.
+
+Now, the second part asks for a minimal firing sequence. The sequence I have is T1, T2, T7, T4, T5 (total 5 transitions). Is there a shorter one?
+
+The necessary steps to enable T5:
+- Need tokens in P2 and P5.
+- P5 is produced by T4, which requires P4.
+- P4 can be obtained by T3 (needs P2) or T7 (needs P3, which needs T2, which needs P1 from T1).
+  
+If we do T1 → P1 and P2. Then to get P5, we need P4 to fire T4. If we fire T3, which consumes P2, then P5 can be produced, but then to fire T5, we need P2 again. However, once P2 is consumed by T3, no other token is produced in P2 in the net. So if we fire T3, P2 is gone and T5 can never fire. Therefore, producing P4 must happen via the P1 → T2 → P3 → T7 → P4 path, so that P4 is produced via T7, then T4 produces P5, while P2 is still there. Then T5 can fire.
+
+So T1 (for P2), T2-T7 to get P4 without consuming P2, T4 to get P5, then T5. That's the minimal path. Can't remove any step.
+
+Therefore, the minimal firing sequence is T1, T2, T7, T4, T5.
+
+For Question 1: Yes, it is possible for T5 to fire before T3.
+
+For Question 2: The minimal sequence is T1, T2, T7, T4, T5.
+**Answer to Question 1:**  
+Yes, it is possible for T5 to fire before T3.
+
+**Answer to Question 2:**  
+Minimal firing sequence (length 5):
+T1 → T2 → T7 → T4 → T5
+
+**Explanation (under 120 words):**  
+1. T1 fires: Creates P1 and P2
+2. T2 fires: Uses P1 to make P3
+3. T7 fires: Uses P3 to make P4
+4. T4 fires: Uses P4 to make P5
+5. T5 is now enabled (P2 and P5 present) and fires before T3
+
+This sequence avoids firing T3 by:
+- Not consuming the P2 token needed later by T5
+- Using the alternative path (T2→T7) to generate P4
+- Creating P5 through T4
+- Enabling T5 while preserving P2 until the end
+
+Once T5 fires, T3 could follow later if needed, but the sequence proves T5 can precede T3.

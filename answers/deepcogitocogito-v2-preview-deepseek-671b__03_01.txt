@@ -1,0 +1,80 @@
+To model AcmeTech's support-ticket process in BPMN 2.0 XML, I need to translate the given 10-step textual description into the appropriate BPMN elements.
+
+**Step-by-step approach**:
+1. Create a start event labeled "Ticket Submitted"
+2. Add an "Automatic Classification" service task to represent step 2
+3. Create an exclusive gateway to branch based on ticket type (step 3)
+   - Password Reset path: "Provide Reset Instructions" user task
+   - Other path: "Initial Diagnosis" user task (which is also the loop-back point)
+4. After "Initial Diagnosis", add an exclusive gateway for "Resolve Issue" vs. "Forward to Specialist" (step 5)
+5. On the "Forward to Specialist" path, add a "Resolve Issue" task (step 6)
+6. Merge both resolve paths ("Resolve Issue" and "Forward to Specialist") to the "Confirm with Customer" task (step 7)
+7. After confirmation, add a gateway (step 8 & 9)
+   - "Confirmed" path leads to "Close Ticket" activity
+   - "Issue persists" path loops back to "Initial Diagnosis"
+8. Add end event after "Close Ticket"
+
+**BPMN Elements Used**:
+- Start Event: 1
+- End Event: 1
+- Service Task: 1 (automatic classification)
+- User Tasks: 4 (reset instructions, diagnosis, resolve, specialist)
+- Exclusive Gateways: 3 (ticket type, resolution vs forward, confirmation)
+- Sequence Flows: to connect everything
+
+**Important Notes**:
+- Don't add any elements not mentioned
+- Use exclusive gateways for decision points
+- Model the loop exactly as described
+- Keep IDs simple (t1, gw1, etc.)
+
+Let me now generate the exact BPMN XML for this process.
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             targetNamespace="http://acme.org/bpmn20" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI">
+
+  <process id="supportTicketProcess">
+    <!-- Events -->
+    <startEvent id="start" name="Ticket Submitted"/>
+    <endEvent id="end"/>
+    <intermediateThrowEvent id="resolutionEvent" name="Resolution Completed"/>
+    
+    <!-- Gateways -->
+    <exclusiveGateway id="gw1" name="Ticket Type?" default="flowToDiagnosis"/>
+    <exclusiveGateway id="gw2" name="Can resolve?"/>
+    <exclusiveGateway id="gw3" name="Customer Confirms?" default="flowToDiagnosis"/>
+    
+    <!-- Automatic Activity -->
+    <serviceTask id="t1" name="Auto-classify Ticket" implementation="##WebService"/>
+    
+    <!-- User Tasks -->
+    <userTask id="t2" name="Provide Reset Instructions"/>
+    <userTask id="t3" name="Initial Diagnosis"/>
+    <userTask id="t4" name="Resolve Issue"/>
+    <userTask id="t5" name="Forward to Specialist"/>
+    <userTask id="t6" name="Confirm with Customer"/>
+    <userTask id="t7" name="Close Ticket"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="t1"/>
+    <sequenceFlow id="flow2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="flow3" sourceRef="gw1" targetRef="t2" name="Password Reset">
+      <conditionExpression xsi:type="tFormalExpression">${classifiedAsPwdReset}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow4" sourceRef="gw1" targetRef="t3" name="Other"/>
+    <sequenceFlow id="flow5" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="flow51" sourceRef="gw2" targetRef="t4" name="Can Resolve"/>
+    <sequenceFlow id="flow6" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="flow7" sourceRef="gw2" targetRef="t5" name="Needs Specialist"/>
+    <sequenceFlow id="flow8" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="flow9" sourceRef="t6" targetRef="gw3"/>
+    <sequenceFlow id="flow10" sourceRef="gw3" targetRef="t7" name="Confirmed"/>
+    <sequenceFlow id="flow11" sourceRef="gw3" targetRef="t3" name="Issue Persists">
+      <conditionExpression xsi:type="tFormalExpression">${!confirmed}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow12" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="flow13" sourceRef="t7" targetRef="end"/>
+  </process>
+</definitions>
+```

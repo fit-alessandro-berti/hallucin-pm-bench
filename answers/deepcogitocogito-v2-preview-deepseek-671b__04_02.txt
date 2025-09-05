@@ -1,0 +1,81 @@
+Alright, let's tackle this internal audit case step by step. I'm looking at case #47291 for Globex Corp’s Purchase-to-Pay process. There are six compliance rules to check against the event trace provided. I need to go through each rule, see if it's been complied with, violated, or if it's not applicable based on the details given. After that, I'll wrap it up with an overall compliance decision.
+
+First, I'll list out the rules again for quick reference:
+- **R1.** PO > €10k needs Manager_Approval followed by Finance_Approval.
+- **R2.** If expedited, Ship_Goods must be within 2 days after last required approval.
+- **R3.** Pay_Invoice must not happen before Receive_Goods.
+- **R4.** If hazardous, Safety_Inspection must be after Receive_Goods and before Store_Goods.
+- **R5.** If Change_Request after any approval, need new Manager_Approval before next step.
+- **R6.** Every case must end with Archive_Record.
+
+Now, let's go through the event trace in order and map out the timeline:
+
+1. **Create_PO** – 2025-03-03 09:12  
+   amount = €12,450 > €10,000, so R1 applies.  
+   expedited = true, so R2 applies.  
+   hazardous = false, so R4 is not applicable.
+
+2. **Manager_Approval** – 2025-03-03 11:05  
+   First approval done as part of R1.
+
+3. **Finance_Approval** – 2025-03-04 08:17  
+   Following Manager_Approval, so this checks out for R1.
+
+4. **Change_Request** – 2025-03-04 15:42  
+   This happens after approvals. According to R5, after any approval and if there's a change request, you need a new Manager_Approval before further steps. So after this, before any other processing step, we should see another Manager_Approval.
+
+5. **Ship_Goods** – 2025-03-05 10:26  
+   For R2: Last approval (Finance_Approval) was on 03-04 08:17. Ship_Goods is on 03-05 10:26, which is within 2 calendar days if we count 03-05 as the last day. Let's see: from 03-04 08:17 to 03-05 10:26 is about 26 hours, so within 2 days. So R2 is met.
+
+   But wait, R5! The Change_Request happened after approvals, and then Ship_Goods was the next step. According to R5, after Change_Request (which is after approval), there must be a new Manager_Approval before any further processing. But immediately after Change_Request, Ship_Goods happened without a new Manager_Approval. That's a violation of R5.
+
+6. **Receive_Goods** – 2025-03-07 14:13  
+   This is straightforward; nothing specific here yet.
+
+7. **Pay_Invoice** – 2025-03-06 09:00  
+   R3 says Pay_Invoice must not happen before Receive_Goods. But here, Pay_Invoice is on 03-06, and Receive_Goods is on 03-07. So Pay_Invoice occurs before Receive_Goods — that's a violation of R3.
+
+8. **Manager_Approval** – 2025-03-07 15:10  
+   This is a second approval by Lee. But by now, the process has already moved past Change_Request without waiting for this approval. Since the Change_Request was on 03-04, and new steps (like Ship_Goods) happened before this approval, R5 was already violated.
+
+9. **Store_Goods** – 2025-03-07 16:02  
+   Nothing specific here, though if hazardous required inspection, but it's not the case.
+
+10. **Archive_Record** – 2025-03-07 16:20  
+    R6 is satisfied since it's the last step.
+
+Now, summarizing each rule:
+
+- **R1:** The PO is over €10k. We have Manager_Approval followed by Finance_Approval. So compliant.  
+  **Verdict: Compliant.** *PO >10k and approvals in order.*
+
+- **R2:** Expedited is true. Last approval was Finance_Approval on 2025-03-04 08:17. Ship_Goods happened on 03-05 10:26, which is within 2 calendar days (03-04 and 03-05 count as days 1 and 2). So, within 48 hours, but the rule says "within 2 calendar days after," so yes, if the last approval was 03-04, then 03-05 is day 1, 03-06 is day 2; Ship_Goods was on 03-05, so within that.  
+  **Verdict: Compliant.** *Shipped within 2 calendar days post-approval.*
+
+- **R3:** Pay_Invoice happened on 03-06, and Receive_Goods was on 03-07. Payment was made before receiving goods, which is a violation.  
+  **Verdict: Violated.** *Paid before receiving goods.*
+
+- **R4:** Hazardous is false, so this rule doesn't apply.  
+  **Verdict: Not applicable.** *No hazardous materials involved.*
+
+- **R5:** Change_Request occurred after approvals (on 03-04). Then, before any new Manager_Approval, Ship_Goods happened (on 03-05). New Manager_Approval wasn't obtained until 03-07, which is after Ship_Goods. So, processing step (Ship_Goods) occurred before new approval.  
+  **Verdict: Violated.** *Processing continued without new Manager_Approval after Change_Request.*
+
+- **R6:** Case ends with Archive_Record, so compliant.  
+  **Verdict: Compliant.** *Terminated with archiving.*
+
+Overall, there are violations in R3 and R5, which make the overall status non-compliant.
+R1: Compliant. PO over €10k has Manager_Approval followed by Finance_Approval.
+
+R2: Compliant. Ship_Goods occurred within 2 days of last approval (03-04 to 03-05).
+
+R3: Violated. Pay_Invoice (03-06) before Receive_Goods (03-07).
+
+R4: Not Applicable. Hazardous = false for this PO.
+
+R5: Violated. Change_Request required new Manager_Approval before Ship_Goods, but Ship_Goods occurred first.
+
+R6: Compliant. Case terminates with Archive_Record.
+
+--- Overall Result ---
+NON-COMPLIANT
