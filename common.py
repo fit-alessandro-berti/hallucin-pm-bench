@@ -42,6 +42,8 @@ class Shared:
                        ("deepcogito/cogito-v2-preview-deepseek-671b", {"base_model": "deepcogito/cogito-v2-preview-deepseek-671b", "payload": {"reasoning": {"enabled": True}}}),
                        "moonshotai/kimi-k2-0905",
                        "qwen/qwen3-max",
+                       "openrouter/sonoma-dusk-alpha",
+                       "openrouter/sonoma-sky-alpha",
                        ("gpt-5-high", {"base_model": "openai/gpt-5", "payload": {"reasoning_effort": "high"}}),
                        ("openai/gpt-oss-120b-high", {"base_model": "openai/gpt-oss-120b", "payload": {"reasoning_effort": "high"}}),
                        ("openai/o3-pro-high", {"base_model": "openai/o3-pro", "payload": {"reasoning_effort": "high"}}),

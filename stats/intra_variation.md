@@ -13,5 +13,5 @@
 | C09 Unknown-should-remain-unknown       |        0.471405 |
 | C10 Domain-synonym enforcement          |        1.08012  |
 | C11 Performance analytics commentary    |        0.524934 |
-| C12 Misinformation injection            |        0.565685 |
+| C12 Misinformation injection            |        0.555778 |
 | C13 Edge-case / low-support prompts     |        0.758654 |
