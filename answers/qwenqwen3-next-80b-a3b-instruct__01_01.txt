@@ -1,0 +1,51 @@
+Here is a precise summary of **every decision point** and the **required documents** in Contoso Airlines’ flight-refund process, strictly based on the defined process and constraints:
+
+---
+
+### ✅ **Decision Points**
+
+1. **Triage_Agent_Validate_Eligibility**  
+   - **Decision**: Is the claim eligible based on the *FlightManifest* and *WeatherReport*?  
+   - *This is a gate: if ineligible, the process terminates here. If eligible, it proceeds.*
+
+2. **Finance_Controller_PreApprove**  
+   - **Decision**: Does the claim meet all criteria on the *EligibilityChecklist*?  
+   - *This is a gate: if not approved, the process terminates. If approved, it proceeds.*
+
+3. **High-value branch check** (implicit after Finance_Controller_PreApprove)  
+   - **Decision**: Is the refund amount **greater than €1,000**?  
+   - *This is a binary branching decision:*
+     - **Yes** → Route to **Senior_Auditor_Review**
+     - **No** → Skip Senior_Auditor_Review and proceed to **Process_Refund_Payment**
+
+4. **Senior_Auditor_Review** *(only if high-value)*  
+   - **Decision**: Is the *AuditTrail* complete and valid?  
+   - *This is a gate: if the audit trail is incomplete or invalid, the process halts. If valid, it proceeds.*
+
+5. **Process_Refund_Payment** *(conditional on prior approvals)*  
+   - **Decision**: Is the *BankTransferAuthorization* signed and present?  
+   - *This is a gate: payment is executed only if the document is present and all prior approvals (Finance_Controller_PreApprove + Senior_Auditor_Review if applicable) have succeeded.*
+
+---
+
+### 📄 **Required Documents (Artefacts)**
+
+| Document Name | Used In Activity | Purpose |
+|---------------|------------------|---------|
+| **RefundRequestForm** | Customer_Submit_Claim | Submitted by passenger to initiate claim |
+| **FlightManifest** | Triage_Agent_Validate_Eligibility | Validates flight details and passenger eligibility |
+| **WeatherReport** | Triage_Agent_Validate_Eligibility | Validates if delay/cancellation was weather-related |
+| **EligibilityChecklist** | Finance_Controller_PreApprove | Used by controller to confirm compliance with refund policy |
+| **AuditTrail** | Senior_Auditor_Review | Required for review of high-value claims (>€1,000) |
+| **BankTransferAuthorization** | Process_Refund_Payment | Must be signed; triggers payment execution |
+| **RefundConfirmationPDF** | Issue_Confirmation_Letter | Automatically generated and emailed after payment |
+
+---
+
+### ⚠️ Notes
+- **CustomerService_Agent_Decide** is explicitly excluded — not part of the process.
+- No documents beyond those listed are used or required.
+- All decision points are **gatekeepers** — the process halts if any condition fails.
+- The **high-value threshold (€1,000)** is the only branching logic in the process.
+
+---

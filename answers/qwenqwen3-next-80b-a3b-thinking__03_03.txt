@@ -1,0 +1,92 @@
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="wrc_Process" name="Warranty-Replacement v1.3">
+    <startEvent id="wrc_StartEvent" name="Start">
+      <outgoing>wrc_SequenceFlow_Start_Validate</outgoing>
+    </startEvent>
+    <task id="wrc_ValidateClaim" name="Validate Claim">
+      <incoming>wrc_SequenceFlow_Start_Validate</incoming>
+      <outgoing>wrc_SequenceFlow_Validate_GW_Complete</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_GW_Completeness" name="Is claim complete?">
+      <incoming>wrc_SequenceFlow_Validate_GW_Complete</incoming>
+      <outgoing>wrc_SequenceFlow_Complete_Yes</outgoing>
+      <outgoing>wrc_SequenceFlow_Complete_No</outgoing>
+    </exclusiveGateway>
+    <task id="wrc_RequestMissingInfo" name="Request Missing Information">
+      <incoming>wrc_SequenceFlow_Complete_No</incoming>
+      <outgoing>wrc_SequenceFlow_Request_Validate</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_GW_Eligibility" name="Warranty Eligibility">
+      <incoming>wrc_SequenceFlow_Complete_Yes</incoming>
+      <outgoing>wrc_SequenceFlow_Eligibility_Approved</outgoing>
+      <outgoing>wrc_SequenceFlow_Eligibility_Rejected</outgoing>
+    </exclusiveGateway>
+    <parallelGateway id="wrc_Parallel_Split" name="Parallel Split">
+      <incoming>wrc_SequenceFlow_Eligibility_Approved</incoming>
+      <outgoing>wrc_SequenceFlow_Split_Create</outgoing>
+      <outgoing>wrc_SequenceFlow_Split_Schedule</outgoing>
+    </parallelGateway>
+    <task id="wrc_CreateShipmentOrder" name="Create shipment order">
+      <incoming>wrc_SequenceFlow_Split_Create</incoming>
+      <outgoing>wrc_SequenceFlow_Create_Join</outgoing>
+    </task>
+    <task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup">
+      <incoming>wrc_SequenceFlow_Split_Schedule</incoming>
+      <outgoing>wrc_SequenceFlow_Schedule_Join</outgoing>
+    </task>
+    <parallelGateway id="wrc_Parallel_Join" name="Parallel Join">
+      <incoming>wrc_SequenceFlow_Create_Join</incoming>
+      <incoming>wrc_SequenceFlow_Schedule_Join</incoming>
+      <outgoing>wrc_SequenceFlow_Join_Update</outgoing>
+    </parallelGateway>
+    <task id="wrc_UpdateInventoryRecords" name="Update inventory records">
+      <incoming>wrc_SequenceFlow_Join_Update</incoming>
+      <outgoing>wrc_SequenceFlow_Update_Close</outgoing>
+    </task>
+    <task id="wrc_CloseClaim" name="Close claim">
+      <incoming>wrc_SequenceFlow_Update_Close</incoming>
+      <outgoing>wrc_SequenceFlow_Close_EndSuccess</outgoing>
+    </task>
+    <endEvent id="wrc_End_Success" name="Success">
+      <incoming>wrc_SequenceFlow_Close_EndSuccess</incoming>
+    </endEvent>
+    <task id="wrc_SendRejectionNotice" name="Send rejection notice">
+      <incoming>wrc_SequenceFlow_Eligibility_Rejected</incoming>
+      <outgoing>wrc_SequenceFlow_Send_EndRejection</outgoing>
+    </task>
+    <endEvent id="wrc_End_Rejection" name="Rejection">
+      <incoming>wrc_SequenceFlow_Send_EndRejection</incoming>
+    </endEvent>
+    <sequenceFlow id="wrc_SequenceFlow_Start_Validate" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim"/>
+    <sequenceFlow id="wrc_SequenceFlow_Validate_GW_Complete" sourceRef="wrc_ValidateClaim" targetRef="wrc_GW_Completeness"/>
+    <sequenceFlow id="wrc_SequenceFlow_Complete_Yes" sourceRef="wrc_GW_Completeness" targetRef="wrc_GW_Eligibility">
+      <conditionExpression xsi:type="bpmn:tFormalExpression">complete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SequenceFlow_Complete_No" sourceRef="wrc_GW_Completeness" targetRef="wrc_RequestMissingInfo">
+      <conditionExpression xsi:type="bpmn:tFormalExpression">!complete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SequenceFlow_Request_Validate" sourceRef="wrc_RequestMissingInfo" targetRef="wrc_ValidateClaim"/>
+    <sequenceFlow id="wrc_SequenceFlow_Eligibility_Approved" sourceRef="wrc_GW_Eligibility" targetRef="wrc_Parallel_Split">
+      <conditionExpression xsi:type="bpmn:tFormalExpression">withinWarranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SequenceFlow_Eligibility_Rejected" sourceRef="wrc_GW_Eligibility" targetRef="wrc_SendRejectionNotice">
+      <conditionExpression xsi:type="bpmn:tFormalExpression">!withinWarranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SequenceFlow_Split_Create" sourceRef="wrc_Parallel_Split" targetRef="wrc_CreateShipmentOrder"/>
+    <sequenceFlow id="wrc_SequenceFlow_Split_Schedule" sourceRef="wrc_Parallel_Split" targetRef="wrc_ScheduleCourierPickup"/>
+    <sequenceFlow id="wrc_SequenceFlow_Create_Join" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_Parallel_Join"/>
+    <sequenceFlow id="wrc_SequenceFlow_Schedule_Join" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_Parallel_Join"/>
+    <sequenceFlow id="wrc_SequenceFlow_Join_Update" sourceRef="wrc_Parallel_Join" targetRef="wrc_UpdateInventoryRecords"/>
+    <sequenceFlow id="wrc_SequenceFlow_Update_Close" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim"/>
+    <sequenceFlow id="wrc_SequenceFlow_Close_EndSuccess" sourceRef="wrc_CloseClaim" targetRef="wrc_End_Success"/>
+    <sequenceFlow id="wrc_SequenceFlow_Send_EndRejection" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_End_Rejection"/>
+  </process>
+</definitions>
+```
