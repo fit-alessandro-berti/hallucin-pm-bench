@@ -1,0 +1,246 @@
+{
+  "definitions": {
+    "name": "Customer Support Ticket Process",
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "processes": [
+      {
+        "id": "mainProcess",
+        "name": "Customer Support Ticket Process",
+        "elements": [
+          {
+            "id": "Start1",
+            "type": "bpmn:MessageStartEvent",
+            "name": "Support Email Received"
+          },
+          {
+            "id": "Parse1",
+            "type": "bpmn:Task",
+            "name": "Parse Email and Create Ticket"
+          },
+          {
+            "id": "Sub1",
+            "type": "bpmn:SubProcess",
+            "name": "Handle Ticket",
+            "elements": [
+              {
+                "id": "SubStart",
+                "type": "bpmn:StartEvent"
+              },
+              {
+                "id": "Classify1",
+                "type": "bpmn:Task",
+                "name": "Initial Classification"
+              },
+              {
+                "id": "GW1",
+                "type": "bpmn:ExclusiveGateway",
+                "name": "Classification"
+              },
+              {
+                "id": "RCA1",
+                "type": "bpmn:Task",
+                "name": "Root Cause Analysis"
+              },
+              {
+                "id": "Provide1",
+                "type": "bpmn:Task",
+                "name": "Provide Resolution"
+              },
+              {
+                "id": "PGsplit",
+                "type": "bpmn:ParallelGateway"
+              },
+              {
+                "id": "Send1",
+                "type": "bpmn:Task",
+                "name": "Send Response to Customer"
+              },
+              {
+                "id": "Log1",
+                "type": "bpmn:Task",
+                "name": "Log Solution in Knowledge Base"
+              },
+              {
+                "id": "EBG1",
+                "type": "bpmn:EventBasedGateway"
+              },
+              {
+                "id": "Reply1",
+                "type": "bpmn:IntermediateCatchEvent",
+                "name": "Customer Reply",
+                "eventDefinitions": [
+                  {
+                    "type": "bpmn:MessageEventDefinition"
+                  }
+                ]
+              },
+              {
+                "id": "Timer1",
+                "type": "bpmn:IntermediateCatchEvent",
+                "name": "24 Hours Timeout",
+                "eventDefinitions": [
+                  {
+                    "type": "bpmn:TimerEventDefinition",
+                    "timeDuration": "PT24H"
+                  }
+                ]
+              },
+              {
+                "id": "Reminder1",
+                "type": "bpmn:Task",
+                "name": "Send Reminder"
+              },
+              {
+                "id": "Close1",
+                "type": "bpmn:Task",
+                "name": "Close Ticket"
+              },
+              {
+                "id": "SubEnd1",
+                "type": "bpmn:EndEvent"
+              },
+              {
+                "id": "SubEnd2",
+                "type": "bpmn:EndEvent"
+              }
+            ],
+            "sequenceFlows": [
+              {
+                "id": "flowSub1",
+                "sourceRef": "SubStart",
+                "targetRef": "Classify1"
+              },
+              {
+                "id": "flowSub2",
+                "sourceRef": "Classify1",
+                "targetRef": "GW1"
+              },
+              {
+                "id": "flowSub3",
+                "sourceRef": "GW1",
+                "targetRef": "Provide1",
+                "conditionExpression": {
+                  "type": "bpmn:FormalExpression",
+                  "body": "Simple"
+                }
+              },
+              {
+                "id": "flowSub4",
+                "sourceRef": "GW1",
+                "targetRef": "RCA1",
+                "conditionExpression": {
+                  "type": "bpmn:FormalExpression",
+                  "body": "Complex"
+                }
+              },
+              {
+                "id": "flowSub5",
+                "sourceRef": "RCA1",
+                "targetRef": "Provide1"
+              },
+              {
+                "id": "flowSub6",
+                "sourceRef": "Provide1",
+                "targetRef": "PGsplit"
+              },
+              {
+                "id": "flowSub7",
+                "sourceRef": "PGsplit",
+                "targetRef": "Send1"
+              },
+              {
+                "id": "flowSub8",
+                "sourceRef": "PGsplit",
+                "targetRef": "Log1"
+              },
+              {
+                "id": "flowSub9",
+                "sourceRef": "Log1",
+                "targetRef": "SubEnd2"
+              },
+              {
+                "id": "flowSub10",
+                "sourceRef": "Send1",
+                "targetRef": "EBG1"
+              },
+              {
+                "id": "flowSub11",
+                "sourceRef": "EBG1",
+                "targetRef": "Reply1"
+              },
+              {
+                "id": "flowSub12",
+                "sourceRef": "EBG1",
+                "targetRef": "Timer1"
+              },
+              {
+                "id": "flowSub13",
+                "sourceRef": "Reply1",
+                "targetRef": "Close1"
+              },
+              {
+                "id": "flowSub14",
+                "sourceRef": "Timer1",
+                "targetRef": "Reminder1"
+              },
+              {
+                "id": "flowSub15",
+                "sourceRef": "Reminder1",
+                "targetRef": "Close1"
+              },
+              {
+                "id": "flowSub16",
+                "sourceRef": "Close1",
+                "targetRef": "SubEnd1"
+              }
+            ]
+          },
+          {
+            "id": "Cancel1",
+            "type": "bpmn:BoundaryEvent",
+            "name": "Customer Cancel",
+            "attachedToRef": "Sub1",
+            "cancelActivity": true,
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "EndTerminate",
+            "type": "bpmn:EndEvent",
+            "name": "Process Terminated"
+          },
+          {
+            "id": "End1",
+            "type": "bpmn:EndEvent",
+            "name": "Process Completed"
+          }
+        ],
+        "sequenceFlows": [
+          {
+            "id": "flow1",
+            "sourceRef": "Start1",
+            "targetRef": "Parse1"
+          },
+          {
+            "id": "flow2",
+            "sourceRef": "Parse1",
+            "targetRef": "Sub1"
+          },
+          {
+            "id": "flow3",
+            "sourceRef": "Sub1",
+            "targetRef": "End1"
+          },
+          {
+            "id": "flowCancel",
+            "sourceRef": "Cancel1",
+            "targetRef": "EndTerminate"
+          }
+        ]
+      }
+    ]
+  }
+}
