@@ -1,0 +1,125 @@
+**No**, it is **not possible** for transition **T5** to fire before transition **T3**.
+
+---
+
+### 🔒 **Proof of Impossibility:**
+
+We analyze the conditions under which **T5** can fire.
+
+- **T5**: `p3 –|p4 → p6`  
+  This means:
+  - **Input**: a token in **p3**
+  - **Inhibitor arc from p4**: T5 is enabled **only if p4 has 0 tokens**
+  - Output: token in p6
+
+So, **T5 is enabled iff**:
+- `p3 ≥ 1` **and** `p4 = 0`
+
+Now consider the flow of tokens:
+
+1. Initially: `p0 = 1`, all others = 0.
+
+2. Only **T1** can fire initially:
+   - T1: `p0 → p1 + p2`  
+     After firing T1: p1 = 1, p2 = 1, p0 = 0
+
+3. Now:
+   - **T2** is enabled (p1 ≥ 1)
+   - **T3** is enabled (p2 ≥ 1)
+
+Let’s suppose we want to fire **T5** at some point **before T3 fires**.
+
+In that scenario:
+- **T3 has not fired yet**, so **p2 still has its token** → T3 is enabled
+- Since p2 has not consumed its token, **p4 is still 0** (no token produced)
+- But for **T5** to fire, we need **p3 ≥ 1**
+
+→ So how can **p3 get a token**? Only via **T2**: `p1 → p3`
+
+So we must fire **T2** before T5 (to get a token in p3)
+
+Let’s do that:
+
+- Fire T1: p0=0, p1=1, p2=1
+- Fire T2: consumes p1, produces p3=1 → now p3=1, p2=1, p4=0
+
+At this point:
+- p3 = 1
+- p4 = 0 → so **inhibitor condition is satisfied**
+- So **T5 is enabled**
+
+Wait! It **seems** T5 could fire now, and T3 hasn’t fired yet.
+
+But **this is exactly the point — so is the answer YES?**
+
+Let’s check: Have we fired T3? No. Can we fire T5? Yes — p3=1, p4=0
+
+So consider this sequence:
+
+1. **T1** → marking: p1=1, p2=1
+2. **T2** → marking: p3=1, p2=1
+3. **T5** → consumes p3, produces p6; p4 still 0 → p6=1
+
+✅ **T5 fired before T3**
+
+### 📌 Contradiction to our initial conclusion?
+
+Yes — our earlier “proof” was flawed. Let’s reevaluate.
+
+We thought T5 firing required T3 to have fired — but actually, **T5 explicitly requires p4 = 0**, which is the **absence** of T3 firing.
+
+So T5 can **only** fire **before** T3 fires — **or after both T3 and T4 fire and p4 is emptied**, but in this net, **p4 is never emptied** (no transition consumes from p4 after T3), so once T3 fires, p4 gets a token **forever**.
+
+Wait — is that true?
+
+- **T3**: p2 → p4 → produces one token in p4
+- No transition removes token from p4
+- So once T3 fires, **p4 ≥ 1 permanently**
+- ⇒ **inhibitor condition of T5 (p4 = 0) is never satisfied again**
+
+Therefore, **T5 can fire only when**:
+- p3 ≥ 1 **and** p4 = 0
+
+Which implies:
+- T3 has **not yet fired** (else p4 ≥ 1)
+- But T2 **must have fired** (to get token in p3)
+
+So **T5 can fire only after T2, but before T3**
+
+Thus, **yes**, it is **possible** — in fact, **T5 can only fire (if at all) *before* T3 fires**
+
+---
+
+### ✅ Correct Answer: **YES**
+
+---
+
+### 🔎 Concrete Firing Sequence:
+
+Initial marking: [p0=1, p1=0, p2=0, p3=0, p4=0, p5=0, p6=0]
+
+1. **T1 fires**  
+   → p0=0, p1=1, p2=1  
+   (parallel split)
+
+2. **T2 fires**  
+   → p1=0, p3=1, p2=1  
+   (p3 now has token, p4 still 0)
+
+3. **T5 fires** (p3 has token, p4 has **0** → inhibitor arc condition satisfied)  
+   → consumes p3, produces p6=1  
+   → Now: p6=1, p2=1, all others 0 except p3=0, p4=0
+
+T3 has **not fired yet**.
+
+Thus: **T5 fired before T3**
+
+---
+
+### ✅ Final Answer:
+
+**Yes**, it is possible.
+
+**Firing sequence**: T1 → T2 → T5
+
+**Justification**: After T1 and T2 fire, p3 contains a token and p4 is still empty. The inhibitor arc on T5 from p4 is satisfied (since p4 has 0 tokens), so T5 is enabled and can fire before T3. This sequence is valid and shows T5 firing prior to T3.

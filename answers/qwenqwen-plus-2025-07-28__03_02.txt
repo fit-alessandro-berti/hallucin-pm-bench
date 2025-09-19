@@ -1,0 +1,280 @@
+{
+  "process": {
+    "id": "CustomerSupportTicketProcess",
+    "flowElements": [
+      {
+        "id": "StartEvent_1",
+        "type": "startEvent",
+        "name": "Support Email Received",
+        "outgoing": "Flow_1"
+      },
+      {
+        "id": "Task_1",
+        "type": "task",
+        "name": "Parse Email and Create Ticket",
+        "incoming": "Flow_1",
+        "outgoing": "Flow_2"
+      },
+      {
+        "id": "Task_2",
+        "type": "task",
+        "name": "Initial Classification",
+        "incoming": "Flow_2",
+        "outgoing": "Flow_3"
+      },
+      {
+        "id": "Gateway_1",
+        "type": "exclusiveGateway",
+        "name": "Ticket Type?",
+        "incoming": "Flow_3",
+        "outgoing": [
+          "Flow_4",
+          "Flow_5"
+        ],
+        "conditionExpression": {
+          "language": "text",
+          "body": "Simple"
+        }
+      },
+      {
+        "id": "Task_3",
+        "type": "task",
+        "name": "Provide Resolution",
+        "incoming": [
+          "Flow_4",
+          "Flow_6"
+        ],
+        "outgoing": "Flow_7"
+      },
+      {
+        "id": "Task_4",
+        "type": "task",
+        "name": "Root Cause Analysis",
+        "incoming": "Flow_5",
+        "outgoing": "Flow_6"
+      },
+      {
+        "id": "Task_5",
+        "type": "task",
+        "name": "Send Response to Customer",
+        "incoming": "Flow_7",
+        "outgoing": "Flow_8"
+      },
+      {
+        "id": "Task_6",
+        "type": "task",
+        "name": "Log Solution in Knowledge Base",
+        "incoming": "Flow_7",
+        "outgoing": "Flow_9"
+      },
+      {
+        "id": "Gateway_2",
+        "type": "parallelGateway",
+        "name": "Parallel Split",
+        "incoming": "Flow_7",
+        "outgoing": [
+          "Flow_8",
+          "Flow_9"
+        ]
+      },
+      {
+        "id": "Gateway_3",
+        "type": "parallelGateway",
+        "name": "Parallel Join",
+        "incoming": [
+          "Flow_8",
+          "Flow_9"
+        ],
+        "outgoing": "Flow_10"
+      },
+      {
+        "id": "IntermediateCatchEvent_1",
+        "type": "intermediateCatchEvent",
+        "name": "Wait for Customer Reply",
+        "incoming": "Flow_10",
+        "outgoing": "Flow_11",
+        "eventDefinition": {
+          "type": "timer",
+          "timerEventDefinition": {
+            "timeDuration": "PT24H"
+          }
+        }
+      },
+      {
+        "id": "IntermediateCatchEvent_2",
+        "type": "intermediateCatchEvent",
+        "name": "Customer Reply",
+        "incoming": "Flow_10",
+        "outgoing": "Flow_12",
+        "eventDefinition": {
+          "type": "message"
+        }
+      },
+      {
+        "id": "Gateway_4",
+        "type": "exclusiveGateway",
+        "name": "Reply Received?",
+        "incoming": [
+          "Flow_11",
+          "Flow_12"
+        ],
+        "outgoing": "Flow_13"
+      },
+      {
+        "id": "Task_7",
+        "type": "task",
+        "name": "Send Reminder",
+        "incoming": "Flow_11",
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "Task_8",
+        "type": "task",
+        "name": "Close Ticket",
+        "incoming": [
+          "Flow_12",
+          "Flow_14"
+        ],
+        "outgoing": "Flow_15"
+      },
+      {
+        "id": "EndEvent_1",
+        "type": "endEvent",
+        "name": "Ticket Closed",
+        "incoming": "Flow_15"
+      },
+      {
+        "id": "IntermediateCatchEvent_3",
+        "type": "intermediateCatchEvent",
+        "name": "Customer Cancels Ticket",
+        "incoming": [
+          "Flow_2",
+          "Flow_3",
+          "Flow_4",
+          "Flow_5",
+          "Flow_6",
+          "Flow_7",
+          "Flow_8",
+          "Flow_9",
+          "Flow_10",
+          "Flow_11"
+        ],
+        "outgoing": "Flow_16",
+        "eventDefinition": {
+          "type": "message"
+        }
+      },
+      {
+        "id": "EndEvent_2",
+        "type": "endEvent",
+        "name": "Terminated",
+        "incoming": "Flow_16"
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "Flow_1",
+        "sourceRef": "StartEvent_1",
+        "targetRef": "Task_1"
+      },
+      {
+        "id": "Flow_2",
+        "sourceRef": "Task_1",
+        "targetRef": "Task_2"
+      },
+      {
+        "id": "Flow_3",
+        "sourceRef": "Task_2",
+        "targetRef": "Gateway_1"
+      },
+      {
+        "id": "Flow_4",
+        "sourceRef": "Gateway_1",
+        "targetRef": "Task_3",
+        "conditionExpression": {
+          "language": "text",
+          "body": "Simple"
+        }
+      },
+      {
+        "id": "Flow_5",
+        "sourceRef": "Gateway_1",
+        "targetRef": "Task_4",
+        "conditionExpression": {
+          "language": "text",
+          "body": "Complex"
+        }
+      },
+      {
+        "id": "Flow_6",
+        "sourceRef": "Task_4",
+        "targetRef": "Task_3"
+      },
+      {
+        "id": "Flow_7",
+        "sourceRef": "Task_3",
+        "targetRef": "Gateway_2"
+      },
+      {
+        "id": "Flow_8",
+        "sourceRef": "Gateway_2",
+        "targetRef": "Task_5"
+      },
+      {
+        "id": "Flow_9",
+        "sourceRef": "Gateway_2",
+        "targetRef": "Task_6"
+      },
+      {
+        "id": "Flow_10",
+        "sourceRef": "Gateway_3",
+        "targetRef": "IntermediateCatchEvent_1"
+      },
+      {
+        "id": "Flow_11",
+        "sourceRef": "IntermediateCatchEvent_1",
+        "targetRef": "Gateway_4"
+      },
+      {
+        "id": "Flow_12",
+        "sourceRef": "IntermediateCatchEvent_2",
+        "targetRef": "Gateway_4"
+      },
+      {
+        "id": "Flow_13",
+        "sourceRef": "Gateway_4",
+        "targetRef": "Task_7"
+      },
+      {
+        "id": "Flow_14",
+        "sourceRef": "Task_7",
+        "targetRef": "Task_8"
+      },
+      {
+        "id": "Flow_15",
+        "sourceRef": "Task_8",
+        "targetRef": "EndEvent_1"
+      },
+      {
+        "id": "Flow_16",
+        "sourceRef": "IntermediateCatchEvent_3",
+        "targetRef": "EndEvent_2"
+      }
+    ]
+  },
+  "collaboration": {
+    "participants": [
+      {
+        "id": "Participant_1",
+        "name": "Support Team",
+        "processRef": "CustomerSupportTicketProcess"
+      }
+    ],
+    "messageFlows": []
+  },
+  "definitions": {
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "expressionLanguage": "http://www.w3.org/1999/XPath",
+    "typeLanguage": "http://www.w3.org/2001/XMLSchema"
+  }
+}

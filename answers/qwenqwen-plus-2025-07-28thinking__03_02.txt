@@ -1,0 +1,309 @@
+{
+  "definitions": {
+    "id": "definitions",
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "process": {
+      "id": "CustomerSupportProcess",
+      "flowElements": [
+        {
+          "id": "StartEvent_1",
+          "type": "bpmn:StartEvent",
+          "name": "Support E-mail Received",
+          "outgoing": ["Flow_1"]
+        },
+        {
+          "id": "Task_Parse",
+          "type": "bpmn:Task",
+          "name": "Parse E-mail and Create Ticket",
+          "incoming": ["Flow_1"],
+          "outgoing": ["Flow_2"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_Parse",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_Parse",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "Task_InitialClassification",
+          "type": "bpmn:Task",
+          "name": "Initial Classification",
+          "incoming": ["Flow_2"],
+          "outgoing": ["Flow_3"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_IC",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_InitialClassification",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "ExclusiveGateway_1",
+          "type": "bpmn:ExclusiveGateway",
+          "incoming": ["Flow_3"],
+          "outgoing": ["Flow_Simple", "Flow_Complex"]
+        },
+        {
+          "id": "Flow_Simple",
+          "type": "bpmn:SequenceFlow",
+          "sourceRef": "ExclusiveGateway_1",
+          "targetRef": "Task_ProvideResolution",
+          "conditionExpression": {
+            "language": "text",
+            "body": "Simple"
+          }
+        },
+        {
+          "id": "Flow_Complex",
+          "type": "bpmn:SequenceFlow",
+          "sourceRef": "ExclusiveGateway_1",
+          "targetRef": "Task_RootCauseAnalysis",
+          "conditionExpression": {
+            "language": "text",
+            "body": "Complex"
+          }
+        },
+        {
+          "id": "Task_RootCauseAnalysis",
+          "type": "bpmn:Task",
+          "name": "Root Cause Analysis",
+          "incoming": ["Flow_Complex"],
+          "outgoing": ["Flow_4"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_RCA",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_RootCauseAnalysis",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "Task_ProvideResolution",
+          "type": "bpmn:Task",
+          "name": "Provide Resolution",
+          "incoming": ["Flow_Simple", "Flow_4"],
+          "outgoing": ["Flow_5"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_PR",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_ProvideResolution",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "ParallelGateway_1",
+          "type": "bpmn:ParallelGateway",
+          "incoming": ["Flow_5"],
+          "outgoing": ["Flow_SendResponse", "Flow_LogSolution"]
+        },
+        {
+          "id": "Task_SendResponse",
+          "type": "bpmn:Task",
+          "name": "Send Response to Customer",
+          "incoming": ["Flow_SendResponse"],
+          "outgoing": ["Flow_6"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_SR",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_SendResponse",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "IntermediateCatchEvent_1",
+          "type": "bpmn:IntermediateCatchEvent",
+          "name": "Customer Reply",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "incoming": ["Flow_6"],
+          "outgoing": ["Flow_CustomerReply"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_ICE",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "IntermediateCatchEvent_1",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "BoundaryEvent_Timer_1",
+          "type": "bpmn:BoundaryEvent",
+          "name": "24 hours",
+          "attachedToRef": "IntermediateCatchEvent_1",
+          "eventDefinitionType": "bpmn:TimerEventDefinition",
+          "outgoing": ["Flow_Timer"]
+        },
+        {
+          "id": "Flow_CustomerReply",
+          "type": "bpmn:SequenceFlow",
+          "sourceRef": "IntermediateCatchEvent_1",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Task_SendReminder",
+          "type": "bpmn:Task",
+          "name": "Send Reminder",
+          "incoming": ["Flow_Timer"],
+          "outgoing": ["Flow_7"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_SMR",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_SendReminder",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "Task_CloseTicket",
+          "type": "bpmn:Task",
+          "name": "Close Ticket",
+          "incoming": ["Flow_CustomerReply", "Flow_7"],
+          "outgoing": ["Flow_EndMain"]
+        },
+        {
+          "id": "Task_LogSolution",
+          "type": "bpmn:Task",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": ["Flow_LogSolution"],
+          "outgoing": ["Flow_EndLogging"]
+        },
+        {
+          "id": "BoundaryEvent_Cancellation_LS",
+          "type": "bpmn:BoundaryEvent",
+          "name": "Cancellation",
+          "attachedToRef": "Task_LogSolution",
+          "eventDefinitionType": "bpmn:MessageEventDefinition",
+          "outgoing": ["Flow_Cancellation"]
+        },
+        {
+          "id": "EndEvent_Main",
+          "type": "bpmn:EndEvent",
+          "incoming": ["Flow_EndMain"]
+        },
+        {
+          "id": "EndEvent_Logging",
+          "type": "bpmn:EndEvent",
+          "incoming": ["Flow_EndLogging"]
+        },
+        {
+          "id": "TerminateEvent_1",
+          "type": "bpmn:EndEvent",
+          "eventDefinitionType": "bpmn:TerminateEventDefinition",
+          "incoming": ["Flow_Cancellation"]
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "Flow_1",
+          "sourceRef": "StartEvent_1",
+          "targetRef": "Task_Parse"
+        },
+        {
+          "id": "Flow_2",
+          "sourceRef": "Task_Parse",
+          "targetRef": "Task_InitialClassification"
+        },
+        {
+          "id": "Flow_3",
+          "sourceRef": "Task_InitialClassification",
+          "targetRef": "ExclusiveGateway_1"
+        },
+        {
+          "id": "Flow_4",
+          "sourceRef": "Task_RootCauseAnalysis",
+          "targetRef": "Task_ProvideResolution"
+        },
+        {
+          "id": "Flow_5",
+          "sourceRef": "Task_ProvideResolution",
+          "targetRef": "ParallelGateway_1"
+        },
+        {
+          "id": "Flow_SendResponse",
+          "sourceRef": "ParallelGateway_1",
+          "targetRef": "Task_SendResponse"
+        },
+        {
+          "id": "Flow_LogSolution",
+          "sourceRef": "ParallelGateway_1",
+          "targetRef": "Task_LogSolution"
+        },
+        {
+          "id": "Flow_6",
+          "sourceRef": "Task_SendResponse",
+          "targetRef": "IntermediateCatchEvent_1"
+        },
+        {
+          "id": "Flow_Timer",
+          "sourceRef": "BoundaryEvent_Timer_1",
+          "targetRef": "Task_SendReminder"
+        },
+        {
+          "id": "Flow_7",
+          "sourceRef": "Task_SendReminder",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Flow_EndMain",
+          "sourceRef": "Task_CloseTicket",
+          "targetRef": "EndEvent_Main"
+        },
+        {
+          "id": "Flow_EndLogging",
+          "sourceRef": "Task_LogSolution",
+          "targetRef": "EndEvent_Logging"
+        },
+        {
+          "id": "Flow_Cancellation",
+          "sourceRef": "BoundaryEvent_Cancellation_Parse",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation2",
+          "sourceRef": "BoundaryEvent_Cancellation_IC",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation3",
+          "sourceRef": "BoundaryEvent_Cancellation_RCA",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation4",
+          "sourceRef": "BoundaryEvent_Cancellation_PR",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation5",
+          "sourceRef": "BoundaryEvent_Cancellation_SR",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation6",
+          "sourceRef": "BoundaryEvent_Cancellation_ICE",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation7",
+          "sourceRef": "BoundaryEvent_Cancellation_SMR",
+          "targetRef": "TerminateEvent_1"
+        },
+        {
+          "id": "Flow_Cancellation8",
+          "sourceRef": "BoundaryEvent_Cancellation_LS",
+          "targetRef": "TerminateEvent_1"
+        }
+      ]
+    }
+  }
+}

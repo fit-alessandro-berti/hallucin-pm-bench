@@ -1,0 +1,143 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             targetNamespace="http://bpmn.io/schema/bpmn"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             typeLanguage="http://www.w3.org/2001/XMLSchema">
+
+  <process id="wrc_process" isExecutable="false">
+
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Start">
+      <outgoing>wrc_flow_1</outgoing>
+    </startEvent>
+
+    <!-- Task: Validate Claim -->
+    <userTask id="wrc_validate_claim" name="validates the claim">
+      <incoming>wrc_flow_1</incoming>
+      <outgoing>wrc_flow_2</outgoing>
+    </userTask>
+
+    <!-- Gateway: Is Claim Complete? (Exclusive) -->
+    <exclusiveGateway id="wrc_gateway_complete" name="Complete?">
+      <incoming>wrc_flow_2</incoming>
+      <outgoing>wrc_flow_3</outgoing>
+      <outgoing>wrc_flow_4</outgoing>
+    </exclusiveGateway>
+
+    <!-- Task: Request Missing Information -->
+    <userTask id="wrc_request_info" name="requests missing information">
+      <incoming>wrc_flow_4</incoming>
+      <outgoing>wrc_flow_5</outgoing>
+    </userTask>
+
+    <!-- Sequence Flow back to validation -->
+    <sequenceFlow id="wrc_flow_5" sourceRef="wrc_request_info" targetRef="wrc_validate_claim"/>
+
+    <!-- Flow from validation to completeness check -->
+    <sequenceFlow id="wrc_flow_2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_complete"/>
+
+    <!-- Flow if claim is incomplete -->
+    <sequenceFlow id="wrc_flow_4" sourceRef="wrc_gateway_complete" targetRef="wrc_request_info">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[false]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- Flow if claim is complete -->
+    <sequenceFlow id="wrc_flow_3" sourceRef="wrc_gateway_complete" targetRef="wrc_check_eligibility">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[true]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- Task: Check Warranty Eligibility -->
+    <userTask id="wrc_check_eligibility" name="checks warranty eligibility">
+      <incoming>wrc_flow_3</incoming>
+      <outgoing>wrc_flow_6</outgoing>
+    </userTask>
+
+    <!-- Gateway: Warranty Decision (Exclusive) -->
+    <exclusiveGateway id="wrc_gateway_eligible" name="Within Warranty?">
+      <incoming>wrc_flow_6</incoming>
+      <outgoing>wrc_flow_7</outgoing>
+      <outgoing>wrc_flow_8</outgoing>
+    </exclusiveGateway>
+
+    <!-- Flow if out of warranty -->
+    <sequenceFlow id="wrc_flow_8" sourceRef="wrc_gateway_eligible" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[false]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- Flow if within warranty -->
+    <sequenceFlow id="wrc_flow_7" sourceRef="wrc_gateway_eligible" targetRef="wrc_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[true]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- Task: Send Rejection Notice -->
+    <userTask id="wrc_send_rejection" name="sends rejection notice">
+      <incoming>wrc_flow_8</incoming>
+      <outgoing>wrc_flow_9</outgoing>
+    </userTask>
+
+    <!-- End Event: Rejection -->
+    <endEvent id="wrc_end_rejection" name="End">
+      <incoming>wrc_flow_9</incoming>
+    </endEvent>
+    <sequenceFlow id="wrc_flow_9" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection"/>
+
+    <!-- Parallel Split Gateway -->
+    <parallelGateway id="wrc_parallel_split" name="Parallel Split">
+      <incoming>wrc_flow_7</incoming>
+      <outgoing>wrc_flow_10</outgoing>
+      <outgoing>wrc_flow_11</outgoing>
+    </parallelGateway>
+
+    <!-- Task: Create Shipment Order -->
+    <serviceTask id="wrc_create_shipment" name="create shipment order">
+      <incoming>wrc_flow_10</incoming>
+      <outgoing>wrc_flow_12</outgoing>
+    </serviceTask>
+
+    <!-- Task: Schedule Courier Pickup -->
+    <serviceTask id="wrc_schedule_pickup" name="schedule courier pickup">
+      <incoming>wrc_flow_11</incoming>
+      <outgoing>wrc_flow_13</outgoing>
+    </serviceTask>
+
+    <!-- Parallel Join Gateway -->
+    <parallelGateway id="wrc_parallel_join" name="Parallel Join">
+      <incoming>wrc_flow_12</incoming>
+      <incoming>wrc_flow_13</incoming>
+      <outgoing>wrc_flow_14</outgoing>
+    </parallelGateway>
+
+    <!-- Sequence Flows into parallel join -->
+    <sequenceFlow id="wrc_flow_10" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment"/>
+    <sequenceFlow id="wrc_flow_11" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_pickup"/>
+    <sequenceFlow id="wrc_flow_12" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join"/>
+    <sequenceFlow id="wrc_flow_13" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join"/>
+
+    <!-- Task: Update Inventory Records -->
+    <userTask id="wrc_update_inventory" name="update inventory records">
+      <incoming>wrc_flow_14</incoming>
+      <outgoing>wrc_flow_15</outgoing>
+    </userTask>
+
+    <!-- Task: Close the Claim -->
+    <userTask id="wrc_close_claim" name="close the claim">
+      <incoming>wrc_flow_15</incoming>
+      <outgoing>wrc_flow_16</outgoing>
+    </userTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="wrc_end_success" name="End">
+      <incoming>wrc_flow_16</incoming>
+    </endEvent>
+
+    <!-- Final Sequence Flows -->
+    <sequenceFlow id="wrc_flow_14" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory"/>
+    <sequenceFlow id="wrc_flow_15" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    <sequenceFlow id="wrc_flow_16" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+
+  </process>
+</definitions>
+```

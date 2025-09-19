@@ -60,6 +60,8 @@ class Shared:
                        "x-ai/grok-code-fast-1",
                        "nousresearch/hermes-4-70b",
                        "nousresearch/hermes-4-405b",
+                       "qwen/qwen-plus-2025-07-28",
+                       "qwen/qwen-plus-2025-07-28:thinking",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
