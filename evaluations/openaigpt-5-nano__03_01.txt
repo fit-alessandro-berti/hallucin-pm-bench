@@ -1,0 +1,23 @@
+2.5
+
+### Evaluation Rationale
+The LLM answer attempts a BPMN 2.0 XML representation but contains critical structural and fidelity errors compared to the ground truth and the original description, warranting a low score under strict criteria. Key issues include:
+
+- **Major Fidelity Errors to Description/Ground Truth**:
+  - After "Forward to Specialist" (t5), the flow goes directly to "Confirm with Customer" (t6), skipping the explicit "Resolve Issue" (t4) required by line 6 ("When the specialist finishes, the ticket is 'Resolve Issue'"). Ground truth correctly routes t5 to t4 before t6. This omits a core activity, distorting the process logic.
+  - The "Password Reset" path (t2) correctly routes to t6, but the overall resolution handling is inconsistent without proper convergence to "Resolve Issue" for specialist cases.
+
+- **BPMN Validity and Compliance Errors**:
+  - Exclusive gateway gw2 ("Diagnosis Action") has two outgoing sequence flows (to t4 and t5) with **no conditions** (`<conditionExpression>`). Exclusive gateways require conditions (e.g., yes/no as in ground truth) for decisions per line 5; without them, it's invalid BPMN, breaking the decision point. Ground truth uses proper yes/no expressions on f7/f8.
+  - The confirmation decision (lines 8-9) is modeled with direct conditional sequence flows from task t6 to end or t3, which is invalid—tasks cannot split with conditions in BPMN; an exclusive gateway is required (as in ground truth's gw3). The prompt specifies "two decision points" but implies accurate loop modeling (line 9), which ground truth achieves with a third gateway; LLM's approach violates BPMN rules.
+  - Conditions for gw1 use non-standard `${classification} == 'Password Reset'` instead of simple yes/no (ground truth f3/f4), adding invented variables not in the description.
+
+- **Minor but Point-Deducting Deviations** (per strictness rule):
+  - Task names differ: t1 is "Classify Ticket" (LLM) vs. "Auto-Classification" (ground truth, matching "automatically classified" in line 2); gw1 is "Classification Result" vs. "Password Reset?".
+  - Process attributes: `isExecutable="true"` (LLM) vs. `"false"` (ground truth); id="p1" vs. "support_ticket".
+  - End event name: "Closed" vs. "Ticket Closed".
+  - Missing XML declaration (`<?xml ... ?>`); different namespace/targetNamespace.
+  - Flow IDs verbose ("flow_gw1_reset") vs. concise (f1-f13); conditions lack `xsi:type="tFormalExpression"`.
+  - Overall, adds subtle inventions (e.g., variable expressions) while omitting required elements.
+
+The XML is concise (~35 lines) and uses a single `<definitions>` block with mostly correct elements (e.g., start/end events, loop to t3), earning partial credit for skeleton structure. However, the invalid gateways, missing activity, and improper decision modeling make it functionally incorrect and non-executable as BPMN, far from "exactly as stated." No hallucinations like timers/escalations, but core omissions justify severe deduction.

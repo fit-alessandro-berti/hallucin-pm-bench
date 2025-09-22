@@ -1,0 +1,23 @@
+3.5
+
+### Evaluation Rationale
+The LLM answer shows partial alignment with the ground truth but has substantial differences, particularly in the core task of summarizing "every decision point," warranting a low score under strict criteria. Small structural and interpretive variances (e.g., added columns for "basis" or "produced/used at") are not outright errors but contribute to deviation since the prompt seeks a direct summary without extras. Here's a breakdown:
+
+#### Decision Points (Major Differences – Heavy Point Loss)
+- **Core Mismatch**: The ground truth identifies three explicit decision points: (1) eligibility check in Triage_Agent_Validate_Eligibility (branch: continue/reject), (2) amount threshold post-PreApprove (branch: >€1,000 → auditor; ≤€1,000 → skip), and (3) final approval at PreApprove/Senior_Auditor_Review (branch: approved → payment; rejected → end). This captures the process's branching logic accurately, including the explicit high-value condition as a standalone decision.
+- **LLM Shortcomings**:
+  - Misses the amount threshold entirely as a decision point, treating the high-value branch implicitly via the conditional Senior_Auditor_Review entry. This omits a key branching element from the process description ("if the refund amount is greater than €1 000"), making the summary incomplete.
+  - Structures decisions around activity-based approvals/rejections (Triage, PreApprove, Senior), which infers potential rejections but does not match the ground truth's focus on branching logic/outcomes. The combined "final approval" in ground truth is imperfect (as PreApprove precedes the branch), but the LLM's separation still diverges significantly without covering the threshold.
+  - Adds unrequested details (e.g., "What is decided," "Basis for the decision") and a note dismissing the payment constraint as non-decisional, which is interpretive and not in the ground truth. This introduces unnecessary elaboration, straying from a strict summary.
+- **Impact**: This section is the prompt's primary focus ("every decision point"), and the LLM identifies a different set of three points with no overlap beyond #1. Strict evaluation treats this as a fundamental failure to enumerate all points (e.g., missing the explicit "if >€1,000" decision), resulting in ~50% content divergence.
+
+#### Required Documents (Minor Differences – Moderate Point Loss)
+- **Alignment**: Both list all seven exact documents from the process (RefundRequestForm, FlightManifest, WeatherReport, EligibilityChecklist, AuditTrail, BankTransferAuthorization, RefundConfirmationPDF), with correct notes on no extras/legacy activities and conditional use of AuditTrail.
+- **LLM Shortcomings**:
+  - Expands into a table with "Produced/used at which step," adding precise but unrequested context (e.g., "submitted by the passenger," "consulted by Triage"). The ground truth uses a simple numbered list without steps, making the LLM's format and details extraneous.
+  - Minor phrasing tweaks: Adds "(signed)" to BankTransferAuthorization (accurate per description but not in ground truth) and "attached to" for AuditTrail (similar to ground truth's conditional note but more specific).
+- **Impact**: Content is 95% identical, but the added structure/details deviate from the ground truth's concise list, counting as a small error under strictness rules.
+
+#### Overall (Strict Assessment)
+- **Strengths**: No introduction of undefined activities/artefacts (adheres to prompt); covers all documents accurately; maintains process fidelity in notes.
+- **Weaknesses**: Decision points section has ~60-70% difference in identification and structure, missing a critical branch and altering focus. Documents section has ~10-20% deviation via extras. Total divergence ~40-50%, but strictness amplifies this (e.g., incomplete decision enumeration alone justifies major deduction). No perfect match, so score reflects partial utility but clear inferiority to ground truth.

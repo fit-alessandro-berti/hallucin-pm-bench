@@ -1,0 +1,26 @@
+4.5
+
+### Evaluation Rationale
+This evaluation is strictly based on fidelity to the ground truth BPMN 2.0 XML, the prompt's constraints (exact translation without inventions, two exclusive gateways, re-work loop to "Initial Diagnosis", ≤40 lines, concise IDs, no added elements), and the textual description. Differences in structure, elements, and validity lead to major deductions; even minor variances (e.g., ID styles, expressions) compound losses.
+
+#### Major Errors (Severe Deductions: -4.0 total impact)
+- **Invalid BPMN Structure (-2.5)**: The LLM omits an exclusive gateway after "Initial Diagnosis" (t4). Instead, it attaches conditional sequence flows (s6, s7) directly from t4 to "Resolve Issue" (t5) and "Forward to Specialist" (t6), using invented variables (`${diagnosis == 'resolve'}` / `'forward'`). BPMN 2.0 requires an exclusive gateway for branching decisions (as in ground truth's gw2: "Resolved Internally?"). This renders the diagram non-executable and incorrect, violating the prompt's "mark the two decision points with exclusive gateways" (only one valid gw here; second is malformed).
+- **Invented Elements (-1.5)**: Adds a "Specialist Work" task (t7, with s8/s9 flows), not mentioned in the description. Line 6 states "When the specialist finishes, the ticket is 'Resolve Issue'", implying no separate activity—forwarding directly leads to resolution (as in ground truth: t5 → t4). This is a clear hallucination, explicitly warned against in the prompt and trap notes.
+
+#### Significant Errors (Moderate Deductions: -1.0 total impact)
+- **Incorrect Flow for Password Reset Path**: LLM routes "Provide Reset Instructions" (t3) → "Resolve Issue" (t5) → confirm (s5/s10). The description (line 3) sends it "straight to 'Provide Reset Instructions'", implying resolution via that task alone, so it should flow directly to "Confirm with Customer" (as in ground truth: t2 → t6 via f5, skipping resolve). Adding resolve here invents an unmentioned step in that branch.
+- **Overly Complex/Invented Conditions (-0.5)**: Uses verbose FEEL expressions (e.g., `${classification == 'Password Reset'}`, `${customerConfirmed == true}` with CDATA) instead of ground truth's simple "yes"/"no". Prompt emphasizes "exactly as stated" without inventions; this adds unnecessary logic not derived from the text.
+- **Length and Conciseness Violation**: The XML exceeds ~40 lines (actual count ~55 when formatted, due to long flows and namespaces). Ground truth is concise (~35 lines) with minimal expressions.
+
+#### Minor Errors (Small Deductions: -0.5 total impact)
+- **Element Types and Attributes**: Uses `serviceTask` for classification (t2; appropriate for automation but mismatches ground truth's `task` t1). Sets `isExecutable="true"` (vs. ground truth's "false"). Adds unnecessary `xmlns:xsi` and different `targetNamespace`.
+- **ID and Naming Inconsistencies**: Concise IDs (good), but styles differ (e.g., "gw1" vs. "gw1"/"gw2"/"gw3"; "p1" vs. "support_ticket"). Names like "Classify Ticket" vs. "Auto-Classification"; "Password?" vs. "Password Reset?"—close but not exact.
+- **Missing/Extra Details**: No `<?xml>` declaration (matches ground truth omission). End event named "Ticket Closed" (correct), but overall namespace and process name differ slightly.
+
+#### Strengths (Partial Credit: +1.0 baseline)
+- Captures core sequence: start → classify → gw1 → (password/provide or diagnosis) → resolve/forward → confirm → gw2 → (close or loop to diagnosis) → end.
+- Correctly models the re-work loop (gw2 false → t4/t3 "Initial Diagnosis").
+- Uses one correct exclusive gateway (gw1) with proper conditions.
+- No egregious additions like timers, parallel paths, or "Approve Closure" (avoids some traps).
+
+**Overall**: The answer is ~50% accurate in structure/flow but critically flawed in BPMN validity, inventions, and exactness, making it unusable as-is. Strict scoring penalizes these heavily (not a passing implementation). A perfect match would be 10.0; this warrants 4.5 for partial skeleton despite failures.
