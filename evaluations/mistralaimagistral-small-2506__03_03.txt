@@ -1,0 +1,28 @@
+2.5
+
+### Evaluation Rationale
+This evaluation is strictly based on semantic and structural fidelity to the ground truth BPMN 2.0 XML, per the prompt's requirements (e.g., verbatim task names, only explicit elements, specified gateways, two end events, "wrc_" ID prefix, no inventions). The LLM answer deviates significantly in multiple ways, warranting a low score despite capturing a rough outline of the process. Key deductions (cumulative, with strict penalties for even minor issues like naming or structure):
+
+- **Structural Completeness and Correctness (-4.0 points)**: 
+  - Missing critical task "Send rejection notice" (prompt explicitly requires it before ending for out-of-warranty; ground truth includes "wrc_reject"). Flow jumps directly to end event, omitting this verbatim element.
+  - Incorrect loop for incomplete claims: Prompt requires re-validating via the same "validate the claim" task after requesting info and waiting. Ground truth loops back correctly to "wrc_validate". LLM invents a separate "wrc_revalidate" (wrongly as an exclusiveGateway named "re-validate", not a task) and breaks the flow (e.g., "wrc_revalidate" connects oddly to warranty check). This adds hallucinated elements and fails to model the "waits until received before re-validating" loop.
+  - Broken XML references: "wrc_incomplete_check" has default="wrc_incomplete", but "wrc_incomplete" is undefined (used as sourceRef in flows). This renders the XML invalid/non-executable.
+  - Garbled/incomplete elements: "<exclusiveGateway id="wrc hoàn" name=" Hoàn" /?" is nonsensical (likely hallucinated or copy-paste error; no equivalent in ground truth or prompt). Commented-out subprocess is extraneous and violates "self-contained" output.
+  - Parallel flows mostly correct but extra: Two incoming flows to join are fine, but overall process flow omits proper sequencing post-validation to warranty check on incomplete path.
+
+- **Task and Element Naming (-2.0 points)**:
+  - Not verbatim per prompt: E.g., LLM uses "validate the claim" (lowercase, missing "s" from "validates"); ground truth capitalizes but closer to intent ("Validate the claim"). Similar for "request missing information" (prompt: "requests missing information", with "s"); "create shipment order" (lowercase, prompt capitalized in bold); "schedule courier pickup" (lowercase). Prompt demands **verbatim** match to bolded text.
+  - Invented/altered names: "check warranty eligibility" (prompt: "checks warranty eligibility", missing "s" and not exact); gateways like "is claim complete?" ok but "re-validate" invented; end events "Reject Claim" and "End successful claim" differ from ground truth ("Rejected", "Successful end") and prompt intent (simple ends).
+  - Start event name="Start" mismatches prompt's "customer submits an **online warranty claim**" (ground truth: "Online warranty claim submitted").
+
+- **XML Syntax and Standards (-1.0 points)**:
+  - Namespace issues: Uses default xmlns without "bpmn:" prefix (elements like <startEvent> unprefixed), differing from ground truth's explicit <bpmn:definitions> and xmlns:bpmn. BPMN 2.0 allows defaults, but this is inconsistent with ground truth and prompt's "BPMN 2.0 XML".
+  - Unnecessary additions: conditionExpression="${complete}", "${inWarranty}", etc., not in ground truth or required (prompt doesn't specify; ground truth uses flow names like "Yes"/"No" for conditions). Parallel gateways named "Parallel Split/Join" (ground truth unnamed).
+  - Extra bloat: Full <bpmndi:BPMNDiagram> (empty, but present); process attributes like isClosable="false". Ground truth is minimal (34 lines, no extras).
+
+- **Overall Fidelity and Prompt Adherence (-0.5 points)**:
+  - Covers core gateways (exclusive for completeness/warranty, parallel split/join) and two ends with "wrc_" prefixes, earning partial credit.
+  - But hallucinates elements (e.g., revalidate gw, conditions) and omits required ones (rejection task), violating "Model **only** the flow elements explicitly mentioned. Do **not** invent...".
+  - Total length bloated/incomplete vs. ground truth's clean, minimal structure.
+
+A perfect 10.0 requires near-identical semantics (equivalent IDs/whitespace ok, per rubric). This is ~60-70% accurate at best but critically flawed, justifying 2.5 (minimal credit for attempting the skeleton).

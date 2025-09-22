@@ -1,0 +1,15 @@
+2.0
+
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a very low score under strict evaluation criteria. Key issues include:
+
+- **Extra/hallucinated elements**: Introduces an invented "Wait until missing information is received" task, which is not explicitly mentioned as a separate flow element. The prompt describes requesting and waiting as part of the same step before re-validating, modeled in the ground truth as a simple loop without a dedicated wait task. This violates the "model only explicitly mentioned" rule.
+
+- **Malformed XML structure**: Numerous syntax and reference errors, such as `<incoming>wrc_send_rejection_flow</outgoing>` (incorrect tags and self-referential loops), `<incoming>wrc_create_shipment_order</incoming>` (references own task ID instead of flow), and inconsistent incoming/outgoing connections that would prevent the diagram from being valid BPMN. Ground truth has clean, functional connections.
+
+- **Non-verbatim task names and additions**: Names like "Validate the claim" add capitalization not in the prompt's text (e.g., "validates the claim"). Adds unnamed or extra flows with conditionExpressions (e.g., "not complete"), which are not required and inflate the model beyond minimal requirements.
+
+- **Unnecessary complexity and redundancy**: Provides two XML versions, the first absurdly unrolling the validation loop into infinite repetitions (e.g., "_again_again_again"), indicating failure to model the loop correctly. Uses `<serviceTask>` instead of plain `<task>`, and adds gateway names/descriptions not in the ground truth or prompt.
+
+- **Omission/misalignment with specified structure**: While it includes the required gateways and two end events, the parallel flows and validation loop are incorrectly wired (e.g., multiple gateways for re-validation instead of a single looping exclusive gateway). Start event name "Online Warranty Claim" omits "submitted" from ground truth but more critically mismatches the prompt's phrasing slightly; end event names differ ("Claim Closed" vs. "Successful end").
+
+Semantically, the model is non-equivalent due to inventions and errors—it wouldn't render a correct process diagram. No omissions of core elements, but the extras and malformations alone justify severe deduction, far from the ground truth's minimal 34-line correctness.

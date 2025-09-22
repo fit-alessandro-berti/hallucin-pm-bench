@@ -1,0 +1,20 @@
+3.0
+
+### Evaluation Rationale
+Evaluating strictly against the ground truth and prompt requirements, the LLM answer receives a low score due to critical structural invalidity, omissions, and hallucinations, with even minor name discrepancies contributing to deductions. Semantically, it attempts the core flow but fails on validity and completeness.
+
+- **Invalid BPMN Structure (-3.0 points)**: Outgoing sequence flow from an end event (`flow_6`: `wrc_event_after_missing_info` → `wrc_task_validate_claim`) is not allowed in BPMN 2.0; end events terminate processes. This renders the loop non-functional and the entire XML invalidatable by parsers. Ground truth uses a proper direct loop (`wrc_request_info` → `wrc_validate`) without extras.
+
+- **Omission of Required Element (-2.0 points)**: Missing task for "close the claim" (explicit in step 5 and ground truth `wrc_close`). LLM ends directly after `wrc_update_inventory`, violating "model only the flow elements explicitly mentioned" and omitting a required activity. Ground truth includes it (`wrc_sf14` → `wrc_close` → `wrc_end_success`).
+
+- **Hallucinated Elements (-1.0 points)**: Extra end event (`wrc_event_after_missing_info`) invents a termination in the validation loop, contradicting the prompt's "waits until it is received before re-validating" (no end implied) and "do not invent ... error-handling paths." Ground truth has no such element; loop is implicit via re-validation.
+
+- **Name Mismatches (Verbatim Requirement, -0.5 points)**: Several names deviate slightly from prompt text/ground truth:
+  - Start event: "Customer submits online warranty claim" adds "Customer"; ground truth: "Online warranty claim submitted."
+  - Validate task: "Validate claim" omits "the"; ground truth/prompt imply "Validate the claim."
+  - Gateways: "Is claim complete?" vs. ground "Claim complete?"; "Warranty Eligibility" vs. "Within warranty?."
+  These are small but strictly deduct per instructions ("small errors ... significant loss").
+
+- **Other Minor Deviations (-0.5 points)**: No task for "checks warranty eligibility" (omitted like ground truth, but prompt explicitly mentions as activity after validation—neutralized as both err similarly). Extra XML attributes (e.g., exporter, JavaScript conditions) not in ground truth, though semantically equivalent conditions via flow names are preferred. Process `isExecutable="true"` vs. ground "false."
+
+The answer captures the parallel branches, gateways, and rejection path adequately but is undermined by the above, failing semantic equivalence (e.g., loop doesn't work, process can't complete properly without close). A valid, complete match like ground truth would score 10.0; this is ~30% functional.

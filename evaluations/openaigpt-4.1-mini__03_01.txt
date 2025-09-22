@@ -1,0 +1,18 @@
+2.0
+
+### Evaluation Rationale
+The LLM answer deviates significantly from the ground truth and the prompt's textual description, warranting a low score under strict criteria. Key differences include:
+
+- **Invented elements (major error, -4 points)**: Added a non-mentioned `userTask id="t7" name="Resolve Issue (Specialist)"` and flow `f10` from `t6` to `t7` to `t5`. The description (line 6) specifies that specialist work results in "Resolve Issue" without a separate activity; the ground truth reuses the existing "Resolve Issue" task (`t4`), avoiding invention. This creates an extra step (double "resolve" on specialist path: `t7` then `t5`), which is not described and violates "Do not invent or add... activities."
+
+- **Missing gateway for third decision point (major structural error, -2 points)**: No exclusive gateway after "Confirm with Customer" (`t8`). The description (lines 8-9) requires a decision (confirm → close; persists → loop to "Initial Diagnosis"). The ground truth uses `gw3` with conditioned flows (`f12` yes to end, `f13` no to `t3`). The LLM incorrectly branches directly from `t8` (`f12` to `t9`, `f13` to `t4`) without a gateway or conditions, making the decision non-exclusive and invalid for proper BPMN routing. This fails to "model the re-work loop exactly" and ignores the implied third decision, despite the prompt specifying only "two" (but ground truth confirms three are needed).
+
+- **Invalid/incomplete gateways (error, -1.5 points)**: `gw2` lacks `<conditionExpression>` on outgoing flows (`f7`, `f8`), rendering it non-functional for exclusive decisions (flows have only `name` attributes, no logic like ground truth's "yes"/"no"). `gw1` uses detailed conditions (`ticketType == 'Password Reset'`) vs. ground truth's simple "yes"/"no", but this is minor; the missing conditions on `gw2` break executability.
+
+- **Task types and classifications (minor but cumulative error, -0.5 points)**: Uses `serviceTask` for classification and `userTask` for others vs. ground truth's generic `<task>`. While "automatically classified" suggests automation, this adds specificity not required and differs from ground truth.
+
+- **Naming inconsistencies (minor, -0.3 points)**: Slight variations (e.g., start "Customer Submits Ticket" vs. "Ticket Submitted"; classify "Classify Ticket" vs. "Auto-Classification"; gateways unnamed vs. descriptive like "Password Reset?"). Flows have ad-hoc `name` attributes (e.g., "Resolve") not in ground truth, which uses conditions instead.
+
+- **Other mismatches (minor, -0.2 points)**: `isExecutable="true"` vs. "false"; different process ID (`p1` vs. "support_ticket"); added `xmlns:xsi` and `targetNamespace`; no process `name` attribute. These are syntactic but deviate from ground truth format.
+
+The model captures the basic sequence (start → classify → gw1 → reset/diagnosis → gw2 → resolve/forward → confirm → end/loop) and reset shortcut, but the inventions, missing gateway, and invalid decisions fundamentally alter the process flow, especially the specialist path and confirmation loop. Line count (~35 lines) complies, XML is syntactically valid, but semantic/BPMN accuracy is poor. Total deductions from 10.0 yield 2.0; even the core structure is undermined by hallucinations, as noted in the trap description.

@@ -1,0 +1,30 @@
+4.0
+
+### Evaluation Rationale
+Evaluating strictly against the prompt and ground truth as a minimal, semantically equivalent BPMN 2.0 XML (allowing minor variations like IDs or whitespace, but penalizing extras, omissions, or deviations harshly). The LLM answer captures the overall process structure (start, gateways, parallel branches, two ends) but introduces multiple hallucinations, non-verbatim names, and extra elements, violating "model only explicitly mentioned flow elements" and "do not invent" rules. This results in significant deductions despite no major omissions.
+
+#### Key Matches (+ points for core fidelity)
+- Uses required gateways: exclusive for completeness (step 2), exclusive for warranty (step 3), parallel split/join for step 4 (0.5 each, total +2.0).
+- Exactly two end events (rejection and success paths) (+1.0).
+- All IDs prefixed with "wrc_" (+0.5).
+- Core sequence flows align semantically with the process description (validation loop, eligibility check, parallel activities, update/close) (+1.0).
+- Valid BPMN XML structure with default namespace (equivalent to ground truth's prefixed version) (+0.5).
+
+#### Key Deductions (- points for differences/errors)
+- **Hallucinated extra elements** (major violation of "only explicit" and "do not invent"; -3.0 total):
+  - Extra task: `<task id="wrc_OnlineWarrantyClaim" name="Online warranty claim">` (submission is the start event per prompt/ground truth, not a separate task; invents a flow element).
+  - Extra event: `<intermediateCatchEvent id="wrc_WaitForInfo">` (wait is described narratively as part of the loop, not an explicit catch event; ground truth implies via direct loopback without invention; this adds unmentioned error-handling path).
+  - Extra flow attributes: Condition expressions (e.g., `<conditionExpression><![CDATA[Incomplete]]>`) on sequence flows (ground truth uses simple flow names like "Yes"/"No"; prompt doesn't specify conditions, so this is unnecessary invention).
+- **Non-verbatim task names** (prompt requires exact match to text; -1.5 total, strict penalty for even partial deviations):
+  - Parallel tasks shortened: "Create shipment order" (missing "for the replacement unit"); "Schedule courier pickup" (missing "of the faulty product").
+  - Start event name: "Start" (should evoke "customer submits an online warranty claim"; ground truth uses "Online warranty claim submitted").
+  - Minor: "Validate the claim" (close to "validates the claim" but not imperative verbatim); gateway names like "Claim complete?" add phrasing not in prompt.
+- **Structural deviations** (loop mishandled by extra event, shifting validation incoming; start mishandled; -1.5):
+  - Validation loop: Ground truth has direct `request_info -> validate` (implicit wait via sequence flow). LLM inserts catch event, creating an artificial sub-loop not mentioned.
+  - No parallel flow names (ground truth omits; LLM's unnamed flows are fine, but extras compound issues).
+- **Minor issues** (strict rubric demands perfection; -0.5):
+  - Process executable="true" (ground truth "false"; irrelevant but inconsistent).
+  - Added unused XMLNS (e.g., for DI/DC but no diagram elements; bloat).
+  - Longer/more verbose than ground truth's 34-line minimal (extras inflate to ~100 lines).
+
+**Overall Score Calculation**: Base 7.0 for semantic core (flows match description), minus 6.5 for violations = 4.0 (partial credit for structure, but strict penalties for inventions and non-verbatim elements make it unreliable/ non-equivalent).

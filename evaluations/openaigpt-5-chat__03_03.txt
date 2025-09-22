@@ -1,0 +1,15 @@
+3.0
+
+The LLM answer deviates significantly from the ground truth in structure and semantics, warranting a low score under strict evaluation criteria. Key differences include:
+
+- **Extra hallucinated elements**: Introduces a `receiveTask` ("Wait until it is received"), which is not explicitly mentioned in the prompt and thus violates "Do not invent ... beyond what is stated." The ground truth models the wait/re-validation loop implicitly via a direct flow back to the validate task, without adding a new task type. This adds an unnecessary BPMN element and ~4 extra lines/flows.
+
+- **Semantic/structural error in validation loop**: The prompt requires "re-validating" after receiving information, which the ground truth correctly handles by looping back to the `wrc_validate` task (ensuring the validation activity re-runs). The LLM incorrectly loops back to the completeness gateway (`wrc_gatewayCompleteness`) after the receiveTask, bypassing the validation task entirely. This omits required behavior (re-execution of validation) and creates non-equivalent logic—the second "validation" is just a gateway decision without the activity.
+
+- **Addition of omitted element**: Includes a `wrc_checkWarrantyEligibility` task, which faithfully matches the prompt's explicit "checks warranty eligibility" activity. However, the ground truth omits this entirely (directly connecting completeness gateway to warranty gateway), making it a structural difference. While semantically better aligned to the prompt, it increases divergence from the ground truth (extra task and flow).
+
+- **Name mismatches and verbosity**: Task/gateway names do not always match verbatim (e.g., start event "Customer submits online warranty claim" vs. ground truth's "Online warranty claim submitted"; parallel gateway names like "Parallel split" added, absent in ground truth). "Schedule courier pickup" omits "of the faulty product" in both, but LLM's overall names are less minimal. Sequence flows lack condition names like "No"/"Yes" present in ground truth.
+
+- **Other syntactic differences**: Different IDs (e.g., `wrc_validateClaim` vs. `wrc_validate`), process ID/name (`wrc_WarrantyReplacement_v1_3` vs. `wrc_process`), isExecutable (`true` vs. `false`), namespace handling (no `bpmn:` prefix vs. explicit), and more verbose XML structure (50+ lines vs. 34, with unused DI/OMG namespaces). While IDs/whitespace differences alone wouldn't deduct under the rubric, they compound the non-equivalence.
+
+These changes result in a non-semantically equivalent model: the process flow for incomplete claims behaves differently, and extra elements inflate the diagram beyond the prompt's "only ... explicitly mentioned" rule. No credit for equivalence; major deductions for invention, omission of re-validation behavior, and cumulative mismatches.

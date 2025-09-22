@@ -1,0 +1,16 @@
+3.0
+
+### Evaluation Summary
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under strict criteria. Key issues include:
+
+- **Invented/Added Elements (Major Hallucination, -4.0 penalty)**: The LLM incorrectly routes the "Password Reset" path from "Provide Reset Instructions" (t2) through an additional "Resolve Issue" (t5) task before "Confirm with Customer" (t6). The prompt states it "goes straight to 'Provide Reset Instructions'" (line 3), and the ground truth correctly models this as a direct flow to confirmation (t2 → t6), treating "Provide" as the implicit resolution without an extra unmentioned step. This violates "Do not invent or add... activities... that are not mentioned." It fabricates a non-existent sequence, altering the process logic.
+
+- **Incomplete XML Semantics (-2.0 penalty)**: Exclusive gateway branches lack `<conditionExpression>` elements (e.g., `xsi:type="tFormalExpression">yes</conditionExpression`), using only informal `name="Yes"/"No"` labels on sequence flows. The ground truth includes proper conditions for executable/intelligible BPMN. This makes the XML semantically invalid for BPMN 2.0 decision points, despite the prompt requiring "exclusive gateways."
+
+- **Missing or Incorrect Metadata (-1.0 penalty)**: No `<?xml version="1.0" encoding="UTF-8"?>` declaration (present in ground truth). Process attributes differ (id="supportProcess" isExecutable="true" vs. ground truth's "support_ticket" isExecutable="false"). No `targetNamespace`. Start/end events lack names ("Ticket Submitted"/"Ticket Closed"). Task t1 name is "Classify Ticket" instead of "Auto-Classification" (mismatches prompt's "automatically classified by the system"; minor wording but strict loss for inexact translation).
+
+- **Formatting/Output Violations (-0.5 penalty)**: Added extraneous text ("Here is the concise BPMN 2.0 XML...") before the `<definitions>` block, violating "Output a single `<definitions> … </definitions>` block." No IDs on sequence flows (ground truth has f1–f13). Total lines exceed conciseness ideal due to incomplete structure.
+
+- **Minor Structural Mismatches (-0.5 penalty)**: Gateway names differ slightly (e.g., gw2 "Issue Resolved?" vs. "Resolved Internally?"; gw3 "Customer Confirmed?" vs. "Customer Confirms?"). Task IDs for "Resolve Issue" (t5) and "Forward to Specialist" (t4) are swapped vs. ground truth, but flow logic is mostly preserved except for the password path error.
+
+The core loop (gw3 "No" → t3) and seven tasks are present, providing a baseline (partial credit: +3.0), but the hallucinations, omissions, and inexact translations accumulate to a failing grade. This fits the "hallucination trap" by adding unmentioned elements and missing precise XML fidelity.

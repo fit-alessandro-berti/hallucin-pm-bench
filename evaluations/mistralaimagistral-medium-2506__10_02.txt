@@ -1,0 +1,21 @@
+4.5
+
+### Evaluation Rationale
+The LLM answer adheres to the mandated vocabulary (e.g., "KYC Review", "Regulatory Liaison", "Transaction Analyst") strictly, which is a strength, and covers all tasks from the source text (7 rows including the explicit "Send SWIFT message" from step 5, whereas the ground truth omits it, merging or ignoring). However, under utmost strictness, significant differences from the ground truth result in a moderate-low score:
+
+- **Structure/Presentation (major deduction, -3.0 points)**: The LLM uses a non-standard RACI format (tasks in rows, R/A/C/I as columns filled with role names), while the ground truth uses the more conventional format (tasks in rows, roles as columns filled with R/A/C/I letters) with a legend. This alters readability and direct comparability. The LLM's inclusion of explanatory notes is extraneous (not requested), and empty cells use "-" instead of leaving blank as in ground truth.
+
+- **Roles (moderate deduction, -1.5 points)**: LLM correctly limits to mandated roles (Transaction Analyst, Regulatory Liaison) plus "IT Support" from the text, avoiding inventions. Ground truth introduces an unmandated "Operations Manager" (used as A in most rows), which violates the prompt's "only the mandated terms... for roles." However, this creates mismatches in every RACI assignment, as LLM lacks OM and reassigns accountability (e.g., LLM often sets A=Regulatory Liaison where ground truth sets A=Operations Manager).
+
+- **Tasks (minor deduction, -0.5 points)**: LLM accurately lists and words 7 tasks uniquely (e.g., "Perform KYC Review on sender and beneficiary" matches the source precisely; includes "Send SWIFT message" from step 5). Ground truth has only 6, omits sending SWIFT, rewords tasks slightly (e.g., "Receive Payment Instruction" vs. "Receive transfer instruction and log in system"; "Archive Record" vs. "Archive case file"), and inconsistently bolds "KYC Review." Small wording differences and the extra task in LLM count as variances.
+
+- **RACI Assignments (major deduction, -1.0 points)**: Core mismatches in nearly every row, even for overlapping tasks. Examples:
+  - Receive: LLM (R=TA, A=RL) vs. ground (R=TA, A=OM, C=IT, I=RL) — partial R match, but A/I differ; ground extras (C/IT unnecessary per source).
+  - Screen: LLM (R=TA, A=RL) vs. ground (R=TA, A=RL, I=OM, C=IT) — R/A match but extras differ.
+  - KYC Review: LLM (R=RL, A=RL, C=TA) vs. ground (C=TA, R=RL, A=OM, I=IT) — R/C swapable but A/I differ.
+  - Approve: LLM (R=RL, A=RL) vs. ground (C=TA, R=RL, A=OM, I=IT) — adds unneeded C=TA/I=IT.
+  - Release: LLM (R=TA, A=RL, I=IT) vs. ground (R=TA, A=OM, I=RL, C=IT) — R matches, but I/C/RL/IT swapped; A differs.
+  - Archive: LLM (R=IT, A=IT, C=RL) vs. ground (C=TA, I=RL, A=OM, R=IT) — R matches, but C=RL (consulted, inaccurate per source's "notified"=Informed) vs. ground's correct I=RL; adds unneeded C=TA/A=OM.
+  - Send SWIFT (LLM only): No ground truth equivalent, so full mismatch; LLM's I=RL misplaces the notification (should be on archive per step 6).
+
+Small errors (e.g., LLM's C=RL for archive instead of I=RL; minor task rephrasing) amplify deductions per instructions. Overall match ~40-50% on substance, boosted slightly by vocabulary fidelity but penalized heavily for format/RACI divergences.

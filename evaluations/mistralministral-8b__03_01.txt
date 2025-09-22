@@ -1,0 +1,16 @@
+3.5
+
+### Evaluation Rationale
+The LLM answer attempts a BPMN structure but deviates significantly from the prompt and ground truth, warranting a low score under strict criteria. Key differences include:
+
+- **Added extraneous elements (major deduction: -3.0 points)**: Includes unmentioned tasks like "Submit Support Ticket" (t1) and "Close Ticket" (t8), violating "Do not invent or add... activities." Ground truth starts directly with submission via start event and ends without a close task.
+  
+- **Incorrect BPMN syntax and structure (major deduction: -2.0 points)**: Uses invalid `<outcome>` elements inside gateways (e.g., gw1, gw2), which are not standard BPMN 2.0 and break flow connectivity (e.g., f5/f6 route via outcome2). Flows lack `<conditionExpression>` (yes/no) as in ground truth. Dead-end at t3 ("Provide Reset Instructions") with no outgoing flow to resolution/confirmation, halting the password reset path prematurely.
+
+- **Missing or misplaced elements (major deduction: -1.5 points)**: No gateway for customer confirmation (required for lines 8-9), leading to incorrect loop. Ground truth has gw3 for this. Auto-classification is modeled as a userTask (t2) instead of automatic (t1 in ground truth). Specialist handling is "Specialist Resolves Issue" (t5) instead of separate "Forward to Specialist" (t5 in ground truth) leading to shared "Resolve Issue" (t4/t6).
+
+- **Wrong loop modeling (major deduction: -1.0 points)**: Loop (f14) incorrectly branches from t8 ("Close") back to t4 ("Initial Diagnosis"), ignoring line 9's "loops back to Initial Diagnosis" *after* confirmation rejection. Ground truth correctly loops from gw3 (no) to t3 via f13.
+
+- **Minor issues (cumulative -0.5 points)**: Over 40 lines due to redundant flows/outcomes; uses `userTask` universally (ground truth uses generic `task`); inconsistent IDs/names (e.g., gw2 as "Resolve or Forward?" vs. ground truth's "Resolved Internally?"); no `<?xml>` declaration or `targetNamespace` matching ground truth.
+
+The answer captures basic sequence (start → classify → branch → diagnosis → branch → resolve → confirm → end/loop) and uses concise IDs, but hallucinations and structural errors make it non-functional BPMN, far from the ground truth's precise, minimal model. A perfect match would score 10.0; this is ~35% accurate.

@@ -1,0 +1,18 @@
+3.0
+
+### Evaluation Rationale
+The LLM answer captures the broad structure (start, auto-classification, gateways for classification and confirmation, loop back to diagnosis, end) and most activity names, but deviates significantly from the ground truth and prompt in critical ways, warranting a low score under strict criteria:
+
+- **Incorrect Flow for Password Reset Path (Major Error, -4.0 points)**: The description states the ticket "goes straight to 'Provide Reset Instructions'" (line 3), implying this is the resolution step for that case, leading directly to confirmation (line 7: "Once resolved"). The ground truth correctly routes `t2` (Provide Reset Instructions) → `t6` (Confirm with Customer), bypassing the "Resolve Issue" task (which is only mentioned post-diagnosis or post-specialist in lines 5-6). The LLM incorrectly routes Provide Reset Instructions → Resolve Issue → Confirm, inserting an unmentioned activity in this path. This invents a connection not stated, violating "Do not invent or add ... activities ... not mentioned" and altering the "straight to" intent.
+
+- **Exceeds Line Limit (Major Violation, -2.0 points)**: The prompt requires "≤ 40 lines." The LLM's XML spans ~70 lines due to verbose elements (e.g., multi-line conditionExpressions with specific variables, extra attributes like `<triggeredByEvent>false</triggeredByEvent>`). The ground truth is concise (~35 lines total, with compact formatting and simple "yes"/"no" conditions).
+
+- **Unnecessary Specificities and Inventions (Moderate Errors, -1.0 points total)**:
+  - Condition expressions use invented variables (e.g., `ticketType = 'Password Reset'`, `resolved = true`, `confirmed = true`), not mentioned in the description. Ground truth uses neutral "yes"/"no", aligning with unspecified decisions.
+  - Task types: LLM specifies `<serviceTask>` for auto-classify and `<userTask>` for others; ground truth uses plain `<task>` for all, avoiding unsubstantiated subtypes.
+  - Extra XML attributes: Includes `xsi:schemaLocation`, process `isExecutable="false"` (redundant), no `targetNamespace`, and unnamed start/end events (ground truth names them "Ticket Submitted" and "Ticket Closed" per lines 1/10).
+  - Slight name mismatch: "Automatically Classify Ticket" vs. ground truth's "Auto-Classification" (though close, it's not exact to "automatically classified").
+
+- **Gateways (Minor, but Prompt Mismatch, -0.5 points)**: The prompt specifies "the two decision points," but both answers use three exclusive gateways (classification, post-diagnosis resolve/forward, confirmation). LLM matches ground truth here, but the post-diagnosis decision (line 5) is correctly modeled as `gw2` with yes/no to resolve/forward.
+
+Positive aspects (partial credit): Correct loop from confirmation "no" back to Initial Diagnosis (line 9), concise IDs, all required activities present, no added escalations/timers/events. However, the flow error and length violation are disqualifying under utmost strictness, as they prevent exact fidelity to the description and ground truth.

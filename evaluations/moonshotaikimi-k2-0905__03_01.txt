@@ -1,0 +1,35 @@
+3.5
+
+### Evaluation Rationale
+The LLM answer captures the high-level flow (start → classify → gateway1 → either provide reset or diagnosis → decision → resolve/forward → confirm → gateway2 → end/loop), the two exclusive gateways, and the re-work loop back to "Initial Diagnosis" correctly. However, under utmost strictness, it incurs severe penalties for multiple inventions and structural deviations from the prompt and ground truth:
+
+- **Invented activities (major violation of "Do not invent or add activities")**:
+  - Added `userTask id="t1" name="Customer submits support ticket"` as an explicit task after start event; prompt line 1 states the process *starts* with submission (modeled as a named start event in ground truth, no separate task).
+  - Added `userTask id="specialist" name="Specialist finishes"` after forwarding; prompt line 6 implies specialist work leads directly to "Resolve Issue" without a distinct "finishes" activity (ground truth merges via flow from forward to resolve).
+  - Penalty: -3.0 points (direct hallucinations of unmentioned tasks; core trap element).
+
+- **Incorrect flow for password reset path**:
+  - After "Provide Reset Instructions" (t3), flows to "Resolve Issue" (t6); prompt does not mention "Resolve Issue" for this path (line 3 ends there, implying it leads to confirmation as a simple resolution). Ground truth skips to confirm (t6) directly.
+  - Penalty: -1.5 points (alters logic, adding unmentioned step).
+
+- **Decision modeling errors**:
+  - Gateway 2 (gw2) after diagnosis uses condition `#{forwarded}` on the flow to forward task, which is semantically awkward/circular (decision should branch to "Resolve Issue" vs. "Forward to Specialist" without implying the condition *is* the forward).
+  - Conditions use complex FEEL expressions (e.g., `#{classification=='Password Reset'}`) instead of simple yes/no as in ground truth and implied by prompt's binary decisions.
+  - Penalty: -1.0 point (deviates from concise, prompt-aligned modeling).
+
+- **Missing or mismatched elements**:
+  - No XML declaration (`<?xml ...>`), present in ground truth.
+  - Missing descriptive names on start/end events and gateways (e.g., ground truth has "Ticket Submitted", "Password Reset?", "Resolved Internally?", "Customer Confirms?", "Ticket Closed").
+  - Process lacks `name` attribute; different `id` and `targetNamespace`.
+  - Task types: Uses `userTask`/`serviceTask` unnecessarily (prompt doesn't specify; ground truth uses generic `task` for simplicity).
+  - No flow IDs (ground truth has explicit `id="f1"` etc., though not strictly required, it aids precision).
+  - Penalty: -0.5 point each for minor structural omissions (cumulative -1.0; small errors = significant loss).
+
+- **Positives (gains)**:
+  - Concise IDs (t1, gw1 etc.).
+  - Under 40 lines.
+  - Core loop to diagnosis accurate.
+  - No added escalations/timers (avoids other traps).
+  - Baseline for rough structure: +1.0.
+
+Overall differences: 7+ explicit mismatches/inventions vs. ground truth's exact adherence (e.g., no extra tasks, correct skipping of resolve for password, merged specialist path). This fails the "exactly as stated" rule, warranting a low score despite partial correctness.

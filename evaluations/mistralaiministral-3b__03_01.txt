@@ -1,0 +1,24 @@
+2.5
+
+### Evaluation Summary
+The LLM answer attempts a BPMN XML structure but is fundamentally flawed, with numerous deviations from the prompt and ground truth. Under strict evaluation, it earns a low score due to structural malformations, inventions, omissions, and failure to model the process accurately. Key issues include:
+
+- **Malformed XML and missing core elements (major deduction: -4.0 points)**: No `<sequenceFlow>` elements (ground truth uses explicit flows with IDs like `f1`-`f13` and conditions like `<conditionExpression>yes</conditionExpression>`). Instead, it relies on incomplete inline `<incoming>`/`<outgoing>` attributes with mismatched or undefined refs (e.g., `ClassifyTicket` has `<incoming>` but no `<outgoing>`; `InitialDiagnosis` has assumed `_out1`/`_out2` without definition). This renders the XML invalid and unexecutable. Duplicate/misplaced incoming (e.g., both `EndEvent_1` and `Gw2` claim `ConfirmWithCustomer_out`) breaks flow integrity.
+
+- **Invented elements (major deduction: -2.0 points)**: Adds a non-mentioned "SpecialistFinish" activity (line 6 implies specialist work leads directly to "Resolve Issue," as in ground truth's `t5` → `t4`). Prompt explicitly forbids inventing activities. No such task exists in the description.
+
+- **Incorrect process modeling (major deduction: -1.5 points)**: 
+  - Missing exclusive gateway after "Initial Diagnosis" (prompt requires two decision points; ground truth has `gw2` for resolve/forward). LLM assumes branching via undefined outgoings without a gateway.
+  - Wrong flow for specialist path: Goes `ForwardToSpecialist` → `SpecialistFinish` → `ConfirmWithCustomer` (skipping "Resolve Issue"), violating line 6. Ground truth correctly routes `t5` → `t4` (Resolve).
+  - No flow from "ProvideResetInstructions" to "Confirm with Customer" (dead end after reset; ground truth has `f5`: `t2` → `t6`).
+  - Loop modeled partially (from `Gw2` no → `InitialDiagnosis`), but placed after a direct end flow from Confirm, creating conflicts. Ground truth correctly loops from `gw3` no → `t3`.
+  - "Resolve Issue" only reachable from diagnosis (not specialist), and Confirm incoming skips it for specialist path.
+
+- **Non-conformance to prompt specs (minor but strict deductions: -0.5 points total)**: 
+  - IDs not concise (e.g., `StartEvent_1`, `Gw1_out1` vs. ground truth's `start`, `gw1`, `f1`).
+  - No names on most elements (ground truth uses descriptive names like "Ticket Submitted," "Password Reset?").
+  - No conditions on gateways (ground truth has `yes`/`no` expressions; LLM gateways have only `decision` attributes).
+  - Extraneous attributes (e.g., `toRef` in `<startEvent>` outgoing, which is non-standard for BPMN 2.0 serialization).
+  - XML exceeds conciseness (redundant IDs like `_out`/`_in` bloat it; ground truth is clean and ≤40 lines).
+
+The answer captures basic sequence (start → classify → gw → branches → confirm → gw → loop/end) but fails to produce a valid, exact BPMN representation. It hallucinates ~10% new content and omits ~30% required flows/logic, far from the ground truth's precise mapping. No partial credit for intent, per strictness rule.

@@ -1,0 +1,20 @@
+4.0
+
+### Evaluation Summary
+The LLM answer captures the basic sequential flow and loop back to "Initial Diagnosis" (line 9), as well as the two explicit decision points (lines 3 and 5) using exclusive gateways. It uses concise IDs, stays under 40 lines, avoids unmentioned elements (e.g., no timers, escalations, or extra activities), and correctly merges paths to "Confirm with Customer" (line 7) after reset, resolve, or specialist forwarding (lines 3, 5-6). The single "Resolve Issue" task handles both agent and specialist resolutions without invention.
+
+However, under strict evaluation, significant errors and deviations from the ground truth (GT) lower the score substantially:
+
+- **Missing third exclusive gateway (gw3 for confirmation decision, lines 8-9)**: The description implies a decision point after "Confirm with Customer" (confirm/loop or close). GT models this correctly with gw3 and conditioned flows ("yes" to end, "no" to t3). LLM incorrectly branches directly from t6 ("Confirm with Customer") using one conditioned sequence flow to end and one unconditional to t3—invalid BPMN for an exclusive decision, violating the need for a gateway. This alone warrants major deduction (~3 points loss) as it breaks proper modeling of the re-work loop and adds a non-standard structure not in GT.
+
+- **Missing conditionExpressions on gateway flows**: GT specifies simple "yes"/"no" conditions on outgoing flows from gw1 (password reset, lines 3-4) and gw2 (resolve/forward, line 5). LLM omits all conditions for these gateways, relying only on defaults (e.g., default="f_other" for gw1)—resulting in non-executable branching that doesn't reflect the description's logic. For the confirmation, LLM uses a complex `${resolutionConfirmed == true}` condition (not mentioned; GT uses "yes"), while the loop flow lacks any condition. This is a critical fidelity error (~2 points loss).
+
+- **Structural and attribute mismatches**:
+  - Task types: LLM adds specific types (e.g., `<serviceTask>` for classification, `<userTask>` for others), not in GT or description (all GT uses generic `<task>`). This invents implementation details (~0.5 loss).
+  - Process attributes: `isExecutable="true"` (LLM) vs. `"false"` (GT); different IDs (e.g., "p1"/"e1" vs. "support_ticket"/"start"), names (e.g., "Classify Ticket" vs. "Auto-Classification"; "Resolve or Forward?" vs. "Resolved Internally?"), and namespace/targetNamespace (~0.5 loss).
+  - No XML declaration (`<?xml ...>`) in LLM, present in GT (~0.2 loss).
+  - Minor flow naming/omissions: LLM adds names like "Password Reset" on flows (extra, not required), but omits conditions; GT is precise with conditions only.
+
+- **No hallucinations of forbidden elements**: Correctly avoids timers, extra events, parallel paths, or invented tasks (e.g., no "Approve Closure" or specialist activity beyond "Forward to Specialist" → "Resolve Issue").
+
+Overall closeness to GT: ~40% match in structure (main paths align, but decisions are incomplete/broken). Small errors (e.g., name tweaks) compound under strictness, but core flow intent is partially preserved, preventing a 1.0. A perfect score requires near-exact XML fidelity, including all three gateways and conditions.
