@@ -1,0 +1,21 @@
+2.0
+
+### Evaluation Summary
+The LLM answer deviates significantly from the ground truth and the prompt's requirements, introducing structural invalidity, invented elements, missing connections, and logical errors in the process flow. Under strict evaluation, these errors (even if seemingly minor) compound to invalidate the model. Key issues include:
+
+- **Structural invalidity (major deduction: -4.0)**: No `<process>` element enclosing the workflow, violating BPMN 2.0 XML standards. Elements are dumped directly into `<definitions>`, rendering it non-executable and parseable only as malformed XML. Ground truth properly uses a `<process id="support_ticket">`. Additional invalid attributes like `id="Definitions"` on `<definitions>` and lack of `<?xml>` declaration or `targetNamespace`.
+
+- **Invented/missing elements (major deduction: -2.0)**: Adds non-mentioned task `t8` ("Specialist Resolve"), which fabricates specialist work separate from "Resolve Issue" (line 6 specifies specialist finishes → "Resolve Issue" directly, as in ground truth's flow from `t5` to `t4`). No escalation, timers, or extras are allowed, but this violates "do not invent." Conversely, "Resolve Issue" (`t5`) is treated as automated (`serviceTask` with `##WebService`), inconsistently typed without basis.
+
+- **Incorrect flow and loop modeling (major deduction: -1.5)**: 
+  - Password Reset path dead-ends at `t3` ("Provide Reset Instructions") with no outgoing flow to "Confirm with Customer" (`t6`), ignoring that it should resolve/confirm like other paths (line 3 implies direct resolution; ground truth connects `t2` directly to `t6`).
+  - Re-work loop (line 9) is partially correct (`f11` from `gw3` no to `t4` "Initial Diagnosis"), but overall flow mangles the diagnosis-to-resolve/forward logic (line 5): `gw2` yes goes to resolve then confirm, but no path goes to forward after specialist without redundant resolve.
+  - Catastrophic error: `f14` loops end event (`t9`) back to start (`t1`), creating an infinite cycle instead of proper termination (line 10). Ground truth has clean end with no outgoing flow.
+
+- **Gateway inaccuracies (moderate deduction: -0.3)**: Only two exclusive gateways required (prompt specifies for the two decision points). LLM uses three (`gw1`, `gw2`, `gw3`), but `gw3` (after confirm) is legitimate per description (lines 8-9). However, `gw1` name "Encrypted?" is fabricated (should be "Password Reset?" as in ground truth and line 3). `gw2` name "Issue Resolved?" is close but not exact to "Resolved Internally?" in ground truth, implying internal vs. forward decision.
+
+- **Naming and typing inconsistencies (moderate deduction: -0.1)**: Task names mostly match (e.g., "Initial Diagnosis", "Resolve Issue"), but classification is "Classify Ticket" (ground: "Auto-Classification"), and flows have ad-hoc names like "Password Reset" on `f3` instead of proper `<conditionExpression>`. Mixed task types (`serviceTask`, `userTask`, `task`) without prompt justification; ground truth uses consistent `task` for activities. Start event unnamed (ground: "Ticket Submitted"); end unnamed properly (ground: "Ticket Closed").
+
+- **Other non-compliance (minor deduction: -0.1)**: Adds `implementation="##WebService"` on tasks without mention (prompt: no inventions). No `<conditionExpression>` on gateway flows (ground truth includes simple "yes"/"no"). Line count ~30, within limit, but irrelevant due to errors.
+
+The model fails to "translate exactly as stated" and introduces hallucinations (e.g., extra task, wrong loop, dead-end), making it unusable as BPMN. A perfect match would score 10.0; this is barely recognizable, warranting a minimal passing score for partial element inclusion.
