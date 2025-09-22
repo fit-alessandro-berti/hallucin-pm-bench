@@ -1,0 +1,23 @@
+3.0
+
+### Evaluation Rationale (Strict Assessment)
+This evaluation strictly compares the LLM answer to the ground truth, penalizing all differences (structural, content, assignments, wording) with significant point deductions per instruction. Base score starts at 10.0; deductions applied cumulatively for deviations. Small errors (e.g., wording, missing bolding) incur at least -0.5; major ones (e.g., extra/missing tasks, role omissions, mismatched assignments) incur -1.0 or more.
+
+- **Vocabulary Mandate Compliance (-0.5)**: LLM correctly uses “KYC Review”, “Regulatory Liaison”, and “Transaction Analyst” exclusively, with no forbidden terms (e.g., no “CDD” or “Compliance Officer”). Matches ground truth here, but fails to bold “**KYC Review**” as in ground truth (minor formatting error).
+  
+- **Task Coverage and Wording (-3.0)**: Ground truth has exactly 6 tasks, mapping source steps without omissions (e.g., combines receive/log into “Receive Payment Instruction”; merges archive/notify into “Archive Record”; omits explicit SWIFT as separate but implies in release/archive). LLM has 8 tasks, adding splits/extras (e.g., separate “Log customer transfer instruction”, “Ensure SWIFT message is sent”, “Notify Regulatory Liaison of case archival”) not in ground truth, and rewording others (e.g., “Log customer transfer instruction in system” vs. ground truth's “Receive Payment Instruction”; “Archive case file” vs. “Archive Record”). This introduces unsubstantiated breakdowns and omissions in alignment (e.g., no “Receive” equivalent; over-expands low-risk flows). Strict penalty for not matching exactly—covers *more* than source requires but deviates from ground truth's concise mapping.
+
+- **Table Structure and Format (-2.0)**: Ground truth uses role-based columns (Transaction Analyst, Regulatory Liaison, Operations Manager, IT Support) with R/A/C/I letters in cells, a header “Task / Activity (mandated wording)”, and a “**Legend**” footer. LLM uses task-based rows with R/A/C/I columns (traditional format), adds a title (“# RACI Matrix...”), and leaves many cells blank/empty (e.g., no Consulted for screening). No legend or bolding on mandated terms in header. Prompt allows flexibility, but strict match to ground truth's compact, letter-based design is required—deduction for alternative layout and incompleteness.
+
+- **Roles Included (-2.0)**: Ground truth explicitly includes 4 roles: Transaction Analyst, Regulatory Liaison, Operations Manager, IT Support. LLM omits “Operations Manager” entirely (a core column in ground truth) and only uses 3 (Transaction Analyst, Regulatory Liaison, IT Support), violating the "only the mandated terms... for roles" by not incorporating the full set implied in ground truth. Prompt mandates only TA/RL replacements, but ground truth's addition must be matched strictly.
+
+- **RACI Assignments (-4.0)**: Assignments differ entirely across all tasks, with no overlap in most cases (major deviation; source inferences don't excuse this). Examples:
+  - “Screen Against Sanctions List”: Ground truth = R (TA), A (RL), I (Operations Manager), C (IT Support). LLM = R/A (TA), Informed (RL). Wrong on A/C/I.
+  - “**KYC Review**”: Ground truth = C (TA), R (RL), A (Operations Manager), I (IT Support). LLM = R/A (RL), C (TA). Wrong on A/I; inverts some.
+  - “Release Payment”: Ground truth = R (TA), I (RL), A (Operations Manager), C (IT Support). LLM = R/A (TA), Informed (RL, IT Support). Wrong on A/C.
+  - “Archive Record”: Ground truth = C (TA), I (RL), A (Operations Manager), R (IT Support). LLM splits into two rows with R (IT Support), A (RL/TA), C (TA), Informed (RL)—mismatches all, adds unneeded notify row.
+  - Extra LLM tasks (e.g., SWIFT, Notify) have no ground truth equivalents, so fully erroneous. Even overlapping tasks (e.g., Approve) mismatch (ground truth: C (TA), R (RL), A (Operations Manager), I (IT Support); LLM: R/A (RL), C (TA)). Cumulative mismatch on ~90% of content.
+
+- **Overall Fidelity to Source Mapping (-1.5)**: Ground truth notes “maps every step... without omissions or substitutions.” LLM substitutes/invents (e.g., Accountable roles not in source; extra rows) and doesn't align to this. No title/legend match; Markdown is clean but not identical.
+
+**Total Deductions**: -13.0 (from 10.0 base) = -3.0 effective score (floored to scale; reflects ~70% deviation in structure/content, 100% in assignments). LLM shows basic understanding (vocab, Markdown, partial coverage) but fails strict ground truth replication, warranting low marks under utmost strictness.

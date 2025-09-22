@@ -1,0 +1,18 @@
+4.0
+
+### Evaluation Rationale
+The LLM answer captures the basic process flow (start, classification, password reset path, diagnosis, resolve/forward, confirm, loop to diagnosis, end) and avoids major inventions like timers or extra events, aligning with the prompt's "do not invent" rule. The loop (line 9) is modeled correctly via gw3 to diagnosis. However, under utmost strictness, several significant deviations from the ground truth and prompt reduce the score substantially:
+
+- **Invalid BPMN Structure (Major Error, -2.0 points)**: The exclusiveGateway gw2 ("Resolve or Forward?") has two outgoing sequenceFlows (sf7 to resolve, sf8 to forward) with **no conditionExpressions**. In BPMN 2.0, exclusive gateways require conditions (or a default) on outgoing flows to decide paths; unconditional flows make this invalid. Ground truth correctly uses "yes"/"no" conditions (f7/f8). This breaks executability and fidelity to line 5's decision.
+
+- **Incorrect Activity Modeling (Major Error, -1.5 points)**: Two separate tasks named "Resolve Issue" (resolve after gw2, resolveSpecialist after forward) instead of merging into one shared task (ground truth's t4). Description (lines 5-6) uses "Resolve Issue" for both agent and post-specialist paths, implying a shared activity. LLM's duplication invents a distinct specialist resolve step, subtly violating "exactly as stated" and "do not add activities."
+
+- **Non-Concise IDs (Prompt Violation, -1.0 points)**: Uses descriptive IDs (e.g., "classify", "provideReset", "diagnosis", "resolveSpecialist") instead of concise ones like "t1", "gw1" as explicitly instructed. Ground truth follows this strictly.
+
+- **Incorrect Condition Expressions (Error, -0.5 points)**: gw1 uses `<conditionExpression>classification == "Password Reset"</conditionExpression>` (informal, no `xsi:type="tFormalExpression"`). gw3 uses `confirmed == true/false` (same issue). Ground truth uses standard `xsi:type="tFormalExpression">yes/no</conditionExpression>`. gw2 lacks them entirely (as noted). This is non-compliant BPMN XML.
+
+- **Missing XML Elements and Attributes (Minor but Cumulative Errors, -0.5 points)**: No `<?xml version="1.0" encoding="UTF-8"?>` declaration; missing `targetNamespace`; process lacks `name="Support-Ticket"` and `isExecutable="false"`. Ground truth includes these for valid BPMN 2.0.
+
+- **Naming Inconsistencies (Minor Errors, -0.5 points)**: "Classify Ticket" (as serviceTask) vs. ground truth's "Auto-Classification" (task); reflects description's "automatically classified" but not exactly. gw2 named "Resolve or Forward?" vs. ground truth's "Resolved Internally?" (both interpretive, but ground truth better infers line 5).
+
+The output is under 40 lines and uses exclusive gateways for decisions (though prompt says "two" but both answers use three, matching the description's three points). No extra hallucinations (e.g., no timers/SLAs), but the errors above make it functionally flawed and non-compliant, justifying a low score despite partial structural accuracy. A perfect match would be 10.0; this is ~40% divergent in key technical aspects.

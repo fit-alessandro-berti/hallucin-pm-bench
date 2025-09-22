@@ -1,0 +1,14 @@
+2.5
+
+### Evaluation Rationale
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under strict criteria. Key issues include:
+
+- **Invented elements (major hallucinations, -4.0 points)**: Adds an unused `<intermediateThrowEvent id="resolutionEvent">` (not mentioned in description or ground truth). Introduces a `<userTask id="t7" name="Close Ticket">` activity (description implies closure is implicit via end event, not a separate task; ground truth flows directly to `<endEvent>`). Specifies task subtypes like `<serviceTask>` with `implementation="##WebService"` and multiple `<userTask>`s (ground truth uses generic `<task>` for all; prompt forbids adding unmentioned details).
+
+- **Structural and formatting errors (-2.0 points)**: Outputs explanatory prose before the XML block (prompt requires "a single `<definitions> … </definitions>` block"). Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration (present in ground truth). Exceeds ~40 lines in the XML block due to verbose flows and conditions (ground truth is concise at ~35 lines). Includes unnecessary `xmlns:bpmndi` (prompt: "No diagram/interchange elements"). Invalid default flow references (e.g., `gw1 default="flowToDiagnosis"` mismatches flow IDs like "flow4"). Missing `xmlns:xsi` for `xsi:type` in conditions, causing XML invalidity.
+
+- **Name and ID inconsistencies (-0.5 points each, total -1.5)**: Slight mismatches (e.g., "Auto-classify Ticket" vs. ground truth "Auto-Classification"; gateway names like "Ticket Type?" vs. "Password Reset?"; end event unnamed vs. "Ticket Closed"). Process lacks `name` and `isExecutable` attributes (ground truth includes them). Flow IDs inconsistent (e.g., "flow51" skips numbering).
+
+- **Logic and flow deviations (-0.5 points)**: Conditions use complex expressions like `${classifiedAsPwdReset}` and `${!confirmed}` (ground truth uses simple "yes"/"no"; adds inventions). Flow from specialist path (t5 → t4) is correct in structure but tainted by subtype inventions. Loop back to t3 is modeled but embedded in erroneous flows.
+
+The core process flow is partially captured (e.g., gateways, loop, key tasks), justifying a minimal base score above 1.0, but the prompt's "exactly as stated" rule and "do not invent" mandate are violated repeatedly, making it unreliable as BPMN XML. Ground truth is precise with zero additions; even minor extras (e.g., subtypes) count as significant errors per instructions.

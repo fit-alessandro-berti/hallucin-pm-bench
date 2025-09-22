@@ -1,0 +1,19 @@
+2.0
+
+The LLM answer deviates significantly from the ground truth in structure, completeness, and validity, warranting a low score under strict evaluation criteria. Key differences include:
+
+- **Broken process flow**: No sequence flow connects the completeness gateway (`wrc_checkCompleteness`) to the warranty eligibility gateway (`wrc_checkWarrantyEligibility`), leaving the warranty check disconnected and the process unable to proceed after validation (or re-validation). This omits a required connection implied by the prompt's sequential steps, rendering the diagram semantically invalid. Ground truth correctly includes `wrc_sf5` from `wrc_complete_gw` to `wrc_warranty_gw`.
+
+- **Invalid XML elements**: Duplicate sequence flows (`wrc_flow_4` and `wrc_flow_8`, both from `wrc_checkWarrantyEligibility` to `wrc_parallelSplit`), which is erroneous and non-standard. Ground truth has unique, clean flows without redundancy.
+
+- **Omitted or incorrect task modeling**: No task for "checks warranty eligibility" (prompt explicitly mentions this activity after validation); both use a gateway, but LLM's disconnected gateway exacerbates the issue. Ground truth at least sequences directly via gateway. LLM also uses `<serviceTask>` elements instead of `<task>`, a minor namespace-style difference but inconsistent with ground truth's minimalism.
+
+- **Non-verbatim task names**: Prompt requires exact matching (e.g., "validates the claim", "Create shipment order", "Schedule courier pickup"). LLM uses "validate claim" (missing "the" and verb form), "create shipment order" (lowercase, missing capitalization), and "schedule courier pickup" (lowercase). Ground truth better approximates verbatim with capitalization and articles (e.g., "Validate the claim", "Create shipment order"), though not perfect—LLM's are further off.
+
+- **Missing details on elements**: No names on start event, gateways, or end events (e.g., ground truth has "Online warranty claim submitted" on start, "Claim complete?" on gateway). LLM gateways have ad-hoc names like "parallel-split", which are unnecessary and deviate.
+
+- **Output format violation**: Prompt specifies "a single self-contained BPMN 2.0 XML document." LLM prepends explanatory text ("Here's the...") and appends a bullet-point summary, making it non-self-contained. Ground truth is purely the XML.
+
+- **Namespace and minimalism**: LLM's XML is verbose with unnecessary attributes (e.g., full `targetNamespace`, `bpmndi` imports not used) and lacks `bpmn:` prefixing, while ground truth is concise (34 lines as noted) and prefixed. No hallucinations (no extra tasks/gateways), but omissions and errors in required elements (flows, names) deduct heavily.
+
+Semantically, the LLM XML is not equivalent—it doesn't model a functional process due to the disconnect and duplicates. Under the rubric, this is not "correct" and incurs major deductions for omissions and inaccuracies.
