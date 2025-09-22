@@ -2,8 +2,8 @@
 
 | Category                                |      Avg |      Std |
 |:----------------------------------------|---------:|---------:|
-| C01 Domain-override / Precedence checks | 1.66556  | 0.442295 |
-| C02 Event-log fact-extraction           | 2.50556  | 0.486738 |
+| C01 Domain-override / Precedence checks | 1.644    | 0.424552 |
+| C02 Event-log fact-extraction           | 2.505    | 0.461763 |
 | C03 Text to Model reconstruction        | 1.29333  | 0.573914 |
 | C04 Compliance / Conformance reasoning  | 1.52     | 0.507039 |
 | C05 Counterfactual edits                | 1.11111  | 0.370269 |

@@ -278,7 +278,7 @@ def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
 
     F = open(target_leaderboard, "w")
 
-    F.write("## Overall Leaderboard (gpt-4.1 used as the Judge)\n\n")
+    F.write("## Overall Leaderboard (grok-4-fast used as the Judge)\n\n")
     F.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
     F.write(res)
 

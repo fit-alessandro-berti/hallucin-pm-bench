@@ -1,4 +1,4 @@
-## Overall Leaderboard (gpt-4.1 used as the Judge)
+## Overall Leaderboard (grok-4-fast used as the Judge)
 
 The higher the score, the better the model.
 Maximum attainable score per category: **3 points**.
