@@ -1,0 +1,16 @@
+4.0
+
+### Evaluation Rationale
+The LLM answer captures the core structure (start, classification, two exclusive gateways for decisions, loop back to "Initial Diagnosis" from confirmation rejection, and end), but deviates significantly from the ground truth and prompt in ways that violate the "exactly as stated" and "do not invent or add" rules. Under utmost strictness, these errors—especially the invented flow and missing elements—warrant a low score. Breakdown of key differences (each causing point deductions):
+
+- **Major structural error (flow invention, -3.0 points)**: After "Provide Reset Instructions" (t2), the LLM incorrectly routes to "Resolve Issue" (t4) via f5, then to confirmation (t6). The description (line 3) states it "goes straight to 'Provide Reset Instructions'" without mentioning resolution there, and line 7 implies confirmation follows resolution only after diagnosis/specialist paths. Ground truth correctly skips "Resolve Issue" for the password path (t2 → t6 directly), treating instructions as implicit resolution without adding a task. This is a clear invention, breaking the process logic and "do not invent" rule.
+
+- **Missing condition expressions (-1.5 points)**: Exclusive gateways (gw1, gw2, gw3) require decision logic. Ground truth uses `<conditionExpression>` (e.g., "yes"/"no") on flows f3/f4, f7/f8, f12/f13 for precise BPMN 2.0 compliance. LLM only adds informal `name` attributes (e.g., "Password Reset"), which is incomplete and non-standard for executable decisions.
+
+- **Incorrect task types and details (-0.5 points)**: LLM uses `<serviceTask>` for classification (t1, reasonable but not matching ground truth's generic `<task>`) and `<userTask>` for agent/specialist activities (t2-t6), implying human performers without basis in the description (e.g., classification is "automatically by the system"). Ground truth uses neutral `<task>` throughout. Minor name tweaks (e.g., "Classify Ticket" vs. "Auto-Classification"; no names on start/gateways/end) add deviation.
+
+- **Invalid extra element (-0.5 points)**: Unnecessary `<sequenceFlow id="f14" sourceRef="end" targetRef="end" />` creates a self-loop on the end event, which is fabricated (not mentioned anywhere) and breaks BPMN validity. No such element in ground truth.
+
+- **Format and metadata mismatches (-0.5 points)**: Missing `<?xml version...?>` declaration and `targetNamespace`. Process `id="p1"` (generic) vs. ground truth's descriptive "support_ticket"; `isExecutable="true"` vs. "false" (prompt implies descriptive modeling, not execution). No names on key elements (e.g., startEvent lacks "Ticket Submitted"; gateways lack labels like "Password Reset?"). Output exceeds "concise IDs" intent slightly with verbose flow names.
+
+The loop (gw3 → t3 on rejection) and post-diagnosis/specialist paths (t3 → gw2 → t4/t5 → t4 → t6) are correctly modeled, earning partial credit. Total lines (~30) comply. However, the password path invention alone is a critical hallucination (as noted in the trap explanation), and cumulative small errors (e.g., types, conditions, extras) amplify deductions under strict criteria. A perfect match would require near-identical XML structure, flows, and details to ground truth.

@@ -1,0 +1,14 @@
+2.5
+
+### Evaluation Rationale
+The LLM answer deviates substantially from the ground truth in structure, content, and fidelity to the expected simplified JSON schema, warranting a low score under strict criteria. Key differences include:
+
+- **Format and Structure (Major Penalty, -5.0 points base)**: The ground truth uses a concise custom JSON with `"process_id"`, `"elements"` (list of objects with `id`, `type`, `name`, optional `event`/`condition`), and `"flows"` (source-target pairs with optional `condition`). The LLM answer uses a verbose, full BPMN 2.0-inspired structure with `"definitions"`, `"process"`, `"flowElements"`, explicit refs (`sourceRef`/`targetRef`), separate `"messages"`, and nested objects. This is not equivalent; it's an over-engineered expansion absent from the key, introducing unnecessary complexity (e.g., `eventDefinitions`, `timeDuration: "PT24H"`). Even small structural mismatches count as significant errors.
+
+- **Extra/Invented Elements (Penalty, -1.5 points)**: LLM adds a "Parse Email" task (id: "Task_ParseEmail"), not described separately in the text ("The e-mail is parsed and a Ticket is created" implies one step) and absent from ground truth (direct "start" → "createTicket"). This is a hallucination of an additional step. Also, extra message definitions (e.g., `"Message_SupportEmail"`) and an EventSubProcess for cancellation are over-specifications not in the key.
+
+- **Name and Detail Mismatches (Penalty, -0.5 points)**: Names differ slightly but cumulatively (e.g., start: "Support Email Received" vs. "Email Received"; gateway: "Classification" vs. "Simple or Complex?"; end: "Process Completed" vs. "End"). No flow conditions (e.g., ground truth has `"condition": "simple"`/`"complex"`); LLM uses flow names instead, a subtle but non-matching representation. Timer lacks explicit "PT24H" in ground truth (just "event": "timer").
+
+- **Flow and Logic Differences (Penalty, -0.5 points)**: Core sequence matches broadly (start → create/classify → decision → resolution branch → parallel send/log → wait/timer → close), but parallel modeling diverges. Ground truth joins send/log *before* awaitReply (incorrectly delaying wait until log completes), while LLM joins *after* closeTicket (better for description but not matching key). Cancel handling differs: ground truth has a floating `"cancelEvent"` → `"terminate"` (incomplete attachment); LLM uses an unattached EventSubProcess (also incomplete for "at any point" interruption, e.g., no boundary events). No hallucinations like escalation, but these are absent-key additions.
+
+No perfect match in any section; even faithful intent is undermined by format deviation and extras. Total starts at 10.0, deducts to 2.5 for cumulative strict penalties.

@@ -1,0 +1,29 @@
+8.5
+
+### Evaluation Rationale
+The LLM answer produces a semantically correct and complete BPMN 2.0 XML that accurately models the required process flow without omissions or hallucinations (e.g., no invented tasks, escalations, or error paths). It includes all specified elements: a start event, exclusive gateways for claim completeness (step 2) and warranty decision (step 3), parallel split/join gateways for step 4, exactly two end events, and tasks only for explicitly mentioned activities. All IDs are correctly prefixed with "wrc_", and sequence flows properly connect the elements, including the validation loop (request → re-validate).
+
+However, under utmost strictness, deduct points for the following differences from the ground truth and prompt requirements (prioritizing verbatim matching and exact structure):
+
+- **Task name mismatches (significant deductions per prompt's "verbatim" rule)**:
+  - "Validate Claim" omits "the" (prompt: "validates the claim"; ground truth: "Validate the claim") → -0.75 points.
+  - "Close claim" omits "the" (prompt: "close the claim"; ground truth: "Close the claim") → -0.75 points.
+  - "Request Missing Information" has inconsistent casing (prompt/ground truth lowercase "missing information") → -0.25 points.
+  - Parallel tasks ("Create shipment order", "Schedule courier pickup") match verbatim (bolded portions of prompt), no deduction.
+  - "Send rejection notice" and "Update inventory records" match exactly, no deduction.
+
+- **Event and gateway naming/structure (minor but strict deductions)**:
+  - Start event name "Start" lacks descriptiveness (prompt implies "customer submits an online warranty claim"; ground truth: "Online warranty claim submitted") → -0.25 points.
+  - End event names ("Success", "Rejection") differ slightly from ground truth ("Successful end", "Rejected") → -0.1 points.
+  - Completeness gateway name "Is claim complete?" vs. ground truth "Claim complete?" → negligible.
+  - Warranty gateway name "Warranty Eligibility" vs. ground truth "Within warranty?" → negligible (prompt unspecified).
+  - Parallel gateways named "Parallel Split/Join" (ground truth unnamed) → -0.1 points.
+
+- **Decision modeling**:
+  - Uses `<conditionExpression>` on sequence flows (e.g., "complete", "!complete") instead of ground truth's flow `name="Yes"/"No"`. Semantically equivalent but structurally different → -0.2 points.
+
+- **XML formatting/minimalism**:
+  - Valid BPMN 2.0 but lacks `bpmn:` prefix (ground truth uses it), has verbose sequence flow IDs/names, and includes extra attributes (e.g., outgoing/incoming lists, process `name`). More lines (~60 vs. ground truth's 34) and less minimal, but no invalidity → -0.1 points.
+  - No errors in flow logic (e.g., loop correctly models re-validation; parallel activities join before update/close; rejection path ends correctly).
+
+Base score: 10.0 (semantically equivalent, fully functional BPMN). Total deductions: -1.5 (primarily verbatim task names, as small errors warrant significant loss). Final: 8.5. This rewards completeness while strictly penalizing prompt violations.
