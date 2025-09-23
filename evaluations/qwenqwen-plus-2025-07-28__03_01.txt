@@ -1,0 +1,11 @@
+4.0
+
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under strict evaluation criteria. Key errors include:
+
+- **Invented activity**: Added a "Submit Support Ticket" task (t1) after the start event, violating the "do not invent or add activities" rule. The process starts directly with ticket submission (modeled as the start event leading to classification in ground truth).
+- **Incorrect process flow**: For the "Password Reset" path, the LLM routes "Provide Reset Instructions" (t3) to "Resolve Issue" (t5) before "Confirm with Customer" (t7). The description implies "Provide Reset Instructions" is the resolution for this path (straight to it, skipping diagnosis/forward/resolve), so it should connect directly to "Confirm" (as in ground truth: t2 → t6). Inserting "Resolve Issue" here fabricates an unmentioned step in this branch.
+- **Invalid BPMN XML elements**: Condition expressions lack `xsi:type="tFormalExpression"` (e.g., uses plain `<conditionExpression>passwordReset</conditionExpression>` instead of structured "yes"/"no" or equivalent). Sequence flows omit required `id` attributes. No `<?xml>` declaration or `targetNamespace`. Process `isExecutable="true"` mismatches ground truth's "false".
+- **Minor naming/structural mismatches**: "Classify Ticket" (t2) should reflect "automatically classified" (ground: "Auto-Classification"). No names on events/gateways (ground provides them, though not strictly required). Flow IDs absent (e.g., ground uses f1–f13).
+- **Line count and conciseness**: Under 40 lines, but errors outweigh this.
+
+These alter the core model (two gateways, loop to "Initial Diagnosis"), introducing hallucinations and invalid XML, reducing fidelity to ~40% match.

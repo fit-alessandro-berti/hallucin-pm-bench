@@ -1,0 +1,15 @@
+4.0
+
+The LLM answer captures the basic process structure, including the start event, classification, two exclusive gateways for the decision points, the re-work loop back to initial diagnosis, confirmation, and end event. However, it deviates significantly from the ground truth and prompt requirements in ways that violate the "do not invent or add activities" rule and introduce errors:
+
+- **Invented activity**: Adds a "Specialist Investigates" task (t5), not mentioned in the description (line 5 specifies "Forward to Specialist" as the activity after diagnosis; line 6 implies resolve follows specialist work without an explicit investigation task). The ground truth correctly uses "Forward to Specialist" as t5, followed directly by resolve (t4). This is a hallucination, replacing a required task with an unmentioned one.
+  
+- **Added unmentioned activity in password reset path**: Inserts a "Resolve Issue" task (t3) after "Provide Reset Instructions" (t2 → t3), not stated in line 3 (which says it "goes straight" to provide instructions, bypassing diagnosis and resolve). The ground truth correctly skips resolve here (t2 → t6 directly to confirm), treating provide instructions as the resolution path without adding extra steps. This violates the no-addition rule.
+
+- **Malformed BPMN XML syntax**: All conditionExpressions (e.g., `conditionExpression="passwordResetFlag"`) are incorrectly written as attributes on `<sequenceFlow>`, which is invalid BPMN 2.0 XML (they must be child elements, e.g., `<conditionExpression xsi:type="tFormalExpression">...</conditionExpression>` as in the ground truth). This renders the decision flows non-compliant and unparsable. Additionally, uses invented variables (e.g., "passwordResetFlag", "isResolved") instead of the ground truth's simple "yes"/"no" expressions, adding unnecessary complexity not specified.
+
+- **Missing exact task**: No explicit "Forward to Specialist" task; the gateway flow named "Forward" leads directly to the invented "Specialist Investigates," omitting the described activity.
+
+- **Minor but penalized differences** (per strictness): Process ID/name ("acmeSupport" vs. "support_ticket"), isExecutable="true" (vs. "false"), unnamed gateways (ground truth names them for clarity, though not strictly required), added unnecessary flow names (e.g., "Password Reset" on sf3), and different sequence flow IDs/naming conventions. The XML is concise (<40 lines) but not "exactly as stated" due to these.
+
+These additions, omissions, and syntax errors create structural and semantic differences from the ground truth, failing the hallucination trap by fabricating elements while missing precise mappings. The core loop and gateways are intact, preventing a total failure, but strict evaluation demands near-exact fidelity.

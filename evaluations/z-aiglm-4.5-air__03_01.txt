@@ -1,0 +1,18 @@
+4.0
+
+### Evaluation Rationale
+Under utmost strictness, the LLM answer deviates from the ground truth in several critical ways, leading to a low score. While the overall process flow (start → classify → branch → diagnosis/forward/resolve paths → confirm → branch/loop/end) is recognizable and avoids major hallucinations like added timers or parallel paths, there are structural, syntactic, and fidelity issues:
+
+- **Structural differences (major deductions, ~3 points loss)**: The LLM introduces an unnecessary second `<task id="t6" name="Resolve Issue"/>` for the specialist path, creating 7 distinct task elements. The ground truth correctly reuses a single `<task id="t4" name="Resolve Issue"/>` for both the agent resolution (direct from gw2) and specialist resolution (from t5), with merging flows (f7 and f9 to t4). This duplication in the LLM invents an extra activity instance not required by the description's single "Resolve Issue" concept (mentioned twice but as the same activity type), violating "do not invent or add activities." The rework loop (gw3 "no" → t3) is modeled identically, but the extra task inflates the model unnecessarily.
+
+- **Condition expressions (significant deductions, ~1.5 points loss)**: LLM uses verbose, invented XPath conditions (e.g., `classification = "Password Reset"`, `resolution = "Agent resolves"`, `customer_confirms = "true"`) with variables and phrases ("Agent resolves") not in the description, adding unsubstantiated details. Ground truth uses simple, neutral `yes`/`no` expressions without inventions. This breaches "translate exactly as stated" and "do not invent," as the text doesn't specify variables or exact predicates beyond the if-clauses.
+
+- **XML syntax and formatting issues (significant deductions, ~1 point loss)**: 
+  - Incorrect namespace: Uses `xmlns:xs=...` but references `xsi:type` (undefined; should be `xmlns:xsi=...` if used). Also prefixes `bpmn:tFormalExpression` incorrectly (no `xmlns:bpmn` defined, and standard is unqualified `tFormalExpression`).
+  - Length violation: The LLM's XML exceeds 40 lines (approximately 55+ with verbose conditions and indents), directly ignoring the "≤ 40 lines" rule. Ground truth is concise (~35 lines).
+  - Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration present in ground truth.
+  - Extraneous `xmlns:xs` (unused) and `targetNamespace="http://bpmn.io/schema/bpmn"` differs from ground's `http://acmetech/support`.
+
+- **Naming mismatches (minor but cumulative deductions, ~0.5 points loss)**: Element names differ (e.g., LLM "Classify Ticket" vs. ground "Auto-Classification" [matches "automatically"]; "Classification Check" vs. "Password Reset?"; "Diagnosis Outcome" vs. "Resolved Internally?"; "Confirmation Check" vs. "Customer Confirms?"; start "Submit Ticket" vs. "Ticket Submitted"; end "Close Ticket" vs. "Ticket Closed"). Process ID "support-ticket-process" vs. "support_ticket". These are small but reflect imprecise translation of the textual description.
+
+No credit-losing additions like escalations or unmentioned gateways, and the two specified decision points (classification, diagnosis) plus the implied confirmation are all exclusive gateways (though prompt says "two," both answers use three correctly). However, cumulative errors (especially invention/extra elements and rule violations) make it far from exact, warranting a low score. A perfect match would be 10.0; this is ~40% fidelity due to core structural bloat.

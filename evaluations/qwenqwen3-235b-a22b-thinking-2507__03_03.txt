@@ -1,0 +1,24 @@
+2.0
+
+### Evaluation Rationale
+This score reflects utmost strictness per the instructions, with significant deductions for multiple deviations from the ground truth XML. The LLM answer attempts a BPMN model but introduces structural invalidity, extraneous content, and semantic differences, resulting in a non-equivalent document. Key issues (each causing major point loss):
+
+- **Invalid BPMN XML Structure (critical error, -4.0 points)**: Mismatched references in core elements make the document unparsable as valid BPMN 2.0. Specifically:
+  - Task `wrc_checkEligibility` has `<outgoing>wrc_flow_gw_complete_complete</outgoing>`, which incorrectly references its own incoming flow ID instead of `wrc_flow_checkEligibility_to_warranty`.
+  - Gateway `wrc_gw_warrantyStatus` has `<incoming>wrc_flow_gw_complete_complete</incoming>`, which references the wrong flow ID (should be `wrc_flow_checkEligibility_to_warranty`).
+  - These breaks disrupt the sequence (validation complete → check eligibility → warranty decision), rendering the flow non-functional. Even if semantically intended correctly, this violates BPMN 2.0 schema compliance.
+
+- **Extra/Hallucinated Task and Flows (-2.0 points)**: The LLM adds a task `"Check warranty eligibility"` (ID `wrc_checkEligibility`) and its connecting flow (`wrc_flow_checkEligibility_to_warranty`), which is absent in the ground truth. Per the rubric, this is an extra element not present in the reference, despite the prompt mentioning "checks warranty eligibility" (ground truth models the decision via the gateway alone, without a separate task). This alters the process structure: ground truth flows directly from completeness gateway to warranty gateway; LLM inserts an unnecessary step, adding ~2 extra sequence flows.
+
+- **Extraneous Content (DI Section and Verbosity, -1.0 point)**: The LLM includes a full `<bpmndi:BPMNDiagram>` section with shapes and edges (~70 lines), which is not in the ground truth (a minimal 34-line XML without diagram info). While BPMN 2.0 allows DI, this is unrequired bloat, making the output non-minimal and semantically equivalent only if ignored—but it inflates differences in length, namespaces (extra xmlns like `bpmndi`, `omgdc`), and complexity. Waypoints in DI also introduce arbitrary layout that doesn't match any implied ground truth structure.
+
+- **Name and Attribute Mismatches (small but strict deductions, -0.5 point each, total -1.0)**:
+  - Start event name: "Online Warranty Claim Submitted" vs. ground truth "Online warranty claim submitted" (capitalization, word order, and added "Submitted" not verbatim to prompt's "online warranty claim").
+  - End events: "Rejection Processed" / "Claim Closed" vs. "Rejected" / "Successful end" (invented descriptive names; ground truth uses simple labels).
+  - Gateways: Named elements like "Claim Complete?" / "Warranty Eligible?" / "Parallel Split" / "Parallel Join" vs. ground truth's "Claim complete?" / "Within warranty?" (unnamed parallels). Prompt requires verbatim task names, but gateways are interpretive—still, differences accumulate.
+  - Sequence flows: Uses `<conditionExpression>` (e.g., "incomplete", "within warranty") vs. ground truth's simple `name` attributes ("No"/"Yes"). This is a non-equivalent way to model decisions.
+  - ID variations: While prefixed with "wrc_" as required, IDs like `wrc_validateClaim` vs. ground truth `wrc_validate` (longer, less minimal); flow IDs like `wrc_flow_start_to_validate` vs. simple `wrc_sf1`.
+
+- **No Omissions, But Overall Non-Equivalence (+1.0 partial credit)**: Covers all ground truth elements (e.g., loop for incomplete claims, parallel activities, two ends) and adds nothing beyond the noted extras. However, the extras and invalidity outweigh this. Semantically, the model roughly captures the process but diverges in flow (extra check task shifts step 3) and validity.
+
+A perfect 10.0 requires near-identical semantic and structural match (allowing minor ID/whitespace variance). Here, the LLM answer is ~60% divergent: functional intent is ~70% aligned but broken by errors and additions, dropping to 20% effective equivalence. No criminal/jailbreak issues apply.
