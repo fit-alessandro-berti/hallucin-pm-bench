@@ -1,36 +1,25 @@
-**Decision Points in Contoso Airlines’ Flight-Refund Process**  
-There is **one explicit decision point**:
+**Decision Points in Contoso Airlines’ Refund Process**
 
-🔹 **High-value refund check**  
-– *Triggered after* **Finance_Controller_PreApprove**  
-– *Condition*: Is the refund amount **greater than €1 000**?  
-– *If YES* → Route to **Senior_Auditor_Review** (requires *AuditTrail*)  
-– *If NO* → Proceed directly to **Process_Refund_Payment**
+1. **Triage_Agent_Validate_Eligibility**  
+   - *Decision*: Whether the refund claim is eligible based on the *FlightManifest* and *WeatherReport*.  
+   - *Outcome*: Proceeds only if eligibility is confirmed.
 
-—
+2. **Finance_Controller_PreApprove**  
+   - *Decision*: Whether to pre-approve the refund using the *EligibilityChecklist*.  
+   - *Outcome*: Must succeed before proceeding to payment; also triggers the high-value branch check.
 
-**Required Documents (by activity)**  
+3. **High-value refund check** (implicit decision point after pre-approval)  
+   - *Decision*: Whether the refund amount exceeds **€1,000**.  
+   - *Outcome*:  
+     - If **yes**: Route to **Senior_Auditor_Review** (mandatory).  
+     - If **no**: Skip **Senior_Auditor_Review** and proceed directly toward payment.
 
-1. **Customer_Submit_Claim**  
-   → *RefundRequestForm*
+**Required Documents**
 
-2. **Triage_Agent_Validate_Eligibility**  
-   → *FlightManifest*  
-   → *WeatherReport*
-
-3. **Finance_Controller_PreApprove**  
-   → *EligibilityChecklist*
-
-4. **Senior_Auditor_Review** *(only for high-value claims > €1 000)*  
-   → *AuditTrail*
-
-5. **Process_Refund_Payment**  
-   → *BankTransferAuthorization* (signed)
-
-6. **Issue_Confirmation_Letter**  
-   → *RefundConfirmationPDF* (generated and emailed)
-
-—
-
-✅ All listed decision points and documents derive **exclusively** from the defined process.  
-❗ No “CustomerService_Agent_Decide” or other non-defined activities or artefacts are included.
+- *RefundRequestForm* – submitted by the customer.  
+- *FlightManifest* – used during eligibility validation.  
+- *WeatherReport* – used during eligibility validation.  
+- *EligibilityChecklist* – used by the finance controller for pre-approval.  
+- *AuditTrail* – required only if the claim is high-value (refund > €1,000).  
+- *BankTransferAuthorization* – signed document required before processing payment.  
+- *RefundConfirmationPDF* – generated and emailed upon completion.

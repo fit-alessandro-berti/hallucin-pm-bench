@@ -1,29 +1,36 @@
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
-  <process id="supportTicket">
-    <startEvent id="start"/>
-    <sequenceFlow id="f1" sourceRef="start" targetRef="classify"/>
-    <task id="classify" name="Classify Ticket"/>
-    <exclusiveGateway id="gw1"/>
-    <sequenceFlow id="f2" sourceRef="classify" targetRef="gw1"/>
-    <sequenceFlow id="f3" sourceRef="gw1" targetRef="reset" name="Password Reset"/>
-    <task id="reset" name="Provide Reset Instructions"/>
-    <sequenceFlow id="f4" sourceRef="gw1" targetRef="diagnose" name="Other"/>
-    <task id="diagnose" name="Initial Diagnosis"/>
-    <exclusiveGateway id="gw2"/>
-    <sequenceFlow id="f5" sourceRef="diagnose" targetRef="gw2"/>
-    <sequenceFlow id="f6" sourceRef="gw2" targetRef="resolve1" name="Resolve"/>
-    <task id="resolve1" name="Resolve Issue"/>
-    <sequenceFlow id="f7" sourceRef="gw2" targetRef="specialist" name="Forward"/>
-    <task id="specialist" name="Forward to Specialist"/>
-    <sequenceFlow id="f8" sourceRef="specialist" targetRef="resolve2"/>
-    <task id="resolve2" name="Resolve Issue"/>
-    <sequenceFlow id="f9" sourceRef="resolve1" targetRef="confirm"/>
-    <sequenceFlow id="f10" sourceRef="resolve2" targetRef="confirm"/>
-    <task id="confirm" name="Confirm with Customer"/>
-    <exclusiveGateway id="gw3"/>
-    <sequenceFlow id="f11" sourceRef="confirm" targetRef="gw3"/>
-    <sequenceFlow id="f12" sourceRef="gw3" targetRef="end" name="Confirmed"/>
-    <sequenceFlow id="f13" sourceRef="gw3" targetRef="diagnose" name="Persists"/>
-    <endEvent id="end"/>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="acmeSupport">
+  <process id="supportTicketProcess" isExecutable="false">
+    <startEvent id="start" name="Customer submits support ticket"/>
+    <sequenceFlow id="f1" sourceRef="start" targetRef="t1"/>
+    <task id="t1" name="Automatically classify ticket"/>
+    <sequenceFlow id="f2" sourceRef="t1" targetRef="gw1"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <sequenceFlow id="f3" sourceRef="gw1" targetRef="t2">
+      <conditionExpression xsi:type="tFormalExpression">classifiedAsPasswordReset</conditionExpression>
+    </sequenceFlow>
+    <task id="t2" name="Provide Reset Instructions"/>
+    <sequenceFlow id="f4" sourceRef="t2" targetRef="t5"/>
+    <sequenceFlow id="f5" sourceRef="gw1" targetRef="t3">
+      <conditionExpression xsi:type="tFormalExpression">not classifiedAsPasswordReset</conditionExpression>
+    </sequenceFlow>
+    <task id="t3" name="Initial Diagnosis"/>
+    <sequenceFlow id="f6" sourceRef="t3" targetRef="gw2"/>
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <task id="t4" name="Resolve Issue"/>
+    <sequenceFlow id="f7" sourceRef="gw2" targetRef="t4"/>
+    <task id="t6" name="Forward to Specialist"/>
+    <sequenceFlow id="f8" sourceRef="gw2" targetRef="t6"/>
+    <sequenceFlow id="f9" sourceRef="t6" targetRef="t4"/>
+    <sequenceFlow id="f10" sourceRef="t4" targetRef="t5"/>
+    <task id="t5" name="Confirm with Customer"/>
+    <sequenceFlow id="f11" sourceRef="t5" targetRef="gw3"/>
+    <exclusiveGateway id="gw3" name="Confirmed?"/>
+    <sequenceFlow id="f12" sourceRef="gw3" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">confirmed</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="f13" sourceRef="gw3" targetRef="t3">
+      <conditionExpression xsi:type="tFormalExpression">not confirmed</conditionExpression>
+    </sequenceFlow>
+    <endEvent id="end" name="Ticket closed"/>
   </process>
 </definitions>

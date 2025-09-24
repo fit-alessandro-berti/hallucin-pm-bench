@@ -1,16 +1,13 @@
-3.0
+6.0
 
-### Evaluation Rationale
-The LLM answer attempts a BPMN 2.0 XML structure but contains critical structural and fidelity errors when strictly compared to the ground truth and prompt requirements. Even minor deviations result in significant deductions for exactness. Key issues:
+The LLM answer captures the overall structure and does not add unauthorized elements, aligning with the prompt's restrictions against inventions. However, under utmost strictness, several significant deviations from the ground truth warrant a moderate-to-low score:
 
-- **Critical omission (major deduction: -4.0 points)**: No sequence flow from the "Provide Reset Instructions" task (id="reset") to "Confirm with Customer" (id="confirm"). This breaks the process flow for the "Password Reset" path, violating lines 3 and 7 of the description (reset is a resolution leading to confirmation). The BPMN is invalid/incomplete here, as the path dead-ends.
+- **Critical functional error**: The exclusiveGateway gw2 ("Resolve or Forward?") lacks conditionExpressions on its outgoing sequenceFlows (f7 to t4 and f8 to t6), making the decision point invalid in BPMN semantics. An exclusive gateway for a decision requires conditions (e.g., yes/no as in ground truth f7/f8) to determine the exclusive path; unconditional flows render the model ambiguous and non-executable as intended. This misrepresents line 5's "either...or" decision, a core requirement, resulting in a -2.0 deduction.
+  
+- **Name mismatches**: Several element names differ from ground truth and the description's intent (e.g., startEvent "Customer submits support ticket" vs. "Ticket Submitted"; task t1 "Automatically classify ticket" vs. "Auto-Classification"; gw2 "Resolve or Forward?" vs. "Resolved Internally?"; gw3 "Confirmed?" vs. "Customer Confirms?"; endEvent "Ticket closed" vs. "Ticket Closed"). These are not exact translations, causing a -1.0 deduction.
 
-- **Invented elements (deduction: -1.5 points)**: Two separate "Resolve Issue" tasks (resolve1 and resolve2) instead of reusing a single one as in the ground truth. This subtly invents duplication not mentioned in the description (line 6 implies a single "Resolve Issue" after specialist work), contravening "Do not invent or add... activities."
+- **Condition expressions**: gw1 uses verbose/specific conditions ("classifiedAsPasswordReset" / "not classifiedAsPasswordReset") instead of concise yes/no; gw3 uses "confirmed" / "not confirmed" instead of yes/no. While functional, this deviates from ground truth's simplicity, -0.5.
 
-- **Fidelity to description names (deduction: -0.5 points)**: "Classify Ticket" instead of implying "automatically classified" (ground truth uses "Auto-Classification"). Minor, but strict evaluation penalizes wording deviations.
+- **Structural/attribute differences**: No <?xml declaration (present in ground truth); definitions lacks targetNamespace, adds unnecessary id="acmeSupport" and xmlns:xsi; process id="supportTicketProcess" (no name) vs. "support_ticket" (with name="Support-Ticket"); ID assignments differ (e.g., confirm is t5 vs. t6, forward is t6 vs. t5), altering flow references slightly but consistently. These are formatting/conciseness issues, -0.5.
 
-- **Missing attributes and details (deduction: -0.5 points)**: No names on gateways (e.g., ground truth has "Password Reset?", "Resolved Internally?", "Customer Confirms?"), start/end events, or process (no id/name like "support_ticket"/"Support-Ticket"). No conditionExpressions (ground truth uses xsi:type="tFormalExpression" with "yes"/"no"; LLM relies on informal flow names like "Password Reset"/"Other", which is less precise).
-
-- **Minor XML structure (deduction: -0.5 points)**: Lacks XML declaration, targetNamespace, and process attributes (e.g., isExecutable="false"). While the prompt specifies only a "<definitions> block", ground truth includes these for completeness; omission reduces parsability/exactness.
-
-Positive aspects (partial credit): Correctly uses exclusive gateways for decisions (though prompt mentions "two", LLM/ground both use three for the loop), models the re-work loop accurately (gw3 → diagnose), concise IDs/flows, under 40 lines, no invented timers/escalations/parallel paths. Overall functional skeleton is ~60% aligned, but omissions and inventions make it unreliable.
+The model correctly implements the loop (f13 back to t3), uses exactly the specified tasks/events/gateways, stays under 40 lines, and avoids hallucinations like extra timers or activities. Without the gw2 conditions error, it would score ~8.5; the functional flaw and cumulative small differences drop it to 6.0.
