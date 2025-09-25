@@ -1,0 +1,19 @@
+2.0
+
+The LLM answer deviates significantly from the ground truth in structure, content, and fidelity to a minimal representation. Key differences include:
+
+- **JSON schema mismatch**: The LLM uses a verbose, BPMN-XML-inspired structure with "definitions", "targetNamespace", "process", and integrated flowElements (combining elements and flows), while the ground truth uses a simple custom schema with "process_id", separate "elements", and "flows" arrays. This fundamental incompatibility makes direct comparison impossible without major restructuring, warranting severe deduction.
+
+- **Invented elements (hallucination)**: Adds an unmentioned "Task_ParseEmail" as a separate step before "Task_CreateTicket", splitting the described single action ("The e-mail is parsed and a Ticket is created"). The ground truth correctly combines this into one "createTicket" task after start. Per strict instructions, this invention causes significant point loss, even as a "small" error.
+
+- **Parallelism modeling error**: The fork/join for "Log Solution" and customer response/waiting differs. The LLM forks after "Provide Resolution" (parallel to send + full wait/close branch), joining only at the very end after "Close Ticket". The ground truth forks similarly but joins immediately after "sendResponse" (before "awaitReply"), delaying the waiting period until logging completes. While the LLM's logic arguably better matches the description's "in parallel... may finish earlier or later than the customer reply," it still diverges from the ground truth's exact flow sequence, losing points for non-match.
+
+- **Customer cancellation handling mismatch**: The LLM uses a full "EventSubProcess" with interrupting message start and terminate end, but it's not integrated into main flows (dangling, no attachment specified as boundary/interrupting on relevant tasks). The ground truth uses a simpler standalone "intermediateCatchEvent" with a direct flow to "terminateEndEvent," also minimally integrated. Different approaches and incomplete connection in LLM reduce accuracy.
+
+- **Naming and detail inconsistencies**: Names vary (e.g., start event "Support Email Received" vs. "Email Received"; fork "Fork Response and Logging" vs. "Fork Log/Wait"; gateway "Ticket Complexity?" vs. "Simple or Complex?"). Conditions use "Simple"/"Complex" vs. ground truth's lowercase "simple"/"complex". Extra details like task types ("userTask", "serviceTask" vs. uniform "task"), event definitions ("message", "timer" with "PT24H" vs. simple "event": "message"/"timer"), and IDs (verbose vs. short like "start") add non-matching bloat.
+
+- **Flow inaccuracies**: Not all flows align due to ID differences and extra steps (e.g., start → parse → create vs. start → createTicket). The LLM includes 20+ sequence flows in flowElements, but their targets/sources don't map 1:1 to the ground truth's 20 concise flows. The event-based waiting is similar but affected by join placement mismatch.
+
+- **Minor but penalized errors**: End event lacks exact match (LLM's multiple ends, including terminate in subprocess, vs. ground truth's single "end" and separate "terminate"). No escalation invented (positive), but overall extras and omissions compound differences.
+
+With utmost strictness, these cumulative divergences—even semantic similarities in core steps like classification, resolution routing, and timer/reply handling—result in a low score. The LLM captures the process spirit but fails to replicate the ground truth's exact, minimal JSON form and flows.

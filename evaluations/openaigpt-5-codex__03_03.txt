@@ -1,0 +1,19 @@
+4.0
+
+The LLM answer deviates significantly from the ground truth in structure, content, and completeness, warranting a low score under strict evaluation criteria. Key differences include:
+
+- **Extra task and flows**: The LLM adds a task ("Check warranty eligibility") with associated incoming/outgoing flows (wrc_flow_completeness_to_warranty and wrc_flow_warranty_to_decision), which is absent in the ground truth. This alters the sequence (direct from wrc_complete_gw to wrc_warranty_gw in ground truth), representing a non-equivalent model with hallucinated elements relative to the reference.
+
+- **Extra diagram section (bpmndi:BPMNDiagram)**: The LLM includes a full ~100-line DI extension with shapes, bounds, edges, and waypoints for visual layout, which is entirely absent in the minimal 34-line ground truth. This inflates the document unnecessarily and introduces differences in self-containedness and brevity.
+
+- **ID inconsistencies**: Element IDs differ systematically (e.g., LLM uses verbose "wrc_task_validate", "wrc_gateway_completeness"; ground uses concise "wrc_validate", "wrc_complete_gw"). Parallel gateways are "wrc_gateway_parallel_split/join" vs. "wrc_parallel_split/join". Start event is "wrc_startEvent" vs. "wrc_start". End events are "wrc_end_rejection/success" vs. "wrc_end_reject/success". Sequence flow IDs are "wrc_flow_*" vs. "wrc_sf#". All violate semantic equivalence despite "wrc_" prefix compliance.
+
+- **Naming discrepancies**: Success end event is "Completed" vs. ground truth "Successful end". Process element has name="Warranty-Replacement v1.3" (absent in ground). Gateway names match, but start event name "Online warranty claim submitted" adds interpretive phrasing (prompt: "customer submits an online warranty claim"). Task names are mostly verbatim but capitalized (e.g., "Send rejection notice" vs. prompt's "send rejection notice"), consistent with ground but not strictly lowercase.
+
+- **Missing elements from ground truth**: No condition expressions or names on flows (e.g., ground has name="No" on sf3/sf6, name="Yes" on sf5/sf8; LLM omits all).
+
+- **Structural and attribute differences**: Uses "bpmn2" prefix vs. ground's "bpmn" (same namespace URI, but prefix mismatch). Definitions id="wrc_definitions" vs. "Definitions_1". targetNamespace="/wrc" vs. "/warranty". Process isExecutable="true" vs. "false". LLM includes explicit <incoming>/<outgoing> in flow elements (redundant with sequenceFlow sourceRef/targetRef, but adds bulk); ground uses only the latter.
+
+- **Overall length and minimalism**: LLM XML is ~200+ lines vs. ground's 34, due to extras, failing the implied minimal-yet-complete standard.
+
+Semantically, the core flow (validation loop, rejection path, parallel activities) is similar, but the extra task, missing conditions, and added DI prevent equivalence. No omissions in LLM, but additions and mismatches deduct heavily per strict rubric for extras/hallucinations relative to ground truth.
