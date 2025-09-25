@@ -63,6 +63,7 @@ class Shared:
                        "qwen/qwen-plus-2025-07-28",
                        "qwen/qwen-plus-2025-07-28:thinking",
                        "openai/gpt-5-codex",
+                       "arcee-ai/afm-4.5b",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

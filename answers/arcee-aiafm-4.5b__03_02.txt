@@ -1,0 +1,139 @@
+```json
+{
+  "process": "SupportTicketProcess",
+  ".Start": {
+    "name": "SupportEmailReceived",
+    "class": "StartEvent",
+    "description": "(process starts when a support e-mail is received)"
+  },
+  "Events": [
+    {
+      "name": "ParseEmail",
+      "class": "SplitEvent",
+      "description": "(e-mail is parsed)"
+    },
+    {
+      "name": "AssignAgent",
+      "class": "AssignEvent",
+      "description": "(agent is assigned)"
+    },
+    {
+      "name": "InitialClassification",
+      "class": "ProcessDecision",
+      "tests": [
+        {
+          "expression": "IsTicketSimple",
+          "field": "TicketClassification",
+          "operator": "==",
+          "value": "Simple"
+        },
+        {
+          "expression": "IsTicketComplex",
+          "field": "TicketClassification",
+          "operator": "==",
+          "value": "Complex"
+        }
+      ],
+      "next": {
+        "name": "HandleSimpleTickets",
+        "class": "ProcessArc",
+        "endEvent": {
+          "name": "ProvideResolution",
+          "class": "EndEvent",
+          "description": "(Simple tickets go straight to Provide Resolution)"
+        }
+      }
+    },
+    {
+      "name": "PerformRootCauseAnalysis",
+      "class": "ProcessDecision",
+      "tests": [
+        {
+          "expression": "IsTicketComplex",
+          "field": "TicketClassification",
+          "operator": "==",
+          "value": "Complex"
+        }
+      ],
+      "next": {
+        "name": "CompleteRCA",
+        "class": "ProcessArc",
+        "endEvent": {
+          "name": "ProvideResolution",
+          "class": "EndEvent",
+          "description": "(Complex tickets require Root Cause Analysis before resolution)"
+        }
+      }
+    },
+    {
+      "name": "DraftResolution",
+      "class": "ProcessEvent",
+      "description": "(draft resolution is created)"
+    },
+    {
+      "name": "SendResponseToCustomer",
+      "class": "ProcessEvent",
+      "description": "(agent sends response to customer)"
+    },
+    {
+      "name": "LogSolutionToKB",
+      "class": "ProcessEvent",
+      "description": "(solution is logged in knowledge base)"
+    },
+    {
+      "name": "Wait24Hours",
+      "class": "WaitEvent",
+      "description": "(process waits up to 24 hours for customer reply)"
+    },
+    {
+      "name": "ReceiveCustomerReply",
+      "class": "Event",
+      "description": "(customer replies)"
+    },
+    {
+      "name": "CloseTicket",
+      "class": "ProcessEvent",
+      "description": "(ticket is closed immediately if reply received)"
+    },
+    {
+      "name": "SendReminderOnce",
+      "class": "ProcessEvent",
+      "description": "(system sends reminder once after 24 hours without reply)"
+    },
+    {
+      "name": "Terminate",
+      "class": "TerminateEvent",
+      "description": "(process is terminated if ticket is cancelled)"
+    }
+  ],
+  "ProcessFlow": [
+    "SupportEmailReceived",
+    "ParseEmail",
+    "AssignAgent",
+    "InitialClassification",
+    {
+      "_children": [
+        "HandleSimpleTickets",
+        "CompleteRCA"
+      ]
+    },
+    "DraftResolution",
+    {
+      "_children": [
+        "SendResponseToCustomer",
+        "LogSolutionToKB"
+      ]
+    },
+    "Wait24Hours",
+    "ReceiveCustomerReply",
+    "CloseTicket",
+    {
+      "_children": [
+        "SendReminderOnce",
+        "Terminate"
+      ]
+    },
+    "Terminate"
+  ]
+}
+```
