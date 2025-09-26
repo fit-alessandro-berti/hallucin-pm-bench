@@ -1,0 +1,225 @@
+```json
+{
+  "name": "Customer Support Ticket Process",
+  "process": {
+    "isExecutable": true,
+    "startEvents": [
+      {
+        "id": "start_email_received",
+        "name": "Support E-mail Received",
+        "eventType": "Message"
+      }
+    ],
+    "intermediateCatchEvents": [
+      {
+        "id": "wait_customer_reply",
+        "name": "Wait 24 Hours for Customer Reply",
+        "eventType": "Timer",
+        "timerDefinition": {
+          "type": "Duration",
+          "value": "PT24H"
+        }
+      },
+      {
+        "id": "receive_customer_reply",
+        "name": "Customer Reply Received",
+        "eventType": "Message"
+      },
+      {
+        "id": "receive_cancellation",
+        "name": "Ticket Cancellation Received",
+        "eventType": "Message"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "task_create_ticket",
+        "name": "Parse E-mail and Create Ticket",
+        "taskType": "Service"
+      },
+      {
+        "id": "task_initial_classification",
+        "name": "Initial Classification",
+        "taskType": "User"
+      },
+      {
+        "id": "task_provide_resolution",
+        "name": "Provide Resolution",
+        "taskType": "User"
+      },
+      {
+        "id": "task_root_cause_analysis",
+        "name": "Root Cause Analysis",
+        "taskType": "User"
+      },
+      {
+        "id": "task_log_solution",
+        "name": "Log Solution in Knowledge Base",
+        "taskType": "User"
+      },
+      {
+        "id": "task_send_response",
+        "name": "Send Response to Customer",
+        "taskType": "Service"
+      },
+      {
+        "id": "task_send_reminder",
+        "name": "Send Reminder",
+        "taskType": "Service"
+      },
+      {
+        "id": "task_close_ticket",
+        "name": "Close Ticket",
+        "taskType": "Service"
+      }
+    ],
+    "gateways": [
+      {
+        "id": "gateway_decision_type",
+        "name": "Ticket Type?",
+        "gatewayType": "Exclusive"
+      },
+      {
+        "id": "gateway_parallel_start",
+        "name": "Start Parallel Actions",
+        "gatewayType": "Parallel"
+      },
+      {
+        "id": "gateway_parallel_end",
+        "name": "End Parallel Actions",
+        "gatewayType": "Parallel"
+      },
+      {
+        "id": "gateway_wait_or_reply",
+        "name": "Wait for Reply or Timeout",
+        "gatewayType": "EventBased"
+      },
+      {
+        "id": "gateway_timeout_join",
+        "name": "Timeout Join",
+        "gatewayType": "Exclusive"
+      }
+    ],
+    "endEvents": [
+      {
+        "id": "end_process_closed",
+        "name": "Process Finished",
+        "eventType": "None"
+      },
+      {
+        "id": "end_process_terminated",
+        "name": "Process Terminated (Cancelled)",
+        "eventType": "Terminate"
+      }
+    ],
+    "boundaryEvents": [
+      {
+        "id": "boundary_cancellation",
+        "name": "Ticket Cancelled",
+        "eventType": "Message",
+        "cancelActivity": true,
+        "attachedToRef": "task_initial_classification"
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "flow_start_to_create",
+        "sourceRef": "start_email_received",
+        "targetRef": "task_create_ticket"
+      },
+      {
+        "id": "flow_create_to_classify",
+        "sourceRef": "task_create_ticket",
+        "targetRef": "task_initial_classification"
+      },
+      {
+        "id": "flow_classify_to_gateway",
+        "sourceRef": "task_initial_classification",
+        "targetRef": "gateway_decision_type"
+      },
+      {
+        "id": "flow_simple_to_resolve",
+        "sourceRef": "gateway_decision_type",
+        "targetRef": "task_provide_resolution",
+        "conditionExpression": "isSimple"
+      },
+      {
+        "id": "flow_complex_to_rca",
+        "sourceRef": "gateway_decision_type",
+        "targetRef": "task_root_cause_analysis",
+        "conditionExpression": "isComplex"
+      },
+      {
+        "id": "flow_rca_to_resolve",
+        "sourceRef": "task_root_cause_analysis",
+        "targetRef": "task_provide_resolution"
+      },
+      {
+        "id": "flow_resolve_to_parallel_start",
+        "sourceRef": "task_provide_resolution",
+        "targetRef": "gateway_parallel_start"
+      },
+      {
+        "id": "flow_parallel_to_send_response",
+        "sourceRef": "gateway_parallel_start",
+        "targetRef": "task_send_response"
+      },
+      {
+        "id": "flow_parallel_to_log_solution",
+        "sourceRef": "gateway_parallel_start",
+        "targetRef": "task_log_solution"
+      },
+      {
+        "id": "flow_send_response_to_parallel_end",
+        "sourceRef": "task_send_response",
+        "targetRef": "gateway_parallel_end"
+      },
+      {
+        "id": "flow_log_solution_to_parallel_end",
+        "sourceRef": "task_log_solution",
+        "targetRef": "gateway_parallel_end"
+      },
+      {
+        "id": "flow_parallel_end_to_event_gateway",
+        "sourceRef": "gateway_parallel_end",
+        "targetRef": "gateway_wait_or_reply"
+      },
+      {
+        "id": "flow_event_to_timer",
+        "sourceRef": "gateway_wait_or_reply",
+        "targetRef": "wait_customer_reply"
+      },
+      {
+        "id": "flow_event_to_reply",
+        "sourceRef": "gateway_wait_or_reply",
+        "targetRef": "receive_customer_reply"
+      },
+      {
+        "id": "flow_reply_to_close",
+        "sourceRef": "receive_customer_reply",
+        "targetRef": "task_close_ticket"
+      },
+      {
+        "id": "flow_wait_to_send_reminder",
+        "sourceRef": "wait_customer_reply",
+        "targetRef": "task_send_reminder"
+      },
+      {
+        "id": "flow_send_reminder_to_close",
+        "sourceRef": "task_send_reminder",
+        "targetRef": "task_close_ticket"
+      },
+      {
+        "id": "flow_close_to_end",
+        "sourceRef": "task_close_ticket",
+        "targetRef": "end_process_closed"
+      },
+      {
+        "id": "flow_cancellation_to_termination",
+        "sourceRef": "boundary_cancellation",
+        "targetRef": "end_process_terminated"
+      }
+    ]
+  }
+}
+```

@@ -1,0 +1,18 @@
+2.5
+
+### Evaluation Reasoning
+The LLM answer deviates substantially from the ground truth and prompt requirements, with critical structural, semantic, and compliance errors that render the BPMN invalid or incomplete. Under strict evaluation, these warrant severe deductions:
+
+- **Broken Process Flow (Major Fatal Errors, -4.0 points)**: No sequence flow from t4 ("Resolve Issue" after agent diagnosis) to t7 ("Confirm with Customer"); an association (a1) is used instead, which is incorrect for control flow (associations are for artifacts/data objects). Similarly, no sequence flow from t8 ("Close Ticket") to ee1; only an association (a2). This breaks the executable process entirely for key paths. Unused ee2 ("End") and med1 add clutter without connection.
+
+- **Invented/Added Elements (Major Violation, -2.0 points)**: Adds t8 ("Close Ticket") task, not mentioned in the description (line 8 implies closure is implicit/end state, not a task). Adds separate t6 ("Resolve Issue") after t5, inventing an extra activity instance despite the description reusing "Resolve Issue" (line 6) after specialist—ground truth correctly shares t4 for both resolve paths. Prompt explicitly forbids adding activities.
+
+- **Incorrect Modeling of Loop and Paths (-1.0 points)**: Loop from gw3 "no" to t3 is correct, but the overall paths are flawed: Password reset path (t2 to t7) skips resolve appropriately (matching ground truth), but agent resolve path (t4) has no continuation, and specialist path uses extra task.
+
+- **Naming and Semantic Inaccuracies (-0.5 points)**: Task names deviate (e.g., t1 "Classify Ticket" vs. ground truth "Auto-Classification"—description specifies "automatically classified"). Gateway names imprecise (gw1 "Classification" vs. "Password Reset?"; gw2 "Action" vs. "Resolved Internally?"; gw3 "Customer Feedback" vs. "Customer Confirms?"). Prompt requires exact translation without invention.
+
+- **Condition Expressions Invalid (-0.5 points)**: Uses placeholder `<conditionExpression>code</conditionExpression>` on all outgoing flows from gateways—non-functional and incorrect. Ground truth uses proper `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` with required xsi namespace (missing in LLM).
+
+- **Structural/Compliance Issues (-0.5 points)**: Extra gateways implied by prompt ("two decision points," but both answers use three—LLM matches ground truth here, no deduction), yet LLM adds unnecessary elements (two end events, message definition). isExecutable="true" vs. "false". Namespaces differ (20100501 vs. 20100524; extra unused xmlns for DI/DC). Exceeds concise style; ~45 lines vs. ground truth's ~35 (prompt: ≤40 lines). Includes unused DI/DC namespaces despite "no diagram elements."
+
+No credit for correct elements (e.g., basic start/classify/gateways/loop structure, XML format) as the cumulative errors make it non-compliant and non-functional. A working, exact match would score 10.0; this is a poor hallucination-prone attempt with fundamental flaws.
