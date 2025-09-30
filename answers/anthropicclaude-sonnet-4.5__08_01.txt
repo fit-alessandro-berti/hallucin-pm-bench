@@ -1,0 +1,61 @@
+# Answer: **NO**, it is impossible for T5 to fire before T3.
+
+## Proof of Impossibility
+
+### Prerequisites for T5 to fire:
+1. Place **p3** must contain at least 1 token (normal input arc)
+2. Place **p4** must contain exactly 0 tokens (inhibitor arc)
+
+### Analysis:
+
+**Step 1:** To get a token in p3, we must fire T2.
+
+**Step 2:** To fire T2, we need a token in p1.
+
+**Step 3:** Starting from the initial marking p0(1), we must fire T1 first to get tokens in both p1 and p2.
+
+**Step 4:** After firing T1:
+- Marking becomes: p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)
+
+**Step 5:** Now we have two enabled transitions: T2 and T3.
+
+**Critical observation:**
+- When T1 fires, it **simultaneously** places tokens in both p1 and p2
+- The token in p2 remains there until T3 fires (T3: p2 → p4)
+- Once the token is in p2, there is no way to remove it except by firing T3
+
+**Step 6:** For T5 to be enabled:
+- We need p3(1) — this requires firing T2
+- We need p4(0) — this requires that T3 has **not yet fired**
+
+But p2 received its token at the same time as p1 (from T1's parallel split). Since p4 starts empty and only T3 can move the token from p2 to p4, the condition p4(0) is maintained. However, **the token in p2 blocks nothing directly**.
+
+Wait, let me reconsider:
+
+### Correct Analysis:
+
+After T1 fires: p1(1), p2(1)
+
+- If we fire T2: p1(0), p2(1), p3(1), p4(0) → **T5 is now enabled!** (p3 has a token, p4 is empty)
+
+So T5 **can** fire at this point, which is **before T3 fires**.
+
+# Revised Answer: **YES**
+
+## Concrete Firing Sequence:
+
+**Initial marking:** p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)
+
+1. **Fire T1:** p0(1) → p1(1) + p2(1)
+   - Marking: p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)
+
+2. **Fire T2:** p1(1) → p3(1)
+   - Marking: p0(0), p1(0), p2(1), p3(1), p4(0), p5(0), p6(0)
+
+3. **Fire T5:** p3(1) →[inhibited by p4(0)]→ p6(1)
+   - Marking: p0(0), p1(0), p2(1), p3(0), p4(0), p5(0), p6(1)
+
+**T5 has fired, and T3 has not yet fired.** ✓
+
+### Justification:
+After the parallel split (T1), the token in p2 doesn't prevent T5 from firing—only a token in **p4** would. Since T3 hasn't fired yet, p4 remains empty, satisfying the inhibitor arc condition.

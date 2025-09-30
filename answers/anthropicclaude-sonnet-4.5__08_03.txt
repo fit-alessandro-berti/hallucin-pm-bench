@@ -1,0 +1,55 @@
+I need to determine if T5 can fire before T3 in any execution sequence.
+
+Let me trace through the net systematically.
+
+## Analysis
+
+**Initial marking:** p0=1, all others=0
+
+**For T5 to fire:** It requires tokens in both pd AND pe (synchronizing join).
+
+**For T3 to fire:** It requires a token in pc.
+
+Let me explore possible firing sequences:
+
+### Sequence attempt 1: Trying to fire T5 before T3
+
+1. **Fire T1** (p0 → pa, pb)
+   - Marking: pa=1, pb=1
+
+2. **Fire T4** (pb → pe)
+   - Marking: pa=1, pe=1
+
+3. Now I need pd to fire T5. How can I get a token in pd?
+   - **Option A:** Fire T2 (pa → pc), then T3 (pc → pd)
+     - But this fires T3, violating our goal
+   - **Option B:** Fire T2b (pa → pd)
+     - This is the shortcut that bypasses pc entirely!
+
+4. **Fire T2b** (pa → pd)
+   - Marking: pd=1, pe=1
+
+5. **Fire T5** (pd, pe → pf)
+   - Marking: pf=1
+   - **T3 has NOT fired yet!**
+
+### Verification of the sequence
+
+Starting from p0=1:
+1. T1: p0=0, pa=1, pb=1
+2. T4: pb=0, pa=1, pe=1
+3. T2b: pa=0, pd=1, pe=1
+4. T5: pd=0, pe=0, pf=1
+
+At this point, T5 has fired but T3 has never fired (and cannot fire since pc=0).
+
+## Answer
+
+**YES**, it is possible for T5 to fire before T3.
+
+**Shortest firing sequence:**
+```
+T1 → T4 → T2b → T5
+```
+
+**Explanation:** The shortcut transition T2b allows the system to place a token directly in pd without going through pc, thereby bypassing the need for T3. When T2b is used instead of the "normal path" (T2→T3), a token reaches pd without T3 ever firing, allowing T5 to synchronize with the token from T4 in pe.

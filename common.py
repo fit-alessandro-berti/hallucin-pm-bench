@@ -66,6 +66,8 @@ class Shared:
                        "arcee-ai/afm-4.5b",
                        "google/gemini-2.5-flash-preview-09-2025",
                        "google/gemini-2.5-flash-lite-preview-09-2025",
+                       "deepseek/deepseek-v3.2-exp",
+                       "anthropic/claude-sonnet-4.5",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

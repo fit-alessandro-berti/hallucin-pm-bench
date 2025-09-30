@@ -1,0 +1,22 @@
+2.0
+
+### Evaluation Rationale
+The LLM answer deviates significantly from the ground truth (GT) in structure, fidelity to the process description, and BPMN modeling accuracy, warranting a very low score under strict criteria. Key differences include:
+
+- **JSON Structure (Major Loss: -3.0 points)**: LLM uses "nodes" and "edges" (graph-like), while GT uses "process_id", "elements" (with detailed attributes like "event": "message" or "timer"), and "flows" (with explicit conditions like "condition": "simple"). This is not equivalent; LLM omits BPMN-specific details (e.g., event types) and process metadata, making it less "well-formed" for BPMN-2.0.
+
+- **Process Flow and Sequencing (Major Loss: -3.0 points)**: LLM models "Send Response to Customer" and "Log Solution in Knowledge Base" sequentially (send → log), violating the description's explicit "in parallel" requirement (log may finish "earlier or later than the customer reply"). GT correctly uses parallelGateway (fork "Fork Log/Wait" → send/log → join "Join After Log") to handle parallelism before waiting. This is a core hallucination by omission, as LLM invents a linear path absent from both description and GT.
+
+- **Close Ticket Modeling (Major Loss: -1.5 points)**: LLM treats "Close Ticket" as an endEvent (e.g., waitReply → endEvent_closeTicket; sendReminder → endEvent_closeTicket), but the description specifies it as agent/system actions (tasks). GT correctly models it as a task ("closeTicket") → endEvent. This inverts BPMN semantics and ignores the description's action-oriented closure.
+
+- **Customer Cancel Handling (Significant Loss: -1.0 point)**: LLM places a single boundaryEvent (interrupting, "cancelActivity": true) only on "task_parseEmail" (early in process), limiting cancellation to one point despite the description's "at any point before closure." GT uses a separate intermediateCatchEvent ("cancelEvent", message) → terminateEndEvent, unattached to the main flow (also imperfect but broader). LLM's restriction is an invention not in description or GT, and both fail full "any point" modeling, but placements differ entirely.
+
+- **Start and Parsing (Minor but Penalized Loss: -0.5 points)**: LLM combines "Support Email Received" (startEvent) → "Parse Email and Create Ticket" (single task), faithfully adding "parse" from description but differing from GT's separate start ("Email Received") → "Create Ticket" (omitting parse). Strictness penalizes the mismatch and extra detail as deviation.
+
+- **Waiting Mechanism (Minor Loss: -0.5 points)**: Both use eventBasedGateway for 24h wait (message vs. timer), but LLM positions it after sequential log (delaying wait incorrectly), while GT places it after parallel join. LLM's intermediateCatchEvent_waitReply lacks explicit "event": "message" (unlike GT's "customerReply"). Edges are similar but contextually wrong due to sequencing.
+
+- **Naming and Details (Cumulative Minor Loss: -1.0 points)**: Inconsistent names (e.g., LLM "Provide Resolution" vs. GT exact match; conditions "Simple"/"Complex" vs. GT "simple"/"complex"; IDs like "task_provideResolution" vs. GT "provideResolution"). No "terminateEndEvent" type in LLM (just "endEvent"); GT specifies it. Small casing/omissions accumulate as errors.
+
+- **Element Count and Completeness (Minor Loss: -0.5 points)**: LLM has 15 nodes (missing GT's parallel gateways, separate close task, integrated cancel); 15 edges (missing GT's 19 flows for forks/joins/cancel integration). No hallucinated escalations (positive), but omissions (e.g., no "Join After Log") create an incomplete/inaccurate diagram.
+
+Overall faithfulness to description is partial (captures classification, resolution paths, wait logic), but deviations from GT—especially missing parallelism, wrong close semantics, and structural mismatches—result in a fundamentally different BPMN representation. No prose/output violations, but strict scoring yields 2.0 (minimal credit for core sequence nodes like classification/root cause).

@@ -1,0 +1,67 @@
+Let’s reason through the net step by step.
+
+---
+
+**Initial marking:**  
+\[
+M_0 = (p0:1, p1:0, p2:0, p3:0, p4:0, p5:0, p6:0)
+\]
+
+---
+
+**Step 1 — Only T1 is enabled initially**  
+T1: \( p0 \to p1 + p2 \)  
+Firing T1 yields:  
+\[
+M_1 = (p0:0, p1:1, p2:1, p3:0, p4:0, p5:0, p6:0)
+\]
+
+---
+
+**Step 2 — Enabled transitions in M₁**  
+- T2: needs p1 (has 1 token) → enabled  
+- T3: needs p2 (has 1 token) → enabled  
+- T4: needs p3 and p4 (both 0) → not enabled  
+- T5: needs p3 (≥1 token) and inhibitor from p4 (p4 must have 0 tokens) → p3 is 0 → not enabled  
+
+So from M₁, we can fire T2 or T3.
+
+---
+
+**Case A: Fire T2 first**  
+T2: \( p1 \to p3 \)  
+\[
+M_2 = (p0:0, p1:0, p2:1, p3:1, p4:0, p5:0, p6:0)
+\]
+
+Now check enabled transitions:  
+- T3: needs p2 (has 1) → enabled  
+- T4: needs p3=1 and p4=1 → p4=0 → not enabled  
+- T5: needs p3=1 and p4=0 → **enabled** (since p3=1, p4=0)  
+
+So in M₂, T5 is enabled.  
+T3 is also enabled, but **we can fire T5 before T3**.
+
+---
+
+**Firing sequence:**  
+\[
+M_0 \xrightarrow{T1} M_1 \xrightarrow{T2} M_2 \xrightarrow{T5} M_3
+\]
+Where T5: \( p3 \to p6 \) (inhibitor condition satisfied: p4=0)  
+\[
+M_3 = (p0:0, p1:0, p2:1, p3:0, p4:0, p5:0, p6:1)
+\]
+
+---
+
+**Conclusion:**  
+Yes, it is possible for T5 to fire before T3.  
+The sequence is: **T1, T2, T5**.
+
+---
+
+**Justification:**  
+After T1, we have tokens in p1 and p2.  
+If we fire T2 first, p3 gets a token while p4 still has 0 tokens (since T3 hasn’t fired).  
+That satisfies T5’s enabling condition (p3≥1 and p4=0), so T5 can fire before T3.
