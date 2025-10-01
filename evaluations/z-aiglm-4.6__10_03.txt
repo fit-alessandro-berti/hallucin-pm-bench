@@ -1,0 +1,21 @@
+2.5
+
+### Evaluation Rationale
+With utmost strictness, the LLM answer receives a low score due to multiple fundamental violations of the prompt and significant deviations from the ground truth. Key issues include:
+
+- **Added unauthorized activities**: The prompt mandates covering "every activity... described above" using *only* the authorized vocabulary (Intake Vetting, KYC Review, AML Screening, Risk Scoring) without adding, renaming, or merging. The LLM incorrectly adds "Schedule Payment" and "Notify Originating Analyst" as separate rows, which are not distinct activities in the narrative (they are subsumed under Release Funds in the ground truth). This alone warrants major deduction (-3.0 points) for direct violation of "do not... add activities."
+
+- **Missing or incomplete activities**: While the four core activities are named correctly (no vocabulary leaks, a minor positive), the ground truth includes "Compliance Officer Approval" and "Release Funds" as explicit mappings from the narrative (escalation/approval and release/notify). The LLM partially covers these but fragments "Release Funds" incorrectly by splitting out "Schedule Payment" and "Notify," leading to incomplete coverage.
+
+- **RACI assignment errors (pervasive, cell-by-cell mismatches)**: Nearly every cell deviates from the ground truth, with small errors compounded for significant loss:
+  - **Intake Vetting**: Front-Office Analyst correct as R/A (+), but Compliance Analyst is I instead of C (-0.5); Treasury Ops missing I (empty vs. I, -0.5); Compliance Officer empty vs. – (minor, but inconsistent formatting).
+  - **KYC Review**: Front-Office empty vs. – (ok), but Compliance Analyst R vs. R,A (missing A, -0.5); Compliance Officer A vs. C (-0.5); Treasury Ops empty vs. I (-0.5).
+  - **AML Screening**: Similar to KYC: Compliance Analyst R vs. R,A (-0.5); Compliance Officer A vs. C (-0.5); Treasury Ops empty vs. I (-0.5); Front-Office empty (correct).
+  - **Risk Scoring**: Compliance Analyst and Officer partially correct (R and A), but Front-Office missing C (-0.5); Treasury Ops empty vs. I (-0.5).
+  - **Compliance Officer Approval**: Front-Office correct as I (+); Compliance Officer correct as R/A (+); but Compliance Analyst I vs. C (-0.5); Treasury Ops I vs. – (-0.5).
+  - **Release Funds**: Front-Office correct as I (+); Treasury Ops R vs. R,A (missing A, -0.5); but Compliance Analyst I vs. C (-0.5); Compliance Officer A vs. C (-0.5).
+  - Added rows ("Schedule Payment," "Notify Originating Analyst") have no ground truth equivalents, introducing fabricated RACI (e.g., Compliance Analyst A in Schedule Payment has no basis, -1.0 total for extras).
+
+- **Formatting and notation inconsistencies**: Uses "R / A" instead of "R, A" or "**R, A**" (-0.3); empty cells vs. explicit "–" (-0.2); no bolding as in ground truth (-0.2). These are small but deduct per strictness rule.
+
+- **Overall fidelity**: The answer captures ~40% of correct RACI elements but fails on structure (extras, no merging as implied in ground truth for notify/schedule into Release Funds). No criminal/jailbreak issues, but core task butchered. Base score starts at 10, deduct -7.5 for content errors.
