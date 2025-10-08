@@ -2,7 +2,7 @@ import os, time
 from common import *
 
 
-EVALUATING_MODEL_NAME = "x-ai/grok-4-fast:free"
+EVALUATING_MODEL_NAME = "x-ai/grok-4-fast"
 
 
 def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):

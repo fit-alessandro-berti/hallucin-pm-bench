@@ -1,0 +1,144 @@
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "name": "Customer Support Ticket Definitions",
+    "processes": [
+      {
+        "id": "Process_CustomerSupportTicket",
+        "name": "Customer Support Ticket",
+        "isExecutable": true,
+        "messages": [
+          { "id": "Message_SupportEmail", "name": "Support E-mail Received" },
+          { "id": "Message_CustomerReply", "name": "Customer Reply" },
+          { "id": "Message_CustomerCancellation", "name": "Customer Cancellation" }
+        ],
+        "elements": [
+          {
+            "id": "Start_SupportEmail",
+            "type": "startEvent",
+            "name": "Support E-mail Received",
+            "eventDefinition": { "type": "message", "messageRef": "Message_SupportEmail" },
+            "outgoing": ["Flow_Start_to_PreResponse"]
+          },
+          {
+            "id": "SubProcess_PreResponse",
+            "type": "subProcess",
+            "name": "Pre-Response Activities",
+            "incoming": ["Flow_Start_to_PreResponse"],
+            "outgoing": ["Flow_PreResponse_to_Fork"],
+            "flowElements": [
+              { "id": "Pre_Start", "type": "startEvent", "name": "Start", "outgoing": ["Flow_Pre_Start_to_Parse"] },
+              { "id": "Task_ParseEmail", "type": "task", "name": "Parse E-mail", "incoming": ["Flow_Pre_Start_to_Parse"], "outgoing": ["Flow_Parse_to_Create"] },
+              { "id": "Task_CreateTicket", "type": "task", "name": "Create Ticket", "incoming": ["Flow_Parse_to_Create"], "outgoing": ["Flow_Create_to_Classify"] },
+              { "id": "Task_InitialClassification", "type": "userTask", "name": "Initial Classification", "incoming": ["Flow_Create_to_Classify"], "outgoing": ["Flow_Classify_to_Gateway"] },
+              { "id": "Gateway_SimpleOrComplex", "type": "exclusiveGateway", "name": "Simple or Complex?", "incoming": ["Flow_Classify_to_Gateway"], "outgoing": ["Flow_Gateway_to_ProvideSimple", "Flow_Gateway_to_RCA"] },
+              { "id": "Task_RootCauseAnalysis", "type": "task", "name": "Root Cause Analysis", "incoming": ["Flow_Gateway_to_RCA"], "outgoing": ["Flow_RCA_to_Provide"] },
+              { "id": "Task_ProvideResolution", "type": "task", "name": "Provide Resolution", "incoming": ["Flow_Gateway_to_ProvideSimple", "Flow_RCA_to_Provide"], "outgoing": ["Flow_Provide_to_Pre_End"] },
+              { "id": "Pre_End", "type": "endEvent", "name": "End Pre-Response", "incoming": ["Flow_Provide_to_Pre_End"] }
+            ],
+            "sequenceFlows": [
+              { "id": "Flow_Pre_Start_to_Parse", "sourceRef": "Pre_Start", "targetRef": "Task_ParseEmail" },
+              { "id": "Flow_Parse_to_Create", "sourceRef": "Task_ParseEmail", "targetRef": "Task_CreateTicket" },
+              { "id": "Flow_Create_to_Classify", "sourceRef": "Task_CreateTicket", "targetRef": "Task_InitialClassification" },
+              { "id": "Flow_Classify_to_Gateway", "sourceRef": "Task_InitialClassification", "targetRef": "Gateway_SimpleOrComplex" },
+              { "id": "Flow_Gateway_to_ProvideSimple", "sourceRef": "Gateway_SimpleOrComplex", "targetRef": "Task_ProvideResolution", "conditionExpression": "Simple" },
+              { "id": "Flow_Gateway_to_RCA", "sourceRef": "Gateway_SimpleOrComplex", "targetRef": "Task_RootCauseAnalysis", "conditionExpression": "Complex" },
+              { "id": "Flow_RCA_to_Provide", "sourceRef": "Task_RootCauseAnalysis", "targetRef": "Task_ProvideResolution" },
+              { "id": "Flow_Provide_to_Pre_End", "sourceRef": "Task_ProvideResolution", "targetRef": "Pre_End" }
+            ]
+          },
+          {
+            "id": "Boundary_Cancel_PreResponse",
+            "type": "boundaryEvent",
+            "name": "Customer Cancels (Before Closure)",
+            "attachedToRef": "SubProcess_PreResponse",
+            "cancelActivity": true,
+            "outgoing": ["Flow_BoundaryPre_to_Terminate"],
+            "eventDefinition": { "type": "message", "messageRef": "Message_CustomerCancellation" }
+          },
+          {
+            "id": "Gateway_Fork",
+            "type": "parallelGateway",
+            "name": "Fork: KB Logging and Customer Reply",
+            "incoming": ["Flow_PreResponse_to_Fork"],
+            "outgoing": ["Flow_Fork_to_SubprocessReply", "Flow_Fork_to_LogKB"]
+          },
+          {
+            "id": "SubProcess_ReplyClosure",
+            "type": "subProcess",
+            "name": "Customer Reply and Closure",
+            "incoming": ["Flow_Fork_to_SubprocessReply"],
+            "outgoing": ["Flow_SubprocessReply_to_Join"],
+            "flowElements": [
+              { "id": "Reply_Start", "type": "startEvent", "name": "Start", "outgoing": ["Flow_Reply_Start_to_SendResponse"] },
+              { "id": "Task_SendResponse", "type": "task", "name": "Send Response to Customer", "incoming": ["Flow_Reply_Start_to_SendResponse"], "outgoing": ["Flow_SendResponse_to_EventGateway"] },
+              { "id": "Gateway_WaitForReply", "type": "eventBasedGateway", "name": "Wait up to 24h for Customer Reply", "incoming": ["Flow_SendResponse_to_EventGateway"], "outgoing": ["Flow_Gateway_to_CustomerReply", "Flow_Gateway_to_Timer24h"] },
+              { "id": "Catch_CustomerReply", "type": "intermediateCatchEvent", "name": "Customer Reply", "incoming": ["Flow_Gateway_to_CustomerReply"], "outgoing": ["Flow_ReplyEvent_to_Close"], "eventDefinition": { "type": "message", "messageRef": "Message_CustomerReply" } },
+              { "id": "Catch_24hTimer", "type": "intermediateCatchEvent", "name": "24 Hours", "incoming": ["Flow_Gateway_to_Timer24h"], "outgoing": ["Flow_Timer_to_SendReminder"], "eventDefinition": { "type": "timer", "timeDuration": "PT24H" } },
+              { "id": "Task_SendReminder", "type": "task", "name": "Send Reminder", "incoming": ["Flow_Timer_to_SendReminder"], "outgoing": ["Flow_Reminder_to_Close"] },
+              { "id": "Task_CloseTicket", "type": "task", "name": "Close Ticket", "incoming": ["Flow_ReplyEvent_to_Close", "Flow_Reminder_to_Close"], "outgoing": ["Flow_Close_to_Reply_End"] },
+              { "id": "Reply_End", "type": "endEvent", "name": "End Reply/Closure", "incoming": ["Flow_Close_to_Reply_End"] }
+            ],
+            "sequenceFlows": [
+              { "id": "Flow_Reply_Start_to_SendResponse", "sourceRef": "Reply_Start", "targetRef": "Task_SendResponse" },
+              { "id": "Flow_SendResponse_to_EventGateway", "sourceRef": "Task_SendResponse", "targetRef": "Gateway_WaitForReply" },
+              { "id": "Flow_Gateway_to_CustomerReply", "sourceRef": "Gateway_WaitForReply", "targetRef": "Catch_CustomerReply" },
+              { "id": "Flow_Gateway_to_Timer24h", "sourceRef": "Gateway_WaitForReply", "targetRef": "Catch_24hTimer" },
+              { "id": "Flow_ReplyEvent_to_Close", "sourceRef": "Catch_CustomerReply", "targetRef": "Task_CloseTicket" },
+              { "id": "Flow_Timer_to_SendReminder", "sourceRef": "Catch_24hTimer", "targetRef": "Task_SendReminder" },
+              { "id": "Flow_Reminder_to_Close", "sourceRef": "Task_SendReminder", "targetRef": "Task_CloseTicket" },
+              { "id": "Flow_Close_to_Reply_End", "sourceRef": "Task_CloseTicket", "targetRef": "Reply_End" }
+            ]
+          },
+          {
+            "id": "Boundary_Cancel_ReplyClosure",
+            "type": "boundaryEvent",
+            "name": "Customer Cancels (Before Closure)",
+            "attachedToRef": "SubProcess_ReplyClosure",
+            "cancelActivity": true,
+            "outgoing": ["Flow_BoundaryReply_to_Terminate"],
+            "eventDefinition": { "type": "message", "messageRef": "Message_CustomerCancellation" }
+          },
+          {
+            "id": "Task_LogSolution",
+            "type": "task",
+            "name": "Log Solution in Knowledge Base",
+            "incoming": ["Flow_Fork_to_LogKB"],
+            "outgoing": ["Flow_LogKB_to_Join"]
+          },
+          {
+            "id": "Gateway_Join",
+            "type": "parallelGateway",
+            "name": "Join: KB Logging and Customer Closure",
+            "incoming": ["Flow_SubprocessReply_to_Join", "Flow_LogKB_to_Join"],
+            "outgoing": ["Flow_Join_to_End"]
+          },
+          {
+            "id": "End_Normal",
+            "type": "endEvent",
+            "name": "End",
+            "incoming": ["Flow_Join_to_End"]
+          },
+          {
+            "id": "End_Terminate",
+            "type": "endEvent",
+            "name": "Terminate Process",
+            "incoming": ["Flow_BoundaryPre_to_Terminate", "Flow_BoundaryReply_to_Terminate"],
+            "eventDefinition": { "type": "terminate" }
+          }
+        ],
+        "sequenceFlows": [
+          { "id": "Flow_Start_to_PreResponse", "sourceRef": "Start_SupportEmail", "targetRef": "SubProcess_PreResponse" },
+          { "id": "Flow_PreResponse_to_Fork", "sourceRef": "SubProcess_PreResponse", "targetRef": "Gateway_Fork" },
+          { "id": "Flow_Fork_to_SubprocessReply", "sourceRef": "Gateway_Fork", "targetRef": "SubProcess_ReplyClosure" },
+          { "id": "Flow_Fork_to_LogKB", "sourceRef": "Gateway_Fork", "targetRef": "Task_LogSolution" },
+          { "id": "Flow_SubprocessReply_to_Join", "sourceRef": "SubProcess_ReplyClosure", "targetRef": "Gateway_Join" },
+          { "id": "Flow_LogKB_to_Join", "sourceRef": "Task_LogSolution", "targetRef": "Gateway_Join" },
+          { "id": "Flow_Join_to_End", "sourceRef": "Gateway_Join", "targetRef": "End_Normal" },
+          { "id": "Flow_BoundaryPre_to_Terminate", "sourceRef": "Boundary_Cancel_PreResponse", "targetRef": "End_Terminate" },
+          { "id": "Flow_BoundaryReply_to_Terminate", "sourceRef": "Boundary_Cancel_ReplyClosure", "targetRef": "End_Terminate" }
+        ]
+      }
+    ]
+  }
+}

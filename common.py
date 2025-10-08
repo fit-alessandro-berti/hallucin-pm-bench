@@ -69,6 +69,7 @@ class Shared:
                        "deepseek/deepseek-v3.2-exp",
                        "anthropic/claude-sonnet-4.5",
                        "z-ai/glm-4.6",
+                       "openai/gpt-5-pro",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
