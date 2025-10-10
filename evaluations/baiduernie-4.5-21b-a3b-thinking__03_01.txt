@@ -1,0 +1,19 @@
+3.5
+
+### Evaluation Rationale
+The LLM answer attempts a BPMN XML structure but deviates significantly from the ground truth and prompt in structure, logic, and syntax, warranting a low score under strict criteria. Key differences (each costing points for errors, inventions, or omissions):
+
+- **Structural Errors (-2.0 points)**: Lacks a `<process>` wrapper (ground truth has `id="support_ticket"`); elements are loose in `<definitions>`, invalid BPMN. No `<?xml>` declaration. Missing `<outgoing>` on `startEvent`. `Close Ticket` is an activity without an explicit `<endEvent>` (ground truth uses `end` event named "Ticket Closed"). Exceeds concise style; XML is ~45 lines (prompt: ≤40).
+
+- **Logical Flow Errors (-2.5 points)**: 
+  - Password reset path incorrect: LLM routes `reset_instructions` → `resolve_issue` → `confirm` (invents unnecessary "Resolve" step; description implies "Provide Reset Instructions" leads directly to confirmation as resolution).
+  - Specialist path broken: `forward` activity has `<outgoing>flow8</outgoing>` but no defined flow to `resolve_issue` (line 6 requires specialist finish → "Resolve Issue"). Flow from `forward` undefined, leaving token hanging.
+  - Loop modeled partially (confirm no → diagnosis, matching line 9), but starts from broken paths.
+  - Classification after start missing connection: `classify` has `<outgoing>flow1</outgoing>`, but `flow1` is `start` → `classify` (ID reuse/conflict; no flow from classify to `gw1`).
+  - `Close Ticket` incoming `flow8`, but `flow8` redefined as `resolve_issue` → `confirm` (ID conflict; forward unresolved).
+
+- **Gateway and Condition Errors (-1.5 points)**: Prompt specifies "two decision points," but description/ground truth implies three; LLM adds `gw2` (after diagnosis, correct) but misses labeling/conditions properly. Conditions placed inside `<decision>` elements (invalid BPMN; must be on `<sequenceFlow>` with `xsi:type="tFormalExpression"`). LLM uses vague expressions like "Password Reset" (one only, ambiguous for exclusive gateway) vs. ground truth's clear "yes"/"no" on flows. Third gateway (`gw3`) has internal conditions "Confirmed"/"Issue Persists" (wrong placement; invents labels not in description).
+
+- **Element and Naming Errors (-0.5 points)**: Uses `<activity>` generically (ground truth uses `<task>` for precision). Names like "Classify Ticket" (ok, but "Auto-Classification" more precise). Invents "Resolution Decision" label (prompt: no extra labels). Missing `name` on some (e.g., start unnamed vs. "Ticket Submitted").
+
+Overall, ~70% mismatch: captures start/classify/gateways/loop skeleton but fabricates paths (e.g., reset → resolve), breaks connections, and violates BPMN syntax (e.g., conditions). No hallucinations like timers (good), but core process logic fails, making it non-executable/inaccurate.

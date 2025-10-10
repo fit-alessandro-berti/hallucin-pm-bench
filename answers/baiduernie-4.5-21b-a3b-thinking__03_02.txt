@@ -1,0 +1,158 @@
+
+```json
+{
+  "$schema": "http://www.omg.org/spec/BPMN/2.0/BPMN20.xml",
+  "elements": [
+    {
+      "id": "startEvent",
+      "type": "startEvent",
+      "name": "Support Email Received",
+      "eventType": "message"
+    },
+    {
+      "id": "parseTicket",
+      "type": "serviceTask",
+      "name": "Parse Email and Create Ticket",
+      "serviceEntryPoint": "parseEmailCreateTicket"
+    },
+    {
+      "id": "classification",
+      "type": "userTask",
+      "name": "Initial Classification",
+      "implementation": "explicit"
+    },
+    {
+      "id": "exclusiveGateway",
+      "type": "exclusiveGateway",
+      "name": "Route Decision",
+      "gatewayDirection": "Diverging"
+    },
+    {
+      "id": "simplePath",
+      "type": "serviceTask",
+      "name": "Provide Resolution",
+      "serviceEntryPoint": "resolveSimpleTicket"
+    },
+    {
+      "id": "complexPathStart",
+      "type": "serviceTask",
+      "name": "Root Cause Analysis",
+      "serviceEntryPoint": "analyzeComplexTicket"
+    },
+    {
+      "id": "sendResponse",
+      "type": "userTask",
+      "name": "Send Response to Customer",
+      "implementation": "explicit"
+    },
+    {
+      "id": "logKnowledge",
+      "type": "userTask",
+      "name": "Log Solution in Knowledge Base",
+      "implementation": "explicit"
+    },
+    {
+      "id": "timer",
+      "type": "timerEvent",
+      "name": "Wait 24 Hours",
+      "timerDefinition": {
+        "type": "hours",
+        "value": "24"
+      }
+    },
+    {
+      "id": "replyCheck",
+      "type": "intermediateCatchEvent",
+      "name": "Customer Reply",
+      "eventType": "message"
+    },
+    {
+      "id": "sendReminder",
+      "type": "serviceTask",
+      "name": "Send Reminder",
+      "serviceEntryPoint": "sendReminder"
+    },
+    {
+      "id": "endEvent",
+      "type": "endEvent",
+      "name": "Ticket Closed"
+    },
+    {
+      "id": "cancelEvent",
+      "type": "intermediateThrowEvent",
+      "name": "Ticket Cancelled",
+      "eventType": "cancel"
+    },
+    "flows": [
+      {
+        "from": "startEvent",
+        "to": "parseTicket"
+      },
+      {
+        "from": "parseTicket",
+        "to": "classification"
+      },
+      {
+        "from": "classification",
+        "to": "exclusiveGateway"
+      },
+      {
+        "from": "exclusiveGateway",
+        "to": "simplePathPath",
+        "condition": "taskType == \"Simple\""
+      },
+      {
+        "from": "exclusiveGateway",
+        "to": "complexPathStart",
+        "condition": "taskType == \"Complex\""
+      },
+      {
+        "from": "simplePathPath",
+        "to": "sendResponse"
+      },
+      {
+        "from": "complexPathStart",
+        "to": "sendResponse"
+      },
+      {
+        "from": "sendResponse",
+        "to": "logKnowledge"
+      },
+      {
+        "from": "logKnowledge",
+        "to": "timer"
+      },
+      {
+        "from": "timer",
+        "to": "replyCheck"
+      },
+      {
+        "from": "replyCheck",
+        "to": "endEvent"
+      },
+      {
+        "from": "timer",
+        "to": "sendReminder"
+      },
+      {
+        "from": "sendReminder",
+        "to": "endEvent"
+      },
+      {
+        "from": "sendResponse",
+        "to": "cancelEvent"
+      },
+      {
+        "from": "logKnowledge",
+        "to": "cancelEvent"
+      },
+      {
+        "from": "classification",
+        "to": "cancelEvent"
+      }
+    ]
+  }
+]
+}
+```
+

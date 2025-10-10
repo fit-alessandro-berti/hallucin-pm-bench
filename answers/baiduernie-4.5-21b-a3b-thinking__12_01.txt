@@ -1,0 +1,60 @@
+
+To determine the accuracy of the fact—**"Authorize_Refund always occurs immediately before Update_Inventory within the same case"**—we analyze the sequence of activities in each case (1001, 1002, 1003) from the event-log fragment. The key criterion is whether **Authorize_Refund is the activity directly preceding Update_Inventory** (i.e., "immediately before" means no other activity occurs between them in the sequence).
+
+
+### **Step 1: List Activities per Case in Order**
+The event-log fragments are ordered by timestamp, which defines the sequence of activities for each case. We extract the sequence for each case:
+
+#### **Case 1001**  
+Activity order (timestamp-based):  
+1. Receive_Return (08:15:23)  
+2. Inspect_Item (08:20:10)  
+3. Update_Inventory (08:25:55)  
+4. Authorize_Refund (08:45:12)  
+5. Refund_Issued (08:45:12)  
+
+#### **Case 1002**  
+Activity order (timestamp-based):  
+1. Receive_Return (10:05:47)  
+2. Inspect_Item (10:11:00)  
+3. Authorize_Refund (10:18:40)  
+4. Refund_Issued (10:25:10)  
+
+*Note: Case 1002 has no **Update_Inventory** activity, so the fact does not apply to this case.*
+
+#### **Case 1003**  
+Activity order (timestamp-based):  
+1. Receive_Return (09:55:01)  
+2. Inspect_Item (10:02:31)  
+3. Update_Inventory (10:08:07)  
+4. Quality_Check (10:15:42)  
+5. Authorize_Refund (10:22:18)  
+
+
+### **Step 2: Check "Immediately Before" for Update_Inventory**
+For the fact to hold, **Authorize_Refund must be the activity directly before Update_Inventory** in each case where Update_Inventory occurs. We examine cases with Update_Inventory:
+
+#### **Case 1001**  
+Update_Inventory occurs at position 3 in the sequence. The activity immediately before it is **Inspect_Item** (position 2).  
+**Result**: Authorize_Refund (position 4) is after Update_Inventory, not before. **Violates the fact.**
+
+#### **Case 1003**  
+Update_Inventory occurs at position 3 in the sequence. The activity immediately before it is **Inspect_Item** (position 2).  
+**Result**: Authorize_Refund (position 5) is after Update_Inventory, not before. **Violates the fact.**
+
+
+### **Step 3: Conclusion**
+The fact claims **"Authorize_Refund always occurs immediately before Update_Inventory"**, but:  
+- Cases 1001 and 1003 (where Update_Inventory exists) have Update_Inventory preceded by **Inspect_Item**, not Authorize_Refund.  
+- Case 1002 has no Update_Inventory, so the fact does not apply.  
+
+Since there are cases where Authorize_Refund does not occur immediately before Update_Inventory, the fact is **inaccurate**.
+
+
+**Justification citing relevant case IDs and activities:**  
+- **Case 1001**: Update_Inventory (08:25:55) is preceded by Inspect_Item (08:20:10). Authorize_Refund (08:45:12) occurs after Update_Inventory, violating the fact.  
+- **Case 1003**: Update_Inventory (10:08:07) is preceded by Inspect_Item (10:02:31). Authorize_Refund (10:22:18) occurs after Update_Inventory, violating the fact.  
+- **Case 1002**: No Update_Inventory activity exists, so the fact does not apply.  
+
+The fact is not accurate because there are cases (1001, 1003) where Authorize_Refund does not occur immediately before Update_Inventory.
+
