@@ -71,6 +71,7 @@ class Shared:
                        "z-ai/glm-4.6",
                        "openai/gpt-5-pro",
                        "baidu/ernie-4.5-21b-a3b-thinking",
+                       "inclusionai/ling-1t",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
