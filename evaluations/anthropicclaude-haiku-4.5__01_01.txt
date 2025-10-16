@@ -1,0 +1,34 @@
+5.5
+
+### Evaluation Breakdown
+Evaluating strictly against the ground truth, the LLM answer captures the core elements but introduces notable deviations in structure, granularity, and fidelity to the prompt's constraints, warranting deductions. Here's a detailed, point-by-point comparison:
+
+#### 1. **Decision Points (Major Differences, Significant Deduction)**
+   - **Ground Truth Structure**: Exactly 3 decision points, presented in a table. They are:
+     1. Eligibility check *during* Triage_Agent_Validate_Eligibility (binary: eligible → continue; not → reject/return).
+     2. Amount threshold *after* Finance_Controller_PreApprove (> €1,000 → include Senior_Auditor_Review; ≤ → skip).
+     3. Combined "Final payment approval" at Finance_Controller_PreApprove *or* Senior_Auditor_Review (approved → payment; rejected → ends). This merges approvals without treating them as separate.
+   - **LLM Answer Structure**: 4 decision points in a numbered list (instead of table), over-granularizing and deviating:
+     1. Matches ground truth #1 closely (eligibility in Triage), but adds "Outcome: Pass → proceed to Finance_Controller_PreApprove | Fail → process ends" – minor rephrasing, but "process ends" is acceptable (aligns with implied rejection).
+     2. Introduces Finance_Controller_PreApprove as a standalone decision ("Does the claim meet all conditions? Approved → eligibility-amount check | Rejected → ends"). Ground truth does *not* list this as a separate decision point; it's subsumed into #3. This adds an unlisted decision, inflating the count.
+     3. "High-Value Branch Gate" as a separate conditional decision (> €1,000? Yes → Senior | No → Process_Refund_Payment). This matches ground truth #2 in logic but *introduces an undefined activity name* ("High-Value Branch Gate" and "eligibility-amount check"), violating the prompt's "Do not introduce any activities." Ground truth names it "*Amount threshold*" without a "gate" artifact.
+     4. Treats Senior_Auditor_Review as a fully separate decision, which ground truth folds into #3's combined approval. This splits what should be unified, creating an extra point.
+   - **Impact**: The LLM expands to 4 points (vs. 3), introduces forbidden elements (new names/activities), and misaligns granularity. This is a core mismatch in summarizing "every decision point" without extras. Deduction: -3.0 points (from potential 10.0, as this is the primary task component).
+
+#### 2. **Required Documents (Minor Differences, Moderate Deduction)**
+   - **Ground Truth**: Simple numbered list of exactly 7 documents, with a note that AuditTrail is "only for claims > €1,000, but still part of the catalogue." Includes a closing note: "(No other documents or legacy activities are part of Contoso Airlines’ current flight-refund process.)" – directly echoes the prompt's constraints.
+   - **LLM Answer**: Lists all 7 documents correctly in a table, matching the ground truth catalogue (RefundRequestForm, FlightManifest, WeatherReport, EligibilityChecklist, AuditTrail, BankTransferAuthorization, RefundConfirmationPDF). No new artifacts introduced.
+     - However, adds unrequested details: "Used At" (e.g., tying to activities) and "Purpose" (e.g., "Validate passenger & flight details"). The prompt asks only to "list all required documents" – no elaboration required or allowed.
+     - Omits the conditional note on AuditTrail (it's listed unconditionally without mention of high-value only) and the closing note reinforcing no extras/legacy.
+     - Format mismatch: Table vs. numbered list, plus extra title "# Contoso Airlines Flight-Refund Process: Decision Points & Documents" (unnecessary embellishment).
+   - **Impact**: Core list is accurate, but extras (columns, purposes) bloat it beyond "list," and missing notes ignore nuances/ prompt adherence. Small but strict-worthy error. Deduction: -1.0 point.
+
+#### 3. **Overall Adherence to Prompt and Process Description (Minor Issues, Small Deduction)**
+   - **Strengths**: No introduction of undefined activities/artifacts in documents; stays within defined process (e.g., no "CustomerService_Agent_Decide" legacy). Outcomes align logically with constraints (e.g., payment only after approvals).
+   - **Weaknesses**: Overall format is more verbose and structured (headers, lists/tables) than ground truth's concise table + list. Introduces interpretive phrasing (e.g., "Outcome: Pass → ...") not in ground truth. Fails to "summarise every decision point" at the exact level of abstraction – too detailed and additive.
+   - **Impact**: Violates "Do not introduce any activities or artefacts" via the branch "gate." No major criminal/irrelevant content, but strict prompt fidelity is partial. Deduction: -0.5 point.
+
+#### Scoring Rationale
+- **Base Score**: Starts at 10.0 for perfect match.
+- **Total Deductions**: -3.0 (decision points mismatch/introductions) -1.0 (documents extras/omissions) -0.5 (format/adherence) = 5.5.
+- **Strictness Applied**: Even "small" additions (e.g., purposes, gate name) cost points, as they deviate from the minimalistic ground truth. The response is informative but not a faithful summary – it's an expansion, leading to a mid-range score. If less strict, it could be 7.0+, but per instructions, differences = lower grade.
