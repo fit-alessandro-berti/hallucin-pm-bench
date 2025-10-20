@@ -73,6 +73,7 @@ class Shared:
                        "baidu/ernie-4.5-21b-a3b-thinking",
                        "inclusionai/ling-1t",
                        "anthropic/claude-haiku-4.5",
+                       "ibm-granite/granite-4.0-h-micro",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
