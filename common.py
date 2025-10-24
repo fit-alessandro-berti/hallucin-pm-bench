@@ -74,6 +74,8 @@ class Shared:
                        "inclusionai/ling-1t",
                        "anthropic/claude-haiku-4.5",
                        "ibm-granite/granite-4.0-h-micro",
+                       "liquid/lfm2-8b-a1b",
+                       "liquid/lfm-2.2-6b",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

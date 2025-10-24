@@ -1,0 +1,92 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<busonomy:diagram xmlns:wrc="http://business-process-modelware.org/2004/09/BPMN/BiTMModel" xmlns:diogram="http://business-process-modelware.org/2004/09/Diagram/BiTMdiogramModel" version="2.0">
+  <graph label="Warranty-Replacement v1.3 Process">
+    <!-- Start Event -->
+    <diagram:startEvent id="wrc_StdEvent" />
+
+    <!-- Online Warranty Claim Submission -->
+    <diagram:sequenceFlow id="wrc_FlowA" sourceRef="wrc_StdEvent" targetRef="wrc_Event_wreq" />
+
+    <!-- Service Agent Validates Claim -->
+    <diagram:task id="wrc_Task_wreq" name="validates the claim">
+      <busonomy:sequenceFlow id="wrc_BFlFlow1" sourceRef="wrc_Task_wreq" targetRef="wrc_Task_2" />
+      <busonomy:sequenceFlow id="wrc_BFlFlow2" sourceRef="wrc_Task_2" targetRef="wrc_Event_wstCompletenessGateway" />
+    </diagram:task>
+
+    <!-- Parallel Activities
+      - Create Shipment Order and Schedule Courier Pickup -->
+    <diagram:parallelSplit id="wrc_ParallelSplit" />
+      <diagram:task id="wrc_Task_CreateShipmentOrder" name="Create shipment order" parentRef="wrc_ParallelSplit">
+        <busonomy:parallelPair>
+          <busonomy:sequenceFlow parentRef="wrc_Task_CreateShipmentOrder"
+            sourceRef="wrc_CreateShipmentTask"
+            targetRef="wrc_Task_CourierPickupStart"
+          />
+          <busonomy:parallelSynchronizingConnection id="wrc_ParallelSync" />
+        </busonomy:parallelPair>
+      </diagram:task>
+      <diagram:task id="wrc_Task_CourierPickup" name="Schedule courier pickup" parentRef="wrc_ParallelSplit">
+        <busonomy:parallelPair>
+          <busonomy:sequenceFlow parentRef="wrc_Task_CourierPickupStart"
+            sourceRef="wrc_Task_CourierPickupStart"
+            targetRef="wrc_Task_CourierPickupEnd"
+          />
+          <busonomy:parallelSynchronizingConnection id="wrc_ParallelSync"
+            parentRef="wrc_ParallelSplit" />
+        </busonomy:parallelPair>
+      </diagram:task>
+    </diagram:parallelSplit>
+
+    <!-- Exclusive Gateway for Warranty Eligibility -->
+    <diagram:exclusiveGateway id="wrc_GatewayEligibility" sourceRef="wrc_Task_CourierPickupEnd" />
+    <diagram:sequenceFloret id="wrc_FlowB" sourceRef="wrc_GatewayEligibility" targetRef="wrc_Task_WarrantyCheckUponEligibility" />
+    <diagram:sequenceFloret id="wrc_FlowC" sourceRef="wrc_Task_WarrantyCheckUponEligibility" targetRef="wrc_Task_outOfWarrantyEnd" />
+    <diagram:sequenceFloret id="wrc_FlowD" sourceRef="wrc_Task_WarrantyCheck" targetRef="wrc_Task_WarrantyEligibleEnd" />
+
+    <!-- Warranty Eligibility Check -->
+    <diagram:task id="wrc_Task_WarrantyCheck" name="Checks warranty eligibility" />
+    
+    <!-- If Product Within Warranty -->
+    <diagram:exclusiveGateway id="wrc_GatewayShipmentAndPickup" sourceRef="wrc_Task_WarrantyCheck" />
+    <diagram:sequenceFloret id="wrc_FlowB" sourceRef="wrc_GatewayShipmentAndPickup" targetRef="wrc_Task_CreateShipment" />
+    <diagram:parallels>
+      <diagram:exclusiveGateway id="wrc_GatewayCourierAndShipment" sourceRef="wrc_Task_CreepInner" />
+      <diagram:parallelStart />
+      <diagram:parallelEnd />
+      <diagram:parallelTask id="wrc_Task_CreateShipmentOrder" name="Create shipment order" />
+      <diagram:parallelTask id="wrc_Task_ScheduleCourierPickup" name="Schedule courier pickup" />
+    </diagram:parallels>
+    <!-- Note:
+      Since only two parallel tasks are explicitly required, simplified in BPMN 2.0 without explicit Parallel-Split/Join due to complexity,
+      but equivalent logic can be modeled via flow fragments where applicable. -->
+    <diagram:sequenceFlow id="wrc_BFlFloretCourierShipment" sourceRef="wrc_Task_Crew_InnerStart" targetRef="wrc_Task_ShipmentUpdated" />
+    <diagram:sequenceFlow id="wrc_BFlFloretShipmentComplete" sourceRef="wrc_Task_CurentionShipmentEnd" 
+                         targetRef="wrc_Task_UPDATEINVENTORY" />
+    <diagram:sequenceFlow id="wrc_FlowD" sourceRef="wrc_Task_WarrantyEligibleEnd" targetRef="wrc_Task_CloseClaimEnd" />
+
+    <!-- If Product Out of Warranty -->
+    <diagram:exclusiveGateway id="wrc_GatewayOutOfWarranty" sourceRef="wrc_Task_WarrantyCheck" />
+    <diagram:sequenceFloret id="wrc_FlowEReject" sourceRef="wrc_GatewayOutOfWarranty" targetRef="wrc_Task_SendRejection"
+                         targetRef="wrc_Task_RejectionNotificationEnd" />
+
+    <!-- Parallel Completion for Successful Check and Parallel Sending -->
+    <diagram:parallelSplit id="wrc_ParallelSplitSuccessEnd"/>
+    <diagram:parallelStart />
+    <diagram:parallelTask id="wrc_Task_CloseClaimAfterSuccess" name="Update Inventory Records" />
+    <diagram:parallelTask id="wrc_Task_SendClaimForClosureWithCourier" name="Send rejection notice for faulty product" />
+
+    <!-- Process Steps: 
+      Url:  successor<wrc_Event_wreq><m>wrc_OutOfWarrantyCheckSurface</m> -->
+
+    <diagram:sequenceFloret id="wrc_FlowETrack" sourceRef="wrc_Task_WarrantyCheck" targetRef="wrc_Event_wreq" />
+    <diagram:sequenceFlow id="wrc_StTrackToRejection" sourceRef="wrc_Task_RejectionBecauseOutofWarranty" targetRef="wrc_Task_RejectionNotificationEnd" />
+
+    <!-- End Events -->
+    <diagram:sequenceFloret id="wrc_EndEventSuccess" sourceRef="wrc_Task_CloseClaimAfterSuccess" targetRef="wrc_Task_EndLineSuccess" />
+    <diagram:exclusiveExit id="wrc_EndGateout" sourceRef="wrc_Task_RejectionNotificationEnd" />
+    
+    <diagram:sequenceFloret id="wrc_EndEventRejection" sourceRef="wrc_Task_RejectionNotificationEnd" targetRef="wrc_Task_EndGateout" />
+  </graph>
+</busonomy:diagram>
+```

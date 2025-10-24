@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2.0>
+  <process id="wrc_001">
+    <startEvent id="wrc_001_start" type="production" name="Start">  
+      Text: Customer submits online warranty claim  
+    </startEvent>  
+    <exclusiveGateway id="wrc_001_gateway_validate" type="decision" name="Claim valid?" />  
+    <sequenceFlow id="wrc_001_flow1" sourceRef="wrc_001_start" targetRef="wrc_001_gateway_validate"/>  
+    <exclusiveGateway id="wrc_001_gateway_reqinfo" type="decision" name="Claim complete?" />  
+    <sequenceFlow id="wrc_001_gateway_no" sourceRef="wrc_001_gateway_validate" targetRef="wrc_001_gateway_reqinfo" />  
+    <exclusiveGateway id="wrc_001_gateway_invalid" type="decision" name="Out of warranty?" />  
+    <sequenceFlow id="wrc_001_gateway_revoke" sourceRef="wrc_001_gateway_invalid" targetRef="wrc_001_end_rejection"/>  
+    <sequenceFlow id="wrc_001_gateway_eligible" sourceRef="wrc_001_gateway_reqinfo" targetRef="wrc_001_parallel">wrc_001_act_createピickup" />  
+    <sequenceFlow id="wrc_001_gateway_eligible_j" sourceRef="wrc_001_gateway_eligible" targetRef="wrc_001_gateway_eligible_s"/>  
+    <exclusiveGateway id="wrc_001_gateway_eligible" type="parallel_split" name="Parallel activities for eligible claims"/>  
+    <exclusiveGateway id="wrc_001_gateway_eligible_s" type="decision" name="Ship replacement" />  
+    <exclusiveGateway id="wrc_001_gateway_eligible_j" type="decision" name="Schedule pickup" />  
+    <sequenceFlow id="wrc_001_parallel_start" sourceRef="wrc_001_gateway_eligible" targetRef="wrc_001_parallel_activities"/>  
+    <sequenceFlow id="wrc_001_parallel_active" sourceRef="wrc_001_parallel_start" targetRef="wrc_001_parallel_end" />  
+    <parallelSplits id="wrc_001_parallel" sourceRef="wrc_001_parallel_start" />  
+
+    <sequenceFlow id="wrc_001_parallel_act_create" sourceRef="wrc_001_parallel" targetRef="wrc_001_update_inventory"/>  
+    <sequenceFlow id="wrc_001_parallel_act_schedule" sourceRef="wrc_001_parallel" targetRef="wrc_001_schedule_pickup"/>  
+
+    <activate id="wrc_001_act_create"/>
+    <activate id="wrc_001_act_schedule_pickup"/>
+    <activate id="wrc_001_act_update_inventory"/>  
+    <activate id="wrc_001_act_schedule_pickup"/>
+
+    <endEvent id="wrc_001_end_rejection" name="Reject claim"/>  
+    <endEvent id="wrc_001_end_complete" name="Claim resolved successfully"/>  
+
+    <sequenceFlow id="wrc_001_end_rejection" sourceRef="wrc_001_gateway_revoke" targetRef="wrc_001_end_rejection"/>  
+    <sequenceFlow id="wrc_001_end_complete" sourceRef="wrc_001_parallel_end" targetRef="wrc_001_end_complete"/>  
+
+    <parallelJoin id="wrc_001_parallel_join" sourceRef="wrc_001_parallel" name="Finalize parallel steps"/>  
+    <sequenceFlow id="wrc_001_parallel_join" sourceRef="wrc_001_parallel_join" targetRef="wrc_001_parallel_activities"/>  
+
+    <sequenceFlow id="wrc_001_parallel_activities" sourceRef="wrc_001_parallel_join" targetRef="wrc_001_update_inventory"/>  
+    <sequenceFlow id="wrc_001_parallel_activities" sourceRef="wrc_001_parallel_join" targetRef="wrc_001_schedule_pickup"/>  
+    <sequenceFlow id="wrc_001_parallel_activities" sourceRef="wrc_001_parallel_join" targetRef="wrc_001_end_complete"/>  
+
+    <sequenceFlow id="wrc_001_update_inventory" sourceRef="wrc_001_act_update_inventory" targetRef="wrc_001_update_inventory"/>  
+    <sequenceFlow id="wrc_001_schedule_pickup" sourceRef="wrc_001_act_schedule" targetRef="wrc_001_update_inventory"/>  
+    <sequenceFlow id="wrc_001_schedule_pickup_end" sourceRef="wrc_001_act_schedule_pickup" targetRef="wrc_001_update_inventory"/>  
+
+    <dataObject id="wrc_claim_data"/>
+    <dataObject id="wrc_inventory_data"/>
+    
+    <sequenceFlow id="wrc_start" sourceRef="wrc_001_start" targetRef="wrc_claim_data"/>  
+    <sequenceFlow id="wrc_claim_data" sourceRef="wrc_claim_data" targetRef="wrc_update_inventory"/>  
+    <dataObjectRef id="wrc_claim_data" modelRef="wrc_001"/>  
+    <dataObjectRef id="wrc_inventory_data" modelRef="wrc_001"/>  
+
+    <sequenceFlow id="wrc_update_inventory" sourceRef="wrc_update_inventory" targetRef="wrc_optimal_end"/>  
+  </process>
+</bpmn2.0>

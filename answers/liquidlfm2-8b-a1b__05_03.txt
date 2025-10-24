@@ -1,0 +1,17 @@
+```xml
+<bpmn:exclusiveGateway id="Gateway_VerifyOutcome" name="Identity OK?" />
+<bpmn:stitchingSequenceFlow id="Flow_09" sourceRef="Gateway_VerifyOutcome" targetRef="Activity_CreateAccountAfterTimeout"/>
+<bpmn:userTask id="Activity_CreateAccountAfterTimeout" name="Create Account (with 48h SLA Enforcement)" 
+      conditions="hasFailureGatewayOrTimeout('48h', 'VerifyIdentity')"/>
+<bpmn:endEvent id="End_Success_WithTimeout" name="Onboarding failed SLA – Account Creation Rejected">  
+  <bpmn:pingEvent id="Timeout_Exit" name="Account creation exceeded 48h SLA" />  
+</bpmn:endEvent>
+
+<!-- Added condition to enforce timeout and fail fast via explicit path -->
+<bpmn:sequenceFlow id="Flow_04_TimeoutPath" sourceRef="Gateway_VerifyOutcome" targetRef="Activity_CreateAccountAfterTimeout"/>
+<bpmn:sequenceFlow id="Flow_10" sourceRef="Timeout_Exit" targetRef="End_Rejected">
+  <bpmn:conditionExpression xsi:type="bpmn:tTimeoutExpression">afterT315000ms('VerifyIdentity') + 28800000ms</bpmn:conditionExpression>
+</bpmn:sequenceFlow>
+```
+
+**Justification:** Added an explicit timeout enforcement via a timestamp condition and a dedicated escalation path to trigger rejection if verification exceeds 48 hours, ensuring SLA compliance without introducing new tasks.

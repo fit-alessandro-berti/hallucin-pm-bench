@@ -1,0 +1,23 @@
+2.0
+
+### Evaluation Rationale
+The LLM answer partially adheres to the strict vocabulary policy by correctly using **Intake Vetting**, **KYC Review**, **AML Screening**, and **Risk Scoring** exactly as mandated, without any leaks of disallowed synonyms (e.g., no "Preliminary Assessment" or "risk rating"). This earns minimal credit, as the policy is the core constraint.
+
+However, the answer deviates severely from the ground truth and prompt in multiple ways, warranting a near-minimal score under strict evaluation criteria (significant point loss for even small errors, compounded here by major structural and content failures):
+
+- **Incomplete coverage of activities**: The prompt requires covering *every activity* described in the narrative (e.g., paperwork check → Intake Vetting; CDD → KYC Review; sanctions check → AML Screening; risk derivation → Risk Scoring; escalation/approval by Compliance Officer; release/scheduling by Treasury Ops; notification). The ground truth correctly infers and includes **Compliance Officer Approval** and **Release Funds** as distinct activities. The LLM only lists the four mandated terms but fails to include or map the approval and release steps, leaving key process elements uncovered. This is a critical omission.
+
+- **Invalid structure and additions**: The matrix is malformed. After the four activities, it adds nonsensical rows like "Decision Responsible (Approval & Release)", "Decision Accountable", "Consulted", and "Informed"—these are not activities from the narrative and violate the "do not rename, merge, or add activities" rule. RACI matrices have *activities as rows* and *roles as columns*, with R/A/C/I/C/I assignments *within cells*. The LLM inverts this by treating RACI categories as rows, creating a non-standard, unusable table. Superscripts (e.g., `<sup>Trey</sup>`) are irrelevant gibberish, further corrupting the output.
+
+- **Incorrect RACI assignments**: Even for the four shared activities, assignments mismatch the ground truth and inferred narrative logic:
+  - **Intake Vetting**: LLM assigns R to Front-Office (partial match), but incorrectly gives A to Compliance Analyst (ground truth: Front-Office R,A; Compliance C). No dashes (–) for non-involvement (e.g., Officer has I, but ground truth –).
+  - **KYC Review**: LLM gives C to Front-Office, A to Compliance (wrong; ground truth: Compliance R,A; Front-Office –).
+  - **AML Screening**: LLM gives I to Front-Office, C to Compliance (wrong; ground truth: Compliance R,A; Front-Office –).
+  - **Risk Scoring**: LLM gives I to Front-Office, C to Compliance (wrong; ground truth: Front-Office C; Compliance R; Officer A).
+  - No coverage of Consulted/Informed nuances (e.g., notification to originating analyst implied as I for Front-Office in release).
+
+- **Formatting errors**: No bolding for activities or key cells as in ground truth. Uses single letters (e.g., "R") instead of combined notations like "R, A". Lacks dashes (–) for no involvement. Table headers and alignment are sloppy compared to ground truth.
+
+- **Overall fidelity**: The output captures ~25% of the ground truth's structure (four activities in a table) but introduces errors that render it non-functional for process governance. Differences are pervasive (structure, completeness, accuracy), exceeding "small errors" and justifying a score far below passing (e.g., no credit for invented elements or partial mappings).
+
+This is a fundamental failure to produce a usable RACI matrix, despite vocabulary compliance.

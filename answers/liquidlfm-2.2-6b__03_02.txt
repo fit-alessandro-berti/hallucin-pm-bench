@@ -1,0 +1,379 @@
+```json
+{
+  "definitions": {
+    "Torego": {
+      "name": "Support Agent",
+      "types": ["Normal", "Escalated"] // Only Normal used in currently defined process path
+    },
+    "Participant": {
+      "name": "HelpDeskSystem",
+      "types": ["TicketSystem"]
+    },
+    "Worker": {
+      "name": "InitialClassifier",
+      "archetype": "P beats diamond"
+    },
+    "SubProcesses": {
+      "SimplePath": {
+        "name": "SimpleTicketPath",
+        "start": "Request",
+        "sequenceFlow": ["arrowa1"],
+        "arrowa1": {
+          "type": "parallelTask",
+          "startContainer": "Request",
+          "endContainer": []
+        },
+        "arrowb2": {
+          "type": "sequenceFlow",
+          "from": "IdentifyAssignment",
+          "to": "ResolveTicket.",
+          "conflictingTasks": [
+            {
+              "type": "I",
+              "target": "SendResponseToCustomer",
+              "attributes": {"branchCondition": "Condition(Ticket.Status === 'Drafted') and FailResolutionNotRequired"},
+              "endCondition": "Conflicts=[later(kids[Arb2], child=SendResponseToCustomer)]"
+            },
+            {
+              "type": "parallelTask",
+              "startContainer": "RootAnalysis",
+              "endContainer": "SendResponseToCustomer",
+              "sequenceFlow": ["esCA"],
+              "esCA": {
+                "type": "sequenceFlow",
+                "from": "FindRootCause",
+                "to": "RootAnalysis",
+                "markAsPending": false,
+                "branchCondition": "Condition(Ticket.Status === 'Complex')"
+              },
+              "taskA": {
+                "type": "activity",
+                "name": "Root Analysis",
+                "executionOriginal": true,
+                "start": "taskArr",
+                "resolve": "Condition(Ticket.Status === 'Complex') and Condition(ProcessFlowPath == 'ComplexPath')",
+                "markAsEnd": "notBreakBefore(DocIdCont("performanceMetrics")), NOTBegin2"
+              },
+              "taskB": {
+                "type": "participation",
+                "parameters": {
+                  "attempt": "agentPerformsAnalysis"
+                },
+                "start": "taskBA",
+                "markAsBackward": false
+              },
+              "target": "SendToRootAnalysisEndpoint"
+            },
+            "arrowb3": {
+              "type": "sequenceFlow",
+              "to": "SendResponseToCustomer"
+            }
+          }
+        },
+        "kids": [
+          { "type": "parallelTask", "start": "arrowb2", "target": "SendResponseToCustomer" },
+          { "type": "response", "name": "ResponseSent", "begin": "SendResponseToCustomer", "end": "SendDalyticsAndLog." },
+          "arrowesB4": {
+            "type": "sequenceFlow",
+            "from": "SendDalyticsAndLog",
+            "to": "LogSolutionKBF"
+          },
+          "arroweC": {
+            "type": "sequenceFlow",
+            "from": "LogSolutionKBF",
+            "to": "WaitForCustomerReply"
+          },
+          "alternate1": {
+            "type": "sequenceFlow",
+            "from": "WaitForCustomerReply",
+            "to": "CustomerReplyReceived",
+            "markAsPending": false
+          },
+          "alternate2": {
+            "type": "sequenceFlow",
+            "from": "WaitForCustomerReply",
+            "to": "TimeLimitExceeded",
+            "markAsPending": false
+          },
+          {
+            "type": "end",
+            "name": "CloseTicket",
+            "start": "TimeLimitExceeded",
+            "alternate": [
+              { "type": "sequenceFlow", "to": "CancelTicketEnd" }
+            ]
+          },
+          {
+            "type": "sequenceFlow",
+            "from": "CancelTicketEnd",
+            "to": "CancelTicket"
+          }
+        ]
+      },
+      "name": "ComplexTicketPath",
+      "start": "Request",
+      "sequenceFlow": ["arrowIdc"],
+      "arrowIdc": {
+        "type": "parallelTask",
+        "startContainer": "Request",
+        "endContainer": "Escalated",
+        "markAsPending": false,
+        "branchCondition": "Condition(Ticket.Status === 'Assigned') and NOT(CancelTicket)"
+      },
+      "kids": [
+        { "type": "sequenceFlow", "from": "Request", "to": "FindAssignment" },
+        { "type": "sequenceFlow", "from": "FindAssignment", "to": "IdentifyLockDownLevel">0,",
+          "range": {},
+          "markAsStart": "not closeable" },
+        {
+          "type": "sequenceFlow",
+          "from": "IdentifyLockDownLevel",
+          "to": "ChooseAnalysisType",
+          "conflictingOut": [
+            { "type": "child", "end": "RootAnalysis" },
+            { "type": "participation", "parameters": { ... } },
+            { "type": "inactivityWaitFor", "name": "LockDownRefit" }
+          ]
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "ChooseAnalysisType.child(RootAnalysis)",
+          "to": "RootAnalysis"
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "IdentifyLockDownLevel.child(RootAnalysis)",
+          "to": "SendRootCauseAnalysis"
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "FindRootCause",
+          "to": "RootCauseAnalysisEnd"
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "RootCauseAnalysisEnd",
+          "to": "ProvideResolutionAnalysis",
+          "markAsPending": true
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "RootCauseAnalysisEnd",
+          "to": "ScoutDataApproach",
+          "markAsPending": true
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "ScoutDataApproach",
+          "to": "LabelAndResearchRoot"
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "LabelAndResearchRoot",
+          "to": "DraftResolution",
+          "markAsPending": true
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "DraftResolution",
+          "to": "SendTicketWithResolution"
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "SendTicketWithResolution",
+          "to": "ProvideResolution",
+          "markAsEnd": false
+        },
+        {
+          "type": "sequenceFlow",
+          "from": "ProvideResolution",
+          "to": "TimerEnd",
+          "markAsPending": true
+        }
+      ]
+    },
+    "WorkerAssignment": {
+      "name": "InitialClassifier",
+      "description": "Handles classification and routing",
+      "participation": [
+        { "type": "association", "participant": "HelpDeskSystem", "participantId": "IdentifyAssignmentTask" }
+      ],
+      "start": "Request",
+      "end": "SendIdentificationRequestToAgent"
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "SendTicketWithResolution",
+      "to": "TimerEnd",
+      "markAsEnd": true
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "TimerEnd",
+      "to": "ModifyStatusToWaiting",
+      "markAsPending": false
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "CancelTicketEnd",
+      "to": "SkipReminder",
+      "markAsPending": false
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "TimeoutTimer",
+      "to": "TimerEnd",
+      "markAsEnd": true
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "InitiallyAssigned",
+      "to": "SendResolution",
+      "markAsPending": false
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "SendResolution",
+      "to": "WaitForCustomerReply"
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "WaitForCustomerReply",
+      "to": "TimeoutNotification",
+      "markAsPending": false
+    },
+    {
+      "type": "sequenceFlow",
+      "from": "TimeoutNotification",
+      "to": "SendReminderNotification",
+      "markAsPending": true
+    }
+  },
+  "participants": [
+    { "name": "HelpDeskSystem", "type": "Participant" },
+    { "name": "InitialClassifier", "type": "Worker" },
+    { "name": "FindAssignmentTask", "type": "Task" },
+    { "name": "IdentifyLockDownLevel", "type": "Task" },
+    { "name": "ChooseAnalysisType", "type": "Task" },
+    { "name": "RootAnalysis", "type": "SubProcess", "kind": "sequence" },
+    { "name": "RootCauseAnalysis", "type": "SubProcess", "kind": "sequence" },
+    { "name": "ScoutDataApproach", "type": "SubProcess", "kind": "sequence" },
+    { "name": "LabelAndResearchRoot", "type": "Task" },
+    { "name": "DraftResolution", "type": "Task" },
+    { "name": "SendTicketWithResolution", "type": "Task" },
+    { "name": "SendResolution", "type": "Task" },
+    { "name": "TimeLimitExceeded", "type": "Task" },
+    { "name": "SendReminderNotification", "type": "Task", "mark": "END_REMINDER_ON_TIMEOUT" },
+    { "name": "CancelTicket", "type": "SubProcess", "kind": "withEnd",
+      "to": "CancelTicketEnd"
+    },
+    { "name": "SendBackgroundReminder",
+      "type": "Task",
+      "mark": "ATTEND_TO_OPERATIONAL_CHECKPOINT",
+      "to": "TimeoutNotification",
+      "afterEachAwaitPeriod": [
+        { "task": "TimeoutNotification", "values": { "reload": 0.5 } },
+        { "task": "ModifyStatusToWaiting" }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Request",
+      "type": "timeout",
+      "name": "CustomerReceivedSupportMail",
+      "activationID": "InitMask",
+      "start": "start",
+      "source": "externalSource",
+      "firingRule": {"toNever": [], "sourceOnEnd": false},
+      "mark": "triggerOnMailReceived",
+      "bold": false
+    },
+    {
+      "name": "pingCustomer",
+      "type": "implying",
+      "name": "CheckedForCustomerReply",
+      "to": "CustomerSession",
+      "activationCondition": "Condition(Ticket.Status == 'Drafted') and (Event has occurred after 0–24 hours) OR CustomerCancelRequested && (Ticket != Closed)"
+    },
+    {
+      "name": "sendBackgroundReminder",
+      "type": "sequence",
+      "from": "TimeoutNotification",
+      "to": "NextTake",
+      "ages": [0.0, 0.5],
+      "beforeNext": true,
+      "parents": [
+        { "start": "TimeoutNotification" },
+        { "start": "CustomerCancelRequested" }
+      ]
+    }
+  ],
+  "schemingRules": [
+    {
+      "name": "OnlyOneActiveSubProcess",
+      "parameters": [
+        { "subProcess": "RootAnalysis", "statusDateTime": "special", },
+        { "subProcess": "RootCauseAnalysis", "statusDateTime": "specExplicit", "
+      ]
+    },
+    {
+      "name": "DoNotEscalateBackwards",
+      "activationCondition": {
+        "subProcess": "SendTicketWithResolution",
+        "ticketId": "customerTicketId",
+        "condition0": "Status == 'Drafted'"
+      },
+      "mark": "bringBackTicket"
+    },
+    {
+      "name": "ActivateTimerWhenTimeout",
+      "activationCondition": {
+        "subProcess": "SendTicketWithResolution",
+        "ticketId": "packageId"
+      },
+      "mark": "pauseTicketProgress"
+    },
+    {
+      "name": "ProvideResolutionAsPending",
+      "activationCondition": {
+        "subProcess": "SendTicketWithResolution",
+        "ticketId": "customerTicketId",
+        "condition1": "ResolutionDrafted && Ticket.status == 'Drafted'
+      },
+      "mark": "createProcessStatement"
+    }
+    },
+    {
+      "name": "SendReminderNotification",
+      "type": "custom-domain",
+      "name": "SendCustomerReminder",
+      "conditions": {
+        "event": "TimeoutNotification",
+        "ticketId": "customerTicketId",
+        "time": "customerTicketStatus == 'Stale', shouldbounce = false"
+      },
+      "activationID": "reminderTrigger",
+      "repeatPolicy": {
+        "period": 1,
+        "afterStone": true,
+        "untilNoFailure": true
+      },
+      "intervals": [
+        {
+          "interval": 1,
+          "rule": "Condition(Event.Type == 'CustomerReminder') && Ticket.Status.LastStatus != 'Cancelled'",
+          "frequency": true
+        },
+        {
+          "condition": "Condition(Ticket.Status == 'Stale') == true && TimeInStalePeriod > 1.0",
+          "frequency": true
+        }
+      ]
+    },
+    {
+      "name": "AvoidEscalationToOtherTasks",
+      "mark": "block"I actor action"
+    }
+  ]
+}
