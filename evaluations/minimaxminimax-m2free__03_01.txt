@@ -1,0 +1,22 @@
+4.5
+
+### Evaluation Rationale
+This score reflects a strict assessment against the ground truth, penalizing all deviations heavily as per instructions. The LLM answer captures the overall process logic (start, classification branch, diagnosis branch with forward/resolve, confirmation loop back to diagnosis, and end) without fabricating unrelated elements like timers or parallel paths—avoiding the noted hallucination traps. However, it introduces structural and fidelity errors that violate the prompt's "exactly as stated" rule, "do not invent or add activities," and "concise IDs (e.g., t1, gw1)" guideline. The output is under 40 lines and uses only mentioned elements' names, but differences accumulate significantly:
+
+#### Major Errors (-3.0 points total):
+- **Added activity/element (invention violation)**: Duplicates "Resolve Issue" as two separate tasks (`tResolve1` and `tResolve2`) instead of reusing a single task (as in ground truth's `t4`). This adds an unnecessary element not implied by the description's reuse of the phrase in lines 5-6, increasing tasks from 6 to 7 and flows from 13 to 14. The prompt explicitly forbids adding activities.
+- **Flow structure mismatch**: The dual resolve tasks create redundant paths to confirmation, altering the BPMN topology. Ground truth merges them efficiently with multiple incoming edges to one task, better matching the shared activity name without addition.
+
+#### Medium Errors (-1.5 points each, total -4.5):
+- **Non-concise/ descriptive IDs**: Uses verbose IDs like `tClassify`, `gwDiagnosis`, `tResolve1` (etc.) instead of simple numeric ones (e.g., `t1`, `gw1`) as explicitly exemplified. This ignores the prompt's style directive, making it less "concise."
+- **Missing condition expressions**: Relies solely on flow `name` attributes (e.g., "Yes"/"No") for gateway branches, omitting formal `<conditionExpression>` elements (with `xsi:type="tFormalExpression"`) present in ground truth for all exclusive gateways. BPMN 2.0 supports both, but exact translation to ground truth requires them; this is an omission in XML fidelity.
+- **Gateway name deviations**: `gwDiagnosis` named "Resolved or Forward?" (interpretation of line 5) vs. ground truth's "Resolved Internally?" (also interpretive, but mismatched). Similarly, `gwConfirm` "Confirmed?" vs. "Customer Confirms?" (line 8 phrasing closer to ground truth).
+
+#### Minor Errors (-0.5 points each, total -2.0):
+- **Activity name mismatches**: Several slight but non-exact translations from description/ground truth, e.g.:
+  - Start event: "Customer Submits Ticket" vs. "Ticket Submitted" (line 1).
+  - Classification: "System Classifies Ticket" vs. "Auto-Classification" (line 2's "automatically classified").
+- **Header/metadata differences**: Lacks `<?xml ...?>` declaration; different `targetNamespace` ("http://bpmn.io/schema/bpmn" vs. "http://acmetech/support"); process `id`/`name` ("Process_acmeSupportTicket"/"AcmeTech Support Ticket Process" vs. "support_ticket"/"Support-Ticket"); definitions has extraneous `id` attribute.
+- **Namespace omission**: No `xmlns:xsi` declaration, which ground truth implies for `xsi:type` usage (though LLM avoids it by not using conditions, this is inconsistent for strict BPMN 2.0 compliance).
+
+Base score starts at 10.0 for any valid BPMN XML. Deductions total -9.5, yielding 4.5—reflecting functional but non-exact output with clear rule violations. A perfect 10.0 would require near-identical XML (structure, IDs, names, conditions). Even the three gateways (vs. prompt's "two") are consistent across both, but not excused here.

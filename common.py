@@ -76,6 +76,7 @@ class Shared:
                        "ibm-granite/granite-4.0-h-micro",
                        "liquid/lfm2-8b-a1b",
                        "liquid/lfm-2.2-6b",
+                       "minimax/minimax-m2:free",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
