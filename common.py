@@ -78,6 +78,7 @@ class Shared:
                        "liquid/lfm-2.2-6b",
                        "minimax/minimax-m2:free",
                        "openrouter/polaris-alpha",
+                       "moonshotai/kimi-k2-thinking",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

@@ -1,0 +1,41 @@
+**Answer: Yes – it is possible for T5 to fire before T3.**  
+
+The shortest firing sequence that accomplishes this is:
+
+```
+T1 → T2b → T4 → T5
+```
+
+---
+
+### Why this sequence works
+
+1. **Initial marking:** `p0 = 1` (all other places empty).  
+   - *T1* is enabled.
+
+2. **After firing T1:**  
+   - Token moves from `p0` to `pa` and `pb`.  
+   - Marking: `pa = 1, pb = 1`.
+
+3. **After firing T2b:**  
+   - Consumes the token in `pa` and produces a token in `pd`.  
+   - Marking: `pb = 1, pd = 1`.  
+   - *T4* is still enabled.
+
+4. **After firing T4:**  
+   - Consumes the token in `pb` and produces a token in `pe`.  
+   - Marking: `pd = 1, pe = 1`.  
+   - Now *T5* is enabled (it needs `pd` and `pe`).
+
+5. **After firing T5:**  
+   - Consumes tokens from `pd` and `pe`; produces a token in `pf`.  
+   - Marking: `pf = 1`.
+
+During this entire execution, place `pc` (the input place of T3) never receives a token, so T3 never becomes enabled and therefore never fires. Consequently, **T5 fires while T3 has not yet fired**, i.e., T5 fires before T3.
+
+---
+
+### Formal justification (if the answer had been “no”)
+
+*(Provided for completeness, though the answer is “yes”.)*  
+If T5 could not fire before T3, it would mean that whenever T5 is enabled, T3 must have already fired. In this net, that would require that a token in `pd` (needed for T5) can only be produced by T3, which consumes a token from `pc`. However, there is an alternative path: T2b can directly produce `pd` from `pa`, bypassing T3 entirely. Because T2 and T2b are in conflict on `pa`, we can choose T2b, obtain `pd` without ever creating `pc`, and then obtain `pe` via T4. Hence T5 can be enabled without T3 ever firing, making the ordering possible.
