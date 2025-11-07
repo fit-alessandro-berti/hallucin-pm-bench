@@ -1,0 +1,13 @@
+4.0
+
+### Evaluation Rationale
+Under utmost strictness, the LLM answer receives a low score due to a critical violation: invention of an unauthorized activity ("Specialist Work" task, id="t6"), directly contravening the prompt's rule against adding activities not mentioned in the description (line 6 specifies forwarding leads to "Resolve Issue" without an intermediate specialist task). This is a clear hallucination, as highlighted in the ground truth's trap notes, warranting severe deduction (>50% loss). The ground truth correctly merges forwarding directly into "Resolve Issue" (f9: t5 → t4) without extras.
+
+Additional differences compound the score downward (each small error deducts ~0.5-1.0 points):
+- **Structural mismatches**: Lacks XML declaration (`<?xml version="1.0" encoding="UTF-8"?>`), adding potential parsing issues (-0.5). Extra `id="defs1"` on `<definitions>` not in ground truth (-0.5). Process `isExecutable="true"` vs. ground truth's `"false"` (-0.5).
+- **Element naming inaccuracies**: "Auto Classify Ticket" vs. ground truth's "Auto-Classification" (minor rephrasing of description, but not exact; -0.5). Gateway gw2 named "Issue Resolved?" vs. "Resolved Internally?" (-0.5). gw3 "Issue Persists?" vs. "Customer Confirms?" (semantically close but not precise to description's line 8/9; -0.5).
+- **Flow and gateway issues**: No `<conditionExpression>` elements with `xsi:type="tFormalExpression"` on gateway branches (ground truth includes them for yes/no; LLM uses informal `name` attributes like "Yes", which is valid BPMN but deviates from ground truth's formal structure; -1.0). Prompt specifies only "two decision points" for exclusive gateways, but both answers use three (gw1, gw2, gw3); no deduction as it's consistent, but highlights over-modeling in LLM via the extra task.
+- **Loop and path fidelity**: Rework loop (gw3 no → t3) matches description line 9 and ground truth exactly (+partial credit). Password reset path (t2 → confirm) correct in both. Internal resolve (gw2 yes → t4 → confirm) correct. But forward path distorted by invented t6, breaking "exactly as stated" for lines 5-6 (-2.0 already factored into invention penalty).
+- **Overall completeness**: Concise IDs used (e.g., t1, gw1) as required. Single `<definitions>` block under 40 lines (~28 lines). No forbidden additions like timers/SLAs. But the hallucinated task inflates element count and violates "do not invent" core rule.
+
+The answer captures ~60% of the ground truth's fidelity (core flow and loop intact) but fails on precision and adherence, justifying 4.0. A perfect match would score 10.0; even minor name tweaks would drop to 8.0-9.0 without the invention.
