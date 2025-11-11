@@ -79,6 +79,7 @@ class Shared:
                        "minimax/minimax-m2:free",
                        "openrouter/polaris-alpha",
                        "moonshotai/kimi-k2-thinking",
+                       "moonshotai/kimi-linear-48b-a3b-instruct",
                   "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

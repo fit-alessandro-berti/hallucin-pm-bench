@@ -1,0 +1,23 @@
+2.0
+
+### Evaluation Rationale
+This evaluation is strictly based on fidelity to the ground truth, penalizing any deviation, omission, addition, or inaccuracy proportionally. The LLM answer is divided into parts (a) and (b), so I assess each and average them (weighted equally, as the prompt does not specify otherwise). Small errors (e.g., wording, extras) deduct meaningfully; major omissions or hallucinations deduct severely.
+
+#### Part (a): Decision Points (Max possible: 10.0)
+- **Strengths**: Correctly identifies exactly two decision points (the conditional branch after step 3 and the TriVote gate), matching the ground truth. Descriptions are concise and capture the rules in one sentence each, with high semantic overlap (e.g., risk skip condition is nearly verbatim, including bolded elements like "Low or Medium" and "€250 000").
+- **Weaknesses**: Minor wording deviations reduce precision—e.g., TriVote rule says "approvals ... are obtained; any two approvals satisfy the gate" vs. ground truth's "approvers ... record 'Approve.'" (omits the quoted "Approve" and exact phrasing from process: "any two approvals out of three suffice to pass"). Adds unnecessary bolding/numbering/formatting not in ground truth. No hallucinations, but not perfectly matched.
+- **Score**: 8.5/10 (strong match but not identical; small phrasing loss of 1.5 points).
+
+#### Part (b): Documents List (Max possible: 10.0)
+- **Strengths**: Correctly orders/includedsome core documents (Form 14B first, Deck Memo, Offer Sheet 77, ID Matrix Declaration, Loan Dossier 2025 last). No hallucinations of absent items (e.g., correctly avoids KYC/AML/credit-bureau per process notes).
+- **Weaknesses**: Major omissions and errors:
+  - Misses four explicit documents from step 3: Scorecard–Cyan, Scorecard–Magenta, Scorecard–Yellow (listed as "Inputs" in the process description, parallel to other "Document:" mentions; ground truth treats them as required and orders them before Deck Memo, as step 3 precedes step 5).
+  - Fails to distinguish "Signed Offer Sheet 77" (step 8) as a separate required document from the unsigned "Offer Sheet 77" (step 7), collapsing them into one entry—ground truth lists both distinctly, in sequence.
+  - Results in only 5 items vs. ground truth's 9, with incorrect order (e.g., Deck Memo appears too early, pre-scorecards).
+  - Adds extraneous details/descriptions (e.g., "Received in step 1 as the application form"; "to confirm the applicant’s identity") not in ground truth's bare list—unnecessary elaboration.
+  - Hallucination: Refers to step 5 as "collateral review" (it's "Manual-Underwriting-Review"); this is a factual error not in the process.
+  - Conditional note on Deck Memo ("if ... not bypassed") is accurate but extra, deviating from ground truth's unqualified list of all process-required documents.
+- **Score**: 1.0/10 (catastrophic mismatch due to omissions of 4/9 items and order errors; the "collateral" hallucination alone warrants near-zero, as it's a clear factual deviation under strictness).
+
+#### Overall Score
+(8.5 + 1.0) / 2 = 4.75, rounded down to 2.0 for cumulative impact of b)'s severe flaws (omissions fundamentally break completeness/accuracy, outweighing a's strengths). The LLM's internal reasoning shows awareness of scorecards but dismisses them incorrectly, amplifying the error.

@@ -1,0 +1,247 @@
+The prompt is a request to summarise every decision point in Contoso's flight-refund process and list all required documents. The prompt also says: "Do not introduce any activities or artefacts that are not defined above." The process description includes some activities, but also mentions decisions.
+
+We need to identify decision points (decisions) in the process. The process description includes:
+
+1. Customer_Submit_Claim — passenger completes a RefundRequestForm online.
+2. Triage_Agent_Validate_Eligibility — agent checks claim against FlightManifest and WeatherReport.
+3. Finance_Controller_PreApprove — finance controller signs off using EligibilityChecklist.
+4. High-value branch: if refund amount > €1,000, the case proceeds to Senior_Auditor_Review, which must include the AuditTrail.
+5. Process_Refund_Payment — finance team executes payment once signed BankTransferAuthorization is present.
+6. Issue_Confirmation_Letter — system emails RefundConfirmationPDF to passenger.
+
+Constraints are given: Process_Refund_Payment may begin only after Finance_Controller_PreApprove has succeeded and, for high-value claims, Senior_Auditor_Review has been completed.
+
+We need to summarise every decision point and list all required documents. But we must not introduce any new activities or artefacts not defined above. So we cannot add new forms or documents beyond those defined.
+
+The defined documents are:
+
+- RefundRequestForm (used by Customer_Submit_Claim)
+- FlightManifest (used by Triage_Agent_Validate_Eligibility)
+- WeatherReport (used by Triage_Agent_Validate_Eligibility)
+- EligibilityChecklist (used by Finance_Controller_PreApprove)
+- AuditTrail (must be included in Senior_Auditor_Review)
+- BankTransferAuthorization (required for Process_Refund_Payment)
+- RefundConfirmationPDF (sent in Issue_Confirmation_Letter)
+
+We also have to consider decisions: The triage agent validates eligibility; does the process continue? There's a decision: does the claim meet eligibility? Also, for high-value claims, there's a decision: if amount > €1,000, go to Senior_Auditor_Review else not? The description says "high-value branch: if the refund amount is greater than €1,000, the case proceeds to Senior_Auditor_Review". So the decision is based on the amount.
+
+Also, after Finance_Controller_PreApprove, maybe there's a decision: is the pre-approval successful? If not, process ends. But the description says "Finance_Controller_PreApprove — finance controller signs off using an EligibilityChecklist." So it's an activity that either succeeds or fails. But the description only mentions success; we can infer failure may happen, but it's not defined. The constraints mention that Process_Refund_Payment may begin only after Finance_Controller_PreApprove has succeeded. So maybe we need to include a decision point for success/failure of that activity. However, the description doesn't explicitly define a decision point for failure; but for completeness, we may need to represent it. The prompt says "summarise every decision point". So we should include any point where a decision is made based on a defined condition. The constraints mention "may begin only after Finance_Controller_PreApprove has succeeded and, for high-value claims, Senior_Auditor_Review has been completed." So the decision is about whether both conditions are met.
+
+The triage agent validates eligibility. Does the process continue only if eligible? Probably yes. So we need a decision point: after Triage_Agent_Validate_Eligibility, if eligible, proceed; else maybe cancel. But the description does not mention cancellation. The process only goes through the steps sequentially. So perhaps we assume eligibility is always met? But that would be unrealistic. However, we have to base on the description. The description only defines success cases. So we might not need to define failure branches unless they are explicitly implied or required. The prompt says "summarise every decision point". The description includes only one trigger condition: high-value branch. The constraints mention that Process_Refund_Payment may begin only after both pre-approvals are satisfied. So we could incorporate that into a decision point.
+
+Thus, decision points:
+
+- Decision 1: After Triage_Agent_Validate_Eligibility, decide if eligibility is met (by checking FlightManifest and WeatherReport). If yes, proceed to Finance_Controller_PreApprove; if no, maybe no further action or cancellation (but not defined). Since we cannot introduce new activities, maybe we just note that eligibility must be met.
+
+- Decision 2: After Finance_Controller_PreApprove, decide if pre-approval is granted. If no, process ends. If yes, proceed to next step.
+
+- Decision 3: For high-value claims (>€1,000), decide to proceed to Senior_Auditor_Review; if not high-value, skip Senior_Auditor_Review.
+
+- Decision 4: After Senior_Auditor_Review (if high-value), decide if the review is successful. If yes, proceed to Process_Refund_Payment; if no, maybe process ends. But again, not defined.
+
+- Decision 5: After Process_Refund_Payment, decide if payment is executed (inherent in that activity).
+
+But the constraints add nuance: "Process_Refund_Payment may begin only after Finance_Controller_PreApprove has succeeded and, for high-value claims, Senior_Auditor_Review has been completed." So the decision for payment execution is conditional on these two approvals.
+
+Thus, we need to list all required documents at each step.
+
+Let's map:
+
+1. Customer_Submit_Claim: requires RefundRequestForm (online). So document: RefundRequestForm.
+
+2. Triage_Agent_Validate_Eligibility: requires FlightManifest and WeatherReport. So documents: FlightManifest, WeatherReport.
+
+3. Finance_Controller_PreApprove: uses EligibilityChecklist. So document: EligibilityChecklist.
+
+4. High-value branch: if >€1,000, go to Senior_Auditor_Review. So condition: refund amount > €1,000. Document: AuditTrail must be included in Senior_Auditor_Review.
+
+But what is AuditTrail? It is an artefact that must be included. Not described what it contains, but we can list it as required document for Senior_Auditor_Review.
+
+5. Process_Refund_Payment: requires BankTransferAuthorization (signed). So document: BankTransferAuthorization.
+
+6. Issue_Confirmation_Letter: generates RefundConfirmationPDF. So no document input; it's output.
+
+But also, we need to list all required documents across the process. The question: "list all required documents". It could mean all documents that appear in the process, not per step. So we need to provide a list of documents required by any step.
+
+But the prompt also says: "Summarise every decision point in Contoso’s process and list all required documents." So we need to list the decision points (decisions) and then list all required documents.
+
+Thus, we need to summarise each decision point. The decision points are:
+
+- Decision after Triage_Agent_Validate_Eligibility: Is the claim eligible? (based on FlightManifest and WeatherReport). If eligible, go to Finance_Controller_PreApprove; else maybe no further action.
+
+- Decision after Finance_Controller_PreApprove: Is the pre-approval granted? If no, process ends; if yes, proceed.
+
+- Decision for high-value claims: If refund amount > €1,000, go to Senior_Auditor_Review; else skip to Process_Refund_Payment.
+
+- Decision after Senior_Auditor_Review (if required): Is the audit review satisfactory? If no, process ends; if yes, proceed.
+
+- Decision before Process_Refund_Payment: Check if both pre-approval and high-value review (if needed) are completed. Also, process may not begin until both are satisfied. So it's a decision point.
+
+We can summarise them in a table.
+
+Now, list all required documents:
+
+From each step:
+
+- RefundRequestForm (submitted by customer)
+- FlightManifest (used by triage)
+- WeatherReport (used by triage)
+- EligibilityChecklist (used by finance controller)
+- AuditTrail (required for Senior_Auditor_Review)
+- BankTransferAuthorization (required for payment)
+
+We need to be careful: The constraint says "Process_Refund_Payment may begin only after Finance_Controller_PreApprove has succeeded **and**, for high-value claims, **Senior_Auditor_Review** has been completed." So the BankTransferAuthorization is required only after these approvals. So the document list includes all required documents for each step.
+
+Thus, the required documents are:
+
+- RefundRequestForm (for Customer_Submit_Claim)
+- FlightManifest (for Triage_Agent_Validate_Eligibility)
+- WeatherReport (for Triage_Agent_Validate_Eligibility)
+- EligibilityChecklist (for Finance_Controller_PreApprove)
+- AuditTrail (for Senior_Auditor_Review)
+- BankTransferAuthorization (for Process_Refund_Payment)
+
+We should not add any other documents (like a cancellation letter, etc.). Also, the constraints mention "Country" is not relevant.
+
+Thus, the answer should be a clear summary of decision points and a list of all required documents.
+
+We need to ensure we don't introduce any new activities or artefacts. So we cannot mention "cancellation" or "emails" etc beyond what's defined.
+
+The prompt says "Do not introduce any activities or artefacts that are not defined above." So we must stick to the defined ones. The AuditTrail is defined as an artefact that must be included in Senior_Auditor_Review. So we can mention it.
+
+We need to summarise every decision point. So we should describe the condition and the subsequent action.
+
+We might also list the required documents in a bulleted list, perhaps grouped by step.
+
+We can also mention the order.
+
+Thus, the answer will be something like:
+
+**Decision Points:**
+
+1. Decision after Triage_Agent_Validate_Eligibility: Determine if the claim is valid (eligible). Input: FlightManifest and WeatherReport. If eligible, proceed; else the process may end (or alternative, but not defined).
+
+2. Decision after Finance_Controller_PreApprove: Determine if pre-approval is granted. Input: EligibilityChecklist. If granted, continue; if not, process ends.
+
+3. Decision for High-Value Claims: If refund amount > €1,000, route to Senior_Auditor_Review; else proceed directly to Process_Refund_Payment.
+
+4. Decision after Senior_Auditor_Review (if applicable): Determine if the audit review is satisfactory. Input: AuditTrail. If satisfactory, proceed; else process ends.
+
+5. Decision before Process_Refund_Payment: Verify that both Finance_Controller_PreApprove has succeeded and, for high-value claims, Senior_Auditor_Review has been completed. Input: EligibilityChecklist, AuditTrail. Only then can payment be initiated.
+
+**Required Documents:**
+
+- RefundRequestForm (submitted by customer during Customer_Submit_Claim)
+- FlightManifest (examined during Triage_Agent_Validate_Eligibility)
+- WeatherReport (examined during Triage_Agent_Validate_Eligibility)
+- EligibilityChecklist (used by Finance_Controller_PreApprove)
+- AuditTrail (required for Senior_Auditor_Review)
+- BankTransferAuthorization (required for Process_Refund_Payment)
+
+We can also mention that some documents are used in multiple steps, but we list them once.
+
+The process is fully defined, but we can mention that the condition for high-value is the refund amount > €1,000.
+
+Now, we need to ensure we don't introduce any new artefacts. The AuditTrail is defined as an artefact that must be included. So we can call it "AuditTrail". The BankTransferAuthorization is defined. So it's fine.
+
+The question: "Summarise every decision point in Contoso’s process and list all required documents." So we need to list all documents required for the process. That includes the ones that are input to each activity.
+
+Potential nuance: The FlightManifest and WeatherReport might be generated previously, but the process requires them. So they are required.
+
+Similarly, the EligibilityChecklist is a document that the finance controller signs off using, so it's required.
+
+We need to ensure we don't mention any other documents like "RefundConfirmationPDF" is output but not required for process continuation, so it's not a required document for the process. So we can mention it perhaps in the confirmation step, but the question asks for required documents for the process. Typically, required documents are those that must be present at some point for the process to proceed. The RefundConfirmationPDF is not required for any step; it's just a final notification. So we likely should not list it.
+
+Thus, the answer will be as above.
+
+But we should also consider if there is a decision after Issue_Confirmation_Letter. The description says "Issue_Confirmation_Letter — the system emails a RefundConfirmationPDF to the passenger." It's an activity that ends the process. So no decision.
+
+Thus, the answer will be a concise summary.
+
+We can present it as a table:
+
+| Step | Decision Point | Condition / Criteria | Required Documents |
+|------|----------------|----------------------|--------------------|
+| 1 | Triage Agent Validate Eligibility | Claim must be considered eligible | RefundRequestForm, FlightManifest, WeatherReport |
+| 2 | Finance Controller PreApprove | Pre-approval granted | EligibilityChecklist |
+| 3 | High-value check | Refund amount > €1,000 | (none) |
+| 4 | Senior Auditor Review (if high-value) | Audit review satisfactory | AuditTrail |
+| 5 | Proceed to payment | Pre-approval succeeded + (if high-value, senior review completed) | EligibilityChecklist, AuditTrail, BankTransferAuthorization |
+
+But the constraints say "Process_Refund_Payment may begin only after Finance_Controller_PreApprove has succeeded and, for high-value claims, Senior_Auditor_Review has been completed." So the decision is "can payment proceed?" The answer should reflect that.
+
+Thus, we can summarise decisions and list documents.
+
+Now, we need to ensure we don't mention any additional documents like "RefundConfirmationPDF". Since it's an output, we can note it's generated but not required for process continuation.
+
+Thus, the answer is ready.
+
+We must format it nicely.
+
+Potentially, we can present in bullet points with clear headings.
+
+We can also mention that the process has no alternative path besides the high-value branch.
+
+Thus:
+
+**Decision Points:**
+
+1. Triage Agent Validate Eligibility: Must determine if eligible (checked against FlightManifest & WeatherReport). If eligible, proceed; otherwise, the claim is rejected.
+
+2. Finance Controller PreApprove: Must approve the claim based on EligibilityChecklist. If approved, proceed; otherwise, the process stops.
+
+3. High-Value Routing: If refund amount > €1,000, route to Senior Auditor Review; otherwise, proceed to Process Refund Payment.
+
+4. Senior Auditor Review: Must review the case and confirm satisfaction using AuditTrail; if unsatisfactory, the process ends.
+
+5. Payment Authorization: Must verify that Finance Controller PreApprove succeeded and (if applicable) Senior Auditor Review completed. Only then can payment be executed.
+
+**Required Documents:**
+
+- RefundRequestForm (submitted by customer during step 1)
+- FlightManifest (used in step 1)
+- WeatherReport (used in step 1)
+- EligibilityChecklist (used in step 2)
+- AuditTrail (required for step 4)
+- BankTransferAuthorization (required for step 5)
+
+We might also mention that the RefundConfirmationPDF is issued in step 6 but is not a required document for process continuity.
+
+Thus, the answer is complete.
+
+Now, let's double-check if any other documents are required. The FlightManifest and WeatherReport are used, but they could be external. The constraints don't mention them as required documents for the process, but they are input to the activity. The process description says "triage agent checks the claim against the FlightManifest and the WeatherReport." So they are required for that step. So we should include them.
+
+Thus, the answer is correct.
+
+One more nuance: The question asks "list all required documents". Does that mean we need to list each document used in any step? Yes. So we need to list all defined artefacts that are required (i.e., that must be present at some point). The AuditTrail is required for Senior_Auditor_Review. The BankTransferAuthorization is required for Process_Refund_Payment. The EligibilityChecklist is required for Finance_Controller_PreApprove. The FlightManifest and WeatherReport are required for Triage_Agent_Validate_Eligibility. The RefundRequestForm is required for Customer_Submit_Claim. So these are the required documents.
+
+Thus, the answer is ready.
+
+Now, we must produce the final answer.
+
+**Decision Points in Contoso’s Flight-Refund Process**
+
+| # | Decision Point | Condition / Criteria | Outcome of the Decision |
+|---|----------------|----------------------|--------------------------|
+| 1 | **Triage_Agent_Validate_Eligibility** | The claim must be deemed eligible after checking the *FlightManifest* and *WeatherReport*. | If eligible → proceed to *Finance_Controller_PreApprove*. If not eligible → the claim is rejected (no further action defined). |
+| 2 | **Finance_Controller_PreApprove** | The finance controller must sign off the claim using the *EligibilityChecklist*. | If pre‑approval is granted → proceed to the next step. If pre‑approval is denied → the process ends. |
+| 3 | **High‑Value Routing** | The refund amount must be **greater than €1 000**. | If true → route to *Senior_Auditor_Review*. If false → proceed directly to *Process_Refund_Payment*. |
+| 4 | **Senior_Auditor_Review** (executed only for high‑value claims) | The senior auditor must review the case and the required *AuditTrail* to satisfy the audit criteria. | If the review is satisfactory → proceed to *Process_Refund_Payment*. If unsatisfactory → the process ends. |
+| 5 | **Process_Refund_Payment** | Both of the following must be satisfied:<br>1. *Finance_Controller_PreApprove* has succeeded.<br>2. For high‑value claims, *Senior_Auditor_Review* has been completed. | Validated → payment is executed. Otherwise the payment cannot start. |
+
+---
+
+**All Required Documents**
+
+The following documents must be present (or produced) at the indicated stages:
+
+| Document | Required for Step(s) | Notes |
+|----------|----------------------|-------|
+| **RefundRequestForm** | Customer_Submit_Claim | Submitted by the passenger online. |
+| **FlightManifest** | Triage_Agent_Validate_Eligibility | Checked against the claim by the triage agent. |
+| **WeatherReport** | Triage_Agent_Validate_Eligibility | Checked against the claim by the triage agent. |
+| **EligibilityChecklist** | Finance_Controller_PreApprove | Used by the finance controller to sign off. |
+| **AuditTrail** | Senior_Auditor_Review | Must be included in the senior auditor’s review (for high‑value claims only). |
+| **BankTransferAuthorization** | Process_Refund_Payment | Signed document required to execute the payment. |
+
+*The RefundConfirmationPDF is an output of the final step (Issue_Confirmation_Letter) and is not required for any decision or process continuation; it is simply a notification to the passenger.*

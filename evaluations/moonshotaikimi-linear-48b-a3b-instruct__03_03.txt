@@ -1,0 +1,30 @@
+2.0
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer deviates substantially from the ground truth in structure, completeness, and correctness, warranting a very low score under utmost strictness. Even minor syntactic or semantic mismatches (e.g., capitalization in task names, missing names on elements) deduct points, but here are cascading major errors leading to near-total invalidity as a functional BPMN model:
+
+#### 1. **Core Flow Structure Errors (Severe Deduction: -4.0 points)**
+   - Validation/completeness loop is fundamentally inverted and broken. Ground truth correctly places the exclusive gateway *after* "Validate the claim" task (sf2: validate → complete_gw; sf3: no → request; sf4: request → validate), enabling proper re-validation loop as per prompt ("waits until received before re-validating"). LLM places the "wrc_VerifyClaimCompleteness_gateway" *before* validation (start → gw → validate "claim complete" or request "missing info"), creating an illogical preemptive decision without an initial validation. This misrepresents step 2 entirely—no true loop, potential infinite or skipped validation.
+   - Warranty eligibility flow omits the decision logic properly. Ground truth routes complete_gw "Yes" → warranty_gw (sf5), then "No" → reject task. LLM routes validate → warranty_gw directly, then "within warranty" → create shipment (skipping any eligibility check in flow).
+   - Parallel activities (step 4) are non-functional. Ground truth uses parallel_split after warranty_gw "Yes" (sf8), branches to both tasks (sf9/sf10), then join (sf11/sf12 from tasks → join). LLM has warranty_gw → create (sf6), create → split (sf8), *and* schedule → split (sf9), but split → join directly (sf10) with *no outgoing branches from split to tasks*. This makes parallelism impossible—create is serial, schedule has no incoming flow (floating task), and split-join shorts circuits without executing tasks in parallel. Direct violation of "two activities occur in parallel" and required gateway pair usage.
+
+#### 2. **Missing/Extra/Hallucinated Elements (Severe Deduction: -3.0 points)**
+   - Missing required task: No "Send rejection notice" task (ground truth: wrc_reject). Prompt explicitly states "send rejection notice and end"; LLM branches directly from warranty_gw to end (sf7), omitting this explicit activity.
+   - Hallucinated/unused task: Includes "wrc_CheckWarrantyEligibility" (name="check warranty eligibility"), matching prompt text verbatim, but it is defined yet *unconnected* (no incoming/outgoing sequence flows). This adds bloat without modeling the flow, contradicting "model only explicitly mentioned" while ground truth integrates the decision via gateway (no separate task, but flow proceeds correctly).
+   - Invalid BPMN construct in end event: Rejection end contains non-standard `<BPMN20:finishTask>` child element referencing the gateway—hallucinated and invalid (BPMN end events are simple; no such extension). Ground truth uses clean `<bpmn:endEvent>` with names.
+   - Omitted start event details: Ground truth names it "Online warranty claim submitted" (verbatim from prompt step 1). LLM has unnamed start, violating explicit mention.
+
+#### 3. **Naming and Verbatim Mismatches (Moderate Deduction: -0.5 points)**
+   - Task names not verbatim/capitalized consistently: E.g., LLM "validate the claim" vs. ground truth/prompt intent "Validate the claim" (capital V, "the"); similar for "request missing information" (missing capital R). Prompt requires "match the text verbatim," but LLM lowercases key verbs. Other tasks like "create shipment order" match ground truth closely but lose points for inconsistency.
+   - Gateways/events lack names: Ground truth names complete_gw "Claim complete?", warranty_gw "Within warranty?", ends "Successful end"/"Rejected". LLM gateways/events are unnamed, reducing clarity despite prompt not explicitly requiring but ground truth exemplifying.
+
+#### 4. **XML/Syntactic Issues (Moderate Deduction: -0.5 points)**
+   - Namespace prefix: LLM uses "BPMN20:", ground truth "bpmn:"—functionally equivalent URL, but inconsistent formatting/style deducts under strictness.
+   - Process ID mismatch: LLM "WarrantyReplacement_v1_3" vs. ground "wrc_process"—minor, but IDs must prefix "wrc_" (LLM complies internally).
+   - Extra/malformed flows: 13 sequence flows defined, but several illogical (e.g., sf2 "claim complete" to validate makes no sense; sf9 from unconnected schedule; sf10 split → join bypasses tasks). Ground truth has exactly 15 clean flows matching logic. LLM's flows create dead ends/orphans.
+   - No diagrams/DC/DI elements: Both omit, but LLM's invalid end further breaks parsability.
+
+#### Overall Score Justification
+- Ground truth is a minimal, correct 34-line XML faithfully modeling only explicit elements with proper flows (start → validate → loop/gw → warranty gw → parallel → sequential close → two ends).
+- LLM attempts structure (prefixes, gateways, two ends, parallel pair) but results in a non-executable, semantically wrong diagram—flows don't match prompt (e.g., no re-validation loop, no rejection task, broken parallel). This is not "semantically equivalent" per rubric; it's a hallucinated mess with omissions and extras.
+- Strict rubric: "The more differences... the lower the grade." Multiple major semantic/flow errors (6+), plus small ones (naming, syntax), cap at 2.0—partial credit for basic skeleton (definitions, process, some tasks/flows/prefixes) but zero for usability/correctness. Anything functional would score 8+, minor tweaks 6-7, this is critically flawed.

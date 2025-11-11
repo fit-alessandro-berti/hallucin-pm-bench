@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BPMN20:definitions xmlns:BPMN20="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                   id="Definitions"
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+  <BPMN20:process id="WarrantyReplacement_v1_3"
+                  isExecutable="false">
+    <!-- Start Event -->
+    <BPMN20:startEvent id="wrc_StartEvent"/>
+    
+    <!-- Exclusive Gateway (Step 2 – completeness) -->
+    <BPMN20:exclusiveGateway id="wrc_VerifyClaimCompleteness_gateway"/>
+    
+    <!-- Task: Validate claim -->
+    <BPMN20:userTask id="wrc_ValidateClaim"
+                     name="validate the claim"/>
+    
+    <!-- Task: Request missing information -->
+    <BPMN20:userTask id="wrc_RequestMissingInformation"
+                     name="request missing information"/>
+    
+    <!-- Exclusive Gateway (Step 3 – warranty eligibility) -->
+    <BPMN20:exclusiveGateway id="wrc_CheckWarrantyEligibility_gateway"/>
+    
+    <!-- Task: Check warranty eligibility -->
+    <BPMN20:serviceTask id="wrc_CheckWarrantyEligibility"
+                        name="check warranty eligibility"/>
+    
+    <!-- Task: Create shipment order -->
+    <BPMN20:serviceTask id="wrc_CreateShipmentOrder"
+                        name="create shipment order"/>
+    
+    <!-- Task: Schedule courier pickup -->
+    <BPMN20:serviceTask id="wrc_ScheduleCourierPickup"
+                        name="schedule courier pickup"/>
+    
+    <!-- Parallel Gateway Pair (split & join) -->
+    <BPMN20:parallelGateway id="wrc_ParallelSplit"/>
+    <BPMN20:parallelGateway id="wrc_ParallelJoin"/>
+    
+    <!-- Task: Update inventory records -->
+    <BPMN20:serviceTask id="wrc_UpdateInventoryRecords"
+                        name="update inventory records"/>
+    
+    <!-- Task: Close claim -->
+    <BPMN20:serviceTask id="wrc_CloseClaim"
+                        name="close the claim"/>
+    
+    <!-- End events -->
+    <BPMN20:endEvent id="wrc_RejectionEnd">
+      <BPMN20:finishTask>
+        <BPMN20:flowNodeRef>wrc_CheckWarrantyEligibility_gateway</BPMN20:flowNodeRef>
+      </BPMN20:finishTask>
+    </BPMN20:endEvent>
+    
+    <BPMN20:endEvent id="wrc_SuccessEnd"/>
+    
+    <!-- Flows -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow1"
+                         sourceRef="wrc_StartEvent"
+                         targetRef="wrc_VerifyClaimCompleteness_gateway"/>
+    
+    <!-- from completeness gateway -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow2"
+                         sourceRef="wrc_VerifyClaimCompleteness_gateway"
+                         targetRef="wrc_ValidateClaim"
+                         name="claim complete"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow3"
+                         sourceRef="wrc_VerifyClaimCompleteness_gateway"
+                         targetRef="wrc_RequestMissingInformation"
+                         name="missing info"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow4"
+                         sourceRef="wrc_RequestMissingInformation"
+                         targetRef="wrc_ValidateClaim"/>
+    
+    <!-- from validation task -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow5"
+                         sourceRef="wrc_ValidateClaim"
+                         targetRef="wrc_CheckWarrantyEligibility_gateway"/>
+    
+    <!-- from warranty gateway -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow6"
+                         sourceRef="wrc_CheckWarrantyEligibility_gateway"
+                         targetRef="wrc_CreateShipmentOrder"
+                         name="within warranty"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow7"
+                         sourceRef="wrc_CheckWarrantyEligibility_gateway"
+                         targetRef="wrc_RejectionEnd"
+                         name="out of warranty"/>
+    
+    <!-- from shipment tasks -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow8"
+                         sourceRef="wrc_CreateShipmentOrder"
+                         targetRef="wrc_ParallelSplit"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow9"
+                         sourceRef="wrc_ScheduleCourierPickup"
+                         targetRef="wrc_ParallelSplit"/>
+    
+    <!-- parallel split -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow10"
+                         sourceRef="wrc_ParallelSplit"
+                         targetRef="wrc_ParallelJoin"/>
+    
+    <!-- from parallel join -->
+    <BPMN20:sequenceFlow id="wrc_SeqFlow11"
+                         sourceRef="wrc_ParallelJoin"
+                         targetRef="wrc_UpdateInventoryRecords"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow12"
+                         sourceRef="wrc_UpdateInventoryRecords"
+                         targetRef="wrc_CloseClaim"/>
+    
+    <BPMN20:sequenceFlow id="wrc_SeqFlow13"
+                         sourceRef="wrc_CloseClaim"
+                         targetRef="wrc_SuccessEnd"/>
+  </BPMN20:process>
+</BPMN20:definitions>
