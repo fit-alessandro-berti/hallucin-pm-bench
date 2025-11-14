@@ -1,0 +1,400 @@
+{
+  "definitions": {
+    "id": "Definitions_SupportTicket",
+    "targetNamespace": "http://example.com/bpmn/support-ticket",
+    "rootElements": [
+      {
+        "$type": "bpmn:Process",
+        "id": "SupportTicketProcess",
+        "name": "Customer Support Ticket Handling",
+        "isExecutable": true,
+        "flowElements": [
+          {
+            "$type": "bpmn:StartEvent",
+            "id": "StartEvent_SupportEmailReceived",
+            "name": "Support E-mail Received",
+            "incoming": [],
+            "outgoing": [
+              "Flow_Start_to_ParseEmail"
+            ],
+            "eventDefinitions": [
+              {
+                "$type": "bpmn:MessageEventDefinition",
+                "id": "MessageEventDefinition_SupportEmailReceived",
+                "messageRef": "Message_SupportEmail"
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_ParseEmailAndCreateTicket",
+            "name": "Parse E-mail and Create Ticket",
+            "incoming": [
+              "Flow_Start_to_ParseEmail"
+            ],
+            "outgoing": [
+              "Flow_ParseEmail_to_InitialClassification"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_InitialClassification",
+            "name": "Initial Classification",
+            "incoming": [
+              "Flow_ParseEmail_to_InitialClassification"
+            ],
+            "outgoing": [
+              "Flow_InitialClassification_to_ComplexityGateway"
+            ]
+          },
+          {
+            "$type": "bpmn:ExclusiveGateway",
+            "id": "Gateway_ComplexityDecision",
+            "name": "Ticket Complexity?",
+            "incoming": [
+              "Flow_InitialClassification_to_ComplexityGateway"
+            ],
+            "outgoing": [
+              "Flow_ComplexityGateway_to_ProvideResolution_Simple",
+              "Flow_ComplexityGateway_to_RootCauseAnalysis_Complex"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_RootCauseAnalysis",
+            "name": "Root Cause Analysis",
+            "incoming": [
+              "Flow_ComplexityGateway_to_RootCauseAnalysis_Complex"
+            ],
+            "outgoing": [
+              "Flow_RootCauseAnalysis_to_ProvideResolution"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_ProvideResolution",
+            "name": "Provide Resolution",
+            "incoming": [
+              "Flow_ComplexityGateway_to_ProvideResolution_Simple",
+              "Flow_RootCauseAnalysis_to_ProvideResolution"
+            ],
+            "outgoing": [
+              "Flow_ProvideResolution_to_SendResponse"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_SendResponseToCustomer",
+            "name": "Send Response to Customer",
+            "incoming": [
+              "Flow_ProvideResolution_to_SendResponse"
+            ],
+            "outgoing": [
+              "Flow_SendResponse_to_SplitGateway"
+            ]
+          },
+          {
+            "$type": "bpmn:ParallelGateway",
+            "id": "Gateway_Split_WaitAndLog",
+            "name": "Split Wait and Logging",
+            "incoming": [
+              "Flow_SendResponse_to_SplitGateway"
+            ],
+            "outgoing": [
+              "Flow_SplitGateway_to_WaitGateway",
+              "Flow_SplitGateway_to_LogSolution"
+            ]
+          },
+          {
+            "$type": "bpmn:EventBasedGateway",
+            "id": "Gateway_WaitForReplyOr24h",
+            "name": "Wait for Customer Reply or 24h Timeout",
+            "incoming": [
+              "Flow_SplitGateway_to_WaitGateway"
+            ],
+            "outgoing": [
+              "Flow_WaitGateway_to_CustomerReplyEvent",
+              "Flow_WaitGateway_to_24hTimeoutEvent"
+            ]
+          },
+          {
+            "$type": "bpmn:IntermediateCatchEvent",
+            "id": "IntermediateCatchEvent_CustomerReply",
+            "name": "Customer Reply Received",
+            "incoming": [
+              "Flow_WaitGateway_to_CustomerReplyEvent"
+            ],
+            "outgoing": [
+              "Flow_CustomerReplyEvent_to_CloseTicket"
+            ],
+            "eventDefinitions": [
+              {
+                "$type": "bpmn:MessageEventDefinition",
+                "id": "MessageEventDefinition_CustomerReply",
+                "messageRef": "Message_CustomerReply"
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:IntermediateCatchEvent",
+            "id": "IntermediateCatchEvent_24hTimeout",
+            "name": "24h Without Reply",
+            "incoming": [
+              "Flow_WaitGateway_to_24hTimeoutEvent"
+            ],
+            "outgoing": [
+              "Flow_24hTimeoutEvent_to_SendReminder"
+            ],
+            "eventDefinitions": [
+              {
+                "$type": "bpmn:TimerEventDefinition",
+                "id": "TimerEventDefinition_24hTimeout",
+                "timeDuration": {
+                  "$type": "bpmn:FormalExpression",
+                  "body": "PT24H"
+                }
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_SendReminder",
+            "name": "Send Reminder",
+            "incoming": [
+              "Flow_24hTimeoutEvent_to_SendReminder"
+            ],
+            "outgoing": [
+              "Flow_SendReminder_to_CloseTicket"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_CloseTicket",
+            "name": "Close Ticket",
+            "incoming": [
+              "Flow_CustomerReplyEvent_to_CloseTicket",
+              "Flow_SendReminder_to_CloseTicket"
+            ],
+            "outgoing": [
+              "Flow_CloseTicket_to_JoinGateway"
+            ]
+          },
+          {
+            "$type": "bpmn:Task",
+            "id": "Task_LogSolutionInKnowledgeBase",
+            "name": "Log Solution in Knowledge Base",
+            "incoming": [
+              "Flow_SplitGateway_to_LogSolution"
+            ],
+            "outgoing": [
+              "Flow_LogSolution_to_JoinGateway"
+            ]
+          },
+          {
+            "$type": "bpmn:ParallelGateway",
+            "id": "Gateway_Join_WaitAndLog",
+            "name": "Join Wait and Logging",
+            "incoming": [
+              "Flow_CloseTicket_to_JoinGateway",
+              "Flow_LogSolution_to_JoinGateway"
+            ],
+            "outgoing": [
+              "Flow_JoinGateway_to_End"
+            ]
+          },
+          {
+            "$type": "bpmn:EndEvent",
+            "id": "EndEvent_ProcessCompleted",
+            "name": "Process Completed",
+            "incoming": [
+              "Flow_JoinGateway_to_End"
+            ],
+            "outgoing": []
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Start_to_ParseEmail",
+            "name": "E-mail Received",
+            "sourceRef": "StartEvent_SupportEmailReceived",
+            "targetRef": "Task_ParseEmailAndCreateTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_ParseEmail_to_InitialClassification",
+            "sourceRef": "Task_ParseEmailAndCreateTicket",
+            "targetRef": "Task_InitialClassification"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_InitialClassification_to_ComplexityGateway",
+            "sourceRef": "Task_InitialClassification",
+            "targetRef": "Gateway_ComplexityDecision"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_ComplexityGateway_to_ProvideResolution_Simple",
+            "name": "Simple Ticket",
+            "sourceRef": "Gateway_ComplexityDecision",
+            "targetRef": "Task_ProvideResolution",
+            "conditionExpression": {
+              "$type": "bpmn:FormalExpression",
+              "language": "http://www.w3.org/1999/XPath",
+              "body": "classification = 'Simple'"
+            }
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_ComplexityGateway_to_RootCauseAnalysis_Complex",
+            "name": "Complex Ticket",
+            "sourceRef": "Gateway_ComplexityDecision",
+            "targetRef": "Task_RootCauseAnalysis",
+            "conditionExpression": {
+              "$type": "bpmn:FormalExpression",
+              "language": "http://www.w3.org/1999/XPath",
+              "body": "classification = 'Complex'"
+            }
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_RootCauseAnalysis_to_ProvideResolution",
+            "sourceRef": "Task_RootCauseAnalysis",
+            "targetRef": "Task_ProvideResolution"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_ProvideResolution_to_SendResponse",
+            "sourceRef": "Task_ProvideResolution",
+            "targetRef": "Task_SendResponseToCustomer"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_SendResponse_to_SplitGateway",
+            "sourceRef": "Task_SendResponseToCustomer",
+            "targetRef": "Gateway_Split_WaitAndLog"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_SplitGateway_to_WaitGateway",
+            "sourceRef": "Gateway_Split_WaitAndLog",
+            "targetRef": "Gateway_WaitForReplyOr24h"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_SplitGateway_to_LogSolution",
+            "sourceRef": "Gateway_Split_WaitAndLog",
+            "targetRef": "Task_LogSolutionInKnowledgeBase"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_WaitGateway_to_CustomerReplyEvent",
+            "sourceRef": "Gateway_WaitForReplyOr24h",
+            "targetRef": "IntermediateCatchEvent_CustomerReply"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_WaitGateway_to_24hTimeoutEvent",
+            "sourceRef": "Gateway_WaitForReplyOr24h",
+            "targetRef": "IntermediateCatchEvent_24hTimeout"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_CustomerReplyEvent_to_CloseTicket",
+            "sourceRef": "IntermediateCatchEvent_CustomerReply",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_24hTimeoutEvent_to_SendReminder",
+            "sourceRef": "IntermediateCatchEvent_24hTimeout",
+            "targetRef": "Task_SendReminder"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_SendReminder_to_CloseTicket",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_CloseTicket_to_JoinGateway",
+            "sourceRef": "Task_CloseTicket",
+            "targetRef": "Gateway_Join_WaitAndLog"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_LogSolution_to_JoinGateway",
+            "sourceRef": "Task_LogSolutionInKnowledgeBase",
+            "targetRef": "Gateway_Join_WaitAndLog"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_JoinGateway_to_End",
+            "sourceRef": "Gateway_Join_WaitAndLog",
+            "targetRef": "EndEvent_ProcessCompleted"
+          },
+          {
+            "$type": "bpmn:SubProcess",
+            "id": "EventSubProcess_TicketCancellation",
+            "name": "Handle Ticket Cancellation",
+            "triggeredByEvent": true,
+            "flowElements": [
+              {
+                "$type": "bpmn:StartEvent",
+                "id": "StartEvent_TicketCancellation",
+                "name": "Ticket Cancellation Received",
+                "incoming": [],
+                "outgoing": [
+                  "Flow_CancellationStart_to_Terminate"
+                ],
+                "isInterrupting": true,
+                "eventDefinitions": [
+                  {
+                    "$type": "bpmn:MessageEventDefinition",
+                    "id": "MessageEventDefinition_TicketCancellation",
+                    "messageRef": "Message_TicketCancellation"
+                  }
+                ]
+              },
+              {
+                "$type": "bpmn:EndEvent",
+                "id": "EndEvent_TerminateOnCancellation",
+                "name": "Terminate on Cancellation",
+                "incoming": [
+                  "Flow_CancellationStart_to_Terminate"
+                ],
+                "outgoing": [],
+                "eventDefinitions": [
+                  {
+                    "$type": "bpmn:TerminateEventDefinition",
+                    "id": "TerminateEventDefinition_TicketCancellation"
+                  }
+                ]
+              },
+              {
+                "$type": "bpmn:SequenceFlow",
+                "id": "Flow_CancellationStart_to_Terminate",
+                "sourceRef": "StartEvent_TicketCancellation",
+                "targetRef": "EndEvent_TerminateOnCancellation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "$type": "bpmn:Message",
+        "id": "Message_SupportEmail",
+        "name": "Support E-mail"
+      },
+      {
+        "$type": "bpmn:Message",
+        "id": "Message_CustomerReply",
+        "name": "Customer Reply"
+      },
+      {
+        "$type": "bpmn:Message",
+        "id": "Message_TicketCancellation",
+        "name": "Ticket Cancellation"
+      }
+    ]
+  }
+}

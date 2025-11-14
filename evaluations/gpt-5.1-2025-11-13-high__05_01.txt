@@ -1,0 +1,16 @@
+2.5
+
+### Evaluation Rationale
+The LLM answer deviates substantially from the ground truth in ways that violate BPMN 2.0 best practices, SLA compliance, and prompt constraints, warranting a low score under strict criteria:
+
+- **Timer Placement and Timing (-2.5 points)**: Attaches to `Task_RequestDocs` (late in process, only if docs missing), starting the clock upon task entry rather than from submission (`Start_Claim`). This fails to monitor the full 48h SLA from start, risking non-compliance if prior steps delay entry. Ground truth correctly places on `Task_Receive` (early, post-start) for process-wide coverage. LLM's "submitted timestamp" hack is non-standard BPMN and unreliable without extensions.
+
+- **Timer Type and Behavior (-2.0 points)**: Uses non-interrupting timer (`cancelActivity="false"`), allowing `Task_RequestDocs` to continue alongside escalation. This creates parallel paths (task proceeds to `Task_Triage` while also ending), potentially duplicating instances or ignoring the timeout. Ground truth uses interrupting timer to halt and bypass, cleanly ensuring progression.
+
+- **Escalation Target and SLA Fulfillment (-2.0 points)**: Routes to a *new* escalation end event (`End_SLA_Escalated`), prematurely terminating the process without reaching `Task_Triage`. This violates the SLA's core ("must reach 'Triage Claim' within 48 hours"), as escalation ends the flow instead of forcing triage. Ground truth routes directly to existing `Task_Triage`, reusing elements to guarantee arrival within SLA via bypass—no new ends needed.
+
+- **Element Introduction and Reusability (-1.0 point)**: Adds a new end event (unnecessary; prompt allows events but favors minimal changes). Ground truth adds only a timer event and flow, maximizing reuse of existing IDs/elements.
+
+- **Minor Positives (+0.5 points partial credit)**: Correctly uses timer event, references IDs (e.g., `Task_RequestDocs`), stays under 120 words, no new tasks, and attempts escalation. However, these are outweighed by flaws; even small BPMN inaccuracies (e.g., non-interrupting misuse) deduct heavily.
+
+Total: Fundamentally ineffective for SLA (doesn't ensure triage), with cascading errors in design. Ground truth is precise, compliant, and minimal.

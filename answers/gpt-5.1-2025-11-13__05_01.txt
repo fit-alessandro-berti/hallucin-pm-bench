@@ -1,0 +1,15 @@
+Introduce an escalation boundary timer on **Task_Receive** (or **Task_Check**, depending on implementation) to enforce the 48‑hour SLA.
+
+Example:
+
+```xml
+<bpmn:boundaryEvent id="BE_ReceiveTimeout" attachedToRef="Task_Receive" cancelActivity="false">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<bpmn:sequenceFlow id="f_timeout" sourceRef="BE_ReceiveTimeout" targetRef="Task_Triage"/>
+```
+
+If the claim hasn’t reached **Task_Triage** within 48 hours after **Start_Claim**, the timer fires and immediately routes the process via **f_timeout** to **Task_Triage**, satisfying the SLA without introducing new tasks.

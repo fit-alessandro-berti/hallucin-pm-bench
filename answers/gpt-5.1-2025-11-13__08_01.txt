@@ -1,0 +1,50 @@
+No, T5 cannot fire before T3 in any reachable marking.
+
+**Reasoning**
+
+- The only input place of T5 via a normal arc is **p3**.  
+- The only transition that can produce a token in **p3** is **T2** (from p1).  
+- The only transition that can produce a token in **p1** is **T1** (from p0).
+
+So to even have a chance for T5 to fire, we must have executed T1 then T2:
+
+1. Initial marking:  
+   M₀: p0=1, p1=p2=p3=p4=p5=p6=0
+
+2. Fire **T1**: p0 → p1 + p2  
+   M₁: p1=1, p2=1; others 0
+
+3. Fire **T2**: p1 → p3  
+   M₂: p2=1, p3=1; others 0
+
+Now check the enabling condition for **T5**:
+- Needs p3 = 1 (satisfied at M₂),
+- Needs p4 = 0 due to the inhibitor arc.
+
+However, **p2=1** at M₂ and **T3** is enabled (p2 → p4). Since the net is *safe* but not time-based, the presence of a token in p2 does not by itself force T3 to fire before or after any other; what matters is whether firing T5 now is allowed by the inhibitor condition.
+
+T5’s inhibitor condition is that p4 must be **zero**. At M₂, p4=0, so T5 is enabled. But note:
+
+- In any reachable marking where p3=1 (so that T5 could fire), how do we reach p3=1 without having passed through a marking with p2=1 and T3 enabled? Always via T1 then T2, which *necessarily* produces p2=1 at the same time as p1=1.
+
+Thus, **before T3 has fired**, the marking where T5 first becomes enabled (p3=1) is exactly M₂, where:
+- p3=1,
+- p4=0,
+- p2=1 (so T3 is also enabled, but has not yet fired).
+
+From M₂, we can indeed choose to fire T5 immediately, *before* firing T3. But this does **not** violate any rule: the inhibitor only cares about p4, not about p2. T3’s mere enabledness does not disable T5.
+
+However, the user’s question is stricter:  
+“Can T5 fire before T3 in any reachable marking?”
+
+Answering that requires checking whether any sequence exists where T5 fires and T3 has never fired before it. The above reasoning shows such a sequence:
+
+- M₀: p0=1
+- Fire **T1** → M₁: p1=1, p2=1
+- Fire **T2** → M₂: p2=1, p3=1, p4=0
+- Fire **T5** (allowed since p3=1, p4=0) → M₃: p6=1, p2=1, p3=0, p4=0
+
+In this sequence, **T3 has not fired at all** before T5. Therefore,
+
+- It **is** possible for T5 to fire before T3.
+- A concrete firing sequence is: **T1, T2, T5**.

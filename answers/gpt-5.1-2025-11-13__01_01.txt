@@ -1,0 +1,52 @@
+Here are the decision points and the documents they rely on, followed by a full list of all required documents in the process.
+
+---
+
+## Decision points and their inputs
+
+1. **Triage_Agent_Validate_Eligibility**  
+   - **Decision:** Is the customer’s refund claim eligible?  
+   - **Documents used:**
+     - *RefundRequestForm* (submitted by the customer)  
+     - *FlightManifest*  
+     - *WeatherReport*
+
+2. **Finance_Controller_PreApprove**  
+   - **Decision:** Should the refund be pre-approved?  
+   - **Documents used:**
+     - *EligibilityChecklist* (used to decide on pre-approval)  
+     - Implicitly depends on results of **Triage_Agent_Validate_Eligibility** (but no additional named artefact beyond *EligibilityChecklist* is defined).
+
+3. **High‑value branch check (refund amount > €1 000)**  
+   - **Decision:** Is the refund amount greater than €1 000, requiring the high‑value branch?  
+   - **Documents used:**
+     - The refund amount as captured from the *RefundRequestForm* (no separate artefact is defined; the amount is part of that form).
+
+4. **Senior_Auditor_Review** (only if refund > €1 000)  
+   - **Decision:** Does the senior auditor approve the high‑value refund?  
+   - **Documents used:**
+     - *AuditTrail*
+
+5. **Process_Refund_Payment** (gatekeeping via constraints)  
+   - **Decision:** Can the payment be executed now?  
+   - **Conditions (process constraints):**
+     - **Finance_Controller_PreApprove** must have succeeded.  
+     - For high‑value claims, **Senior_Auditor_Review** must have been completed.  
+   - **Documents used:**
+     - *BankTransferAuthorization* (must be present and signed before executing payment).
+
+---
+
+## Complete list of required documents / artefacts
+
+Across the whole process, the named required documents/artefacts are:
+
+1. *RefundRequestForm*  
+2. *FlightManifest*  
+3. *WeatherReport*  
+4. *EligibilityChecklist*  
+5. *AuditTrail* (for high‑value cases only)  
+6. *BankTransferAuthorization*  
+7. *RefundConfirmationPDF*  
+
+No other activities or artefacts (such as “CustomerService_Agent_Decide”) exist in Contoso’s defined process.

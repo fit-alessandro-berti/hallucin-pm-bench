@@ -1,0 +1,51 @@
+**Decision points in Contoso’s refund process**
+
+1. **Triage_Agent_Validate_Eligibility**  
+   - **Decision:** Is the submitted refund claim eligible to proceed?  
+   - **Basis for decision:**  
+     - The passenger’s claim as captured in the **RefundRequestForm**.  
+     - Cross-check against the **FlightManifest**.  
+     - Conditions in the **WeatherReport**.  
+   - **Effect:** If the eligibility check succeeds, the case can move on to **Finance_Controller_PreApprove**; if it fails, the process cannot proceed further for that claim (no additional activities are defined).
+
+2. **Finance_Controller_PreApprove**  
+   - **Decision:** Should the refund be pre-approved by finance?  
+   - **Basis for decision:**  
+     - The controller verifies conditions using the **EligibilityChecklist** (applied to the already-validated claim).  
+   - **Effect:** Only successfully pre-approved cases can move toward payment (and, for high-value claims, onward to **Senior_Auditor_Review**).
+
+3. **High-value branch (amount > €1 000)**  
+   - **Decision:** Is the refund amount greater than **€1 000**?  
+   - **Basis for decision:**  
+     - The refund amount associated with the claim (an attribute of the case; no extra artefact).  
+   - **Effect:**  
+     - If **> €1 000**: the case must go through **Senior_Auditor_Review**, which must include the **AuditTrail**, before payment can be processed.  
+     - If **≤ €1 000**: **Senior_Auditor_Review** is skipped, and the case can move directly toward **Process_Refund_Payment** once pre-approved.
+
+4. **Senior_Auditor_Review** (only for high-value claims)  
+   - **Decision:** Should a high-value refund be approved after senior audit?  
+   - **Basis for decision:**  
+     - Review of the case including the **AuditTrail**.  
+   - **Effect:** Only after **Senior_Auditor_Review** is completed can **Process_Refund_Payment** begin for high-value claims.
+
+5. **Process_Refund_Payment – readiness to execute payment**  
+   - **Decision:** Can the refund payment now be executed?  
+   - **Preconditions / basis:**  
+     - **Finance_Controller_PreApprove** has succeeded.  
+     - For claims > €1 000, **Senior_Auditor_Review** has been completed.  
+     - A signed **BankTransferAuthorization** is present.  
+   - **Effect:** Once these conditions are met, the finance team executes the payment.
+
+*(The final step, **Issue_Confirmation_Letter**, is a system action that sends confirmation; no decision point is described there.)*
+
+---
+
+**All required documents / artefacts mentioned in the process**
+
+1. **RefundRequestForm** – completed by the passenger in **Customer_Submit_Claim**.  
+2. **FlightManifest** – used in **Triage_Agent_Validate_Eligibility**.  
+3. **WeatherReport** – used in **Triage_Agent_Validate_Eligibility**.  
+4. **EligibilityChecklist** – used by the finance controller in **Finance_Controller_PreApprove**.  
+5. **AuditTrail** – must be included in **Senior_Auditor_Review** for high-value refunds.  
+6. **BankTransferAuthorization** – must be signed before **Process_Refund_Payment** is executed.  
+7. **RefundConfirmationPDF** – generated and emailed in **Issue_Confirmation_Letter**.
