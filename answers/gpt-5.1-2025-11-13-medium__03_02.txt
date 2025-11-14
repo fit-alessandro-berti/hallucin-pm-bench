@@ -1,0 +1,257 @@
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "targetNamespace": "http://example.com/bpmn",
+    "processes": [
+      {
+        "id": "Support_Ticket_Process",
+        "name": "Customer Support Ticket Handling",
+        "isExecutable": true,
+        "elements": {
+          "startEvents": [
+            {
+              "id": "start_email_received",
+              "name": "Support E-mail Received",
+              "eventDefinition": {
+                "type": "message",
+                "messageRef": "SupportEmail"
+              }
+            }
+          ],
+          "tasks": [
+            {
+              "id": "task_parse_create_ticket",
+              "name": "Parse E-mail and Create Ticket",
+              "type": "userTask"
+            },
+            {
+              "id": "task_initial_classification",
+              "name": "Initial Classification",
+              "type": "userTask"
+            },
+            {
+              "id": "task_provide_resolution",
+              "name": "Provide Resolution",
+              "type": "userTask"
+            },
+            {
+              "id": "task_root_cause_analysis",
+              "name": "Root Cause Analysis",
+              "type": "userTask"
+            },
+            {
+              "id": "task_send_response",
+              "name": "Send Response to Customer",
+              "type": "userTask"
+            },
+            {
+              "id": "task_log_kb",
+              "name": "Log Solution in Knowledge Base",
+              "type": "userTask"
+            },
+            {
+              "id": "task_send_reminder",
+              "name": "Send Reminder",
+              "type": "serviceTask"
+            },
+            {
+              "id": "task_close_ticket",
+              "name": "Close Ticket",
+              "type": "userTask"
+            }
+          ],
+          "gateways": [
+            {
+              "id": "gw_simple_or_complex",
+              "name": "Simple or Complex",
+              "type": "exclusiveGateway"
+            },
+            {
+              "id": "gw_after_response_parallel_split",
+              "name": "Log KB and Wait for Reply in Parallel",
+              "type": "parallelGateway"
+            },
+            {
+              "id": "gw_after_parallel_join",
+              "name": "Join Logging and Ticket Closure",
+              "type": "parallelGateway"
+            },
+            {
+              "id": "gw_wait_for_reply",
+              "name": "Wait for Customer Reply or 24h Timeout",
+              "type": "eventBasedGateway"
+            }
+          ],
+          "intermediateCatchEvents": [
+            {
+              "id": "event_customer_reply_received",
+              "name": "Customer Reply Received",
+              "eventDefinition": {
+                "type": "message",
+                "messageRef": "CustomerReply"
+              }
+            },
+            {
+              "id": "event_timer_24h",
+              "name": "24h Without Reply",
+              "eventDefinition": {
+                "type": "timer",
+                "timeDuration": "PT24H"
+              }
+            }
+          ],
+          "endEvents": [
+            {
+              "id": "end_normal_completion",
+              "name": "Ticket Process Completed",
+              "eventDefinition": {
+                "type": "none"
+              }
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "id": "flow_start_to_parse",
+              "sourceRef": "start_email_received",
+              "targetRef": "task_parse_create_ticket"
+            },
+            {
+              "id": "flow_parse_to_classification",
+              "sourceRef": "task_parse_create_ticket",
+              "targetRef": "task_initial_classification"
+            },
+            {
+              "id": "flow_classification_to_gw_simple_or_complex",
+              "sourceRef": "task_initial_classification",
+              "targetRef": "gw_simple_or_complex"
+            },
+            {
+              "id": "flow_gw_to_provide_resolution_simple",
+              "sourceRef": "gw_simple_or_complex",
+              "targetRef": "task_provide_resolution",
+              "name": "Simple"
+            },
+            {
+              "id": "flow_gw_to_root_cause_complex",
+              "sourceRef": "gw_simple_or_complex",
+              "targetRef": "task_root_cause_analysis",
+              "name": "Complex"
+            },
+            {
+              "id": "flow_root_cause_to_provide_resolution",
+              "sourceRef": "task_root_cause_analysis",
+              "targetRef": "task_provide_resolution"
+            },
+            {
+              "id": "flow_provide_resolution_to_send_response",
+              "sourceRef": "task_provide_resolution",
+              "targetRef": "task_send_response"
+            },
+            {
+              "id": "flow_send_response_to_parallel_split",
+              "sourceRef": "task_send_response",
+              "targetRef": "gw_after_response_parallel_split"
+            },
+            {
+              "id": "flow_parallel_split_to_log_kb",
+              "sourceRef": "gw_after_response_parallel_split",
+              "targetRef": "task_log_kb"
+            },
+            {
+              "id": "flow_parallel_split_to_gw_wait_for_reply",
+              "sourceRef": "gw_after_response_parallel_split",
+              "targetRef": "gw_wait_for_reply"
+            },
+            {
+              "id": "flow_log_kb_to_parallel_join",
+              "sourceRef": "task_log_kb",
+              "targetRef": "gw_after_parallel_join"
+            },
+            {
+              "id": "flow_wait_for_reply_to_customer_reply_event",
+              "sourceRef": "gw_wait_for_reply",
+              "targetRef": "event_customer_reply_received"
+            },
+            {
+              "id": "flow_wait_for_reply_to_timer_24h",
+              "sourceRef": "gw_wait_for_reply",
+              "targetRef": "event_timer_24h"
+            },
+            {
+              "id": "flow_customer_reply_to_close_ticket",
+              "sourceRef": "event_customer_reply_received",
+              "targetRef": "task_close_ticket"
+            },
+            {
+              "id": "flow_timer_24h_to_send_reminder",
+              "sourceRef": "event_timer_24h",
+              "targetRef": "task_send_reminder"
+            },
+            {
+              "id": "flow_send_reminder_to_close_ticket",
+              "sourceRef": "task_send_reminder",
+              "targetRef": "task_close_ticket"
+            },
+            {
+              "id": "flow_close_ticket_to_parallel_join",
+              "sourceRef": "task_close_ticket",
+              "targetRef": "gw_after_parallel_join"
+            },
+            {
+              "id": "flow_parallel_join_to_end",
+              "sourceRef": "gw_after_parallel_join",
+              "targetRef": "end_normal_completion"
+            }
+          ],
+          "eventSubProcesses": [
+            {
+              "id": "es_customer_cancellation",
+              "name": "Customer Cancellation",
+              "triggeredByEvent": true,
+              "startEvents": [
+                {
+                  "id": "es_start_customer_cancel",
+                  "name": "Customer Cancels Ticket",
+                  "eventDefinition": {
+                    "type": "message",
+                    "messageRef": "CustomerCancellation"
+                  }
+                }
+              ],
+              "endEvents": [
+                {
+                  "id": "es_end_terminate",
+                  "name": "Terminate Ticket Process",
+                  "eventDefinition": {
+                    "type": "terminate"
+                  }
+                }
+              ],
+              "sequenceFlows": [
+                {
+                  "id": "flow_cancel_to_terminate",
+                  "sourceRef": "es_start_customer_cancel",
+                  "targetRef": "es_end_terminate"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "messages": [
+      {
+        "id": "SupportEmail",
+        "name": "Support E-mail"
+      },
+      {
+        "id": "CustomerReply",
+        "name": "Customer Reply"
+      },
+      {
+        "id": "CustomerCancellation",
+        "name": "Customer Cancellation"
+      }
+    ]
+  }
+}
