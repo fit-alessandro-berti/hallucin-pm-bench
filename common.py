@@ -1,12 +1,11 @@
+import os
+
 import requests
 import traceback
 import json
 
 
 class Shared:
-    API_URL = "https://openrouter.ai/api/v1/"
-    API_KEY = open("api_key.txt", "r").read().strip()
-
     MODEL_CATALOGUE = ["openai/gpt-4.1",
                   "openai/gpt-4.1-mini",
                   "openai/gpt-4.1-nano",
@@ -80,7 +79,9 @@ class Shared:
                        "openrouter/polaris-alpha",
                        "moonshotai/kimi-k2-thinking",
                        "moonshotai/kimi-linear-48b-a3b-instruct",
-                  "google/gemini-2.5-flash",
+                       ("gpt-5.1-2025-11-13", {"api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
+                       ("gpt-5.1-2025-11-13-high", {"base_model": "gpt-5.1-2025-11-13", "api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                       "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
                   "google/gemini-2.0-flash-001",
@@ -132,11 +133,14 @@ def get_response(prompt, model_name, parameters=None):
     if parameters is None:
         parameters = {}
 
-    complete_url = Shared.API_URL + "chat/completions"
+    api_url = parameters["api_url"] if "api_url" in parameters else "https://openrouter.ai/api/v1/"
+    api_key = parameters["api_key"] if "api_key" in parameters else os.environ["OPENROUTER_API_KEY"]
+
+    complete_url = api_url + "chat/completions"
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {Shared.API_KEY}"
+        "Authorization": f"Bearer {api_key}"
     }
 
     messages = [{"role": "user", "content": prompt}]

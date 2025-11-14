@@ -2,12 +2,19 @@ import os, time
 from common import *
 
 
-EVALUATING_MODEL_NAME = "x-ai/grok-4-fast"
-
+EVALUATING_MODEL_NAME = "grok-4-fast-reasoning"
+EVALUATING_API_URL = "https://api.x.ai/v1/"
+EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
 
 def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
         parameters = {}
+
+    if "api_key" not in parameters:
+        parameters["api_key"] = EVALUATING_API_KEY
+
+    if "api_url" not in parameters:
+        parameters["api_url"] = EVALUATING_API_URL
 
     modified_something = False
 
