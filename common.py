@@ -84,6 +84,8 @@ class Shared:
                        ("gpt-5.1-2025-11-13-medium",
                         {"base_model": "gpt-5.1-2025-11-13", "api_url": "https://api.openai.com/v1/",
                          "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "medium"}}),
+                       "openrouter/sherlock-dash-alpha",
+                       "openrouter/sherlock-think-alpha",
                        "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

@@ -1,0 +1,15 @@
+3.5
+
+### Evaluation Rationale
+- **Semantic Correctness (Major Deduction: -4.0 points)**: The core process flow is mostly captured, but the validation loop is fundamentally incorrect. The prompt specifies that after requesting missing information, the agent "waits until it is received before **re-validating**," which requires looping back to the "validate the claim" task itself (as in ground truth: request_info → validate). The LLM incorrectly loops back to the completeness gateway (`wrc_requests missing information` → `wrc_Complete`), bypassing re-execution of the validation task. This omits the explicit re-validation step, altering the process semantics (the agent skips re-validating and jumps to warranty check). This is not equivalent and violates "model **only** the flow elements explicitly mentioned" by mishandling the loop.
+  
+- **Task Names (Deduction: -1.0 points)**: Most match verbatim (e.g., "Create shipment order", "Schedule courier pickup"). However, "validate the claim" does not match the prompt's "validates the claim" (missing verb conjugation). Strict rubric requires verbatim matching; this small error incurs significant loss.
+
+- **Elements and Structure (Partial Credit: +2.0 points base, -1.5 deductions)**: Includes required start event, two exclusive gateways (completeness and warranty), parallel split/join pair, and exactly two end events. No hallucinated tasks, escalations, or error paths. All IDs prefixed with "wrc_". However, deducts for:
+  - Omitting explicit names on start/end events and gateways (ground truth includes descriptive names like "Online warranty claim submitted", "Claim complete?", "Within warranty?"). Prompt implies modeling the described flow, and ground truth sets this as standard.
+  - Adding unrequired conditionExpressions (e.g., `<bpmn:conditionExpression>complete</bpmn:conditionExpression>`) on flows, while ground truth uses simple `name` attributes (e.g., "Yes"/"No"). This is extra and not specified.
+  - Including full `<bpmndi:BPMNDiagram>` with shapes, edges, and bounds (over 100 lines of DI content), making it non-minimal. Ground truth is a compact 34-line model-only XML; prompt requests "self-contained BPMN 2.0 XML" but expects minimal equivalence, not bloat.
+
+- **Completeness (Minor Deduction: -0.5 points)**: Covers all mentioned activities (shipment, pickup, update, close) in parallel as required. No omissions of explicit elements, but the loop error propagates incompleteness.
+
+Overall, the LLM answer is structurally close but semantically flawed in a key required loop, with small verbatim and extra-content issues compounding under strict evaluation. Not equivalent to ground truth.
