@@ -1,0 +1,39 @@
+4.2
+
+### Evaluation Rationale
+This evaluation is conducted with utmost strictness, penalizing all deviations from the ground truth answer, including structural differences, inaccurate RACI assignments, unauthorized activity naming/merging/adding, incomplete coverage of roles (e.g., missing C/I assignments), and extraneous content. The LLM answer demonstrates partial adherence to the vocabulary policy (correctly using the four mandated terms without synonyms) but fails significantly in matrix construction, activity definition, and role involvements, resulting in a low score. Breakdown of key errors:
+
+#### 1. **Vocabulary and Activity Handling (Major Partial Credit, but Strict Penalty for Additions/Merges)**
+   - **Strength**: The four authorized activities (Intake Vetting, KYC Review, AML Screening, Risk Scoring) are named exactly as required, with no disallowed synonyms (e.g., no "Preliminary Assessment," "CDD," "Sanctions Check," or "risk rating") leaking in. This aligns with the ground truth and policy.
+   - **Errors**:
+     - Added three unauthorized activities ("Approval (for cases >70)", "Schedule/Release payment", "Notify originating analyst"), violating "do not rename, merge, or add activities." The ground truth adds two inferred activities ("Compliance Officer Approval," "Release Funds") but keeps them distinct and policy-compliant; the LLM's additions merge steps (e.g., "Schedule/Release payment" combines scheduling and release) and include conditional phrasing (">70"), which is interpretive and non-standard.
+     - "Notify originating analyst" is a separate row but poorly defined (see assignments below). The ground truth integrates notifications via I assignments across rows, avoiding addition.
+     - No bolding on activities or roles as in ground truth (minor formatting error, but strictness deducts points for non-exact replication).
+   - **Impact**: Vocabulary compliance earns ~2 points, but additions/merges/renaming deduct ~3 points (significant structural violation).
+
+#### 2. **RACI Assignments (Major Deviations, Heavy Penalty)**
+   - The LLM's assignments are overly simplistic (mostly isolated R or A, with excessive "-" for non-involvement), ignoring nuanced consultations, accountabilities, and notifications described in the narrative. Ground truth provides comprehensive coverage with C/I across roles for "every activity and role," reflecting process flow (e.g., file movement implies I/C).
+   - **Row-by-Row Comparison** (focusing on differences; exact matches are rare):
+     - **Intake Vetting**: LLM = Front-Office R only (others -). Ground = Front-Office R,A; Compliance Analyst C; Treasury Ops I; Compliance Officer –. Misses A/C/I; incomplete coverage. (Deduct 1.0+ for missing multi-role involvement.)
+     - **KYC Review**: LLM = Compliance Analyst R (others -). Ground = Compliance Analyst R,A; Compliance Officer C; Treasury Ops I; Front-Office –. Misses A/C/I. (Similar deduction.)
+     - **AML Screening**: Identical issue to KYC; misses A/C/I. (Deduct another 1.0.)
+     - **Risk Scoring**: LLM = Compliance Analyst R (others -). Ground = Compliance Analyst R; Front-Office C; Compliance Officer A; Treasury Ops I. Misses A/C/I; treats scoring as isolated rather than escalatory. (Deduct 1.0.)
+     - **Added LLM Rows (vs. Ground's Inferred Rows)**:
+       - "Approval (for cases >70)": Compliance Officer A/R (others -). Ground's "Compliance Officer Approval" = Compliance Officer R,A; Compliance Analyst C; Front-Office I; Treasury Ops –. LLM merges conditional approval, misses C/I, and uses non-standard name. (Full row mismatch; deduct 1.0.)
+       - "Schedule/Release payment": Treasury Ops R (others -). Ground's "Release Funds" = Treasury Ops R,A; Compliance Analyst C; Compliance Officer C; Front-Office I. Misses A/C/I; merges scheduling/release inaccurately. (Deduct 1.0.)
+       - "Notify originating analyst": Treasury Ops I (others -). This is factually incorrect—narrative has Treasury Ops *performing* notification (should be R), with Front-Office as I (originating analyst). No other roles assigned; doesn't match ground's integrated I across rows. (Critical error; deduct 1.0 for inversion and incompleteness.)
+   - **Overall Coverage**: Fails to "cover every activity and role described" comprehensively. Narrative implies broader I/C (e.g., file movement to Compliance suggests I for Front-Office post-vetting; escalation implies C for Compliance Officer in screening/scoring). LLM uses "-" excessively, ignoring this. No equivalent to ground's multi-role depth.
+   - **Impact**: Assignments match ~20% (basic R for core activities); ~80% deviation. Deducts ~4 points total.
+
+#### 3. **Table Structure and Output Format (Minor but Penalized Errors)**
+   - Markdown table is present and readable, with roles as columns—matches ground truth.
+   - **Errors**:
+     - No legend/key in table itself (ground has none; LLM adds external **Legend** and *Note*, violating "Return the matrix as a Markdown table" by including unrequested explanations. The note restates process conditionally, adding interpretive content not in prompt.
+     - Dashes: LLM uses "-" (fine), but ground uses "–" (en-dash); minor inconsistency, but strictness penalizes non-exact.
+     - No bolding on key cells (e.g., ground bolds R,A assignments).
+   - **Impact**: Basic structure ok (~1 point), but extras and formatting deduct ~0.5.
+
+#### 4. **Overall Adherence to Prompt and Policy**
+   - Covers process narrative partially but introduces inaccuracies (e.g., no distinction for low-risk path; treats approval as separate without full escalation flow).
+   - Strict small-error penalty: Even minor issues like the inverted "I" in notification or missing bolding compound to significant loss.
+   - **Final Score Calculation**: Starts at 10.0; deduct ~5.8 for content/assignment errors, ~2.0 for structure/additions. Nets 4.2—acknowledges vocabulary success and table effort but heavily penalizes deviations from ground truth's comprehensive, policy-aligned matrix.

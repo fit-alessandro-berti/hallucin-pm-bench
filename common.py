@@ -86,6 +86,7 @@ class Shared:
                          "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "medium"}}),
                        "openrouter/sherlock-dash-alpha",
                        "openrouter/sherlock-think-alpha",
+                       "Grok-4.1-20251118",
                        "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",

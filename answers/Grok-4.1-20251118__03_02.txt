@@ -1,0 +1,115 @@
+{
+  "definitions": {
+    "@xmlns": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+    "@xmlns:camunda": "http://camunda.org/schema/1.0/bpmn",
+    "@targetNamespace": "http://bpmn.io/schema/bpmn",
+    "process": {
+      "@id": "Process_CustomerSupportTicket",
+      "@isExecutable": true,
+      "startEvent": {
+        "@id": "StartEvent_ReceiveEmail",
+        "@name": "Support Email Received",
+        "outgoing": "Flow_ReceiveToParse"
+      },
+      "sequenceFlow": [
+        { "@id": "Flow_ReceiveToParse", "@sourceRef": "StartEvent_ReceiveEmail", "@targetRef": "Task_ParseEmail" },
+        { "@id": "Flow_ParseToClassify", "@sourceRef": "Task_ParseEmail", "@targetRef": "Task_InitialClassification" },
+        { "@id": "Flow_ClassifyToSimple", "@sourceRef": "Task_InitialClassification", "@targetRef": "Task_ProvideResolution", "@name": "Simple" },
+        { "@id": "Flow_ClassifyToComplex", "@sourceRef": "Task_InitialClassification", "@targetRef": "Task_RootCauseAnalysis", "@name": "Complex" },
+        { "@id": "Flow_RootCauseToResolution", "@sourceRef": "Task_RootCauseAnalysis", "@targetRef": "Task_ProvideResolution" },
+        { "@id": "Flow_ResolutionToParallelGateway", "@sourceRef": "Task_ProvideResolution", "@targetRef": "ParallelGateway_Split" },
+        { "@id": "Flow_SplitToSendResponse", "@sourceRef": "ParallelGateway_Split", "@targetRef": "Task_SendResponse" },
+        { "@id": "Flow_SplitToLogKB", "@sourceRef": "ParallelGateway_Split", "@targetRef": "Task_LogKB" },
+        { "@id": "Flow_SendResponseToJoin", "@sourceRef": "Task_SendResponse", "@targetRef": "ParallelGateway_Join" },
+        { "@id": "Flow_LogKBToJoin", "@sourceRef": "Task_LogKB", "@targetRef": "ParallelGateway_Join" },
+        { "@id": "Flow_JoinToTimerGateway", "@sourceRef": "ParallelGateway_Join", "@targetRef": "EventBasedGateway_WaitReply" },
+        { "@id": "Flow_TimerToReminder", "@sourceRef": "IntermediateCatch_Timer", "@targetRef": "Task_SendReminder" },
+        { "@id": "Flow_ReminderToClose", "@sourceRef": "Task_SendReminder", "@targetRef": "Task_CloseTicket" },
+        { "@id": "Flow_ReplyToClose", "@sourceRef": "ReceiveTask_CustomerReply", "@targetRef": "Task_CloseTicket" },
+        { "@id": "Flow_CloseToEnd", "@sourceRef": "Task_CloseTicket", "@targetRef": "EndEvent_Normal" }
+      ],
+      "task": [
+        { "@id": "Task_ParseEmail", "@name": "Parse Email and Create Ticket", "incoming": "Flow_ReceiveToParse", "outgoing": "Flow_ParseToClassify" },
+        { "@id": "Task_InitialClassification", "@name": "Initial Classification", "incoming": "Flow_ParseToClassify", "outgoing": ["Flow_ClassifyToSimple", "Flow_ClassifyToComplex"] },
+        { "@id": "Task_RootCauseAnalysis", "@name": "Root Cause Analysis", "incoming": "Flow_ClassifyToComplex", "outgoing": "Flow_RootCauseToResolution" },
+        { "@id": "Task_ProvideResolution", "@name": "Provide Resolution", "incoming": ["Flow_ClassifyToSimple", "Flow_RootCauseToResolution"], "outgoing": "Flow_ResolutionToParallelGateway" },
+        { "@id": "Task_SendResponse", "@name": "Send Response to Customer", "incoming": "Flow_SplitToSendResponse", "outgoing": "Flow_SendResponseToJoin" },
+        { "@id": "Task_LogKB", "@name": "Log Solution in Knowledge Base", "incoming": "Flow_SplitToLogKB", "outgoing": "Flow_LogKBToJoin" },
+        { "@id": "Task_SendReminder", "@name": "Send Reminder", "incoming": "Flow_TimerToReminder", "outgoing": "Flow_ReminderToClose" },
+        { "@id": "Task_CloseTicket", "@name": "Close Ticket", "incoming": ["Flow_ReplyToClose", "Flow_ReminderToClose"], "outgoing": "Flow_CloseToEnd" }
+      ],
+      "exclusiveGateway": {
+        "@id": "Task_InitialClassification",
+        "@gatewayDirection": "Diverging"
+      },
+      "parallelGateway": [
+        { "@id": "ParallelGateway_Split", "@name": "", "incoming": "Flow_ResolutionToParallelGateway", "outgoing": ["Flow_SplitToSendResponse", "Flow_SplitToLogKB"], "@gatewayDirection": "Diverging" },
+        { "@id": "ParallelGateway_Join", "@name": "", "incoming": ["Flow_SendResponseToJoin", "Flow_LogKBToJoin"], "outgoing": "Flow_JoinToTimerGateway", "@gatewayDirection": "Converging" }
+      ],
+      "eventBasedGateway": {
+        "@id": "EventBasedGateway_WaitReply",
+        "@gatewayDirection": "Diverging",
+        "@instantiate": false,
+        "incoming": "Flow_JoinToTimerGateway",
+        "outgoing": ["Flow_ToTimer", "Flow_ToReply"]
+      },
+      "intermediateCatchEvent": [
+        {
+          "@id": "IntermediateCatch_Timer",
+          "@name": "24 hours",
+          "incoming": "Flow_ToTimer",
+          "outgoing": "Flow_TimerToReminder",
+          "timerEventDefinition": {
+            "timeDuration": { "#text": "PT24H" }
+          }
+        }
+      ],
+      "receiveTask": {
+        "@id": "ReceiveTask_CustomerReply",
+        "@name": "Customer Reply",
+        "@isForCompensation": false,
+        "incoming": "Flow_ToReply",
+        "outgoing": "Flow_ReplyToClose"
+      },
+      "sequenceFlow": [
+        { "@id": "Flow_ToTimer", "@sourceRef": "EventBasedGateway_WaitReply", "@targetRef": "IntermediateCatch_Timer" },
+        { "@id": "Flow_ToReply", "@sourceRef": "EventBasedGateway_WaitReply", "@targetRef": "ReceiveTask_CustomerReply" }
+      ],
+      "boundaryEvent": [
+        {
+          "@id": "Boundary_Cancel",
+          "@name": "Customer Cancels Ticket",
+          "@attachedToRef": "SubProcess_MainFlow",
+          "@cancelActivity": true,
+          "outgoing": "Flow_CancelToTerminate",
+          "messageEventDefinition": {}
+        }
+      ],
+      "subProcess": {
+        "@id": "SubProcess_MainFlow",
+        "@triggeredByEvent": false,
+        "startEvent": { "@id": "StartEvent_ReceiveEmail" },
+        "endEvent": [
+          { "@id": "EndEvent_Normal", "@name": "Ticket Closed" },
+          { "@id": "EndEvent_Terminate", "@name": "Terminated", "terminateEventDefinition": {} }
+        ]
+      },
+      "sequenceFlow": {
+        "@id": "Flow_CancelToTerminate",
+        "@sourceRef": "Boundary_Cancel",
+        "@targetRef": "EndEvent_Terminate"
+      },
+      "endEvent": [
+        { "@id": "EndEvent_Normal" },
+        { "@id": "EndEvent_Terminate", "terminateEventDefinition": {} }
+      ]
+    },
+    "BPMNDiagram": {
+      "BPMNPlane": {
+        "@bpmnElement": "Process_CustomerSupportTicket"
+      }
+    }
+  }
+}
