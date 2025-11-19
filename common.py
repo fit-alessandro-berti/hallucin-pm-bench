@@ -116,6 +116,7 @@ class Shared:
                        "deepseek/deepseek-chat-v3-0324",
                        "microsoft/phi-4-reasoning-plus",
                        "google/gemma-3-4b-it", "google/gemma-3-12b-it", "google/gemma-3-27b-it",
+                       "google/gemini-3-pro-preview",
                   ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
                   ("qwen/qwen3-30b-a3b-think", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /think"}),
                   ("qwen/qwen3-32b-nothink", {"base_model": "qwen/qwen3-32b", "add_prompt": " /no_think"}),
