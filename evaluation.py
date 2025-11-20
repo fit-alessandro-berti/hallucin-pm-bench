@@ -2,7 +2,7 @@ import os, time
 from common import *
 
 
-EVALUATING_MODEL_NAME = "grok-4-fast-reasoning"
+EVALUATING_MODEL_NAME = "grok-4-1-fast-reasoning"
 EVALUATING_API_URL = "https://api.x.ai/v1/"
 EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
 
