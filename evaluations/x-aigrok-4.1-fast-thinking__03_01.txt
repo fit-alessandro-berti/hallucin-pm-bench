@@ -1,0 +1,17 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the high-level flow (start → classify → gw1 → reset/diag → gw2 → resolve/forward → confirm → gw3 → close/loop), correct loop to "Initial Diagnosis", direct reset → confirm path, and uses exclusive gateways, concise IDs, no invented names/timers/etc., and stays under 40 lines. However, with **utmost strictness**, it has significant structural, technical, and fidelity errors vs. ground truth:
+
+**Major Errors (-4.0 total deduction from 10.0):**
+- **Extra task & incorrect specialist modeling** (t6 "Resolve Issue"): Adds a 7th task (duplicate resolve after forward), instead of reusing single t4 "Resolve Issue" (forward t5 → t4). This invents an extra activity instance, violating "do not invent or add activities" and the trap's note on legitimate elements/avoiding specialist hallucinations. Ground merges logically into one task (-2.0).
+- **Invalid exclusive gateways - no `<conditionExpression>`** (all 3 gw): Outgoing flows lack `xsi:type="tFormalExpression" yes/no` conditions (ground has 6). Uses informal `name` attrs on flows instead (e.g., "Password Reset"), making decisions non-standard/ non-executable even if `isExecutable="false"`. Critical BPMN XML flaw (-2.0).
+
+**Minor Errors (-2.0 total):**
+- **Task/event name mismatches**: "Classify Ticket" ≠ "Auto-Classification" (description: "automatically classified"); start "Customer submits support ticket" ≠ "Ticket Submitted" (-0.5).
+- **Unnamed gateways**: Lacks `name` attrs (e.g., no "Password Reset?", "Resolved Internally?", "Customer Confirms?") (-0.5).
+- **Extra/duplicated flows**: 14 `<sequenceFlow>` (sf8/sf11 for extra t6) vs. ground's 13; unnecessary due to extra task (-0.3).
+- **Superfluous XML**: Extra `xmlns:xsi`, `xmlns:xsd`, verbose `targetNamespace`, process `name` (-0.3).
+- **Different IDs/structure**: e.g., confirm t7/ee1 vs. t6/end; process "p1" vs. "support_ticket" (-0.4).
+
+Semantically ~80% aligned (flows/loop correct), but XML differs line-by-line (extra/missing elements, no conditions, duplication), failing "exactly as stated." Half-credit for core structure yields 4.0; stricter would be lower, but acknowledges no egregious inventions beyond noted issues.

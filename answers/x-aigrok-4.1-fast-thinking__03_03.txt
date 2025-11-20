@@ -1,0 +1,111 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/wrc">
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+    <startEvent id="wrc_start" name="online warranty claim">
+      <outgoing>wrc_sf1</outgoing>
+    </startEvent>
+    <task id="wrc_validate_claim" name="validates the claim">
+      <incoming>wrc_sf1</incoming>
+      <incoming>wrc_sf_loop</incoming>
+      <outgoing>wrc_sf2</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_gw_complete" name="Claim complete?">
+      <incoming>wrc_sf2</incoming>
+      <outgoing>wrc_sf_complete</outgoing>
+      <outgoing>wrc_sf_incomplete</outgoing>
+    </exclusiveGateway>
+    <task id="wrc_request_info" name="requests missing information">
+      <incoming>wrc_sf_incomplete</incoming>
+      <outgoing>wrc_sf_loop</outgoing>
+    </task>
+    <task id="wrc_check_warranty" name="checks warranty eligibility">
+      <incoming>wrc_sf_complete</incoming>
+      <outgoing>wrc_sf3</outgoing>
+    </task>
+    <exclusiveGateway id="wrc_gw_eligible" name="Product within warranty?">
+      <incoming>wrc_sf3</incoming>
+      <outgoing>wrc_sf_outwarranty</outgoing>
+      <outgoing>wrc_sf_within</outgoing>
+    </exclusiveGateway>
+    <task id="wrc_send_reject" name="send rejection notice">
+      <incoming>wrc_sf_outwarranty</incoming>
+      <outgoing>wrc_sf_reject_end</outgoing>
+    </task>
+    <parallelGateway id="wrc_par_split" gatewayDirection="Diverging">
+      <incoming>wrc_sf_within</incoming>
+      <outgoing>wrc_sf_ship</outgoing>
+      <outgoing>wrc_sf_pickup</outgoing>
+    </parallelGateway>
+    <task id="wrc_create_ship" name="Create shipment order">
+      <incoming>wrc_sf_ship</incoming>
+      <outgoing>wrc_sf_ship_join</outgoing>
+    </task>
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup">
+      <incoming>wrc_sf_pickup</incoming>
+      <outgoing>wrc_sf_pickup_join</outgoing>
+    </task>
+    <parallelGateway id="wrc_par_join" gatewayDirection="Converging">
+      <incoming>wrc_sf_ship_join</incoming>
+      <incoming>wrc_sf_pickup_join</incoming>
+      <outgoing>wrc_sf_update</outgoing>
+    </parallelGateway>
+    <task id="wrc_update_inv" name="update inventory records">
+      <incoming>wrc_sf_update</incoming>
+      <outgoing>wrc_sf_close</outgoing>
+    </task>
+    <task id="wrc_close_claim" name="close the claim">
+      <incoming>wrc_sf_close</incoming>
+      <outgoing>wrc_sf_success_end</outgoing>
+    </task>
+    <endEvent id="wrc_end_reject" name="Rejected">
+      <incoming>wrc_sf_reject_end</incoming>
+    </endEvent>
+    <endEvent id="wrc_end_success" name="Completed">
+      <incoming>wrc_sf_success_end</incoming>
+    </endEvent>
+    <sequenceFlow id="wrc_sf1" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_sf2" sourceRef="wrc_validate_claim" targetRef="wrc_gw_complete" />
+    <sequenceFlow id="wrc_sf_complete" sourceRef="wrc_gw_complete" targetRef="wrc_check_warranty">
+      <name>complete</name>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_incomplete" sourceRef="wrc_gw_complete" targetRef="wrc_request_info">
+      <name>incomplete</name>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_loop" sourceRef="wrc_request_info" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_sf3" sourceRef="wrc_check_warranty" targetRef="wrc_gw_eligible" />
+    <sequenceFlow id="wrc_sf_outwarranty" sourceRef="wrc_gw_eligible" targetRef="wrc_send_reject">
+      <name>out of warranty</name>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_within" sourceRef="wrc_gw_eligible" targetRef="wrc_par_split">
+      <name>within warranty</name>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_sf_ship" sourceRef="wrc_par_split" targetRef="wrc_create_ship" />
+    <sequenceFlow id="wrc_sf_pickup" sourceRef="wrc_par_split" targetRef="wrc_schedule_pickup" />
+    <sequenceFlow id="wrc_sf_ship_join" sourceRef="wrc_create_ship" targetRef="wrc_par_join" />
+    <sequenceFlow id="wrc_sf_pickup_join" sourceRef="wrc_schedule_pickup" targetRef="wrc_par_join" />
+    <sequenceFlow id="wrc_sf_update" sourceRef="wrc_par_join" targetRef="wrc_update_inv" />
+    <sequenceFlow id="wrc_sf_close" sourceRef="wrc_update_inv" targetRef="wrc_close_claim" />
+    <sequenceFlow id="wrc_sf_success_end" sourceRef="wrc_close_claim" targetRef="wrc_end_success" />
+    <sequenceFlow id="wrc_sf_reject_end" sourceRef="wrc_send_reject" targetRef="wrc_end_reject" />
+  </process>
+</definitions>
+```
+
+## Explanation (not part of output)
+This XML defines a valid BPMN 2.0 process:
+- Start event named "online warranty claim" (models step 1 explicitly).
+- "validates the claim" task → exclusive GW for completeness (step 2, with loop via "incomplete"/"requests missing information").
+- "checks warranty eligibility" task → exclusive GW for warranty decision (step 3).
+- Parallel split → parallel tasks (step 4).
+- Parallel join → "update inventory records" → "close the claim" → success end (step 5).
+- Rejection path → reject end.
+- All IDs prefixed "wrc_", task names verbatim from text (bolded phrases).
+- Sequence flow names use verbatim decision text ("complete","incomplete","within warranty","out of warranty").
+- No invented elements (e.g., no error paths, no conditions beyond text).

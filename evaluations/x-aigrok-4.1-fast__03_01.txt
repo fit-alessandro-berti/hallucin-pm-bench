@@ -1,0 +1,28 @@
+**2.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer deviates substantially from the ground truth (GT) in structure, elements, flows, and fidelity to the prompt's "exactly as stated" / "do not invent" rules. With utmost strictness, even minor mismatches deduct significantly; major inventions/topology errors are fatal. Total differences: ~40% structural mismatch, multiple violations. Key failures:
+
+#### Major Errors (-5.0 points total):
+- **Invented activity**: Extra `<task id="t1" name="Submit Support Ticket"/>` + flow (f1,f2). Prompt: Process *starts* with submission (GT uses `startEvent name="Ticket Submitted"`). Violates "do not invent ... activities not mentioned" (line 1).
+- **Wrong topology/flow for Password Reset path** (line 3): t3 ("Provide Reset Instructions") → t5 ("Resolve Issue") via f6. GT: t2 → t6 ("Confirm") directly (bypasses resolve/forward). LLM adds unmentioned "Resolve Issue" execution; invents connection.
+- **Duplicate invented "Resolve Issue" tasks**: t5 (shared post-reset/internal) + t7 (post-specialist). GT reuses single t4. Violates "do not add activities"; description mentions "Resolve Issue" twice but not as distinct tasks.
+
+#### Significant Errors (-2.0 points total):
+- **Missing/incorrect names**:
+  - gw2: Unnamed vs. GT `name="Resolved Internally?"`.
+  - endEvent: `name="Close Ticket"` vs. `"Ticket Closed"`.
+  - classify: `"Classify Ticket"` (serviceTask) vs. `"Auto-Classification"` (task). "Automatically by system" doesn't mandate serviceTask.
+  - No startEvent `name`; process `id/name/isExecutable` differ.
+  - gw3: `"Confirmed?"` vs. `"Customer Confirms?"`.
+- **Condition modeling**: Flow `name="Yes"/"No"` etc. vs. GT `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>`. Valid alternative but exact mismatch.
+- **Re-work loop partially mismatched**: Correct target (diag on gw3 "No"), but polluted by upstream inventions (reset executes extra resolve before loop entry).
+
+#### Minor Errors (-1.0 point total):
+- Extra unnecessary `xmlns` (bpmndi/dc/di) despite "No diagram/interchange elements".
+- `isExecutable="true"` vs. `"false"`.
+- definitions `id/targetNamespace` extras (GT minimal).
+- No `<?xml>` prolog.
+- Line count ok (~38 vs. GT ~35), IDs concise, 3 exclusive gateways (prompt says "two" but description implies 3; both match).
+
+**Why not lower?** Core loop (gw3 → diag), specialist path (forward → resolve), and main diagnosis branch roughly align; no egregious hallucinations (timers/parallel/approve). **Why not higher?** Topology wrong (reset path), extra activity, non-exact names/conditions = core violations. Matches "hallucination trap" intent (added unmentioned elements). Perfect match would be 10.0; this is ~20% fidelity.
