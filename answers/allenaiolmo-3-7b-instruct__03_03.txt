@@ -1,0 +1,57 @@
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn20 xmlns="http://www.bpmn.org/modeler/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.bpmn.org/modeler/2.0 bpmn20.xsd">
+
+  <process id="wrc_WarrantyReplacement_v1.3">
+    <startEvent id="wrc_Start"/>
+    
+    <sequenceFlow id="wrc_Flow1" sourceRef="wrc_Start" targetRef="wrc_ValidateClaim"/>
+    
+    <gateways>
+      <!-- Step 2: Completeness check -->
+      <exclusiveGateway id="wrc_GatewayCompleteness">
+        <incomingEdge id="wrc_Flow1"/>
+        <incomingChannel type="Message" id="wrc_IncompleteInfo"/>
+        <incomingTask id="wrc ValidateClaim"/>
+        < outgoingEdge id="wrc_Flow2" condition="isComplete"/>
+        < outgoingEdge id="wrc_Flow2Missing" action="RequestMissingInfo"/>
+      </exclusiveGateway>
+      
+      <!-- Step 3: Warranty eligibility -->
+      <exclusiveGateway id="wrc_GatewayWarrantyCheck">
+        <incomingEdge id="wrc_Flow2"/>
+        <incomingTask id="wrc ValidateClaim"/>
+        <outgoingEdge id="wrc_PutInWarranty" condition="isInWarranty"/>
+        <outgoingEdge id="wrc_SendRejection" condition="isNotInWarranty"/>
+      </exclusiveGateway>
+      
+      <!-- Step 4: Parallel activities -->
+      <parallelGateway id="wrc_GatewayParallelActivities">
+        <incomingEdge id="wrc_PutInWarranty"/>
+        <incomingEdge id="wrc_SendRejection"/>
+        <incomingTask id="wrc CreateShipmentOrder"/>
+        <incomingTask id="wrc ScheduleCourierPickup"/>
+        <splitEntry id="wrc_SplitStart"/>
+        <joinEntry id="wrc_JoinEnd"/>
+      </parallelGateway>
+      
+      <sequenceFlow id="wrc_FlowSplitToCreate" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_SplitStart"/>
+      <sequenceFlow id="wrc_FlowSplitToPickup" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_SplitStart"/>
+      <sequenceFlow id="wrc_FlowJoinToUpdate" sourceRef="wrc_JoinEnd" targetRef="wrc_UpdateInventory"/>
+      <sequenceFlow id="wrc_FlowClose" sourceRef="wrc_JoinEnd" targetRef="wrc_CloseClaim"/>
+    </gateways>
+    
+    <task id="wrc ValidateClaim" name="The process agent validates the claim"/>
+    <task id="wrc CreateShipmentOrder" name="Create shipment order for the replacement unit"/>
+    <task id="wrc ScheduleCourierPickup" name="Schedule courier pickup of the faulty product"/>
+    <task id="wrc UpdateInventoryRecords" name="Update inventory records"/>
+    <task id="wrc SendRejectionNotice" name="Send rejection notice"/>
+    <task id="wrc CloseTheClaim" name="Close the claim"/>
+    
+    <endEvent id="wrc_EndRejection" name="Warranty claim rejected"/>
+    <endEvent id="wrc_EndSuccess" name="Warranty claim processed and closed"/>
+  </process>
+</bpmn20>
+```

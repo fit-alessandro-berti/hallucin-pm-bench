@@ -1,0 +1,18 @@
+**2.0**
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer has **critical structural, logical, and syntactic errors** deviating substantially from the ground truth and prompt:
+
+- **Invalid BPMN 2.0 XML syntax (fatal, -4.0)**: `<sequenceFlow>` elements are incorrectly nested *inside* gateways (`gw1`, `gw2`), rather than as separate sibling elements with `sourceRef`/`targetRef`. This renders the XML non-parsable/non-compliant with BPMN 2.0 schema.
+- **Incorrect process flow/logic (fatal, -2.0)**: 
+  - "Forward to Specialist" (`forward`) flows directly to "Confirm with Customer" (`confirm`), skipping "Resolve Issue" (`resolve`) as required by line 6 ("When the specialist finishes, the ticket is 'Resolve Issue'"). Ground truth correctly merges `t5` → `t4` (resolve).
+  - No merge/synchronization before `confirm`; agent/specialist paths run independently to `confirm`, violating line 7 ("Once resolved, the ticket is 'Confirm with Customer'").
+- **Missing elements/details (-1.0)**: No `sequenceFlow` IDs (e.g., `f1`); missing gateway names (e.g., "Password Reset?"); no `<?xml>` declaration, `targetNamespace`, or `xsi:type="tFormalExpression"` on conditions.
+- **Minor mismatches (-0.5 each, total -1.0)**: 
+  - Names: `start`="Support Ticket Submitted" (vs. "Ticket Submitted"); `classify`="Ticket Classification" (vs. "Auto-Classification"); conditions use invented vars (e.g., `ticketType == 'Password Reset'`) vs. simple "yes"/"no".
+  - Process ID="supportProcess" (vs. "support_ticket"); different xmlns version (20100714 vs. 20100524); no process `name`.
+  - Prompt specifies **two** gateways, but both answers use three (minor, but unaddressed).
+
+**Strengths (partial credit +1.0)**: Includes all required tasks/gateways/loop (gw3 "no" → `diag`/`t3` matches line 9); concise IDs; ≤40 lines; no invented extras (e.g., no timers/SLAs).
+
+Overall: Major violations of "exactly as stated" (logic/XML) outweigh basics, warranting low score under strictness. Equivalent to ~20% match.

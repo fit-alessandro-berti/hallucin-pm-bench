@@ -1,0 +1,13 @@
+2.0
+
+### Evaluation Rationale (strict assessment):
+- **Structural mismatch** (-2.0): LLM uses "bpmn:elements"/"bpmn:connections" with sequenceFlows improperly embedded/mixed; GT uses "process_id", "elements", "flows". Non-standard and incomplete schema.
+- **Classification error** (-1.5): LLM collapses "Initial Classification" into named exclusiveGateway (no task); GT explicitly separates task → gateway with conditions. Violates description's task-based routing.
+- **Parallelism fundamentally wrong** (-2.0): LLM forks *after* sendResponse (log || waitReply only); GT forks *after* provideResolution (sendResponse || log, with join). LLM note "may finish earlier/later than customer reply" mismatched; no join at all (logSolution dangling, tokens lost).
+- **Waiting/timer mechanism incorrect** (-2.0): LLM misuses receiveTask + detached timerEvent + malformed flows (duplicates, wrong triggers like receive→timer); GT uses proper eventBasedGateway → intermediateCatchEvents (message/timer). No PT24H in GT but logic absent in LLM.
+- **Customer cancel hallucinated/malformed** (-1.5): LLM hacks messageEvents onto unrelated flows + undefined "customerCancel" source → terminate; GT has dedicated intermediateCatchEvent. Not "at any point before closure"; unconnected.
+- **Flows/connections errors** (-1.5): Duplicates (e.g., multiple sendReminder→close), missing outgoings (logSolution, closeTicket→end), no conditions on exclusiveGateway flows, extra invalid attrs (trigger, nested messageEvent). No proper end from closeTicket path.
+- **Naming/granularity** (-0.5): Minor diffs (e.g., "Parse Email and Create Ticket" vs "Create Ticket", "provideResolutionSimple", abbreviated KB, unnamed timer/terminate).
+- **Completeness** (-1.0): No process-level ID, missing explicit endEvent paths, unconnected terminate properly.
+
+Total deviations: faithful translation fails on core logic (parallel/waiting/cancel/classify). No escalations invented (+0). **Strict score: 2.0** (partial task coverage but critical BPMN/logic errors).

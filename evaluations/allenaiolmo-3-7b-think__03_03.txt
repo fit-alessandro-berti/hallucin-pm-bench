@@ -1,0 +1,25 @@
+**1.0**
+
+### Evaluation Summary (Strict Rubric Application)
+- **Structural Validity (Major Failure, -3.0)**: Not a valid BPMN 2.0 XML document. Lacks `<?xml declaration>`, `<bpmn:definitions>`, required namespaces (`xmlns:bpmn=...`), and proper `<bpmn:process>`. Uses invalid custom elements (`<gateWayEdge>`, `<parallelSplit>`, `<parallelJoin>`) instead of standard `<bpmn:parallelGateway>` (split/join via flows) and `<bpmn:sequenceFlow>`. No explicit sequence flows; connections implied incorrectly or missing (e.g., no outgoing from `<startEvent>`).
+- **ID Prefixing (Partial, -0.5)**: Uses "wrc_" prefix correctly, but many IDs invalid (spaces, e.g., `id="wrc_validates the claim"`, periods in some).
+- **Task Names Verbatim Match (Partial, -1.5)**: Mostly close but inconsistent (e.g., adds period in `"Create shipment order for the replacement unit."`; invents `"revalidates the claim"` and `"check warranty eligibility"` phrasing). Missing required verbatim task `"Send rejection notice"`.
+- **Flow Elements Explicitly Required (Major Omissions/Extras, -2.5)**: 
+  | Element | LLM Status | Issue |
+  |---------|------------|-------|
+  | Start Event | Present | Unconnected. |
+  | Exclusive GW (completeness) | Present (`wrc_complete_check`) | Wrong incoming/outgoing; no proper "Yes" loop to same validate task. |
+  | Exclusive GW (warranty) | Present | Goes directly to end (omits rejection task). |
+  | Parallel Split/Join | Present (wrong syntax) | Non-standard `<parallelSplit>`/`from="..."`; no proper flows. |
+  | Validate claim | Present | Good, but loop broken. |
+  | Request missing info | Present | Good. |
+  | **Send rejection notice** | **Missing** | Direct to end; hallucinated shortcut. |
+  | Create shipment... | Present | Minor phrasing/period issue. |
+  | Schedule courier... | Present | Minor phrasing. |
+  | Update inventory... | Present | Good. |
+  | Close the claim | Present | Good. |
+  | **Check warranty eligibility** | Invented phrasing | Extra detail not verbatim; ground truth omits task (treats as GW). |
+  | **Re-validates** | **Hallucinated task** | Should loop to existing "validate" task; invents new one. |
+- **End Events (Minor, -0.5)**: Exactly two present, but unconnected properly (rejection lacks preceding rejection task).
+- **Semantically Equivalent? (No, -1.0)**: Not equivalent. Broken loop (no true wait/re-validate cycle), missing rejection activity, unmodeled flows, non-executable/invalid diagram. Ground truth (34 lines, complete flows) is parseable and minimal-yet-complete per prompt.
+- **Total Deductions**: Exhaustive failures across validity, omissions (rejection task), hallucinations (revalidate task), and syntax make it unusable. No partial credit for intent under "utmost strictness"; small errors (e.g., IDs) compound to minimum score.

@@ -1,0 +1,12 @@
+**3.2**
+
+### Evaluation Rationale (strict assessment):
+- **Structural mismatch (-2.5)**: LLM uses non-standard "nodes"/"edges" schema without "process_id" or BPMN-standard "elements"/"flows". Ground truth has precise BPMN schema.
+- **Non-standard BPMN types (-2.0)**: "DecisionTask", "WaitEvent", "ExternalEvent", "TerminateEvent" are invented; ground truth uses "exclusiveGateway", "eventBasedGateway", "intermediateCatchEvent", "parallelGateway", etc.
+- **Incorrect parallel modeling (-1.5)**: Direct splits from "provide_resolution" to "send_response"/"log_solution" and merges to "wait_reply" without fork/join gateways. Ground truth uses proper "forkLogging"/"joinAfterLogging" parallelGateways.
+- **Broken wait/reply/timer logic (-2.0)**: Single "wait_reply" → "send_reminder" path ignores conditional reply vs. timeout. "customer_reply" unconnected (no trigger from wait). Ground truth uses "eventBasedGateway" + "customerReply" (message) / "timer24h" catches for faithful "wait up to 24h; reply → close immediately; no reply → reminder → close".
+- **Unintegrated cancellation (-1.0)**: "customer_cancellation" floats with no incoming flow or interruption modeling. Ground truth has "cancelEvent" intermediateCatchEvent (at least listed for "any point").
+- **Missing details (-1.0)**: No conditions ("simple"/"complex"), no proper end events ("end"/"terminateEndEvent"), unnecessary split "initial_classification" → "classify_ticket".
+- **Partial credits (+2.8)**: Includes most tasks/names faithfully (e.g., "Create Ticket", "Root Cause Analysis", "Send Reminder"), basic sequence for classification/resolution/closure, no invented escalations.
+
+Total differences too numerous/critical for >3.2; faithful BPMN translation requires exact mechanics, not approximations.

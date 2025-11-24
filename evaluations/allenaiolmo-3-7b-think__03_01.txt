@@ -1,0 +1,19 @@
+**1.0**
+
+The LLM answer is fundamentally invalid BPMN 2.0 XML and deviates severely from the prompt and ground truth:
+
+- **Malformed structure**: Lacks `<process>`, `<?xml>` declaration, namespaces (`xmlns`), and all required `<sequenceFlow>` elements with `sourceRef`/`targetRef`. Uses non-standard `<gateWayEdge>` and `condition` attributes on gateways (conditions must be on flows via `<conditionExpression>`).
+- **Missing/incomplete flows**: No connections defined (e.g., `t1` start → `t2`; `t3` reset → nowhere, dead end; `t5` resolve agent → nowhere; `t6` specialist → `t7` implicit but unmodeled). Password reset path never reaches confirm/close.
+- **Invented/wrong elements**:
+  - No "Forward to Specialist" task (line 5 requires it; ground truth has `t5`).
+  - Two "Resolve Issue" tasks (`t5`/`t6`) incorrectly placed; ground truth uses one `t4` reached via resolve/forward.
+  - Added `participant` attributes (not mentioned; ground truth omits).
+  - Wrong task names: "Classify Ticket" (ground: "Auto-Classification"); gw conditions ("Password Reset", etc., wrong syntax/names).
+- **Wrong process logic**:
+  - Gw2 directly to specialist resolve (skips "Forward" activity, violates line 5/6).
+  - No path from reset (`t3`) to "Confirm with Customer" (`t6` in ground truth).
+  - Loop from `gw3` → `t4` (ok ID match) but upstream broken.
+- **Missing elements**: Start/end names ("Ticket Submitted"/"Ticket Closed"); gw names ("Password Reset?"/etc.); exactly 2 gateways but mis-modeled; no "yes"/"no" flow conditions.
+- **Over limit violations**: Adds unmentioned details; XML won't parse/execute as BPMN.
+
+Every line differs significantly; zero functional equivalence. Strict deduction for all errors yields minimum score.

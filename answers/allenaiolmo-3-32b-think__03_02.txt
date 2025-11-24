@@ -1,0 +1,159 @@
+
+
+```json
+{
+  "bpmn:elements": [
+    {
+      "id": "start",
+      "name": "Email Received",
+      "type": "startEvent"
+    },
+    {
+      "id": "parseTicket",
+      "name": "Parse Email and Create Ticket",
+      "type": "task"
+    },
+    {
+      "id": "classifyGateway",
+      "name": "Classify Ticket",
+      "type": "exclusiveGateway"
+    },
+    {
+      "id": "simplePath",
+      "source": "classifyGateway",
+      "target": "provideResolutionSimple",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "complexPath",
+      "source": "classifyGateway",
+      "target": "rootCauseAnalysis",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "provideResolutionSimple",
+      "name": "Provide Resolution",
+      "type": "task"
+    },
+    {
+      "id": "rootCauseAnalysis",
+      "name": "Root Cause Analysis",
+      "type": "task"
+    },
+    {
+      "id": "resolutionAfterRCA",
+      "source": "rootCauseAnalysis",
+      "target": "provideResolutionSimple",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "toSendResponse",
+      "source": "provideResolutionSimple",
+      "target": "sendResponse",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "sendResponse",
+      "name": "Send Response to Customer",
+      "type": "task"
+    },
+    {
+      "id": "parallelGateway",
+      "name": "Handle in Parallel",
+      "type": "parallelGateway"
+    },
+    {
+      "id": "toParallel",
+      "source": "sendResponse",
+      "target": "parallelGateway",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "mainPath",
+      "source": "parallelGateway",
+      "target": "receiveCustomerReply",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "logPath",
+      "source": "parallelGateway",
+      "target": "logSolution",
+      "type": "sequenceFlow"
+    },
+    {
+      "id": "receiveCustomerReply",
+      "name": "Customer Reply",
+      "type": "receiveTask"
+    },
+    {
+      "id": "logSolution",
+      "name": "Log Solution in KB",
+      "type": "task"
+    },
+    {
+      "id": "24hTimer",
+      "name": "",
+      "type": "timerEvent",
+      "timeDuration": "PT24H"
+    },
+    {
+      "id": "sendReminder",
+      "name": "Send Reminder",
+      "type": "task"
+    },
+    {
+      "id": "closeTicket",
+      "name": "Close Ticket",
+      "type": "task"
+    },
+    {
+      "id": "terminate",
+      "name": "",
+      "type": "endEvent",
+      "isTerminating": true
+    }
+  ],
+  "bpmn:connections": [
+    {"source": "start", "target": "parseTicket"},
+    {"source": "parseTicket", "target": "classifyGateway"},
+    {"source": "classifyGateway", "target": "provideResolutionSimple"},
+    {"source": "rootCauseAnalysis", "target": "provideResolutionSimple"},
+    {"source": "provideResolutionSimple", "target": "sendResponse"},
+    {"source": "sendResponse", "target": "parallelGateway"},
+    {"source": "parallelGateway", "target": "receiveCustomerReply"},
+    {"source": "parallelGateway", "target": "logSolution"},
+    {"source": "receiveCustomerReply", "target": "closeTicket"},
+    {"source": "24hTimer", "target": "sendReminder"},
+    {"source": "sendReminder", "target": "closeTicket"},
+    {"source": "receiveCustomerReply", "target": "closeTicket"},
+    {"source": "sendReminder", "target": "closeTicket"},
+    {"source": "receiveCustomerReply", "target": "24hTimer", "type": "sequenceFlow", "trigger": "timer"},
+    {"source": "24hTimer", "target": "sendReminder"},
+    {
+      "source": "receiveCustomerReply",
+      "target": "closeTicket",
+      "type": "sequenceFlow",
+      "messageEvent": {
+        "id": "customerCancel",
+        "name": "Customer Cancels",
+        "type": "messageEvent"
+      }
+    },
+    {
+      "source": "sendReminder",
+      "target": "closeTicket",
+      "type": "sequenceFlow",
+      "messageEvent": {
+        "id": "customerCancel",
+        "name": "Customer Cancels",
+        "type": "messageEvent"
+      }
+    },
+    {
+      "source": "customerCancel",
+      "target": "terminate",
+      "type": "sequenceFlow"
+    }
+  ]
+}
+```

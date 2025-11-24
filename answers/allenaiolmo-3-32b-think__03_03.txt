@@ -1,0 +1,67 @@
+
+
+```xml
+<bpmn2:definitions id="Definitions_1" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20190702/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20190702/MODEL bpmn20.xsd">
+    <!-- Events -->
+    <startEvent id="wrc_start"/>
+    <endEvent id="wrc_end_rejection"/>
+    <endEvent id="wrc_end_success"/>
+    
+    <!-- Tasks -->
+    <task id="wrc_validate_claim_1" name="validate claim"/>
+    <task id="wrc_request_missing_info" name="request missing information"/>
+    <task id="wrc_validate_claim_2" name="validate claim"/>
+    <task id="wrc_send_rejection" name="send rejection notice"/>
+    <task id="wrc_create_shipment_order" name="create shipment order"/>
+    <task id="wrc_schedule_courier_pickup" name="schedule courier pickup"/>
+    <task id="wrc_update_inventory" name="update inventory records"/>
+    <task id="wrc_close_claim" name="close the claim"/>
+    
+    <!-- Gateways -->
+    <exclusiveGateway id="wrc_gateway_completeness"/>
+    <exclusiveGateway id="wrc_gateway_warranty"/>
+    <parallelGateway id="wrc_parallel_split" type="parallel"/>
+    <parallelGateway id="wrc_parallel_join" type="parallel"/>
+    
+    <!-- Wait Event -->
+    <waitEvent id="wrc_wait_received"/>
+    
+    <!-- Sequence Flows -->
+    <!-- Start to initial validation -->
+    <sequenceFlow sourceRef="wrc_start" targetRef="wrc_validate_claim_1"/>
+    
+    <!-- Validation to completeness gateway -->
+    <sequenceFlow sourceRef="wrc_validate_claim_1" targetRef="wrc_gateway_completeness"/>
+    
+    <!-- Incomplete path: request missing information -->
+    <sequenceFlow sourceRef="wrc_gateway_completeness" targetRef="wrc_request_missing_info"/>
+    
+    <!-- Re-validation path after receiving info -->
+    <sequenceFlow sourceRef="wrc_request_missing_info" targetRef="wrc_wait_received"/>
+    <sequenceFlow sourceRef="wrc_wait_received" targetRef="wrc_validate_claim_2"/>
+    <sequenceFlow sourceRef="wrc_validate_claim_2" targetRef="wrc_gateway_warranty"/>
+    
+    <!-- Complete path to warranty gateway -->
+    <sequenceFlow sourceRef="wrc_gateway_completeness" targetRef="wrc_gateway_warranty"/>
+    
+    <!-- Warranty decision -->
+    <sequenceFlow sourceRef="wrc_gateway_warranty" targetRef="wrc_send_rejection"/>
+    <sequenceFlow sourceRef="wrc_gateway_warranty" targetRef="wrc_parallel_split"/>
+    
+    <!-- Parallel activities for replacement -->
+    <sequenceFlow sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment_order"/>
+    <sequenceFlow sourceRef="wrc_parallel_split" targetRef="wrc_schedule_courier_pickup"/>
+    
+    <!-- Synchronize parallel tasks -->
+    <sequenceFlow sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_join"/>
+    <sequenceFlow sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_join"/>
+    
+    <!-- Post-parallel steps -->
+    <sequenceFlow sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory"/>
+    <sequenceFlow sourceRef="wrc_update_inventory" targetRef="wrc_close_claim"/>
+    <sequenceFlow sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+    
+    <!-- Rejection path -->
+    <sequenceFlow sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection"/>
+</bpmn2:definitions>
+```

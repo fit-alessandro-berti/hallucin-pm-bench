@@ -1,0 +1,136 @@
+
+Let's answer each question step by step based on the given XES event log fragment.
+
+---
+
+## Q1: How many distinct cases are present?
+
+Let's extract the `case` attribute from each event line:
+
+1. C001
+2. C002
+3. C001
+4. C003
+5. C002
+6. C003
+7. C001
+8. C002
+9. C003
+10. C002
+
+The distinct case IDs are: **C001, C002, C003**
+
+**Answer:**  
+\boxed{3}
+
+---
+
+## Q2: For case “C002”, list the sequence of activities in order.
+
+Let's filter all events where `case="C002"` and list their `concept:name` in order of their `time:timestamp`:
+
+From the log:
+
+2. <event case="C002" concept:name="Receive_Order" time:timestamp="2025-03-01T09:15:10"/>
+5. <event case="C002" concept:name="Check_Stock" time:timestamp="2025-03-01T09:22:55"/>
+8. <event case="C002" concept:name="Arrange_Delivery" time:timestamp="2025-03-01T10:15:20"/>
+10. <event case="C002" concept:name="Ship_Order" time:timestamp="2025-03-01T10:25:40"/>
+
+Order by timestamp:
+
+1. Receive_Order (09:15:10)
+2. Check_Stock (09:22:55)
+3. Arrange_Delivery (10:15:20)
+4. Ship_Order (10:25:40)
+
+So the sequence for C002 is:
+
+**Receive_Order → Check_Stock → Arrange_Delivery → Ship_Order**
+
+\boxed{
+Receive_Order → Check_Stock → Arrange_Delivery → Ship_Order
+}
+
+---
+
+## Q3: List every distinct activity that immediately precedes “Ship_Order”, alphabetically.
+
+First, find all events where the next event is "Ship_Order" (i.e., for each event, check if its next event in timestamp order is "Ship_Order").
+
+Let's scan the events in chronological order (by timestamp), and for each event, look at the next event (if any) to see if its concept:name is "Ship_Order".
+
+Order of events by timestamp (with IDs and concepts):
+
+1. C001 Receive_Order (09:12:00)
+2. C002 Receive_Order (09:15:10)
+3. C001 Check_Stock (09:20:05)
+4. C003 Receive_Order (09:21:30)
+5. C002 Check_Stock (09:22:55)
+6. C003 Check_Stock (09:25:05)
+7. C001 Ship_Order (10:05:10)
+8. C002 Arrange_Delivery (10:15:20)
+9. C003 Ship_Order (10:20:30)
+10. C002 Ship_Order (10:25:40)
+
+Now, for each event (except the last), see if the next event (in order) is "Ship_Order":
+
+1. Event 1 (C001 Receive_Order): Next is event 2 (C002 Receive_Order) — not Ship_Order.
+2. Event 2 (C002 Receive_Order): Next is event 3 (C001 Check_Stock) — no.
+3. Event 3 (C001 Check_Stock): Next is event 4 (C003 Receive_Order) — no.
+4. Event 4 (C003 Receive_Order): Next is event 5 (C002 Check_Stock) — no.
+5. Event 5 (C002 Check_Stock): Next is event 6 (C003 Check_Stock) — no.
+6. Event 6 (C003 Check_Stock): Next is event 7 (C001 Ship_Order) — no, it's "Ship_Order" but the preceding event is C003, but the concept here is Check_Stock. Wait, let's clarify: we are interested in the activity that immediately precedes a Ship_Order event.
+
+Let's instead, for each Ship_Order event, find its immediate predecessor in the sequence.
+
+Ship_Order events are at:
+
+- Event 7: C001 Ship_Order (10:05:10) — predecessor is event 6: C003 Check_Stock
+- Event 9: C003 Ship_Order (10:20:30) — predecessor is event 8: C002 Arrange_Delivery
+- Event 10: C002 Ship_Order (10:25:40) — predecessor is event 9: C003 Ship_Order (wait, no: event 9 is before 10, so event 9 is C003 Ship_Order, so event 10's predecessor is event 9 (C003 Ship_Order)? Wait, no, event 9 is a Ship_Order, so event 10's predecessor is event 9 regardless of its concept.
+
+But we only want the activity (concept:name) of the event immediately before a Ship_Order event.
+
+So:
+
+- Before event 7 (C001 Ship_Order): event 6 is C003 Check_Stock → activity: Check_Stock
+- Before event 9 (C003 Ship_Order): event 8 is C002 Arrange_Delivery → activity: Arrange_Delivery
+- Before event 10 (C002 Ship_Order): event 9 is C003 Ship_Order → its concept is Ship_Order, so the preceding event is event 8? Wait, no:
+
+Wait, let's clarify the order again carefully:
+
+1. 1: C001 Receive_Order
+2. 2: C002 Receive_Order
+3. 3: C001 Check_Stock
+4. 4: C003 Receive_Order
+5. 5: C002 Check_Stock
+6. 6: C003 Check_Stock
+7. 7: C001 Ship_Order
+8. 8: C002 Arrange_Delivery
+9. 9: C003 Ship_Order
+10.10: C002 Ship_Order
+
+So for event 7 (C001 Ship_Order), previous event is 6 (C003 Check_Stock) → Check_Stock
+
+For event 9 (C003 Ship_Order), previous is 8 (C002 Arrange_Delivery) → Arrange_Delivery
+
+For event 10 (C002 Ship_Order), previous is 9 (C003 Ship_Order) → but the event before 10 is 9, whose concept is Ship_Order. But we want the activity that immediately precedes a Ship_Order event — so the activity of event 9 is Ship_Order itself, but we need the event that is before the Ship_Order event. So for event 10, the preceding event is event 9 (which is a Ship_Order event), but that's not what we want — we want the event that directly precedes the Ship_Order event, regardless of its own concept.
+
+Wait, actually: the question is "every distinct activity that immediately precedes 'Ship_Order'".
+
+So for each Ship_Order event, look at the event that comes right before it (by timestamp), and take that event's concept:name.
+
+So:
+
+- Event 7 (Ship_Order): previous is event 6 (C003 Check_Stock) → Check_Stock
+- Event 9 (Ship_Order): previous is event 8 (C002 Arrange_Delivery) → Arrange_Delivery
+- Event 10 (Ship_Order): previous is event 9 (C003 Ship_Order) → Ship_Order (but this is the event itself, so not a predecessor activity we are interested in — since the event before it is another Ship_Order event. So we only consider the two cases where the Ship_Order is not immediately after another Ship_Order.)
+
+So the valid immediate predecessors are Check_Stock and Arrange_Delivery.
+
+Alphabetically ordered: **Arrange_Delivery**, **Check_Stock**
+
+\boxed{
+Arrange_Delivery
+Check_Stock
+}
