@@ -1,0 +1,52 @@
+# Analysis: Can T5 fire before T3?
+
+## Understanding the Question
+
+I need to determine if there exists a firing sequence from the initial marking where T5 fires without T3 having fired previously.
+
+## Analyzing the Requirements for T5
+
+**T5 requires:** tokens in both `pd` AND `pe`
+
+Let me trace how these places can get tokens:
+
+### Getting a token in `pe`:
+- Only **T4** produces a token in `pe`
+- T4 requires a token in `pb`
+- `pb` gets a token from **T1**
+
+### Getting a token in `pd`:
+- **T3** produces a token in `pd` (requires `pc`)
+- **T2b** produces a token in `pd` (requires `pa`) ← **This is the key!**
+
+## Finding the Shortest Sequence
+
+**T2b is a shortcut that bypasses T3!**
+
+Starting from initial marking `[p0=1]`:
+
+| Step | Fire | Marking Before | Marking After |
+|------|------|----------------|---------------|
+| 1 | T1 | p0=1 | pa=1, pb=1 |
+| 2 | T2b | pa=1, pb=1 | pd=1, pb=1 |
+| 3 | T4 | pd=1, pb=1 | pd=1, pe=1 |
+| 4 | T5 | pd=1, pe=1 | pf=1 |
+
+## Answer: **YES**
+
+### Shortest firing sequence where T5 fires before T3:
+
+```
+T1 → T2b → T4 → T5
+```
+
+**Length: 4 transitions**
+
+### Verification:
+- ✅ T1 fires: `p0` → `pa, pb`
+- ✅ T2b fires: `pa` → `pd` (shortcut, bypassing pc and T3)
+- ✅ T4 fires: `pb` → `pe`
+- ✅ T5 fires: `pd, pe` → `pf`
+- ✅ T3 has **not** fired in this sequence
+
+The existence of transition **T2b** (the shortcut path `pa → pd`) allows the synchronization place `pd` to receive a token without ever going through `pc` or firing `T3`.

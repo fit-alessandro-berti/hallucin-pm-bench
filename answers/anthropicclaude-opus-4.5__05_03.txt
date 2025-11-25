@@ -1,0 +1,22 @@
+## SLA-Compliance Improvement
+
+### Changed/Added XML Elements
+
+```xml
+<!-- Replace the existing Activity_CreateAccount with this boundary-event-enabled version -->
+<bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System"/>
+
+<!-- Add boundary timer event to Activity_CreateAccount -->
+<bpmn:boundaryEvent id="Timer_SLA_48h" name="48h SLA Breach" attachedToRef="Activity_CreateAccount" cancelActivity="false">
+  <bpmn:timerEventDefinition id="TimerDef_01">
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<!-- Connect the timer to the existing unused escalation activity -->
+<bpmn:sequenceFlow id="Flow_09" sourceRef="Timer_SLA_48h" targetRef="Activity_AMReview"/>
+```
+
+### Justification
+
+This attaches a non-interrupting 48-hour boundary timer event to "Create Account in Core System" that triggers the already-existing (but previously unused) "Account-Manager Review" escalation task when the SLA deadline is breached, enforcing the 48-hour policy without adding any new activities.

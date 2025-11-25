@@ -1,0 +1,11 @@
+**3.2**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Schema/Structure mismatch (major deduction: -3.0)**: LLM uses full BPMN 2.0 schema (`definitions`, `process`, `flowElements`, `sequenceFlows`, embedded `subProcess`, `messages`) vs. ground truth's simple custom `{ "process_id": ..., "elements": [...], "flows": [...] }`. Invalid BPMN nesting (e.g., `subProcess` not properly in `flowElements`, no incoming to subprocess, `attachedToRef` to undefined subProcess in main scope) makes it malformed.
+- **Extra/invented elements hallucinated (major: -2.0)**: Subprocess (`SubProcess_Main`), unnecessary XOR merges (`Gateway_MergeClassification`, `Gateway_MergeToClose`) absent in key; specific task types (`serviceTask`, `userTask`, `sendTask`); detailed event defs (`PT24H`, `${ticketType == 'Simple'}` conditions, `messages`); boundary event vs. key's loose intermediate catch. Penalized per focus on "additional gateways/flows absent from key".
+- **Name/ID deviations (medium: -0.8)**: e.g., "Parse E-mail and Create Ticket" (extra parse invention) vs. "Create Ticket"; "Support E-mail Received" vs. "Email Received"; gateway names like "Parallel Split" vs. "Fork Log/Wait"; IDs completely different (long vs. short).
+- **Cancel modeling mismatch (medium: -0.5)**: Boundary on invented subprocess (interrupts broadly) vs. key's unattached `intermediateCatchEvent` (dangling, no incoming flow).
+- **Minor accuracies (+1.0 partial credit)**: Captures core logic (classification XOR, parallel send/log with fork/join, event-based wait/timer/message, reminder->close, no escalations). Parallel/timer durations faithful.
+- **Other small errors (-0.5)**: Extra flows/conditions; `EndEvent_Terminated` misuses `terminateEventDefinition`; key omits parse but LLM adds it as "faithful" yet deviates.
+
+Total reflects ~60-70% logical match but strict penalties for differences, inventions, and non-conformance to key's exact minimal format/elements/flows.

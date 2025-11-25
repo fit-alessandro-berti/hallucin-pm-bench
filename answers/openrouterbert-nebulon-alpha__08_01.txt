@@ -1,0 +1,39 @@
+Let's analyze whether transition **T5** can fire before **T3** in any reachable marking of this Petri net.
+
+### Key Observations:
+1. **Initial Marking**: Only `p0` has a token (`p0(1)`), all other places are empty.
+2. **T1 (Parallel Split)**: Fires first, moving the token from `p0` to `p1` and `p2` (i.e., `p1(1)` and `p2(1)`).
+3. **T2 and T3**: These transitions consume tokens from `p1` and `p2`, respectively, and produce tokens in `p3` and `p4`.
+   - `T2`: `p1 → p3`
+   - `T3`: `p2 → p4`
+4. **T5 (Inhibitor Arc)**: Requires:
+   - A token in `p3` (normal arc).
+   - **No token in `p4`** (inhibitor arc from `p4`).
+5. **T4 (Synchronizing Join)**: Requires tokens in both `p3` and `p4`.
+
+### Can T5 Fire Before T3?
+For **T5** to fire before **T3**, the following must hold:
+- `p3` must have a token (so `T2` must have fired).
+- `p4` must **not** have a token (so `T3` must **not** have fired yet).
+
+#### Firing Sequence Where T5 Fires Before T3:
+1. **Initial Marking**: `p0(1)`.
+2. Fire **T1**: `p0(1) → p1(1) + p2(1)`.
+   - Now: `p1(1)`, `p2(1)`.
+3. Fire **T2**: `p1(1) → p3(1)`.
+   - Now: `p2(1)`, `p3(1)` (and `p4` is still empty).
+4. Fire **T5**: `p3(1)` (and `p4` is empty, satisfying the inhibitor arc).
+   - Now: `p2(1)`, `p6(1)` (and `p3` is empty).
+
+This sequence is valid:
+- `T5` fires **before** `T3` because `T3` never fires in this sequence.
+- The inhibitor arc condition (`p4` empty) is satisfied when `T5` fires.
+
+### Justification:
+- After `T1` and `T2`, `p3` has a token and `p4` is empty, enabling `T5`.
+- `T3` does not need to fire for `T5` to fire in this case.
+- Thus, **yes**, `T5` can fire before `T3`.
+
+### Concrete Firing Sequence:
+`T1 → T2 → T5`
+(Resulting marking: `p2(1)`, `p6(1)`).

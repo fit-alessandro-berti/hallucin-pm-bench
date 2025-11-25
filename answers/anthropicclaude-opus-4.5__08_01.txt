@@ -1,0 +1,48 @@
+I need to analyze whether T5 can fire before T3 in any reachable marking.
+
+## Understanding the Net Structure
+
+**Initial marking:** p0=1, all others=0
+
+**T5's firing conditions:**
+- Normal arc from p3: needs p3 ≥ 1
+- Inhibitor arc from p4: needs p4 = 0
+
+## Tracing Possible Executions
+
+**Step 1:** From initial marking (1,0,0,0,0,0,0), only T1 is enabled.
+
+**After T1:** p0→0, p1→1, p2→1
+- Marking: (0,1,1,0,0,0,0)
+
+**Step 2:** Now T2 and T3 are enabled.
+
+**Case A: Fire T2 first**
+- After T2: p1→0, p3→1
+- Marking: (0,0,1,1,0,0,0)
+
+**Check T5 enablement:** 
+- p3 = 1 ✓ (normal arc satisfied)
+- p4 = 0 ✓ (inhibitor condition satisfied)
+
+**T5 is enabled!** And T3 has not yet fired.
+
+## Answer: YES
+
+**Concrete firing sequence:** T1 → T2 → T5
+
+| Step | Firing | Marking (p0,p1,p2,p3,p4,p5,p6) |
+|------|--------|-------------------------------|
+| 0 | — | (1,0,0,0,0,0,0) |
+| 1 | T1 | (0,1,1,0,0,0,0) |
+| 2 | T2 | (0,0,1,1,0,0,0) |
+| 3 | T5 | (0,0,1,0,0,0,1) |
+
+**Justification:** 
+- T1 creates tokens in both p1 and p2 (parallel split)
+- T2 moves the token from p1 to p3
+- At this point, p3=1 and p4=0 (since T3 hasn't fired), so T5's inhibitor condition is satisfied
+- T5 fires, consuming the token in p3 and producing in p6
+- T3 has never fired (p2 still has its token)
+
+This represents a scenario where one branch completes and takes an "exception path" (T5) before the other parallel branch (T3) executes.
