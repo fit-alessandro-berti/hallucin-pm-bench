@@ -1,10 +1,49 @@
 import os, time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 
 
 EVALUATING_MODEL_NAME = "grok-4-1-fast-reasoning"
 EVALUATING_API_URL = "https://api.x.ai/v1/"
 EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
+MAX_THREADS = 50
+
+
+def _evaluate_single_answer(answer, base_model_name, target_directory, include_ground_truth_answer, parameters):
+    evaluation_path = os.path.join(target_directory, answer)
+    prompt = answer.split("__")[1]
+    prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read()
+    gt_content = open(os.path.join("gt_answers", prompt), encoding="utf-8").read()
+    answer_content = open(os.path.join("answers", answer), encoding="utf-8").read().split("</think>")[-1].split("</thought>")[-1]
+
+    evaluation_prompt = []
+    evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")
+    if include_ground_truth_answer:
+        evaluation_prompt.append("The prompt is accompanied by a ground truth answer, which should be considered to assess the LLM answer. So, the more differences are between the answers and the ground truth answer, the lower is the grade.")
+    evaluation_prompt.append("Please evaluate with the utmost strictness. Also small errors should reflect in significant loss of points.")
+    evaluation_prompt.append("!! <<PROMPT>>:\n"+prompt_content)
+    evaluation_prompt.append("!! <<LLM ANSWER>>:\n"+answer_content)
+    if include_ground_truth_answer:
+        evaluation_prompt.append("!! <<GROUND TRUTH ANSWER>>:\n"+gt_content)
+    evaluation_prompt = "\n\n".join(evaluation_prompt)
+    evaluation_prompt = evaluation_prompt + parameters.get("add_prompt", "")
+
+    print("starting", evaluation_path)
+
+    try:
+        evaluation = get_response(evaluation_prompt, base_model_name, parameters=parameters)
+
+        if evaluation:
+            F = open(evaluation_path, "w", encoding="utf-8")
+            F.write(evaluation)
+            F.close()
+
+            print("completed", evaluation_path)
+            return True
+    except Exception as e:
+        print("except", evaluation_path, str(e))
+
+    return False
 
 def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
@@ -21,47 +60,31 @@ def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", i
     m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
 
-    for answer in os.listdir("answers"):
-        answer_path = os.path.join("answers", answer)
-        if not os.path.getsize(answer_path) == 0:
-            if filter_self:
-                if not answer.startswith(m_name+"__"):
+    futures = []
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        for answer in os.listdir("answers"):
+            answer_path = os.path.join("answers", answer)
+            if not os.path.getsize(answer_path) == 0:
+                if filter_self and (not answer.startswith(m_name+"__")):
                     continue
 
-            evaluation_path = os.path.join(target_directory, answer)
+                evaluation_path = os.path.join(target_directory, answer)
 
-            if (not os.path.exists(evaluation_path)) or (os.path.getsize(evaluation_path) == 0):
-                prompt = answer.split("__")[1]
-                prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read()
-                gt_content = open(os.path.join("gt_answers", prompt), encoding="utf-8").read()
-                answer_content = open(answer_path, encoding="utf-8").read().split("</think>")[-1].split("</thought>")[-1]
+                if (not os.path.exists(evaluation_path)) or (os.path.getsize(evaluation_path) == 0):
+                    futures.append(executor.submit(
+                        _evaluate_single_answer,
+                        answer,
+                        base_model_name,
+                        target_directory,
+                        include_ground_truth_answer,
+                        parameters
+                    ))
 
-                evaluation_prompt = []
-                evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")
-                if include_ground_truth_answer:
-                    evaluation_prompt.append("The prompt is accompanied by a ground truth answer, which should be considered to assess the LLM answer. So, the more differences are between the answers and the ground truth answer, the lower is the grade.")
-                evaluation_prompt.append("Please evaluate with the utmost strictness. Also small errors should reflect in significant loss of points.")
-                evaluation_prompt.append("!! <<PROMPT>>:\n"+prompt_content)
-                evaluation_prompt.append("!! <<LLM ANSWER>>:\n"+answer_content)
-                if include_ground_truth_answer:
-                    evaluation_prompt.append("!! <<GROUND TRUTH ANSWER>>:\n"+gt_content)
-                evaluation_prompt = "\n\n".join(evaluation_prompt)
-                evaluation_prompt = evaluation_prompt + parameters.get("add_prompt", "")
-
-                print("starting", evaluation_path)
-
-                try:
-                    evaluation = get_response(evaluation_prompt, base_model_name, parameters=parameters)
-
-                    if evaluation:
-                        F = open(evaluation_path, "w", encoding="utf-8")
-                        F.write(evaluation)
-                        F.close()
-
-                        print("completed", evaluation_path)
-                        modified_something = True
-                except Exception as e:
-                    print("except", evaluation_path, str(e))
+        for future in as_completed(futures):
+            try:
+                modified_something = future.result() or modified_something
+            except Exception as e:
+                print("thread except", str(e))
 
     return modified_something
 
