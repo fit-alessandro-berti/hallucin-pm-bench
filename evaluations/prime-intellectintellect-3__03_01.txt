@@ -1,0 +1,35 @@
+**3.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer has **major structural and semantic deviations** from the ground truth and prompt, warranting a low score under utmost strictness (small errors = significant loss; here, errors are large):
+
+#### Critical Errors (each -2.0+ deduction):
+1. **Invented activity (`t6` "Specialist Resolution")**: Violates "Do not invent or add activities...not mentioned." Description (line 6) specifies specialist finishes → **"Resolve Issue"** (reuse `t4`), not a new task. Ground truth correctly routes `t5` (Forward) → `t4` (Resolve) without invention.
+2. **Incorrect specialist path logic**: Forward (`t5`) → invented `t6` → Confirm (`t7`), **bypassing "Resolve Issue" entirely**. Violates line 6. Ground truth: `t5` → `t4` → `t6` (Confirm).
+3. **Extra elements inflate structure**: 7 tasks (vs. ground truth 6), 14 sequenceFlows (vs. 13), longer IDs/flows (e.g., `flow_start_t1` vs. concise `f1`). Exceeds "concise IDs" spirit; adds bloat.
+
+#### Significant Errors (-1.0 each):
+4. **Name mismatches** (do not match description exactly):
+   | Element | LLM | Ground Truth | Description |
+   |---------|-----|--------------|-------------|
+   | Classify | "Classify Ticket" | "Auto-Classification" | "automatically classified" |
+   | gw1 | "Classify Decision" | "Password Reset?" | N/A (but descriptive mismatch) |
+   | gw2 | "Diagnosis Decision" | "Resolved Internally?" | N/A |
+   | gw3 | "Confirmation Decision" | "Customer Confirms?" | N/A |
+   | Start | "Customer submits..." (verbose) | "Ticket Submitted" | "customer submits" |
+   - Invented names like "Specialist Resolution" compound issue.
+5. **Condition expressions differ**:
+   - LLM: Verbose `${classification == "Password Reset"}`, `${decision == ...}` (invents variables), `xsi:type="bpmn:tFormalExpression"`.
+   - Ground: Simple `"yes"`/`"no"`, `xsi:type="tFormalExpression"`. LLM's are non-standard/verbose for BPMN.
+6. **Definitions/XML mismatches**:
+   - Extra `xmlns:xsi`, `id="Definitions_AcmeTech"`.
+   - No `<?xml>`, `targetNamespace`.
+   - Missing `name="Support-Ticket"` on process.
+
+#### Minor Correct Aspects (partial credit):
+- Core flow correct for password reset → Confirm, diagnosis → Resolve/Forward split, Confirm → loop/end.
+- 3 exclusive gateways (prompt said "two," but ground truth uses 3; consistent).
+- Loop to "Initial Diagnosis" exact (line 9).
+- Valid BPMN XML, <40 lines.
+
+**Total**: Starts at 10.0, deduct ~7.0 for above → **3.0**. Hallucination trap triggered (extra task); not "exactly as stated." Ground truth is precise, minimal, no inventions.
