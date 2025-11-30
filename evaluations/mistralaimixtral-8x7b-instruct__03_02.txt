@@ -1,0 +1,19 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment)
+The LLM answer deviates substantially from both the textual description and the ground truth JSON in structure, logic, and fidelity. Key errors (each warranting major point deductions under "utmost strictness"):
+
+- **Structural mismatch (major penalty)**: Uses verbose BPMN-XML-like schema (e.g., `tasks`, `sequenceFlows`, `incoming`/`outgoing` arrays) vs. ground truth's concise `elements`/`flows` with explicit types/conditions. No `process_id`, wrong top-level keys. This alone halves the score.
+
+- **Missing/incorrect flow logic (critical failures)**:
+  - No start event; begins with task "Receive Support Email" (vs. ground truth `startEvent`).
+  - "Initial Classification" task branches directly (no `exclusiveGateway` like `classifyDecision` with `simple`/`complex` conditions).
+  - **No "Provide Resolution" on complex path**: Root Cause → straight to wait (hallucinates skip; textual requires "before resolution").
+  - **Broken parallel**: Direct splits from Provide Resolution to Send/Log (no `parallelGateway` fork/join like `forkLogging`/`joinAfterLogging`); simple path dead-ends before wait; no synchronization.
+  - **Incorrect wait/timer**: Single `IntermediateCatchEvent` on wait (with `timeDuration`); lacks `eventBasedGateway` + separate `message`/`timer` catch events. Only on complex path.
+  - **Wrong post-timer**: Reminder → "Terminate" (misuses as normal end; textual: "Send Reminder *once* and then Close Ticket"). Orphan "Close Ticket (Reminder)" task.
+  - **No customer cancel**: Completely absent (textual point 10 requires `intermediateCatchEvent` → `terminateEndEvent` like ground truth).
+
+- **Minor but penalized errors**: Inconsistent task types (`None`/`UserTask`); combined "Parse Email & Create Ticket"; no flow conditions; incomplete `sequenceFlows` (last truncated); simple path never reaches wait/close; "Terminate" as regular `EndEvent`.
+
+~70% of ground truth logic absent/broken; hallucinates flows (e.g., reminder→terminate). Partial credit for basic task names/sequence (~20% match), but strict rules demand near-exact fidelity. No escalation invented (minor plus, no gain).

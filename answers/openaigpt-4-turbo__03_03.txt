@@ -1,0 +1,101 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  targetNamespace="http://example.bpmn.com/schema/bpmn">
+  <bpmn:process id="wrc_WarrantyReplacementProcess" isExecutable="true">
+    <bpmn:startEvent id="wrc_startEvent">
+      <bpmn:outgoing>wrc_sequenceFlow1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:task id="wrc_validateClaim" name="validate the claim">
+      <bpmn:incoming>wrc_sequenceFlow1</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow2</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="wrc_claimCompletenessGateway" gatewayDirection="Diverging">
+      <bpmn:incoming>wrc_sequenceFlow2</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow3</bpmn:outgoing>
+      <bpmn:outgoing>wrc_sequenceFlow4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:task id="wrc_requestMissingInformation" name="request missing information">
+      <bpmn:incoming>wrc_sequenceFlow3</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow5</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:sequenceFlow id="wrc_sequenceFlow5" sourceRef="wrc_requestMissingInformation" targetRef="wrc_validateClaim"/>
+
+    <bpmn:task id="wrc_checkWarrantyEligibility" name="check warranty eligibility">
+      <bpmn:incoming>wrc_sequenceFlow4</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow6</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="wrc_warrantyDecisionGateway" gatewayDirection="Diverging">
+      <bpmn:incoming>wrc_sequenceFlow6</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow7</bpmn:outgoing>
+      <bpmn:outgoing>wrc_sequenceFlow8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="wrc_rejectionEndEvent">
+      <bpmn:incoming>wrc_sequenceFlow7</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:parallelGateway id="wrc_parallelSplitGateway" gatewayDirection="Diverging">
+      <bpmn:incoming>wrc_sequenceFlow8</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow9</bpmn:outgoing>
+      <bpmn:outgoing>wrc_sequenceFlow10</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:task id="wrc_createShipmentOrder" name="create shipment order for the replacement unit">
+      <bpmn:incoming>wrc_sequenceFlow9</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow11</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="wrc_scheduleCourierPickup" name="schedule courier pickup of the faulty product">
+      <bpmn:incoming>wrc_sequenceFlow10</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow12</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:parallelGateway id="wrc_parallelJoinGateway" gatewayDirection="Converging">
+      <bpmn:incoming>wrc_sequenceFlow11</bpmn:incoming>
+      <bpmn:incoming>wrc_sequenceFlow12</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow13</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:task id="wrc_updateInventoryRecords" name="update inventory records">
+      <bpmn:incoming>wrc_sequenceFlow13</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow14</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="wrc_closeTheClaim" name="close the claim">
+      <bpmn:incoming>wrc_sequenceFlow14</bpmn:incoming>
+      <bpmn:outgoing>wrc_sequenceFlow15</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:endEvent id="wrc_completionEndEvent">
+      <bpmn:incoming>wrc_sequenceFlow15</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="wrc_sequenceFlow1" sourceRef="wrc_startEvent" targetRef="wrc_validateClaim"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow2" sourceRef="wrc_validateClaim" targetRef="wrc_claimCompletenessGateway"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow3" sourceRef="wrc_claimCompletenessGateway" targetRef="wrc_requestMissingInformation" name="Incomplete"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow4" sourceRef="wrc_claimCompletenessGateway" targetRef="wrc_checkWarrantyEligibility" name="Complete"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow6" sourceRef="wrc_checkWarrantyEligibility" targetRef="wrc_warrantyDecisionGateway"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow7" sourceRef="wrc_warrantyDecisionGateway" targetRef="wrc_rejectionEndEvent" name="Out of Warranty"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow8" sourceRef="wrc_warrantyDecisionGateway" targetRef="wrc_parallelSplitGateway" name="Within Warranty"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow9" sourceRef="wrc_parallelSplitGateway" targetRef="wrc_createShipmentOrder"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow10" sourceRef="wrc_parallelSplitGateway" targetRef="wrc_scheduleCourierPickup"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow11" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoinGateway"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow12" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoinGateway"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow13" sourceRef="wrc_parallelJoinGateway" targetRef="wrc_updateInventoryRecords"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow14" sourceRef="wrc_updateInventoryRecords" targetRef="wrc_closeTheClaim"/>
+    <bpmn:sequenceFlow id="wrc_sequenceFlow15" sourceRef="wrc_closeTheClaim" targetRef="wrc_completionEndEvent"/>
+  </bpmn:process>
+</bpmn:definitions>
+```
+
+This XML specifies a BPMN 2.0 model in the BPMN XML syntax for the described warranty-replacement process. Each step in the process description is reflected by specific BPMN elements such as tasks, gateways, and flows. The process also includes the proper end events for different outcomes.

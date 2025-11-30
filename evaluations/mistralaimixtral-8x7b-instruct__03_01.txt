@@ -1,0 +1,21 @@
+**1.0**
+
+The LLM answer is fundamentally incorrect and fails to accurately model the process as described, violating the "exactly as stated" and "do not invent or add" rules. Key failures (each warranting severe deductions under strict criteria):
+
+- **Invented elements**: Adds "Submit Ticket" task (t1, not in description; line 1 is start event). Misnames/misplaces gateways (e.g., gw1="Classification" treats classification as gateway, not task per line 2; gw2="Diagnosis" before "Initial Diagnosis" task).
+- **Missing elements**: No "Auto-Classification" task (line 2). No proper flow for specialist → "Resolve Issue" (line 6; t4 "Forward" → undefined t6, skips resolve).
+- **Wrong structure/flow**:
+  - Classification mishandled: gw1 branches directly to "Provide Reset Instructions" or gw2, skipping auto-classify task.
+  - Post-diagnosis: gw2 wrongly branches to "Initial Diagnosis" OR "Forward" (inverts lines 4-5: diagnosis first, THEN branch).
+  - Password reset path → gw3 → gw1 (wrong loop, not to confirm).
+  - Resolve paths converge incorrectly (t5 → gw6; specialist t6? → gw6 → t7, but gw4/gw5/gw6 undefined properly).
+  - Rework loop mangled: Multiple wrong loops (gw5→t3, gw3→gw1, gw5→gw7); not "exactly as line 9" (customer no → "Initial Diagnosis").
+- **Invalid BPMN**:
+  - endEvent id="gw7" (invalid ID/type for end; should be "end").
+  - No conditionExpressions on gateways (ground truth has "yes"/"no"; prompt implies exclusive gateways need them for decisions).
+  - Broken connections (e.g., gw3,gw4,gw5,gw6 undefined/named; flows like flow17/18 don't match decisions).
+- **Metadata mismatches**: process id="process" (vs. "support_ticket"); isExecutable="true" (vs. "false"); extra/missing xmlns; no <?xml> or targetNamespace.
+- **Extra gateways**: 7 gateways vs. ground truth's 3 (prompt specifies "two decision points," but adds unmentioned ones).
+- **Line count**: ~38 lines (compliant), but irrelevant given errors.
+
+XML parses but doesn't represent the process; it's a hallucinated, non-executable wrong model. Zero fidelity to ground truth flow/logic.

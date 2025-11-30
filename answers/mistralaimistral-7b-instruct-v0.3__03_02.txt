@@ -1,0 +1,149 @@
+ {
+  "process": {
+    "id": "customer-support-ticket",
+    "isExecutable": true,
+    "startEvent": {
+      "id": "start-event",
+      "type": "StartEvent",
+      "name": "Start"
+    },
+    "intermediateCatchingEvent": {
+      "id": "customer-reply-catch",
+      "type": "IntermediateCatchingEvent",
+      "name": "Customer Reply",
+      "eventDefinition": {
+        "id": "customer-reply",
+        "type": "Timer",
+        "timeDuration": "PT24H"
+      }
+    },
+    "endEvent": {
+      "id": "end-event",
+      "type": "EndEvent",
+      "name": "End"
+    },
+    "exclusiveGateway": {
+      "id": "classification-gateway",
+      "type": "ExclusiveGateway",
+      "name": "Initial Classification"
+    },
+    "task": [
+      {
+        "id": "create-ticket",
+        "type": "UserTask",
+        "name": "Create Ticket"
+      },
+      {
+        "id": "simple-resolution",
+        "type": "UserTask",
+        "name": "Provide Resolution"
+      },
+      {
+        "id": "complex-resolution",
+        "type": "UserTask",
+        "name": "Root Cause Analysis"
+      },
+      {
+        "id": "send-response",
+        "type": "UserTask",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "log-solution",
+        "type": "UserTask",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "send-reminder",
+        "type": "UserTask",
+        "name": "Send Reminder"
+      },
+      {
+        "id": "cancel-ticket",
+        "type": "UserTask",
+        "name": "Cancel Ticket"
+      }
+    ],
+    "sequenceFlow": [
+      {
+        "id": "start-to-create-ticket",
+        "sourceRef": "start-event",
+        "targetRef": "create-ticket"
+      },
+      {
+        "id": "create-ticket-to-classification",
+        "sourceRef": "create-ticket",
+        "targetRef": "classification-gateway"
+      },
+      {
+        "id": "classification-simple-to-simple-resolution",
+        "sourceRef": "classification-gateway",
+        "targetRef": "simple-resolution",
+        "conditionExpression": "ticketType='Simple'"
+      },
+      {
+        "id": "classification-complex-to-root-cause-analysis",
+        "sourceRef": "classification-gateway",
+        "targetRef": "complex-resolution",
+        "conditionExpression": "ticketType='Complex'"
+      },
+      {
+        "id": "simple-resolution-to-send-response",
+        "sourceRef": "simple-resolution",
+        "targetRef": "send-response"
+      },
+      {
+        "id": "simple-resolution-to-log-solution",
+        "sourceRef": "simple-resolution",
+        "targetRef": "log-solution"
+      },
+      {
+        "id": "complex-resolution-to-send-response",
+        "sourceRef": "complex-resolution",
+        "targetRef": "send-response"
+      },
+      {
+        "id": "complex-resolution-to-log-solution",
+        "sourceRef": "complex-resolution",
+        "targetRef": "log-solution"
+      },
+      {
+        "id": "send-response-to-customer-reply-catch",
+        "sourceRef": "send-response",
+        "targetRef": "customer-reply-catch"
+      },
+      {
+        "id": "customer-reply-to-close-ticket",
+        "sourceRef": "customer-reply-catch",
+        "targetRef": "end-event",
+        "conditionExpression": "customerReply"
+      },
+      {
+        "id": "customer-reply-to-send-reminder",
+        "sourceRef": "customer-reply-catch",
+        "targetRef": "send-reminder"
+      },
+      {
+        "id": "send-reminder-to-customer-reply-catch",
+        "sourceRef": "send-reminder",
+        "targetRef": "customer-reply-catch"
+      },
+      {
+        "id": "customer-reply-catch-to-close-ticket",
+        "sourceRef": "customer-reply-catch",
+        "targetRef": "end-event",
+        "conditionExpression": "noCustomerReply"
+      },
+      {
+        "id": "create-ticket-to-cancel-ticket",
+        "sourceRef": "create-ticket",
+        "targetRef": "cancel-ticket"
+      },
+      {
+        "id": "cancel-ticket-to-end",
+        "sourceRef": "cancel-ticket",
+        "targetRef": "end-event"
+      }
+    ]
+  }
+}

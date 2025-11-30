@@ -1,0 +1,24 @@
+To ensure SLA compliance, we can add a timer event that will trigger an escalation path if the "Create Account in Core System" task is not completed within 48 hours after "Verify Identity". Here are the changed XML elements:
+
+```xml
+<bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System">
+  <bpmn:incoming>Flow_03</bpmn:incoming>
+  <bpmn:outgoing>Flow_06</bpmn:outgoing>
+  <bpmn:timerEventDefinition>
+    <bpmn:timeCycle>PT48H</bpmn:timeCycle>
+  </bpmn:timerEventDefinition>
+</bpmn:serviceTask>
+
+<bpmn:intermediateCatchEvent id="Event_Escalation">
+  <bpmn:incoming>Timer_CreateAccount</bpmn:incoming>
+  <bpmn:outgoing>Flow_Escalation</bpmn:outgoing>
+  <bpmn:escalation>Escalation_CreateAccount</bpmn:escalation>
+</bpmn:intermediateCatchEvent>
+
+<bpmn:sequenceFlow id="Timer_CreateAccount" sourceRef="Activity_CreateAccount" targetRef="Event_Escalation"/>
+<bpmn:sequenceFlow id="Flow_Escalation" sourceRef="Event_Escalation" targetRef="End_SLABreach"/>
+
+<bpmn:endEvent id="End_SLABreach" name="SLA breach for Create Account"/>
+```
+
+Justification: A timer event is attached to the "Create Account in Core System" task, which triggers an escalation path if not completed within 48 hours. The escalation path leads to an 'SLA breach' end event.

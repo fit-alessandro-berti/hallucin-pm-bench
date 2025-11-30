@@ -1,0 +1,126 @@
+```json
+{
+  "process": {
+    "id": "customer_support_ticket_process",
+    "name": "Customer Support Ticket Process",
+    "activities": [
+      {
+        "id": "start_event",
+        "type": "startEvent",
+        "trigger": "Message",
+        "messageName": "Support Email Received"
+      },
+      {
+        "id": "parse_email",
+        "type": "task",
+        "name": "Parse Email and Create Ticket",
+        "taskType": "service"
+      },
+      {
+        "id": "classify_ticket",
+        "type": "task",
+        "name": "Initial Classification",
+        "taskType": "user"
+      },
+      {
+        "id": "provide_resolution_simple",
+        "type": "task",
+        "name": "Provide Resolution",
+        "taskType": "user"
+      },
+      {
+        "id": "root_cause_analysis",
+        "type": "task",
+        "name": "Root Cause Analysis",
+        "taskType": "user"
+      },
+      {
+        "id": "provide_resolution_complex",
+        "type": "task",
+        "name": "Provide Resolution",
+        "taskType": "user"
+      },
+      {
+        "id": "send_response",
+        "type": "task",
+        "name": "Send Response to Customer",
+        "taskType": "service"
+      },
+      {
+        "id": "log_solution",
+        "type": "task",
+        "name": "Log Solution in Knowledge Base",
+        "taskType": "user"
+      },
+      {
+        "id": "wait_for_reply",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": "timer",
+        "timeDuration": "PT24H"
+      },
+      {
+        "id": "send_reminder",
+        "type": "task",
+        "name": "Send Reminder",
+        "taskType": "service"
+      },
+      {
+        "id": "receive_reply",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": "message",
+        "messageName": "Customer Reply"
+      },
+      {
+        "id": "close_ticket",
+        "type": "task",
+        "name": "Close Ticket",
+        "taskType": "service"
+      },
+      {
+        "id": "cancel_ticket_event",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": "message",
+        "messageName": "Cancel Ticket"
+      },
+      {
+        "id": "terminate_event",
+        "type": "endEvent",
+        "eventDefinition": "terminate"
+      },
+      {
+        "id": "ticket_closure",
+        "type": "endEvent"
+      }
+    ],
+    "gateways": [
+      {
+        "id": "complexity_decision",
+        "type": "exclusiveGateway"
+      },
+      {
+        "id": "reply_decision",
+        "type": "exclusiveGateway"
+      }
+    ],
+    "flows": [
+      {"from": "start_event", "to": "parse_email"},
+      {"from": "parse_email", "to": "classify_ticket"},
+      {"from": "classify_ticket", "to": "complexity_decision"},
+      {"from": "complexity_decision", "to": "provide_resolution_simple", "condition": "Simple"},
+      {"from": "complexity_decision", "to": "root_cause_analysis", "condition": "Complex"},
+      {"from": "root_cause_analysis", "to": "provide_resolution_complex"},
+      {"from": "provide_resolution_simple", "to": "send_response"},
+      {"from": "provide_resolution_complex", "to": "send_response"},
+      {"from": "send_response", "to": "log_solution"},
+      {"from": "log_solution", "to": "wait_for_reply"},
+      {"from": "wait_for_reply", "to": "reply_decision"},
+      {"from": "reply_decision", "to": "send_reminder", "condition": "No Reply"},
+      {"from": "send_reminder", "to": "close_ticket"},
+      {"from": "reply_decision", "to": "receive_reply", "condition": "Reply Received"},
+      {"from": "receive_reply", "to": "close_ticket"},
+      {"from": "cancel_ticket_event", "to": "terminate_event"},
+      {"from": "close_ticket", "to": "ticket_closure"}
+    ]
+  }
+}
+```

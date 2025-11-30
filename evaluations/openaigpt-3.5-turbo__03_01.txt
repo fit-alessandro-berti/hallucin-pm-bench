@@ -1,0 +1,24 @@
+**2.0**
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer has **critical structural failures** making it an invalid/incomplete BPMN model, plus multiple violations of prompt constraints. Compared line-by-line to ground truth:
+
+#### Fatal Errors (-4.0 points each, total -8.0):
+- **Missing flow from "Provide Reset Instructions"**: No outgoing `sequenceFlow` (dead-end for Password Reset path, violating lines 3/7). Ground truth has `f5: t2 → t6`.
+- **Invalid decision after "Confirm with Customer"**: No `gw3`; direct dual `sequenceFlow` from task (`sf10` unconditional to end, `sf11` conditional loop) models unstructured/parallel split, not exclusive gateway. Violates BPMN semantics and line 9 loop. Ground truth uses `gw3` with `f12/f13`.
+- **Incomplete process flow**: Password Reset cannot reach resolution/confirm/end.
+
+#### Major Constraint Violations (-1.0 each, total -4.0):
+- **Extra diagram namespaces** (`bpmndi`, `dc`, `di`, `xsi` unnecessary): Prompt forbids diagram elements. Ground truth clean.
+- **Exceeds ≤40 lines**: LLM ~55 indented lines vs. ground ~35 compact.
+- **Non-concise IDs**: `classifyTicket`, `provideResetInstructions` etc. vs. prompt example `t1`, `gw1` and ground `t1/t2...`.
+- **Invented conditions**: Specific `ticket.category == "Password Reset"`, `diagnosis.issue == "Resolved"` vs. ground/prompt-neutral `yes`/`no`.
+- **Wrong `isExecutable="true"`**: Ground `false`.
+
+#### Minor Errors (-0.2 each, total -1.0; strict deduction):
+- No `<?xml>` header.
+- Missing names: Events/gateways unnamed (ground has descriptive e.g. `name="Password Reset?"`).
+- Process ID mismatch: `supportTicketProcess` vs. `support_ticket`.
+- Task name slight variance: "Automatic Classification" vs. ground "Auto-Classification" (prompt-implied exact).
+
+**Base 10.0 → Deducted to 2.0**. Partial credit for ~70% elements (start/classify/gw1/gw2/diagnosis/forward/resolve/confirm/loop intent), but core flow broken + violations = near-failure. Matches "hallucination trap" (fabricated flows/conditions, missing loop gateway).

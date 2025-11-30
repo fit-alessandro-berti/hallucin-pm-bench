@@ -1,0 +1,29 @@
+ To ensure SLA compliance for the "Create Account in Core System" task, we can add a timer event and a message event to the process. The timer event will trigger if the "Create Account in Core System" task is not completed within the specified 48 hours, and the message event will send an escalation notification to the responsible party.
+
+Here's the updated XML snippet:
+
+```xml
+<bpmn:sequenceFlow id="Flow_03" sourceRef="Activity_VerifyID" targetRef="Gateway_VerifyOutcome"/>
+
+<bpmn:timerEventDefinition id="Timer_CreateAccount" name="SLA Timer for Create Account">
+  <bpmn:timerEventType>IntermediateCatchEvent</bpmn:timerEventType>
+  <bpmn:timeDuration>P2D4H</bpmn:timeDuration>
+</bpmn:timerEventDefinition>
+
+<bpmn:intermediateCatchEvent id="CatchEvent_SLA_CreateAccount" name="SLA Catch Event for Create Account">
+  <bpmn:intermediateThrowEventDefinition>
+    <bpmn:messageEventDefinition id="Message_Escalation" name="Escalation Notification">
+      <bpmn:messageRef ref="#Message_Escalation"/>
+      <bpmn:message name="Escalation Notification">
+        <bpmn:messagePart name="EscalationReason" element="tNS:EscalationReasonType"/>
+      </bpmn:message>
+    </bpmn:messageEventDefinition>
+  </bpmn:intermediateThrowEventDefinition>
+  <bpmn:timerEventDefinitionRef ref="Timer_CreateAccount"/>
+</bpmn:intermediateCatchEvent>
+
+<bpmn:sequenceFlow id="Flow_09" sourceRef="Gateway_VerifyOutcome" targetRef="CatchEvent_SLA_CreateAccount"/>
+<bpmn:sequenceFlow id="Flow_10" sourceRef="CatchEvent_SLA_CreateAccount" targetRef="Activity_CreateAccount"/>
+```
+
+Justification: By adding a timer event (`Timer_CreateAccount`) that triggers after 48 hours from the "Verify Identity" task, we ensure that the "Create Account in Core System" task is monitored for completion. If the task is not completed within the specified time, an intermediate catch event (`CatchEvent_SLA_CreateAccount`) is triggered, which sends an escalation notification (`Message_Escalation`) to the responsible party. This modification helps in maintaining SLA compliance without adding any new activities to the process.

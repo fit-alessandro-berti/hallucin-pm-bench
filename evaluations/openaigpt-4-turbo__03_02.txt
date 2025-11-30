@@ -1,0 +1,18 @@
+**3.0**
+
+### Evaluation Rationale (strict assessment)
+The LLM answer deviates substantially from the ground truth JSON structure, semantics, and faithful modeling of the textual description. Key penalties (cumulative, with small errors scaled to major deductions per instructions):
+
+- **Structure mismatch (-2.0)**: LLM uses `"process"` with nested `"activities"`, `"gateways"`, `"flows"` (from/to/condition); ground truth uses `"process_id"`, flat `"elements"` array (mixing all BPMN types), `"flows"` (source/target/condition). Different schemas/IDs/names/props (e.g., no `"elements"`, `"event"`, `"terminateEndEvent"`). Not "well-formed" equivalent.
+  
+- **No parallel fork/join for "Send Response" || "Log Solution" (-2.0)**: LLM sequences `send_response → log_solution` (flows confirm). Ground truth correctly uses `forkLogging` (parallelGateway) → `sendResponse` & `logSolution` → `joinAfterLogging`. Description explicitly requires parallel ("in parallel", log "may finish earlier or later than the customer reply"). Critical semantic hallucination/omission.
+
+- **Incorrect 24h wait/reply logic (-1.5)**: LLM misuses `wait_for_reply` (timerCatch) → `reply_decision` (XOR) → cond. "No Reply" to `send_reminder` or "Reply Received" → `receive_reply` (msgCatch after timer). Illogical (timer fires = no reply, yet cond allows post-timer reply; no early reply path). Ground truth correctly uses `awaitReply` (eventBasedGateway) → `customerReply` (msgCatch immediate close) or `timer24h` (reminder→close). Fails "waits up to 24h", "reply → close immediately", "if 24h pass → reminder once".
+
+- **Unnecessary duplication (-0.5)**: Two `"Provide Resolution"` tasks (`provide_resolution_simple/complex`); ground truth single `"provideResolution"` post-classify/rootCause. Minor invention.
+
+- **Cancel handling incomplete (-0.5)**: `cancel_ticket_event` listed but **no incoming flow** (floating, untriggerable "at any point"). Ground truth similar (`cancelEvent` outgoing only) but integrated in elements; still flawed, but LLM worse.
+
+- **Minor diffs (-0.5 total)**: Start trigger/name (`"Support Email Received"` vs `"Email Received"`); parse+create combined vs separate `"createTicket"`; extra ends (`terminate_event`, `ticket_closure`); cond. casing ("Simple" vs "simple"); no `"eventBasedGateway"`; log after send (can't "finish later than reply").
+
+Total raw ~40% fidelity (covers most activities nominally but mangles flows/logic/parallel). Strict scaling: **3.0**. No invention of escalation/approval, but unfaithful overall.

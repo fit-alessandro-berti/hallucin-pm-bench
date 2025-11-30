@@ -1,0 +1,14 @@
+**1.0**
+
+The LLM answer deviates critically from the ground truth in format (full BPMN 2.0 schema with namespaces, explicit sequenceFlows, etc., vs. simplified "process_id"/"elements"/"flows" structure), structure (e.g., no matching IDs like "start"/"createTicket"; extraneous/unused intermediateCatchEvents; invalid BPMN semantics like missing parallel join gateway—Task_8 merges unsynchronized tokens—and misused EventBasedGateway with direct flows to tasks instead of catch events), and fidelity to description/ground truth:
+
+- **Missing Provide Resolution on complex path**: RCA (Task_4) flows directly to Send Response (Task_5), skipping resolution task (hallucinated shortcut; ground truth correctly routes rootCause → provideResolution).
+- **Incorrect parallel modeling**: Fork after Send Response to Log and Wait-as-task, unsynchronized join at task (invalid); ground truth forks draft → send/log parallel, join → wait.
+- **Wrong waiting logic**: Wait as blocking task (Task_7), followed by invented "Check Cancellation" task → misused event gateway → direct tasks; ignores proper event-based/timer catch (ground truth: awaitReply → customerReply/timer24h).
+- **Dangling elements**: Catch events defined but unconnected (no flows from/to them).
+- **Customer cancellation mishandled**: Invented blocking task instead of event → terminate (ground truth: cancelEvent → terminate).
+- **Timer path incomplete**: Combines "Send Reminder and Close" into one task, no distinct post-reminder close.
+- **No terminate end**: Single EndEvent_1; ground truth has distinct "terminateEndEvent".
+- Minor: Start parsing combined (acceptable), but gateway/flow names/conditions partial mismatch; extra gateway names.
+
+These are not small errors—core flow invalid, hallucinated steps (check task), omissions (complex resolution, proper events/sync)—yielding minimum score under strict criteria.

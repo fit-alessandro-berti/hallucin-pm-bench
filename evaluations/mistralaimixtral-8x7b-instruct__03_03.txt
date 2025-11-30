@@ -1,0 +1,19 @@
+**1.0**
+
+The LLM answer receives the minimum score due to catastrophic failures against the prompt and ground truth:
+
+- **Omits explicit loop for validation (step 2)**: No "requests missing information" task or loop back to validation. Instead, hacks with non-standard `<extensionElements>` and routes incomplete claims to rejection (semantically wrong).
+- **Wrong control flow**:
+  - Incomplete claim → rejection task (violates prompt; rejection is *only* for out-of-warranty).
+  - Warranty gateway misplaced/referenced incorrectly (e.g., `flow5` multiply used/mismatched).
+  - Shares single end event for both paths (violates "exactly two end events").
+- **Invalid XML/BPMN**:
+  - Duplicate `id="wrc_RejectionNotice"` (endEvent + userTask).
+  - Mismatched `sourceRef`/`targetRef` (e.g., `flow5` from wrong gateway).
+  - Unconnected/orphaned elements (rejection endEvent unused).
+  - Overlapping diagram positions (e.g., rejection_di and end_di).
+- **Non-verbatim names**: E.g., "Service agent validates claim" vs. "validates the claim"; invented extensions.
+- **Extraneous content**: Full `<bpmndi>` diagram (unrequired, error-prone); task types like `userTask`/`serviceTask` (unnecessary); process `isExecutable="true"`.
+- **Omissions**: No condition names on flows (ground truth has "Yes"/"No"); wrong start name.
+
+Semantically nonequivalent; fails to model required elements (loop, distinct ends, correct branches). Ground truth is precise/minimal/correct; LLM hallucinates wrong paths and breaks validity.

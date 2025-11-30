@@ -1,0 +1,34 @@
+4.0
+
+### Evaluation Summary (strict rubric application)
+**Score: 4.0/10.0** (moderate-low due to structural, naming, and format differences from ground truth; small errors like casing/attributes compound to significant deductions per instructions).
+
+**Key Matches (supporting partial credit):**
+- Correct overall process topology: validation loop with exclusive GW, warranty exclusive GW, parallel split/join for shipments/pickup, sequential update/close after join.
+- Exactly the required gateways (2 exclusive, parallel split/join pair).
+- Exactly 2 end events (rejection vs. success).
+- All IDs prefixed "wrc_" (flows, tasks, etc.).
+- Valid self-contained BPMN 2.0 XML (parsable, no syntax errors).
+- Core sequence flows connect semantically similar paths.
+
+**Key Differences/Deductions (strict, significant loss for each):**
+- **Structural/Element Mismatches (major deductions, ~-3.0 points)**:
+  - LLM omits required "Send rejection notice" task (explicit in prompt step 3; present in GT as `wrc_reject` → direct flow to end_reject).
+  - LLM adds hallucinated/extra "check warranty eligibility" task (`wrc_checkWarrantyEligibility`) between completeness GW and warranty GW (absent in GT, where warranty GW follows directly from completeness "Yes"; -1.0 for extra task vs rubric).
+  - Different flow topology: GT has reject path `warranty_gw → reject task → end`; LLM has `warranty_gw → end` (shorter reject path).
+- **Task Names Not Verbatim/Matching GT (~-1.5 points)**:
+  - Casing inconsistent (LLM mostly lowercase e.g., "validate the claim", "request missing information"; GT title-case e.g., "Validate the Claim").
+  - Parallel tasks longer/mismatched: LLM "create shipment order for the replacement unit" / "schedule courier pickup of the faulty product" vs GT shortened "Create shipment order" / "Schedule courier pickup".
+  - Verb forms off vs prompt text (e.g., "validate" vs "validates"; strict verbatim required).
+- **Format/Output Violations (~-0.5 points)**:
+  - Extra prose after XML ("This XML specifies..."); prompt requires "single self-contained BPMN 2.0 XML document" (GT is pure XML).
+- **Minor but Cumulative Errors (per strictness, ~-1.0 points)**:
+  - Extra namespaces (xsi, bpmndi, dc, di unused); GT minimal (bpmn only).
+  - Extra attributes (e.g., `gatewayDirection`; GT omits).
+  - Process diffs: ID "wrc_WarrantyReplacementProcess" vs "wrc_process"; `isExecutable="true"` vs "false".
+  - Missing GT names on events/GWs (e.g., start "Online warranty claim submitted", GWs "Claim complete?", "Within warranty?").
+  - Flow names differ (LLM "Incomplete"/"Complete"; GT "No"/"Yes").
+  - Element order/definition style (LLM mixes inline flows; GT grouped with comments at end).
+  - Longer/more verbose (GT "minimal-yet-complete 34 lines").
+
+Semantically ~80% equivalent (same logic/flow control), but XML/graph not identical due to task swap/omission → not full credit. No criminal content issues.

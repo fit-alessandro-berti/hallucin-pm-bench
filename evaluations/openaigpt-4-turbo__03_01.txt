@@ -1,0 +1,14 @@
+**3.2**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer deviates significantly from the ground truth (GT) and prompt requirements, warranting a low score under utmost strictness. Key errors, each causing point deductions:
+
+- **Critical structural error (-2.5)**: No sequence flow from `t2` ("Provide Reset Instructions") to "Confirm with Customer" (`t7`). Password reset path dead-ends, violating description lines 3/7/10 (must reach confirmation/closure). Invalid BPMN (unreachable end from start via this path).
+- **Incorrect modeling of "Resolve Issue" (-1.5)**: Duplicates as separate tasks `t4` and `t6` instead of single shared `t4` (GT reuses post-gw2 yes and post-t5). Description (lines 5-6) implies same activity; LLM invents distinct tasks.
+- **Gateway naming/decision mismatches (-0.8)**: `gw2` "Resolved or Forward?" ≠ GT "Resolved Internally?"; `gw3` "Issue Resolved?" ≠ GT "Customer Confirms?". Prompt requires exact translation; GT better matches decisions (line 5 agent choice, line 8 customer feedback).
+- **Task naming inaccuracies (-0.5)**: "Classify Ticket" ≠ GT "Auto-Classification" (line 2: "automatically classified"); "Submit Ticket" minor drift from "Ticket Submitted" (line 1).
+- **Extra content violating output spec (-0.5)**: Post-XML explanatory paragraph. Prompt mandates **single `<definitions> … </definitions>` block** ≤40 lines; this adds non-XML.
+- **Unnecessary additions (-0.4)**: `isExecutable="true"` (GT "false"); verbose namespaces/schemaLocation/xsi (GT minimal); flow `name=` attributes instead of GT `conditionExpression` (yes/no).
+- **Minor diffs (-0.3)**: Process ID/name mismatch; no `<?xml>`; different targetNamespace; `gw1` flow names "Password Reset"/"Other" ok but not GT-style conditions.
+
+**Total deductions from 10.0**: -6.8 → **3.2**. Captures loop (sf13 gw3→t3, line 9 exact), basic flows post-diagnosis, and 3 gateways (prompt says "two" but 3 needed; no addition penalty). No invented timers/escalations. But functional incompleteness and non-exactness dominate.

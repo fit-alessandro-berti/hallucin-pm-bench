@@ -1,0 +1,23 @@
+ To bring the "FastClaimOnboarding" process into compliance with the SLA, we can introduce a timer event to ensure the claim reaches the "Task_Triage" within 48 hours of submission. Here's the suggested improvement:
+
+1. Add a timer event (bpmn:timerEvent) after the "Task_Check" task (id="Task_Check"). This timer event will be triggered immediately upon the completion of the "Task_Check" and will wait for 48 hours (960000 milliseconds).
+
+2. Modify the sequence flow from "GW_Docs" to "Task_Triage" (id="f5") to include a condition that checks if the timer event has expired. If the timer has expired, the flow should be redirected to "Task_RequestDocs" (id="Task_RequestDocs").
+
+Here's the updated XML snippet:
+
+```xml
+<bpmn:sequenceFlow id="f5" sourceRef="GW_Docs" targetRef="Task_Triage">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        <bpmn:scriptTask>
+            <bpmn:script><![CDATA[
+                var timer = execution.getVariable("timer");
+                var currentTime = System.currentTimeMillis();
+                return (currentTime - timer) >= 960000;
+            ]]></bpmn:script>
+        </bpmn:scriptTask>
+    </bpmn:conditionExpression>
+</bpmn:sequenceFlow>
+```
+
+This modification will ensure that if the claim does not reach the "Task_Triage" within 48 hours, it will be auto-escalated to "Task_RequestDocs".

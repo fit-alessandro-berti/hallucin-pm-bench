@@ -1,0 +1,15 @@
+**2.0**
+
+### Key Errors (strict evaluation; cumulative major deviations from ground truth and spec):
+- **Schema mismatch**: LLM uses nested "process" with arrays/objects (e.g., "task": [], "sequenceFlow": []); GT uses flat "elements" + "flows". Unfaithful representation.
+- **Classification wrong**: Modeled as gateway ("Initial Classification"); GT/spec has it as *task* before gateway. Hallucinated structure.
+- **Resolution path incomplete**: Complex skips "Provide Resolution" (only "Root Cause Analysis" → send); spec/GT requires resolution *after* root cause for both paths.
+- **Parallel logging invalid**: No fork/join gateways; direct splits from resolution tasks → send/log (invalid BPMN AND-split). GT uses proper parallelGateway ("forkLogging"/"joinAfterLogging").
+- **Timer/reply logic broken**: Single Timer-catching event misused for reply; confused loops/conditions (e.g., reminder → back to catch; duplicate flows from catch). No event-based gateway. GT uses "eventBasedGateway" → message/timer catches correctly. Misses "once" reminder (loops possible).
+- **No "Close Ticket" task**: Paths end directly at "End" (hallucination/omission); GT/spec requires explicit task.
+- **Cancel wrong**: Single UserTask post-create only (agent action?); not "at any point" (no process-wide catch/boundary). GT uses intermediateCatchEvent → terminateEndEvent. Wrong type/name ("Cancel Ticket" vs "Customer Cancel").
+- **Missing elements**: No "Email Received"/parse nuance (GT "start" name); no terminateEndEvent; invented UserTask types (e.g., auto "Send Reminder").
+- **Invalid flows/conditions**: e.g., conditions on catching event outflows (nonstandard); reminder loops; cancel not process-spanning.
+- Minor: Wrong names/IDs (e.g., no "Initial Classification" task); no 24h explicit in GT style.
+
+~80% deviation; faithful BPMN impossible. Penalized heavily per strictness.
