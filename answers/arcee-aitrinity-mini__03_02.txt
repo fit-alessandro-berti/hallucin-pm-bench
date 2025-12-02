@@ -1,0 +1,846 @@
+
+
+{
+  "definitions": {
+    "id": "customer-support-ticket",
+    "name": "Customer Support Ticket",
+    "xmlns": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "xmlns:omgdc": "http://www.omg.org/spec/DD/20100524/DC",
+    "xmlns:omgdi": "http://www.omg.org/spec/DD/20100524/DI",
+    "type": "process",
+    "id_:": "customer-support-ticket-process",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "process": {
+      "id": "customer-support-ticket-process",
+      "name": "Customer Support Ticket Process",
+      "documentation": "Process for managing customer support tickets",
+      "startEvent": {
+        "id": "start_0",
+        "name": "Email Received",
+        "eventDef": {
+          "message": {
+            "id": "email-received-message",
+            "name": "Email Received"
+          }
+        }
+      },
+      "userTask": [
+        {
+          "id": "create-ticket",
+          "name": "Create Ticket",
+          "operationRef": "help-desk-system-create-ticket"
+        },
+        {
+          "id": "initial-classification",
+          "name": "Initial Classification",
+          "operationRef": "help-desk-agent-classification"
+        },
+        {
+          "id": "provide-resolution",
+          "name": "Provide Resolution",
+          "operationRef": "help-desk-agent-resolution"
+        },
+        {
+          "id": "root-cause-analysis",
+          "name": "Root Cause Analysis",
+          "operationRef": "help-desk-agent-analysis"
+        },
+        {
+          "id": "send-response",
+          "name": "Send Response to Customer",
+          "operationRef": "help-desk-agent-response"
+        },
+        {
+          "id": "log-solution",
+          "name": "Log Solution in Knowledge Base",
+          "operationRef": "help-desk-log-solution"
+        }
+      ],
+      "endEvent": [
+        {
+          "id": "end_5",
+          "name": "Close Ticket",
+          "endEventDef": {
+            "none": {}
+          }
+        },
+        {
+          "id": "cancel-end",
+          "name": "Ticket Canceled",
+          "endEventDef": {
+            "terminate": {
+              "cancel": true
+            }
+          }
+        }
+      ],
+      "intermediateCatchEvent": [
+        {
+          "id": "email-received",
+          "name": "Email Received",
+          "intermediateCatchEventDef": {
+            "message": {
+              "messageRef": "email-received-message"
+            }
+          }
+        }
+      ],
+      "sequenceFlow": [
+        {
+          "id": "sf1",
+          "sourceRef": "start_0",
+          "targetRef": "create-ticket"
+        },
+        {
+          "id": "sf2",
+          "sourceRef": "create-ticket",
+          "targetRef": "initial-classification"
+        },
+        {
+          "id": "sf3",
+          "sourceRef": "initial-classification",
+          "targetRef": "provide-resolution"
+        },
+        {
+          "id": "sf4",
+          "sourceRef": "initial-classification",
+          "targetRef": "root-cause-analysis"
+        },
+        {
+          "id": "sf5",
+          "sourceRef": "provide-resolution",
+          "targetRef": "send-response"
+        },
+        {
+          "id": "sf6",
+          "sourceRef": "send-response",
+          "targetRef": "log-solution"
+        },
+        {
+          "id": "sf7",
+          "sourceRef": "root-cause-analysis",
+          "targetRef": "provide-resolution"
+        },
+        {
+          "id": "sf8",
+          "sourceRef": "log-solution",
+          "targetRef": "end_5"
+        },
+        {
+          "id": "sf9",
+          "sourceRef": "send-response",
+          "targetRef": "end_5"
+        },
+        {
+          "id": "sf10",
+          "sourceRef": "end_5",
+          "targetRef": "cancel-end"
+        }
+      ],
+      "gateWay": [
+        {
+          "id": "parallel-split",
+          "name": "Parallel Split",
+          "gatewayDef": {
+            "parallel": {}
+          }
+        }
+      ],
+      "sequenceFlow": [
+        ...,
+        {
+          "id": "sf11",
+          "sourceRef": "provide-resolution",
+          "targetRef": "parallel-split"
+        },
+        {
+          "id": "sf12",
+          "sourceRef": "parallel-split",
+          "targetRef": "log-solution"
+        },
+        {
+          "id": "sf13",
+          "sourceRef": "parallel-split",
+          "targetRef": "provide-resolution"
+        }
+      ],
+      "intermediateThrowEvent": [
+        {
+          "id": "customer-reply",
+          "name": "Customer Reply",
+          "intermediateThrowEventDef": {
+            "none": {}
+          }
+        }
+      ],
+      "eventBasedGateway": [
+        {
+          "id": "customer-reply-gateway",
+          "name": "Customer Reply",
+          "gatewayDef": {
+            "eventBased": {}
+          }
+        }
+      ],
+      "sequenceFlow": [
+        ...,
+        {
+          "id": "sf14",
+          "sourceRef": "customer-reply-gateway",
+          "targetRef": "end_5"
+        }
+      ],
+      "intermediateCatchEvent": [
+        {
+          "id": "customer-reply-catcher",
+          "name": "Customer Reply",
+          "intermediateCatchEventDef": {
+            "none": {}
+          }
+        }
+      ],
+      "sequenceFlow": [
+        ...,
+        {
+          "id": "sf15",
+          "sourceRef": "customer-reply-catcher",
+          "targetRef": "customer-reply-gateway"
+        },
+        {
+          "id": "sf16",
+          "sourceRef": "customer-reply-catcher",
+          "targetRef": "end_5"
+        }
+      ],
+      "intermediateThrowEvent": [
+        {
+          "id": "24-hours-elapsed",
+          "name": "24 Hours Elapsed",
+          "intermediateThrowEventDef": {
+            "timer": {
+              "duration": "PT24H"
+            }
+          }
+        }
+      ],
+      "eventBasedGateway": [
+        {
+          "id": "reminder-gateway",
+          "name": "Send Reminder",
+          "gatewayDef": {
+            "eventBased": {}
+          }
+        }
+      ],
+      "sequenceFlow": [
+        ...,
+        {
+          "id": "sf17",
+          "sourceRef": "end_5",
+          "targetRef": "24-hours-elapsed"
+        },
+        {
+          "id": "sf18",
+          "sourceRef": "24-hours-elapsed",
+          "targetRef": "reminder-gateway"
+        },
+        {
+          "id": "sf19",
+          "sourceRef": "reminder-gateway",
+          "targetRef": "end_5"
+        }
+      ]
+    },
+    "bpmndi:BPMNDiagram": {
+      "id": "BPMNDiagram_1",
+      "processRef": "customer-support-ticket-process",
+      "BPMNDiagramElement": [
+        {
+          "id": "BPMNShape_1",
+          "bpmnElement": "start_0",
+          "omgdc:Bounds": {
+            "x": 100,
+            "y": 100,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_2",
+          "bpmnElement": "email-received",
+          "omgdc:Bounds": {
+            "x": 100,
+            "y": 200,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_3",
+          "bpmnElement": "create-ticket",
+          "omgdc:Bounds": {
+            "x": 200,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_4",
+          "bpmnElement": "initial-classification",
+          "omgdc:Bounds": {
+            "x": 300,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_5",
+          "bpmnElement": "provide-resolution",
+          "omgdc:Bounds": {
+            "x": 400,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_6",
+          "bpmnElement": "root-cause-analysis",
+          "omgdc:Bounds": {
+            "x": 500,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_7",
+          "bpmnElement": "log-solution",
+          "omgdc:Bounds": {
+            "x": 600,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_8",
+          "bpmnElement": "send-response",
+          "omgdc:Bounds": {
+            "x": 700,
+            "y": 100,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_9",
+          "bpmnElement": "end_5",
+          "omgdc:Bounds": {
+            "x": 800,
+            "y": 100,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_10",
+          "bpmnElement": "cancel-end",
+          "omgdc:Bounds": {
+            "x": 800,
+            "y": 200,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_11",
+          "bpmnElement": "customer-reply",
+          "omgdc:Bounds": {
+            "x": 800,
+            "y": 300,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_12",
+          "bpmnElement": "24-hours-elapsed",
+          "omgdc:Bounds": {
+            "x": 900,
+            "y": 200,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_13",
+          "bpmnElement": "parallel-split",
+          "omgdc:Bounds": {
+            "x": 800,
+            "y": 250,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_14",
+          "bpmnElement": "customer-reply-catcher",
+          "omgdc:Bounds": {
+            "x": 700,
+            "y": 300,
+            "width": 36,
+            "height": 36
+          }
+        },
+        {
+          "id": "BPMNShape_15",
+          "bpmnElement": "reminder-gateway",
+          "omgdc:Bounds": {
+            "x": 950,
+            "y": 250,
+            "width": 100,
+            "height": 80
+          }
+        },
+        {
+          "id": "BPMNShape_16",
+          "bpmnElement": "email-received-message",
+          "omgdc:Bounds": {
+            "x": 100,
+            "y": 300,
+            "width": 36,
+            "height": 36
+          }
+        }
+      ],
+      "BPMNLabel": [
+        {
+          "id": "label_1",
+          "text": "Email Received",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 130,
+            "y": 120
+          }
+        },
+        {
+          "id": "label_2",
+          "text": "Create Ticket",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 230,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_3",
+          "text": "Initial Classification",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 330,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_4",
+          "text": "Provide Resolution",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 430,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_5",
+          "text": "Root Cause Analysis",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 530,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_6",
+          "text": "Log Solution",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 630,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_7",
+          "text": "Send Response",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 730,
+            "y": 130
+          }
+        },
+        {
+          "id": "label_8",
+          "text": "Close Ticket",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 830,
+            "y": 120
+          }
+        },
+        {
+          "id": "label_9",
+          "text": "Ticket Canceled",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 830,
+            "y": 220
+          }
+        },
+        {
+          "id": "label_10",
+          "text": "Customer Reply",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 810,
+            "y": 320
+          }
+        },
+        {
+          "id": "label_11",
+          "text": "24 Hours Elapsed",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 930,
+            "y": 220
+          }
+        },
+        {
+          "id": "label_12",
+          "text": "Parallel Split",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 800,
+            "y": 300
+          }
+        },
+        {
+          "id": "label_13",
+          "text": "Customer Reply",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 680,
+            "y": 320
+          }
+        },
+        {
+          "id": "label_14",
+          "text": "Send Reminder",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 1000,
+            "y": 300
+          }
+        },
+        {
+          "id": "label_15",
+          "text": "Email Received",
+          "bpmnLabelStyle": {
+            "fontSize": 12
+          },
+          "omgdc:Bounds": {
+            "x": 130,
+            "y": 320
+          }
+        }
+      ],
+      "BPMNEdge": [
+        {
+          "id": "edge_1",
+          "bpmnElement": "sf1",
+          "omgdi:waypoint": [
+            {
+              "x": 136,
+              "y": 136
+            },
+            {
+              "x": 200,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_2",
+          "bpmnElement": "sf2",
+          "omgdi:waypoint": [
+            {
+              "x": 236,
+              "y": 136
+            },
+            {
+              "x": 300,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_3",
+          "bpmnElement": "sf3",
+          "omgdi:waypoint": [
+            {
+              "x": 336,
+              "y": 136
+            },
+            {
+              "x": 400,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_4",
+          "bpmnElement": "sf4",
+          "omgdi:waypoint": [
+            {
+              "x": 336,
+              "y": 136
+            },
+            {
+              "x": 500,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_5",
+          "bpmnElement": "sf5",
+          "omgdi:waypoint": [
+            {
+              "x": 436,
+              "y": 136
+            },
+            {
+              "x": 700,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_6",
+          "bpmnElement": "sf6",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 136
+            },
+            {
+              "x": 600,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_7",
+          "bpmnElement": "sf7",
+          "omgdi:waypoint": [
+            {
+              "x": 536,
+              "y": 136
+            },
+            {
+              "x": 500,
+              "y": 136
+            }
+          }
+        },
+        {
+          "id": "edge_8",
+          "bpmnElement": "sf8",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 136
+            },
+            {
+              "x": 800,
+              "y": 136
+            }
+          ]
+        },
+        {
+          "id": "edge_9",
+          "bpmnElement": "sf9",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 136
+            },
+            {
+              "x": 800,
+              "y": 136
+            }
+          }
+        },
+        {
+          "id": "edge_10",
+          "bpmnElement": "sf10",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 136
+            },
+            {
+              "x": 800,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "id": "edge_11",
+          "bpmnElement": "sf11",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 136
+            },
+            {
+              "x": 800,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "id": "edge_12",
+          "bpmnElement": "sf12",
+          "omgdi:waypoint": [
+            {
+              "x": 1000,
+              "y": 200
+            },
+            {
+              "x": 950,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "id": "edge_13",
+          "bpmnElement": "sf13",
+          "omgdi:waypoint": [
+            {
+              "x": 950,
+              "y": 200
+            },
+            {
+              "x": 800,
+              "y": 200
+            }
+          }
+        },
+        {
+          "id": "edge_14",
+          "bpmnElement": "sf14",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 200
+            },
+            {
+              "x": 700,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "id": "edge_15",
+          "bpmnElement": "sf15",
+          "omgdi:waypoint": [
+            {
+              "x": 1000,
+              "y": 200
+            },
+            {
+              "x": 950,
+              "y": 250
+            }
+          ]
+        },
+        {
+          "id": "edge_16",
+          "bpmnElement": "sf16",
+          "omgdi:waypoint": [
+            {
+              "x": 950,
+              "y": 250
+            },
+            {
+              "x": 800,
+              "y": 300
+            }
+          ]
+        },
+        {
+          "id": "edge_17",
+          "bpmnElement": "sf17",
+          "omgdi:waypoint": [
+            {
+              "x": 736,
+              "y": 200
+            },
+            {
+              "x": 900,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "id": "edge_18",
+          "bpmnElement": "sf18",
+          "omgdi:waypoint": [
+            {
+              "x": 900,
+              "y": 200
+            },
+            {
+              "x": 950,
+              "y": 250
+            }
+          }
+        }
+      ]
+    }
+  }
+}

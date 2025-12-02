@@ -1,0 +1,264 @@
+```json
+{
+  "definitions": {
+    "id": "definitions_1",
+    "targetNamespace": "http://example.org/bpmn",
+    "rootElements": [
+      {
+        "$type": "bpmn:Process",
+        "id": "Process_1",
+        "name": "Support Ticket Process",
+        "isExecutable": false,
+        "flowElements": [
+          {
+            "$type": "bpmn:StartEvent",
+            "id": "StartEvent_1",
+            "name": "Support email received"
+          },
+          {
+            "$type": "bpmn:ServiceTask",
+            "id": "Task_CreateTicket",
+            "name": "Parse Email & Create Ticket"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_InitialClassification",
+            "name": "Initial Classification"
+          },
+          {
+            "$type": "bpmn:ExclusiveGateway",
+            "id": "ExclusiveGateway_1",
+            "gatewayDirection": "Diverging"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_RootCauseAnalysis",
+            "name": "Root Cause Analysis"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_ProvideResolution",
+            "name": "Provide Resolution"
+          },
+          {
+            "$type": "bpmn:ParallelGateway",
+            "id": "ParallelGateway_Fork",
+            "gatewayDirection": "Diverging"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_SendResponse",
+            "name": "Send Response to Customer"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_LogSolution",
+            "name": "Log Solution in Knowledge Base"
+          },
+          {
+            "$type": "bpmn:EventBasedGateway",
+            "id": "EventBasedGateway_1",
+            "gatewayDirection": "Diverging",
+            "eventGatewayType": "Exclusive"
+          },
+          {
+            "$type": "bpmn:IntermediateCatchEvent",
+            "id": "IntermediateCatchEvent_Message",
+            "name": "Customer Reply",
+            "eventDefinitions": [
+              {
+                "$type": "bpmn:MessageEventDefinition",
+                "id": "MessageEventDefinition_CustomerReply"
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:IntermediateCatchEvent",
+            "id": "IntermediateCatchEvent_Timer",
+            "name": "24 hours",
+            "eventDefinitions": [
+              {
+                "$type": "bpmn:TimerEventDefinition",
+                "id": "TimerEventDefinition_1",
+                "timeDuration": {
+                  "$type": "bpmn:FormalExpression",
+                  "body": "PT24H"
+                }
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:ServiceTask",
+            "id": "Task_SendReminder",
+            "name": "Send Reminder"
+          },
+          {
+            "$type": "bpmn:UserTask",
+            "id": "Task_CloseTicket",
+            "name": "Close Ticket"
+          },
+          {
+            "$type": "bpmn:EndEvent",
+            "id": "EndEvent_Close"
+          },
+          {
+            "$type": "bpmn:EndEvent",
+            "id": "EndEvent_Log"
+          },
+          {
+            "$type": "bpmn:SubProcess",
+            "id": "SubProcess_Cancel",
+            "triggeredByEvent": true,
+            "flowElements": [
+              {
+                "$type": "bpmn:StartEvent",
+                "id": "StartEvent_Cancel",
+                "name": "Customer cancels ticket",
+                "isInterrupting": true,
+                "eventDefinitions": [
+                  {
+                    "$type": "bpmn:MessageEventDefinition",
+                    "id": "MessageEventDefinition_Cancel",
+                    "messageRef": "Message_Cancel"
+                  }
+                ]
+              },
+              {
+                "$type": "bpmn:EndEvent",
+                "id": "EndEvent_Terminate",
+                "eventDefinitions": [
+                  {
+                    "$type": "bpmn:TerminateEventDefinition",
+                    "id": "TerminateEventDefinition_1"
+                  }
+                ]
+              },
+              {
+                "$type": "bpmn:SequenceFlow",
+                "id": "Flow_CancelToTerminate",
+                "sourceRef": "StartEvent_Cancel",
+                "targetRef": "EndEvent_Terminate"
+              }
+            ]
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Start_to_CreateTicket",
+            "sourceRef": "StartEvent_1",
+            "targetRef": "Task_CreateTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_CreateTicket_to_Classification",
+            "sourceRef": "Task_CreateTicket",
+            "targetRef": "Task_InitialClassification"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Classification_to_ExclGw",
+            "sourceRef": "Task_InitialClassification",
+            "targetRef": "ExclusiveGateway_1"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Simple",
+            "sourceRef": "ExclusiveGateway_1",
+            "targetRef": "Task_ProvideResolution",
+            "conditionExpression": {
+              "$type": "bpmn:FormalExpression",
+              "body": "ticketType == 'Simple'"
+            }
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Complex",
+            "sourceRef": "ExclusiveGateway_1",
+            "targetRef": "Task_RootCauseAnalysis",
+            "conditionExpression": {
+              "$type": "bpmn:FormalExpression",
+              "body": "ticketType == 'Complex'"
+            }
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_RootCause_to_Resolve",
+            "sourceRef": "Task_RootCauseAnalysis",
+            "targetRef": "Task_ProvideResolution"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Resolve_to_Fork",
+            "sourceRef": "Task_ProvideResolution",
+            "targetRef": "ParallelGateway_Fork"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Fork_to_SendResponse",
+            "sourceRef": "ParallelGateway_Fork",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Fork_to_Log",
+            "sourceRef": "ParallelGateway_Fork",
+            "targetRef": "Task_LogSolution"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_SendResponse_to_EBGw",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "EventBasedGateway_1"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_EBGw_to_Message",
+            "sourceRef": "EventBasedGateway_1",
+            "targetRef": "IntermediateCatchEvent_Message"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_EBGw_to_Timer",
+            "sourceRef": "EventBasedGateway_1",
+            "targetRef": "IntermediateCatchEvent_Timer"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Message_to_Close",
+            "sourceRef": "IntermediateCatchEvent_Message",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Timer_to_Reminder",
+            "sourceRef": "IntermediateCatchEvent_Timer",
+            "targetRef": "Task_SendReminder"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Reminder_to_Close",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Close_to_End1",
+            "sourceRef": "Task_CloseTicket",
+            "targetRef": "EndEvent_Close"
+          },
+          {
+            "$type": "bpmn:SequenceFlow",
+            "id": "Flow_Log_to_End2",
+            "sourceRef": "Task_LogSolution",
+            "targetRef": "EndEvent_Log"
+          }
+        ]
+      },
+      {
+        "$type": "bpmn:Message",
+        "id": "Message_Cancel",
+        "name": "Cancel Ticket"
+      }
+    ]
+  }
+}
+```

@@ -1,0 +1,34 @@
+**5.0**
+
+### Evaluation Rationale (Strict Grading Breakdown)
+Using utmost strictness, grading prioritizes **exact match to ground truth XML structure, elements, attributes, names, and semantics** per the instructions. Semantically equivalent (same logic/flow despite minor ID/whitespace diffs) would be 10.0; any deviation deducts significantly, with extra/hallucinated elements or omissions costing 1.0+ points each. Total deductions lead to 5.0.
+
+**Major Deductions (High Impact, -4.5 total):**
+- **Extra hallucinated task (`wrc_check_warranty_eligibility`)**: Required by prompt semantics, but absent in ground truth flow (direct `complete_gw` → `warranty_gw`). Adds task + flows (`wrc_flow3_complete` → check → `wrc_flow6`), altering structure/semantics vs GT. (-1.5)
+- **Extra hallucinated event (`wrc_wait_for_info` intermediateCatchEvent + messageEventDefinition)**: Models "waits" explicitly, but prompt says **model only explicitly mentioned flow elements; do not invent**. GT uses direct loop (`request_info` → `validate`). Adds event + flows (`wrc_flow4`, `wrc_flow5`). Violation of "no invention". (-1.5)
+- **Extra DI section (`bpmndi:BPMNDiagram` + 18 shapes)**: GT is minimal (no DI). Adds ~80 lines of unrequired layout, bloating XML beyond self-contained process. (-1.5)
+
+**Moderate Deductions (Structural/Element Mismatches, -2.5 total):**
+- **Task types**: All 8 tasks as `<userTask>` vs GT `<task>`. Different BPMN elements (userTask subtypes task but changes XML). (-1.0)
+- **Gateway/flows modeling**: `gatewayDirection` attributes, `<conditionExpression>` (e.g., `claim_complete`) vs GT `name="Yes"/"No"` on flows. Extra attributes alter XML. (-0.75)
+- **ID schemes**: Longer/verbose (e.g., `wrc_validate_claim` vs `wrc_validate`; `wrc_flow3_complete` vs `wrc_sf3`). Allowed variation but excessive vs minimal GT. (-0.5)
+- **Process/definitions**: Different `id` (`wrc_WarrantyReplacement` vs `wrc_process`), fuller namespaces/targetNamespace, no `bpmn:` prefix. (-0.25)
+
+**Minor Deductions (Names/Verbatim, -1.0 total, but significant per strictness):**
+- **Task names not verbatim** (prompt requires **verbatim** bolded text): 
+  - `validate the claim` vs "**validates the claim**" (tense/case).
+  - `request missing information` vs "**requests missing information**" (tense/case).
+  - `check warranty eligibility` vs "**checks warranty eligibility**" (tense).
+  - Case diffs (e.g., `update inventory records` lower vs GT `Update...`). GT similar issues, but diffs count. (-0.75)
+- **Missing names**: No gateway names (`Claim complete?`, `Within warranty?`), flow labels (`Yes`/`No`), end names (`Successful end`/`Rejected`). (-0.25)
+
+**Strengths (No Deduction, Baseline ~13.0 before cuts)**:
+- Core gateways exact (2 exclusive, parallel split/join).
+- 2 end events.
+- All IDs prefixed `wrc_`.
+- Parallel flows correct.
+- 15 sequence flows (matches count).
+- Start name matches GT/prompt intent.
+- Verbatim matches on 4/8 tasks (`Create shipment order`, etc.).
+
+Overall: LLM captures prompt logic *better* than GT (includes required check task + proper wait), but **excessive differences/extra inventions** (per rubric/GT comparison) yield mid-low score. Equivalent minimal XML without extras/DI/userTask/catch would be 9.0+.

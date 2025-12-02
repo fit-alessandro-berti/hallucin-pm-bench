@@ -1,0 +1,32 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment vs Ground Truth)
+The LLM answer captures the overall process structure and includes all prompt-required gateways, two end events, wrc_ ID prefixes, and parallel flows correctly. However, under utmost strictness, there are **numerous significant differences** from the ground truth (34-line minimal XML), leading to major point deductions for extras, omissions in matching, and structural deviations. Small issues (e.g., name casing/tense, extra attributes) compound losses as per instructions. Semantically, it is **not equivalent** due to added nodes/edges changing the flow graph.
+
+#### Key Differences & Deductions (Cumulative ~60% Loss from 10.0):
+1. **Extra hallucinated elements (major deduction: -3.0)**:
+   - Added `intermediateCatchEvent id="wrc_waitForInfo"` ("Wait for missing information") + related flows (wrc_flow5, wrc_flow6). Violates "Model **only** the flow elements explicitly mentioned. Do **not** invent [...] beyond what is stated." Ground truth loops directly (request_info → validate), implicitly handling "waits until received" without invention.
+   - Added `userTask id="wrc_checkEligibility"` ("Check warranty eligibility"). Ground truth omits this (direct complete_gw → warranty_gw); LLM inserts it, altering path topology.
+
+2. **Extra flows & structural mismatch (major: -1.5)**:
+   - 17 sequenceFlows vs ground truth's 15. Extra flows for wait loop and check task change semantics (longer validation/warranty paths).
+   - Flow paths differ: e.g., ground truth complete_gw Yes → warranty_gw direct; LLM inserts checkEligibility. Warranty_gw incoming from checkEligibility vs ground's complete_gw.
+
+3. **Full <bpmndi:BPMNDiagram> section (major extra: -1.0)**:
+   - ~150+ lines of shapes/edges absent in minimal ground truth. Not required by prompt ("BPMN 2.0 XML document"); inflates size, deviates from "minimal-yet-complete" reference.
+
+4. **Task types & attributes mismatch (moderate: -0.5)**:
+   - `userTask` vs ground truth `task` for all tasks.
+
+5. **Names not verbatim/exact match (moderate: -0.5)**:
+   - Task names changed tense/imperative (e.g., "Validate the claim" vs prompt "**validates the claim**"; not verbatim per prompt rule. Matches ground truth issue but still differs slightly in phrasing).
+   - Start: "Start" vs "Online warranty claim submitted".
+   - Gateways: "Warranty status?" vs "Within warranty?".
+   - Ends: "Rejection end"/"Success end" vs "Successful end"/"Rejected".
+   - Conditions: `<conditionExpression>` (e.g., "Complete") vs ground truth `name="Yes"/"No"` on flows.
+
+6. **Other small errors/extras (minor but significant loss per instructions: -0.5)**:
+   - Added `gatewayDirection`, exporter, comments, longer IDs (e.g., "wrc_validateClaim" vs "wrc_validate").
+   - Namespace style: default xmlns (no prefix) vs ground `bpmn:` prefix.
+
+Base score starts at 10 for required structure (start, gateways, parallel, 2 ends, prefixes). Deductions reflect strict rubric: extras/hallucinations, flow mismatches, non-minimal bloat. Semantically close (~70% overlap in core path) but not equivalent due to added steps/elements. No omissions in LLM, but extras dominate.

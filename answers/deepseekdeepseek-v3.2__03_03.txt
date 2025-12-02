@@ -1,0 +1,136 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" 
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+             targetNamespace="http://www.example.org/warranty-replacement" 
+             typeLanguage="http://www.w3.org/2001/XMLSchema" 
+             expressionLanguage="http://www.w3.org/1999/XPath">
+  
+  <process id="wrc_WarrantyReplacement" isExecutable="false">
+    
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Online warranty claim submitted"/>
+    
+    <!-- Validation Section -->
+    <userTask id="wrc_validate_claim" name="validate the claim"/>
+    <exclusiveGateway id="wrc_gateway_validation" gatewayDirection="Diverging"/>
+    <userTask id="wrc_request_missing_info" name="request missing information"/>
+    <intermediateCatchEvent id="wrc_wait_for_info">
+      <messageEventDefinition/>
+    </intermediateCatchEvent>
+    
+    <!-- Eligibility Check -->
+    <userTask id="wrc_check_warranty_eligibility" name="check warranty eligibility"/>
+    <exclusiveGateway id="wrc_gateway_warranty" gatewayDirection="Diverging"/>
+    <userTask id="wrc_send_rejection_notice" name="send rejection notice"/>
+    <endEvent id="wrc_end_rejection"/>
+    
+    <!-- Parallel Processing -->
+    <parallelGateway id="wrc_parallel_split" gatewayDirection="Diverging"/>
+    <userTask id="wrc_create_shipment_order" name="Create shipment order"/>
+    <userTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup"/>
+    <parallelGateway id="wrc_parallel_join" gatewayDirection="Converging"/>
+    
+    <!-- Completion -->
+    <userTask id="wrc_update_inventory_records" name="update inventory records"/>
+    <userTask id="wrc_close_claim" name="close the claim"/>
+    <endEvent id="wrc_end_success"/>
+    
+    <!-- Sequence Flows -->
+    <!-- Start to validation -->
+    <sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validate_claim"/>
+    
+    <!-- Validation decision -->
+    <sequenceFlow id="wrc_flow2" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_validation"/>
+    <sequenceFlow id="wrc_flow3_complete" sourceRef="wrc_gateway_validation" targetRef="wrc_check_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">claim_complete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow3_incomplete" sourceRef="wrc_gateway_validation" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression">claim_incomplete</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Incomplete claim loop -->
+    <sequenceFlow id="wrc_flow4" sourceRef="wrc_request_missing_info" targetRef="wrc_wait_for_info"/>
+    <sequenceFlow id="wrc_flow5" sourceRef="wrc_wait_for_info" targetRef="wrc_validate_claim"/>
+    
+    <!-- Eligibility decision -->
+    <sequenceFlow id="wrc_flow6" sourceRef="wrc_check_warranty_eligibility" targetRef="wrc_gateway_warranty"/>
+    <sequenceFlow id="wrc_flow7_within" sourceRef="wrc_gateway_warranty" targetRef="wrc_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression">within_warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow7_out" sourceRef="wrc_gateway_warranty" targetRef="wrc_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression">out_of_warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow8" sourceRef="wrc_send_rejection_notice" targetRef="wrc_end_rejection"/>
+    
+    <!-- Parallel flows -->
+    <sequenceFlow id="wrc_flow9_split" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment_order"/>
+    <sequenceFlow id="wrc_flow10_split" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_courier_pickup"/>
+    <sequenceFlow id="wrc_flow11_join1" sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_join"/>
+    <sequenceFlow id="wrc_flow12_join2" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_join"/>
+    
+    <!-- Completion flows -->
+    <sequenceFlow id="wrc_flow13" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory_records"/>
+    <sequenceFlow id="wrc_flow14" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_claim"/>
+    <sequenceFlow id="wrc_flow15" sourceRef="wrc_close_claim" targetRef="wrc_end_success"/>
+    
+  </process>
+  
+  <!-- Diagram layout (minimal positioning for readability) -->
+  <bpmndi:BPMNDiagram id="wrc_diagram">
+    <bpmndi:BPMNPlane bpmnElement="wrc_WarrantyReplacement" id="wrc_plane">
+      <bpmndi:BPMNShape bpmnElement="wrc_start" id="shape_start">
+        <omgdc:Bounds x="100" y="300" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_validate_claim" id="shape_validate">
+        <omgdc:Bounds x="186" y="275" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_gateway_validation" id="shape_gateway_val">
+        <omgdc:Bounds x="336" y="295" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_request_missing_info" id="shape_request">
+        <omgdc:Bounds x="436" y="175" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_wait_for_info" id="shape_wait">
+        <omgdc:Bounds x="586" y="300" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_check_warranty_eligibility" id="shape_check">
+        <omgdc:Bounds x="436" y="275" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_gateway_warranty" id="shape_gateway_warr">
+        <omgdc:Bounds x="586" y="295" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_send_rejection_notice" id="shape_reject">
+        <omgdc:Bounds x="686" y="175" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_end_rejection" id="shape_end_reject">
+        <omgdc:Bounds x="836" y="300" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_parallel_split" id="shape_split">
+        <omgdc:Bounds x="686" y="295" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_create_shipment_order" id="shape_shipment">
+        <omgdc:Bounds x="786" y="175" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_schedule_courier_pickup" id="shape_courier">
+        <omgdc:Bounds x="786" y="375" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_parallel_join" id="shape_join">
+        <omgdc:Bounds x="936" y="295" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_update_inventory_records" id="shape_inventory">
+        <omgdc:Bounds x="1036" y="275" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_close_claim" id="shape_close">
+        <omgdc:Bounds x="1186" y="275" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="wrc_end_success" id="shape_end_success">
+        <omgdc:Bounds x="1336" y="300" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+```

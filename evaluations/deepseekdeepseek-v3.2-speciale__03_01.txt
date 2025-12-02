@@ -1,0 +1,30 @@
+**4.2**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer captures the core process logic (start → classify → gw1 → password reset path direct to confirm; diagnosis → gw2 → resolve/forward → merge to confirm → gw3 → close/loop) and avoids hallucinations like timers/SLAs/parallel paths. However, **utmost strictness** demands near-exact XML/structure match to ground truth (GT). Significant deductions for:
+
+#### Major Structural Errors (-3.0 total):
+- **Extra activity added** (t6 "Resolve Issue"): LLM duplicates Resolve Issue as separate task after Forward (t5 → t6), inventing a distinct instance. GT merges both Resolve paths to *single* t4 (agent/specialist share one task via multiple incoming flows). Violates "Do not invent or add ... activities"; description uses "Resolve Issue" once per context but doesn't require duplication. Adds 7th task where GT optimizes to 6.
+- **Default flow misuse** (gw1 f4): Uses `default="f4"` for else-path (no condition). GT uses explicit `<conditionExpression>no</conditionExpression>` on both outgoing flows. BPMN-valid but mismatches GT/prompt precision.
+- **Incomplete gw2 coverage**: Conditions `canResolve`/`!canResolve` leave no default; assumes vars exist (risky).
+
+#### Naming/Labeling Errors (-1.5 total):
+- Classify task: "Classify Ticket" vs GT "Auto-Classification" (ignores "automatically ... by the system").
+- Missing GT-required names: No gw names ("Password Reset?", "Resolved Internally?", "Customer Confirms?"); start lacks "Ticket Submitted"; process lacks name="Support-Ticket".
+- End name present but id="e1" vs "end".
+
+#### Condition Expression Errors (-0.8 total):
+- Invented variables: `classification == 'Password Reset'`, `canResolve`/`!canResolve`, `confirmed`/`!confirmed` (not mentioned; violates "exactly as stated"). GT uses neutral/generic `yes`/`no` strings (safer, no assumptions).
+
+#### XML/Header Differences (-0.3 total):
+- Missing `<?xml version="1.0" encoding="UTF-8"?>`.
+- Extra/unneeded `xmlns:xsi`, `id="defs"`, wrong `targetNamespace` ("http://example.org/bpmn" vs "http://acmetech/support")`.
+- Process `id="proc"` vs "support_ticket".
+
+#### Minor ID/Flow Diffs (-0.2 total):
+- Flow count: 14 vs GT 13 (extra due to t6).
+- Concise IDs used (matches prompt), but overall structure bulkier.
+
+**Strengths (+ no deduction impact)**: ≤40 lines (35); 3 exclusive gateways (prompt says "two" but GT has 3, so consistent); exact loop (gw3 no → t3); no fabricated elements beyond noted issues; valid BPMN XML.
+
+**Overall**: ~60% syntactic/structural match despite logical equivalence. Strict penalty yields 4.2 (mid-low: functional but not "exact"). Perfect would be 10.0; even 1-2 diffs → 8-9 range.

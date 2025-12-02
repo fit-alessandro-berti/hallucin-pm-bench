@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment vs. ground truth):
+- **Format/structure mismatch (major deduction: -5.0)**: LLM uses full BPMN 2.0 XML-style JSON ("definitions", "$type": "bpmn:*", targetNamespace, rootElements, detailed eventDefinitions). Ground truth uses custom simplified schema ("process_id", flat "elements" and "flows" arrays). No matching keys, hierarchy, or schema—fundamentally different representations.
+- **Missing parallel join (-1.5)**: No "joinAfterLogging" parallelGateway or incoming flows from "sendResponse"/"logSolution" to sync before "awaitReply". LLM sends "logSolution" directly to extra "EndEvent_Log" (unsynchronized parallel).
+- **Extra/inaccurate elements (-1.0)**: Extra "EndEvent_Log"; "SubProcess_Cancel" (complex event subprocess with internal flows, "triggeredByEvent": true, not matching GT's simple "cancelEvent" -> "terminate"); invented "Message_Cancel"; detailed FormalExpressions/PT24H vs. simple "condition": "simple"/"event": "timer".
+- **Name/ID/type mismatches (multiple small errors, -0.5 each, total -1.0)**: e.g., start "Support email received" vs. "Email Received"; "Parse Email & Create Ticket" (invents explicit parse) vs. "Create Ticket"; no gateway names like "Simple or Complex?" or "Wait 24h for Reply"; UserTask/ServiceTask vs. generic "task"; IDs/names entirely different (e.g., "Task_*" vs. "rootCause").
+- **Incomplete cancel integration (-0.5)**: Subprocess defined but not boundary-attached or process-integrated matching GT's loose "cancelEvent" -> "terminate".
+- **Other minor diffs (-0.0 additional, as already covered)**: Two ends vs. single "end"; extra SequenceFlows/Message; no exact flow matches due to IDs.
+
+Semantically close to description (no hallucinations like escalation, correct paths/gateways), but strict literal comparison to ground truth yields low score. ~20% structural/lexical match.

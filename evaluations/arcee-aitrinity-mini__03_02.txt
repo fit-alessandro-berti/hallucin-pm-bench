@@ -1,0 +1,22 @@
+**1.0**
+
+The LLM answer fails catastrophically against the ground truth on multiple axes under utmost strictness:
+
+- **Schema/Format mismatch (fatal, -9+ points)**: Ground truth uses a simple, custom JSON with `"process_id"`, `"elements"` (list of id/type/name/event/condition), and `"flows"` (source/target/condition). LLM outputs an entirely different, verbose BPMN 2.0 XML-in-JSON structure with `definitions`, namespaces, `process`, nested arrays (`userTask`, `sequenceFlow` x3 with invalid `"..."`), `bpmndi:BPMNDiagram`, shapes/edges/labels—none matching ground truth keys or structure.
+
+- **Invalid JSON syntax (-2 points)**: Duplicate `"sequenceFlow"` arrays, `"...,"` placeholders render it unparsable.
+
+- **BPMN inaccuracies/missing faithful modeling (-full points)**:
+  | Aspect | Ground Truth | LLM Errors |
+  |--------|-------------|------------|
+  | Classification | `exclusiveGateway` "classifyDecision" w/ conditions "simple"/"complex" → provide/rootCause | No gateway; direct flows `initial-classification` → `provide-resolution`/`root-cause-analysis` (no conditions). |
+  | Parallel | `parallelGateway` fork after provideResolution → sendResponse + logSolution → join → awaitReply | Misplaced `parallel-split` after provide/send?; wrong targets (e.g., to `provide-resolution`); no proper join. |
+  | Wait/Reply/Timer | `eventBasedGateway` → `customerReply` (catch message) → close OR `timer24h` → sendReminder → close | Convoluted wrong: throw events misused, catchers post-end, `eventBasedGateway`s misplaced, timer as throw "PT24H", flows after "end_5". |
+  | Customer Cancel | Standalone `intermediateCatchEvent` "Customer Cancel" → `terminateEndEvent` (implying boundary/global interrupt "at any point") | Mere `cancel-end` endEvent with invalid `terminate: {cancel:true}`; wrong flow from `end_5`. |
+  | Other elements | Precise tasks/ends; no extras | Invented `operationRef`s, docs, messageRefs, intermediateThrowEvents misused, extra gateways/catchers. No `sendReminder` task properly. |
+  | Flows/Conditions | Explicit sources/targets/conditions | Incomplete/duplicated/malformed `sequenceFlow`s; no conditions; impossible cycles (e.g., end → cancel). |
+
+- **Hallucinations/extras**: Full DI layout (unrequested), invalid BPMN defs (e.g., `endEventDef.terminate`, wrong event types), no "Do not invent" adherence.
+- **No partial credit**: Even core flow (start → create → classify → resolve → send/log parallel → wait → close/remind) is garbled; format alone disqualifies.
+
+Total: Minimal recognition of process (~1.0); zero fidelity to ground truth schema/content.
