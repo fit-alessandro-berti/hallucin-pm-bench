@@ -1,0 +1,41 @@
+Let's analyze whether transition **T5** can fire before **T3** in any reachable marking of the given Petri net.
+
+### Key Observations:
+1. **T5's Enabling Condition**:
+   - T5 requires a token in **p3** (normal arc) and **zero tokens in p4** (inhibitor arc).
+   - Thus, T5 can only fire if **p4 is empty**.
+
+2. **T3's Role**:
+   - T3 moves a token from **p2** to **p4**.
+   - Once T3 fires, **p4** gains a token, disabling T5 forever (since the inhibitor arc requires p4 to be empty).
+
+3. **Order of Events**:
+   - The initial marking has a token in **p0** only.
+   - **T1** must fire first (parallel split), depositing tokens into **p1** and **p2**.
+   - From here:
+     - If **T2** fires (p1 → p3), **p3** gains a token, but **p4** is still empty (since T3 hasn't fired yet).
+     - If **T3** fires (p2 → p4), **p4** gains a token, disabling T5 permanently.
+
+### Can T5 Fire Before T3?
+**Yes**, but only if **T2 fires before T3**. Here’s a concrete firing sequence:
+
+#### Firing Sequence:
+1. **T1**: p0 → p1 + p2
+   (Marking: p1=1, p2=1, others=0)
+2. **T2**: p1 → p3
+   (Marking: p2=1, p3=1, others=0)
+3. **T5**: p3 –|p4 → p6
+   (Marking: p2=1, p6=1, others=0)
+
+#### Justification:
+- After **T1**, **p1** and **p2** each have a token.
+- **T2** fires next, moving the token from **p1** to **p3**, while **p4** remains empty (T3 hasn’t fired yet).
+- **T5** is now enabled (p3 has a token, p4 is empty) and can fire before T3.
+- Once **T5** fires, **p6** gains a token, and **T3** can still fire later (but T5 cannot fire again because p4 will eventually have a token).
+
+### Why This Works:
+- The inhibitor arc from **p4** to **T5** only blocks T5 if **p4** has a token. Since **T3** is the only transition that adds tokens to **p4**, T5 can fire as long as **T3** hasn’t fired yet.
+- The parallel split (T1) allows **T2** and **T3** to fire independently, so **T2** can precede **T3**, enabling **T5**.
+
+### Conclusion:
+**Yes**, T5 can fire before T3. The sequence **T1 → T2 → T5** demonstrates this.

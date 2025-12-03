@@ -1,0 +1,59 @@
+### Summary of Decision Points & Required Documents in Contoso Airlines' Flight-Refund Process
+
+#### **Decision Points**
+
+1. **Triage_Agent_Validate_Eligibility**
+   - **Decision**: Determine whether the customer's claim is eligible for a refund based on the *FlightManifest* and *WeatherReport*.
+   - **Outcome**: 
+     - **Eligible** → Proceed to **Finance_Controller_PreApprove**.
+     - **Ineligible** → Process terminates; no refund issued.
+
+2. **Finance_Controller_PreApprove**
+   - **Decision**: Approve or reject the refund request using the *EligibilityChecklist*.
+   - **Outcome**:
+     - **Approved** → Proceed to **Process_Refund_Payment** (or **Senior_Auditor_Review** if high-value).
+     - **Rejected** → Process terminates; no refund issued.
+
+3. **High-value refund threshold check (€1,000)**
+   - **Decision**: Evaluate whether the refund amount exceeds €1,000.
+   - **Outcome**:
+     - **> €1,000** → Proceed to **Senior_Auditor_Review**.
+     - **≤ €1,000** → Skip **Senior_Auditor_Review**; proceed directly to **Process_Refund_Payment**.
+
+4. **Senior_Auditor_Review (conditional)**
+   - **Decision**: Review the case and approve or reject based on the *AuditTrail*.
+   - **Outcome**:
+     - **Approved** → Proceed to **Process_Refund_Payment**.
+     - **Rejected** → Process terminates; no refund issued.
+
+---
+
+#### **Required Documents**
+
+1. **RefundRequestForm**  
+   - Submitted by the passenger during **Customer_Submit_Claim**.
+
+2. **FlightManifest**  
+   - Used by the **Triage_Agent_Validate_Eligibility** to verify flight details.
+
+3. **WeatherReport**  
+   - Used by the **Triage_Agent_Validate_Eligibility** to assess weather-related eligibility.
+
+4. **EligibilityChecklist**  
+   - Used by **Finance_Controller_PreApprove** to validate the claim against policy rules.
+
+5. **AuditTrail** (conditional)  
+   - Required only when the refund amount is **greater than €1,000** and used during **Senior_Auditor_Review**.
+
+6. **BankTransferAuthorization** (signed)  
+   - Required for **Process_Refund_Payment** to execute the refund.
+
+7. **RefundConfirmationPDF**  
+   - Generated and emailed to the passenger during **Issue_Confirmation_Letter** after the refund is processed.
+
+---
+
+### Constraint Reminder
+- **Process_Refund_Payment** can only start **after**:
+  - **Finance_Controller_PreApprove** succeeds **AND**
+  - For refund amounts **> €1,000**, after **Senior_Auditor_Review** completes successfully.

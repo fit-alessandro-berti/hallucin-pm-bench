@@ -1,0 +1,12 @@
+**2.0**
+
+### Key Issues (Strict Evaluation Summary):
+- **Schema mismatch (major deduction: -3.0)**: LLM uses verbose BPMN 2.0 `definitions/childNodes` structure with `bpmn:` prefixes; ground truth uses simple `{"process_id", "elements", "flows"}`. Fundamentally different formats despite both being "JSON BPMN".
+- **Missing/incorrect parallel logging (-1.5)**: Ground truth correctly forks (`forkLogging` parallelGateway) after `provideResolution` to `sendResponse` + `logSolution` branches, joins before wait. LLM has no fork/join; `logSolution` wrongly placed after timer with circular flows (`FLOW_9/10`), invalidating execution.
+- **Incorrect complex path (-1.5)**: Ground truth routes complex → `rootCause` → `provideResolution`. LLM skips `provideResolution` for complex (direct `rootCause` → `sendResponse`), violating description ("Root Cause Analysis **before resolution**").
+- **Broken wait-for-reply logic (-1.0)**: Ground truth uses `eventBasedGateway` → `customerReply` (message catch) or `timer24h` (timer catch), correctly handling reply *before/up to* 24h. LLM misuses `IntermediateTimerEvent` as pseudo-gateway (multiple outgoings `FLOW_11/12`, incoming `FLOW_9`), with `customerReply` catch downstream from timer (delays reply handling); invalid BPMN semantics.
+- **Flow connectivity errors (-0.5)**: `sendResponse` incoming lists wrong IDs (`["FLOW_6", "FLOW_8"]` vs. actual `FLOW_6/FLOW_7`); circular `timer` ↔ `logSolution`; unconnected/malformed cancel.
+- **Invalid cancel/terminate (-0.3)**: LLM uses wrong `TerminateEventDefinition` (not an event, no `outgoing/incoming` properly); flow `FLOW_17` sources from it illogically. Ground truth has dedicated `cancelEvent` (message) → `terminate`.
+- **Minor diffs (-0.2)**: LLM adds faithful `Parse E-mail` (absent in ground truth); classification as lone gateway (ground truth task + gateway); duplicate `Close Ticket` tasks (ground truth merges).
+
+Total modeling fidelity ~20% (core flows partially match early steps, but mid/late process hallucinates invalid structures). No escalations invented, but strict penalties for all errors per instructions.

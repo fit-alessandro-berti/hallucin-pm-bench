@@ -1,0 +1,217 @@
+```json
+{
+  "bpmn": "2.0",
+  "definitions": {
+    "type": "bpmn:TDefinitions",
+    "namespace": "http://bpmn.io/schema/bpmn",
+    "childNodes": [
+      {
+        "id": "TRIGGER_EMAIL",
+        "type": "bpmn:StartEvent",
+        "outgoing": ["FLOW_1"]
+      },
+      {
+        "id": "ACTIVITY_PARSE_EMAIL",
+        "type": "bpmn:ServiceTask",
+        "name": "Parse E-mail",
+        "incoming": ["FLOW_1"],
+        "outgoing": ["FLOW_2"]
+      },
+      {
+        "id": "ACTIVITY_CREATE_TICKET",
+        "type": "bpmn:ServiceTask",
+        "name": "Create Ticket",
+        "incoming": ["FLOW_2"],
+        "outgoing": ["FLOW_3"]
+      },
+      {
+        "id": "GATEWAY_CLASSIFICATION",
+        "type": "bpmn:ExclusiveGateway",
+        "name": "Initial Classification",
+        "incoming": ["FLOW_3"],
+        "outgoing": ["FLOW_4", "FLOW_5"]
+      },
+      {
+        "id": "ACTIVITY_PROVIDE_RESOLUTION",
+        "type": "bpmn:ServiceTask",
+        "name": "Provide Resolution",
+        "incoming": ["FLOW_4"],
+        "outgoing": ["FLOW_6"]
+      },
+      {
+        "id": "ACTIVITY_ROOT_CAUSE_ANALYSIS",
+        "type": "bpmn:ServiceTask",
+        "name": "Root Cause Analysis",
+        "incoming": ["FLOW_5"],
+        "outgoing": ["FLOW_7"]
+      },
+      {
+        "id": "ACTIVITY_SEND_RESPONSE",
+        "type": "bpmn:ServiceTask",
+        "name": "Send Response to Customer",
+        "incoming": ["FLOW_6", "FLOW_8"],
+        "outgoing": ["FLOW_9"]
+      },
+      {
+        "id": "ACTIVITY_LOG_SOLUTION",
+        "type": "bpmn:ServiceTask",
+        "name": "Log Solution in Knowledge Base",
+        "outgoing": ["FLOW_10"],
+        "incoming": ["FLOW_9"]
+      },
+      {
+        "id": "EVENT_TIMER_WAIT_REPLY",
+        "type": "bpmn:IntermediateTimerEvent",
+        "name": "Wait for Customer Reply (24h)",
+        "outgoing": ["FLOW_11", "FLOW_12"],
+        "incoming": ["FLOW_9"]
+      },
+      {
+        "id": "EVENT_MESSAGE_CUSTOMER_REPLY",
+        "type": "bpmn:IntermediateCatchEvent",
+        "name": "Customer Reply Received",
+        "outgoing": ["FLOW_13"],
+        "incoming": ["FLOW_11"]
+      },
+      {
+        "id": "ACTIVITY_CLOSE_TICKET_REPLY",
+        "type": "bpmn:ServiceTask",
+        "name": "Close Ticket",
+        "incoming": ["FLOW_13"],
+        "outgoing": ["FLOW_14"]
+      },
+      {
+        "id": "ACTIVITY_SEND_REMINDER",
+        "type": "bpmn:ServiceTask",
+        "name": "Send Reminder",
+        "incoming": ["FLOW_12"],
+        "outgoing": ["FLOW_15"]
+      },
+      {
+        "id": "ACTIVITY_CLOSE_TICKET_REMINDER",
+        "type": "bpmn:ServiceTask",
+        "name": "Close Ticket",
+        "incoming": ["FLOW_15"],
+        "outgoing": ["FLOW_16"]
+      },
+      {
+        "id": "EVENT_TERMINATE_CANCEL",
+        "type": "bpmn:TerminateEventDefinition",
+        "name": "Ticket Cancelled",
+        "outgoing": [],
+        "incoming": ["FLOW_17"]
+      },
+      {
+        "id": "END_EVENT_NORMAL",
+        "type": "bpmn:EndEvent",
+        "name": "Process Completed",
+        "incoming": ["FLOW_14", "FLOW_16"]
+      },
+      {
+        "id": "FLOW_1",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "TRIGGER_EMAIL",
+        "targetRef": "ACTIVITY_PARSE_EMAIL"
+      },
+      {
+        "id": "FLOW_2",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_PARSE_EMAIL",
+        "targetRef": "ACTIVITY_CREATE_TICKET"
+      },
+      {
+        "id": "FLOW_3",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_CREATE_TICKET",
+        "targetRef": "GATEWAY_CLASSIFICATION"
+      },
+      {
+        "id": "FLOW_4",
+        "type": "bpmn:SequenceFlow",
+        "name": "Simple",
+        "sourceRef": "GATEWAY_CLASSIFICATION",
+        "targetRef": "ACTIVITY_PROVIDE_RESOLUTION"
+      },
+      {
+        "id": "FLOW_5",
+        "type": "bpmn:SequenceFlow",
+        "name": "Complex",
+        "sourceRef": "GATEWAY_CLASSIFICATION",
+        "targetRef": "ACTIVITY_ROOT_CAUSE_ANALYSIS"
+      },
+      {
+        "id": "FLOW_6",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_PROVIDE_RESOLUTION",
+        "targetRef": "ACTIVITY_SEND_RESPONSE"
+      },
+      {
+        "id": "FLOW_7",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_ROOT_CAUSE_ANALYSIS",
+        "targetRef": "ACTIVITY_SEND_RESPONSE"
+      },
+      {
+        "id": "FLOW_8",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_SEND_RESPONSE",
+        "targetRef": "EVENT_TIMER_WAIT_REPLY"
+      },
+      {
+        "id": "FLOW_9",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "EVENT_TIMER_WAIT_REPLY",
+        "targetRef": "ACTIVITY_LOG_SOLUTION"
+      },
+      {
+        "id": "FLOW_10",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_LOG_SOLUTION",
+        "targetRef": "EVENT_TIMER_WAIT_REPLY"
+      },
+      {
+        "id": "FLOW_11",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "EVENT_TIMER_WAIT_REPLY",
+        "targetRef": "EVENT_MESSAGE_CUSTOMER_REPLY"
+      },
+      {
+        "id": "FLOW_12",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "EVENT_TIMER_WAIT_REPLY",
+        "targetRef": "ACTIVITY_SEND_REMINDER"
+      },
+      {
+        "id": "FLOW_13",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "EVENT_MESSAGE_CUSTOMER_REPLY",
+        "targetRef": "ACTIVITY_CLOSE_TICKET_REPLY"
+      },
+      {
+        "id": "FLOW_14",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_CLOSE_TICKET_REPLY",
+        "targetRef": "END_EVENT_NORMAL"
+      },
+      {
+        "id": "FLOW_15",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_SEND_REMINDER",
+        "targetRef": "ACTIVITY_CLOSE_TICKET_REMINDER"
+      },
+      {
+        "id": "FLOW_16",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "ACTIVITY_CLOSE_TICKET_REMINDER",
+        "targetRef": "END_EVENT_NORMAL"
+      },
+      {
+        "id": "FLOW_17",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "EVENT_TERMINATE_CANCEL",
+        "targetRef": "END_EVENT_NORMAL"
+      }
+    ]
+  }
+}
+```

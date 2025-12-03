@@ -1,0 +1,247 @@
+```json
+{
+  "bpmn:definitions": {
+    "@xmlns:bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "@xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "@xmlns:dc": "http://www.omg.org/spec/DD/20100524/DC",
+    "@xmlns:di": "http://www.omg.org/spec/DD/20100524/DI",
+    "@id": "Definitions_1",
+    "@targetNamespace": "http://bpmn.io/schema/bpmn",
+    "bpmn:process": {
+      "@id": "Process_1",
+      "@isExecutable": true,
+      "bpmn:startEvent": {
+        "@id": "StartEvent_1",
+        "@name": "Support Email Received",
+        "bpmn:outgoing": "SequenceFlow_1"
+      },
+      "bpmn:task": [
+        {
+          "@id": "Task_1",
+          "@name": "Create Ticket",
+          "bpmn:incoming": "SequenceFlow_1",
+          "bpmn:outgoing": "SequenceFlow_2"
+        },
+        {
+          "@id": "Task_2",
+          "@name": "Initial Classification",
+          "bpmn:incoming": "SequenceFlow_2",
+          "bpmn:outgoing": "SequenceFlow_3"
+        },
+        {
+          "@id": "Task_3",
+          "@name": "Root Cause Analysis",
+          "bpmn:incoming": "SequenceFlow_5",
+          "bpmn:outgoing": "SequenceFlow_6"
+        },
+        {
+          "@id": "Task_4",
+          "@name": "Provide Resolution",
+          "bpmn:incoming": ["SequenceFlow_4", "SequenceFlow_6"],
+          "bpmn:outgoing": "SequenceFlow_7"
+        },
+        {
+          "@id": "Task_5",
+          "@name": "Send Response to Customer",
+          "bpmn:incoming": "SequenceFlow_7",
+          "bpmn:outgoing": "SequenceFlow_8"
+        },
+        {
+          "@id": "Task_6",
+          "@name": "Log Solution in Knowledge Base",
+          "bpmn:incoming": "SequenceFlow_8",
+          "bpmn:outgoing": "SequenceFlow_9"
+        },
+        {
+          "@id": "Task_7",
+          "@name": "Send Reminder",
+          "bpmn:incoming": "SequenceFlow_12",
+          "bpmn:outgoing": "SequenceFlow_13"
+        },
+        {
+          "@id": "Task_8",
+          "@name": "Close Ticket",
+          "bpmn:incoming": ["SequenceFlow_10", "SequenceFlow_13", "SequenceFlow_14"],
+          "bpmn:outgoing": "SequenceFlow_15"
+        }
+      ],
+      "bpmn:exclusiveGateway": [
+        {
+          "@id": "ExclusiveGateway_1",
+          "@name": "Simple or Complex?",
+          "bpmn:incoming": "SequenceFlow_3",
+          "bpmn:outgoing": ["SequenceFlow_4", "SequenceFlow_5"]
+        },
+        {
+          "@id": "ExclusiveGateway_2",
+          "@name": "Customer Reply?",
+          "bpmn:incoming": "SequenceFlow_9",
+          "bpmn:outgoing": ["SequenceFlow_10", "SequenceFlow_11"]
+        }
+      ],
+      "bpmn:parallelGateway": {
+        "@id": "ParallelGateway_1",
+        "@name": "Fork for Parallel Tasks",
+        "bpmn:incoming": "SequenceFlow_8",
+        "bpmn:outgoing": ["SequenceFlow_9", "SequenceFlow_16"]
+      },
+      "bpmn:intermediateCatchEvent": {
+        "@id": "IntermediateCatchEvent_1",
+        "@name": "Wait for Customer Reply (24h)",
+        "bpmn:incoming": "SequenceFlow_16",
+        "bpmn:outgoing": "SequenceFlow_14",
+        "bpmn:timerEventDefinition": {
+          "bpmn:timeDuration": "PT24H"
+        }
+      },
+      "bpmn:boundaryEvent": {
+        "@id": "BoundaryEvent_1",
+        "@name": "Ticket Cancelled",
+        "@attachedToRef": "Task_1",
+        "@cancelActivity": true,
+        "bpmn:outgoing": "SequenceFlow_17",
+        "bpmn:messageEventDefinition": {}
+      },
+      "bpmn:endEvent": [
+        {
+          "@id": "EndEvent_1",
+          "@name": "Terminate",
+          "bpmn:incoming": "SequenceFlow_17"
+        },
+        {
+          "@id": "EndEvent_2",
+          "@name": "Process Complete",
+          "bpmn:incoming": "SequenceFlow_15"
+        }
+      ],
+      "bpmn:sequenceFlow": [
+        { "@id": "SequenceFlow_1", "@sourceRef": "StartEvent_1", "@targetRef": "Task_1" },
+        { "@id": "SequenceFlow_2", "@sourceRef": "Task_1", "@targetRef": "Task_2" },
+        { "@id": "SequenceFlow_3", "@sourceRef": "Task_2", "@targetRef": "ExclusiveGateway_1" },
+        { "@id": "SequenceFlow_4", "@sourceRef": "ExclusiveGateway_1", "@targetRef": "Task_4", "@name": "Simple" },
+        { "@id": "SequenceFlow_5", "@sourceRef": "ExclusiveGateway_1", "@targetRef": "Task_3", "@name": "Complex" },
+        { "@id": "SequenceFlow_6", "@sourceRef": "Task_3", "@targetRef": "Task_4" },
+        { "@id": "SequenceFlow_7", "@sourceRef": "Task_4", "@targetRef": "Task_5" },
+        { "@id": "SequenceFlow_8", "@sourceRef": "Task_5", "@targetRef": "ParallelGateway_1" },
+        { "@id": "SequenceFlow_9", "@sourceRef": "ParallelGateway_1", "@targetRef": "ExclusiveGateway_2" },
+        { "@id": "SequenceFlow_10", "@sourceRef": "ExclusiveGateway_2", "@targetRef": "Task_8", "@name": "Reply Received" },
+        { "@id": "SequenceFlow_11", "@sourceRef": "ExclusiveGateway_2", "@targetRef": "IntermediateCatchEvent_1", "@name": "No Reply" },
+        { "@id": "SequenceFlow_12", "@sourceRef": "IntermediateCatchEvent_1", "@targetRef": "Task_7" },
+        { "@id": "SequenceFlow_13", "@sourceRef": "Task_7", "@targetRef": "Task_8" },
+        { "@id": "SequenceFlow_14", "@sourceRef": "IntermediateCatchEvent_1", "@targetRef": "Task_8" },
+        { "@id": "SequenceFlow_15", "@sourceRef": "Task_8", "@targetRef": "EndEvent_2" },
+        { "@id": "SequenceFlow_16", "@sourceRef": "ParallelGateway_1", "@targetRef": "IntermediateCatchEvent_1" },
+        { "@id": "SequenceFlow_17", "@sourceRef": "BoundaryEvent_1", "@targetRef": "EndEvent_1" }
+      ]
+    },
+    "bpmndi:BPMNDiagram": {
+      "@id": "BPMNDiagram_1",
+      "bpmndi:BPMNPlane": {
+        "@id": "BPMNPlane_1",
+        "@bpmnElement": "Process_1",
+        "bpmndi:BPMNShape": [
+          {
+            "@id": "StartEvent_1_di",
+            "@bpmnElement": "StartEvent_1",
+            "dc:Bounds": { "@x": 100, "@y": 100, "@width": 36, "@height": 36 }
+          },
+          {
+            "@id": "Task_1_di",
+            "@bpmnElement": "Task_1",
+            "dc:Bounds": { "@x": 200, "@y": 80, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "Task_2_di",
+            "@bpmnElement": "Task_2",
+            "dc:Bounds": { "@x": 350, "@y": 80, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "ExclusiveGateway_1_di",
+            "@bpmnElement": "ExclusiveGateway_1",
+            "dc:Bounds": { "@x": 500, "@y": 80, "@width": 50, "@height": 50 }
+          },
+          {
+            "@id": "Task_3_di",
+            "@bpmnElement": "Task_3",
+            "dc:Bounds": { "@x": 600, "@y": 160, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "Task_4_di",
+            "@bpmnElement": "Task_4",
+            "dc:Bounds": { "@x": 600, "@y": 80, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "Task_5_di",
+            "@bpmnElement": "Task_5",
+            "dc:Bounds": { "@x": 750, "@y": 80, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "ParallelGateway_1_di",
+            "@bpmnElement": "ParallelGateway_1",
+            "dc:Bounds": { "@x": 900, "@y": 80, "@width": 50, "@height": 50 }
+          },
+          {
+            "@id": "Task_6_di",
+            "@bpmnElement": "Task_6",
+            "dc:Bounds": { "@x": 1000, "@y": 0, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "ExclusiveGateway_2_di",
+            "@bpmnElement": "ExclusiveGateway_2",
+            "dc:Bounds": { "@x": 1000, "@y": 160, "@width": 50, "@height": 50 }
+          },
+          {
+            "@id": "IntermediateCatchEvent_1_di",
+            "@bpmnElement": "IntermediateCatchEvent_1",
+            "dc:Bounds": { "@x": 1000, "@y": 240, "@width": 36, "@height": 36 }
+          },
+          {
+            "@id": "Task_7_di",
+            "@bpmnElement": "Task_7",
+            "dc:Bounds": { "@x": 1100, "@y": 240, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "Task_8_di",
+            "@bpmnElement": "Task_8",
+            "dc:Bounds": { "@x": 1250, "@y": 160, "@width": 100, "@height": 80 }
+          },
+          {
+            "@id": "EndEvent_1_di",
+            "@bpmnElement": "EndEvent_1",
+            "dc:Bounds": { "@x": 1400, "@y": 0, "@width": 36, "@height": 36 }
+          },
+          {
+            "@id": "EndEvent_2_di",
+            "@bpmnElement": "EndEvent_2",
+            "dc:Bounds": { "@x": 1400, "@y": 160, "@width": 36, "@height": 36 }
+          },
+          {
+            "@id": "BoundaryEvent_1_di",
+            "@bpmnElement": "BoundaryEvent_1",
+            "dc:Bounds": { "@x": 236, "@y": 160, "@width": 36, "@height": 36 }
+          }
+        ],
+        "bpmndi:BPMNEdge": [
+          { "@id": "SequenceFlow_1_di", "@bpmnElement": "SequenceFlow_1", "di:waypoint": [{ "@x": 136, "@y": 118 }, { "@x": 200, "@y": 118 }] },
+          { "@id": "SequenceFlow_2_di", "@bpmnElement": "SequenceFlow_2", "di:waypoint": [{ "@x": 300, "@y": 118 }, { "@x": 350, "@y": 118 }] },
+          { "@id": "SequenceFlow_3_di", "@bpmnElement": "SequenceFlow_3", "di:waypoint": [{ "@x": 450, "@y": 118 }, { "@x": 500, "@y": 118 }] },
+          { "@id": "SequenceFlow_4_di", "@bpmnElement": "SequenceFlow_4", "di:waypoint": [{ "@x": 525, "@y": 80 }, { "@x": 525, "@y": 120 }, { "@x": 600, "@y": 120 }] },
+          { "@id": "SequenceFlow_5_di", "@bpmnElement": "SequenceFlow_5", "di:waypoint": [{ "@x": 525, "@y": 130 }, { "@x": 525, "@y": 200 }, { "@x": 600, "@y": 200 }] },
+          { "@id": "SequenceFlow_6_di", "@bpmnElement": "SequenceFlow_6", "di:waypoint": [{ "@x": 700, "@y": 200 }, { "@x": 750, "@y": 200 }, { "@x": 750, "@y": 120 }] },
+          { "@id": "SequenceFlow_7_di", "@bpmnElement": "SequenceFlow_7", "di:waypoint": [{ "@x": 850, "@y": 118 }, { "@x": 900, "@y": 118 }] },
+          { "@id": "SequenceFlow_8_di", "@bpmnElement": "SequenceFlow_8", "di:waypoint": [{ "@x": 950, "@y": 105 }, { "@x": 1000, "@y": 105 }] },
+          { "@id": "SequenceFlow_9_di", "@bpmnElement": "SequenceFlow_9", "di:waypoint": [{ "@x": 1050, "@y": 105 }, { "@x": 1050, "@y": 160 }, { "@x": 1000, "@y": 160 }] },
+          { "@id": "SequenceFlow_10_di", "@bpmnElement": "SequenceFlow_10", "di:waypoint": [{ "@x": 1025, "@y": 185 }, { "@x": 1025, "@y": 200 }, { "@x": 1250, "@y": 200 }] },
+          { "@id": "SequenceFlow_11_di", "@bpmnElement": "SequenceFlow_11", "di:waypoint": [{ "@x": 1025, "@y": 210 }, { "@x": 1025, "@y": 240 }, { "@x": 1000, "@y": 240 }] },
+          { "@id": "SequenceFlow_12_di", "@bpmnElement": "SequenceFlow_12", "di:waypoint": [{ "@x": 1036, "@y": 258 }, { "@x": 1100, "@y": 258 }] },
+          { "@id": "SequenceFlow_13_di", "@bpmnElement": "SequenceFlow_13", "di:waypoint": [{ "@x": 1200, "@y": 258 }, { "@x": 1250, "@y": 258 }, { "@x": 1250, "@y": 200 }] },
+          { "@id": "SequenceFlow_14_di", "@bpmnElement": "SequenceFlow_14", "di:waypoint": [{ "@x": 1036, "@y": 276 }, { "@x": 1250, "@y": 276 }, { "@x": 1250, "@y": 200 }] },
+          { "@id": "SequenceFlow_15_di", "@bpmnElement": "SequenceFlow_15", "di:waypoint": [{ "@x": 1350, "@y": 200 }, { "@x": 1400, "@y": 200 }] },
+          { "@id": "SequenceFlow_16_di", "@bpmnElement": "SequenceFlow_16", "di:waypoint": [{ "@x": 950, "@y": 130 }, { "@x": 1000, "@y": 240 }] },
+          { "@id": "SequenceFlow_17_di", "@bpmnElement": "SequenceFlow_17", "di:waypoint": [{ "@x": 272, "@y": 178 }, { "@x": 1400, "@y": 18 }] }
+        ]
+      }
+    }
+  }
+}
+```

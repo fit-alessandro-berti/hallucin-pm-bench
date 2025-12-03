@@ -1,0 +1,31 @@
+**4.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison to Ground Truth)
+The LLM answer captures the core process flow (password reset branch, diagnosis gateway, resolve/forward branch, confirm gateway with loop to diagnosis) without hallucinating new activities/events/gateways (e.g., no timers, approvals, parallels). However, under utmost strictness, it has **numerous structural, formatting, and invention errors** vs. the ground truth (GT), warranting major deductions. Differences are tabulated below; even minor mismatches (e.g., names, conditions) incur significant point loss.
+
+#### Major Errors (-4.0 total):
+- **Output format violation** (-2.0): Prompt requires *single `<definitions> … </definitions>` block ≤40 lines. LLM prefixes with "Here's the BPMN..." + Markdown fences (not pure XML). ~45+ lines due to prefixes/indents vs. GT's compact ~35 lines.
+- **Extra activity/element** (-1.0): Duplicates "Resolve Issue" as separate `t6` after `t5` (specialist path). GT reuses single `t4` concisely for both agent/specialist "Resolve Issue" (matches description lines 5-6 exactly, no invention). LLM adds unneeded element.
+- **Invented condition expressions** (-1.0): Specific CDATA vars (`classification == "Password Reset"`, `canResolve`, `confirmed`) + flow names ("Password Reset", "Resolve", etc.) not in description. GT uses generic, non-invented `xsi:type="tFormalExpression">yes/no</`. Violates "Do not invent".
+
+#### Minor Errors (-2.0 total, significant loss per strictness rule):
+- **Namespace/structure mismatches** (-0.5): `bpmn:` prefixes on all tags + unused `xmlns:bpmndi` + `id="d1"` + different `targetNamespace`. GT uses default namespace, no extras/prefixes.
+- **Missing XML declaration** (-0.3): GT has `<?xml version="1.0" encoding="UTF-8"?>`; LLM omits.
+- **Element naming/omissions** (-0.6): 
+  | Element | LLM | GT | Issue |
+  |---------|-----|----|-------|
+  | Classify task | "Classify Ticket" (`t1`) | "Auto-Classification" (`t1`) | Name mismatch (description: "automatically classified"). |
+  | Start | No name | "Ticket Submitted" | Missing descriptive name. |
+  | End | No name | "Ticket Closed" | Missing. |
+  | Gateways | No `name` attrs | Descriptive (`gw1`="Password Reset?", etc.) | Missing (prompt implies via "two decision points"). |
+  | gw1/t3 flow | No condition | `<conditionExpression>no</` | Incomplete (GT explicit on both outgoings). Similar for gw2/gw3 defaults. |
+- **Process ID/ns** (-0.3): `p1` vs. GT `support_ticket` + different ns. Concise IDs used but inconsistent.
+
+#### Neutral/Good (no deduction):
+- Correct 3 exclusive gateways (prompt says "two" but description/GT has 3; loop exact per line 9).
+- Task names exact where specified ("Provide Reset Instructions", etc.).
+- Flow logic/loop correct (t2→confirm, specialist→resolve→confirm→gw→t3/end).
+- No prohibited inventions (timers, etc.).
+- Valid BPMN syntax.
+
+**Total: 10.0 base - 6.0 deductions = 4.0**. Functionally similar but not "exactly as stated"; too many diffs for higher score. Perfect match to GT structure/names/conditions/format would be 10.0.

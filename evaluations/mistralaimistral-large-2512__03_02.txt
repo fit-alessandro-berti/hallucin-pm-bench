@@ -1,0 +1,14 @@
+**1.2**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Format mismatch (major deduction: -4.0)**: LLM outputs full BPMN 2.0 XML/JSON with namespaces, process/process elements, DI diagram (shapes/edges/waypoints)—absent in ground truth's simple flat `{process_id, elements[], flows[]}` schema. Extra layout/DI is unrequested bloat.
+- **Invalid BPMN structure (-2.5)**: Mismatched refs (e.g., Task_6 incoming Seq_8 targets ParallelGateway_1 instead; IntermediateCatchEvent_1 outgoing claims Seq_14 but Seq_12 sources it). Orphaned/misconnected Log Solution (Task_6)—critical faithful translation fail.
+- **Logic errors (-1.8)**:
+  - Parallel modeling wrong: Fork after Send Response to miswired branches (no proper log path/join; Seq_9 bypasses log to wrong XOR "Customer Reply?").
+  - Wait/reply hallucinated: ExclusiveGateway_2 ("Customer Reply?") can't handle async events—wrong for "wait up to 24h for Reply"; invents "No Reply" immediate path to timer. Timer paths duplicate (Seq_14 direct close + Seq_12 reminder)—contradicts "send reminder *once* then close"; no event-based gateway.
+  - No sync join post-parallel; paths converge sloppily at Close.
+- **Cancel incomplete (-0.3)**: BoundaryEvent only on Task_1 (Create Ticket)—not "at any point before closure" (ground truth implies global via separate catch event).
+- **Minor mismatches (-0.2)**: Names slight diffs (e.g., StartEvent "Support Email Received" vs "Email Received"); extra flow names/ends; single parallelGateway (no explicit join like ground's fork/join pair); ParallelGateway named unnecessarily.
+- **Fidelity positives (+0.0, no credit per strictness)**: Core sequence (start→create→classify→branch→resolution→send) matches; no invented escalation/approvals; most task names exact; conditions "Simple"/"Complex".
+
+Total: Matches ~20% elements/logic superficially but structurally/logically diverges entirely. Unrunnable BPMN. Unfaithful to description/ground truth.

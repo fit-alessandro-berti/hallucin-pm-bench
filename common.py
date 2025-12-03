@@ -86,6 +86,8 @@ class Shared:
                        "minimax/minimax-m2:free",
                        "moonshotai/kimi-k2-thinking",
                        "moonshotai/kimi-linear-48b-a3b-instruct",
+                       "mistralai/mistral-large-2512",
+                       "amazon/nova-2-lite-v1",
                        ("gpt-5.1-2025-11-13", {"api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
                        ("gpt-5.1-2025-11-13-high", {"base_model": "gpt-5.1-2025-11-13", "api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.1-2025-11-13-medium",

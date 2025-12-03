@@ -1,0 +1,272 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="wrc_Definitions" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_Process" isExecutable="true">
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_StartEvent" name="Customer submits online warranty claim">
+      <bpmn:outgoing>wrc_Process_ValidatesClaim</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Task: Validate the claim -->
+    <bpmn:task id="wrc_TaskValidateClaim" name="validates the claim">
+      <bpmn:incoming>wrc_Process_ValidatesClaim</bpmn:incoming>
+      <bpmn:outgoing>wrc_ExclusiveGatewayCheckCompleteness</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Check claim completeness -->
+    <bpmn:exclusiveGateway id="wrc_ExclusiveGatewayCheckCompleteness" name="Is claim complete?">
+      <bpmn:incoming>wrc_Process_ValidatesClaim</bpmn:incoming>
+      <bpmn:outgoing>wrc_TaskRequestMissingInfo</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Process_CheckWarrantyEligibility</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Task: Request missing information -->
+    <bpmn:task id="wrc_TaskRequestMissingInfo" name="requests missing information">
+      <bpmn:incoming>wrc_ExclusiveGatewayCheckCompleteness</bpmn:incoming>
+      <bpmn:outgoing>wrc_Process_WaitForInfo</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Intermediate Catch Event: Wait for missing info -->
+    <bpmn:intermediateCatchEvent id="wrc_IntermediateCatchEventWaitForInfo" name="Wait for missing information">
+      <bpmn:incoming>wrc_Process_WaitForInfo</bpmn:incoming>
+      <bpmn:outgoing>wrc_Process_ReValidateClaim</bpmn:outgoing>
+    </bpmn:intermediateCatchEvent>
+
+    <!-- Sequence Flow: Re-validate claim -->
+    <bpmn:sequenceFlow id="wrc_Process_ReValidateClaim" sourceRef="wrc_IntermediateCatchEventWaitForInfo" targetRef="wrc_TaskValidateClaim"/>
+
+    <!-- Sequence Flow: Proceed to check warranty eligibility -->
+    <bpmn:sequenceFlow id="wrc_Process_CheckWarrantyEligibility" sourceRef="wrc_ExclusiveGatewayCheckCompleteness" targetRef="wrc_TaskCheckWarrantyEligibility"/>
+
+    <!-- Task: Check warranty eligibility -->
+    <bpmn:task id="wrc_TaskCheckWarrantyEligibility" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_Process_CheckWarrantyEligibility</bpmn:incoming>
+      <bpmn:outgoing>wrc_ExclusiveGatewayWarrantyDecision</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Warranty decision -->
+    <bpmn:exclusiveGateway id="wrc_ExclusiveGatewayWarrantyDecision" name="Is product within warranty?">
+      <bpmn:incoming>wrc_Process_CheckWarrantyEligibility</bpmn:incoming>
+      <bpmn:outgoing>wrc_Activity_SendRejection</bpmn:outgoing>
+      <bpmn:outgoing>wrc_ParallelGatewaySplit</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Activity: Send rejection notice -->
+    <bpmn:activity id="wrc_Activity_SendRejection" name="send rejection notice">
+      <bpmn:incoming>wrc_ExclusiveGatewayWarrantyDecision</bpmn:incoming>
+      <bpmn:outgoing>wrc_EndEventRejection</bpmn:outgoing>
+    </bpmn:activity>
+
+    <!-- End Event: Rejection -->
+    <bpmn:endEvent id="wrc_EndEventRejection" name="Rejection">
+      <bpmn:incoming>wrc_Activity_SendRejection</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Parallel Gateway: Split for parallel activities -->
+    <bpmn:parallelGateway id="wrc_ParallelGatewaySplit">
+      <bpmn:incoming>wrc_ExclusiveGatewayWarrantyDecision</bpmn:incoming>
+      <bpmn:outgoing>wrc_TaskCreateShipmentOrder</bpmn:outgoing>
+      <bpmn:outgoing>wrc_TaskScheduleCourierPickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Task: Create shipment order -->
+    <bpmn:task id="wrc_TaskCreateShipmentOrder" name="Create shipment order">
+      <bpmn:incoming>wrc_ParallelGatewaySplit</bpmn:incoming>
+      <bpmn:outgoing>wrc_ParallelGatewayJoin</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Task: Schedule courier pickup -->
+    <bpmn:task id="wrc_TaskScheduleCourierPickup" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_ParallelGatewaySplit</bpmn:incoming>
+      <bpmn:outgoing>wrc_ParallelGatewayJoin</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Parallel Gateway: Join after parallel activities -->
+    <bpmn:parallelGateway id="wrc_ParallelGatewayJoin">
+      <bpmn:incoming>wrc_TaskCreateShipmentOrder</bpmn:incoming>
+      <bpmn:incoming>wrc_TaskScheduleCourierPickup</bpmn:incoming>
+      <bpmn:outgoing>wrc_TaskUpdateInventoryRecords</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Task: Update inventory records -->
+    <bpmn:task id="wrc_TaskUpdateInventoryRecords" name="update inventory records">
+      <bpmn:incoming>wrc_ParallelGatewayJoin</bpmn:incoming>
+      <bpmn:outgoing>wrc_TaskCloseClaim</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Task: Close claim -->
+    <bpmn:task id="wrc_TaskCloseClaim" name="close the claim">
+      <bpmn:incoming>wrc_TaskUpdateInventoryRecords</bpmn:incoming>
+      <bpmn:outgoing>wrc_EndEventSuccess</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event: Successful Completion -->
+    <bpmn:endEvent id="wrc_EndEventSuccess" name="Completion">
+      <bpmn:incoming>wrc_TaskCloseClaim</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_Process_ValidatesClaim" sourceRef="wrc_StartEvent" targetRef="wrc_TaskValidateClaim"/>
+    <bpmn:sequenceFlow id="wrc_Process_WaitForInfo" sourceRef="wrc_TaskRequestMissingInfo" targetRef="wrc_IntermediateCatchEventWaitForInfo"/>
+    <bpmn:sequenceFlow id="wrc_Process_SendRejection" sourceRef="wrc_ExclusiveGatewayWarrantyDecision" targetRef="wrc_Activity_SendRejection"/>
+    <bpmn:sequenceFlow id="wrc_Process_CreateShipment" sourceRef="wrc_ParallelGatewaySplit" targetRef="wrc_TaskCreateShipmentOrder"/>
+    <bpmn:sequenceFlow id="wrc_Process_SchedulePickup" sourceRef="wrc_ParallelGatewaySplit" targetRef="wrc_TaskScheduleCourierPickup"/>
+    <bpmn:sequenceFlow id="wrc_Process_UpdateInventory" sourceRef="wrc_ParallelGatewayJoin" targetRef="wrc_TaskUpdateInventoryRecords"/>
+    <bpmn:sequenceFlow id="wrc_Process_CloseClaim" sourceRef="wrc_TaskUpdateInventoryRecords" targetRef="wrc_TaskCloseClaim"/>
+  </bpmn:process>
+
+  <bpmn:diagrams>
+    <bpmn:diagram id="wrc_Diagram">
+      <bpmn:plane bpmn:element="wrc_Process">
+        <dp:shape id="wrc_Diagram_StartEvent" bpmn:element="wrc_StartEvent">
+          <dp:roundcorner x="150" y="50" width="30" height="30"/>
+          <dp:label x="160" y="90" width="80" height="20"/><!-- Adjusted for name placement -->
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskValidateClaim" bpmn:element="wrc_TaskValidateClaim">
+          <dp:rectangle x="200" y="50" width="100" height="80"/>
+          <dp:label x="205" y="130" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_ExclusiveGatewayCheckCompleteness" bpmn:element="wrc_ExclusiveGatewayCheckCompleteness">
+          <dp:rhombus x="310" y="66" width="30" height="30"/>
+          <dp:label x="300" y="106" width="80" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskRequestMissingInfo" bpmn:element="wrc_TaskRequestMissingInfo">
+          <dp:rectangle x="360" y="50" width="100" height="80"/>
+          <dp:label x="365" y="130" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_IntermediateCatchEventWaitForInfo" bpmn:element="wrc_IntermediateCatchEventWaitForInfo">
+          <dp:rectangle x="470" y="50" width="100" height="80"/>
+          <dp:label x="481" y="130" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskCheckWarrantyEligibility" bpmn:element="wrc_TaskCheckWarrantyEligibility">
+          <dp:rectangle x="210" y="200" width="100" height="80"/>
+          <dp:label x="215" y="280" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_ExclusiveGatewayWarrantyDecision" bpmn:element="wrc_ExclusiveGatewayWarrantyDecision">
+          <dp:rhombus x="320" y="216" width="30" height="30"/>
+          <dp:label x="301" y="256" width="110" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_Activity_SendRejection" bpmn:element="wrc_Activity_SendRejection">
+          <dp:rectangle x="370" y="200" width="100" height="80"/>
+          <dp:label x="380" y="280" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_EndEventRejection" bpmn:element="wrc_EndEventRejection">
+          <dp:roundcorner x="490" y="200" width="30" height="30"/>
+          <dp:label x="495" y="240" width="60" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_ParallelGatewaySplit" bpmn:element="wrc_ParallelGatewaySplit">
+          <dp:rhombus x="370" y="350" width="30" height="30"/>
+          <dp:label x="350" y="390" width="50" height="20"/><!-- Updated label position -->
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskCreateShipmentOrder" bpmn:element="wrc_TaskCreateShipmentOrder">
+          <dp:rectangle x="400" y="400" width="100" height="80"/>
+          <dp:label x="405" y="480" width="100" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskScheduleCourierPickup" bpmn:element="wrc_TaskScheduleCourierPickup">
+          <dp:rectangle x="420" y="300" width="100" height="80"/>
+          <dp:label x="425" y="380" width="100" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_ParallelGatewayJoin" bpmn:element="wrc_ParallelGatewayJoin">
+          <dp:rhombus x="520" y="400" width="30" height="30"/>
+          <dp:label x="510" y="440" width="50" height="20"/><!-- Updated label position -->
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskUpdateInventoryRecords" bpmn:element="wrc_TaskUpdateInventoryRecords">
+          <dp:rectangle x="570" y="400" width="100" height="80"/>
+          <dp:label x="575" y="480" width="100" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_TaskCloseClaim" bpmn:element="wrc_TaskCloseClaim">
+          <dp:rectangle x="690" y="400" width="100" height="80"/>
+          <dp:label x="695" y="480" width="90" height="20"/>
+        </dp:shape>
+
+        <dp:shape id="wrc_Diagram_EndEventSuccess" bpmn:element="wrc_EndEventSuccess">
+          <dp:roundcorner x="800" y="400" width="30" height="30"/>
+          <dp:label x="805" y="440" width="60" height="20"/>
+        </dp:shape>
+
+        <dp:edge id="wrc_Diagram_Edge_StartEventToValidate" bpmn:element="wrc_Process_ValidatesClaim">
+          <dp:polyline points="150,80 200,80"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_ValidateToGateway" bpmn:element="wrc_Process_CheckWarrantyEligibility">
+          <dp:polyline points="300,80 320,80 320,96"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_GatewayToRequestInfo" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ExclusiveGatewayCheckCompleteness" bpmn:targetRef="wrc_TaskRequestMissingInfo">
+          <dp:polyline points="345,96 360,96"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_RequestInfoToWaitEvent" bpmn:element="wrc_Process_WaitForInfo" bpmn:sourceRef="wrc_TaskRequestMissingInfo" bpmn:targetRef="wrc_IntermediateCatchEventWaitForInfo">
+          <dp:polyline points="460,80 470,80"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_WaitEventToReValidate" bpmn:element="wrc_Process_ReValidateClaim" bpmn:sourceRef="wrc_IntermediateCatchEventWaitForInfo" bpmn:targetRef="wrc_TaskValidateClaim">
+          <dp:polyline points="570,80 570,80 570,80 570,80"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_GatewayToCheckEligibility" bpmn:element="wrc_Process_CheckWarrantyEligibility" bpmn:sourceRef="wrc_ExclusiveGatewayCheckCompleteness" bpmn:targetRef="wrc_TaskCheckWarrantyEligibility">
+          <dp:polyline points="380,96 310,96 310,216 320,216"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_CheckEligibilityToWarrantyDecision" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_TaskCheckWarrantyEligibility" bpmn:targetRef="wrc_ExclusiveGatewayWarrantyDecision">
+          <dp:polyline points="300,280 300,246 320,246"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_WarrantyDecisionToRejection" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ExclusiveGatewayWarrantyDecision" bpmn:targetRef="wrc_Activity_SendRejection">
+          <dp:polyline points="380,246 390,246 390,280"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_RejectionToEndRejection" bpmn:element="wrc_EndEventRejection" bpmn:sourceRef="wrc_Activity_SendRejection" bpmn:targetRef="wrc_EndEventRejection">
+          <dp:polyline points="470,280 470,230 490,230"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_WarrantyDecisionToSplit" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ExclusiveGatewayWarrantyDecision" bpmn:targetRef="wrc_ParallelGatewaySplit">
+          <dp:polyline points="380,246 350,246 350,350 370,350"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_SplitToCreateShipment" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ParallelGatewaySplit" bpmn:targetRef="wrc_TaskCreateShipmentOrder">
+          <dp:polyline points="400,350 400,400"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_SplitToSchedulePickup" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ParallelGatewaySplit" bpmn:targetRef="wrc_TaskScheduleCourierPickup">
+          <dp:polyline points="400,350 420,350 420,380"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_CreateShipmentToJoin" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_TaskCreateShipmentOrder" bpmn:targetRef="wrc_ParallelGatewayJoin">
+          <dp:polyline points="500,480 510,480 510,400 520,400"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_SchedulePickupToJoin" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_TaskScheduleCourierPickup" bpmn:targetRef="wrc_ParallelGatewayJoin">
+          <dp:polyline points="520,480 520,480 520,400 520,400"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_JoinToUpdateInventory" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_ParallelGatewayJoin" bpmn:targetRef="wrc_TaskUpdateInventoryRecords">
+          <dp:polyline points="550,400 570,400"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_UpdateInventoryToCloseClaim" bpmn:element="wrc_Process_SendRejection" bpmn:sourceRef="wrc_TaskUpdateInventoryRecords" bpmn:targetRef="wrc_TaskCloseClaim">
+          <dp:polyline points="670,480 690,480"/>
+        </dp:edge>
+
+        <dp:edge id="wrc_Diagram_Edge_CloseClaimToEndSuccess" bpmn:element="wrc_EndEventSuccess" bpmn:sourceRef="wrc_TaskCloseClaim" bpmn:targetRef="wrc_EndEventSuccess">
+          <dp:polyline points="790,480 800,480"/>
+        </dp:edge>
+      </dp:plane>
+    </bpmn:diagram>
+  </bpmn:diagrams>
+</bpmn:definitions>
+```
