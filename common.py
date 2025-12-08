@@ -133,7 +133,6 @@ class Shared:
                        "allenai/olmo-3-7b-think",
                        "allenai/olmo-3-32b-think",
                        "anthropic/claude-opus-4.5",
-                       "openrouter/bert-nebulon-alpha",
                        "prime-intellect/intellect-3",
                        ("qwen/qwen3-30b-a3b-nothink", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /no_think"}),
                   ("qwen/qwen3-30b-a3b-think", {"base_model": "qwen/qwen3-30b-a3b", "add_prompt": " /think"}),
