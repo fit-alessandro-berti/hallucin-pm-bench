@@ -1,0 +1,53 @@
+```python
+bpdmn_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                 xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                 xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                 xmlns:di="http://www.omg.org/spec/DD/20100524/SCI"
+                 id="wrc_BPMN2.0_WarrantyProcess">
+  <bpmn:process id="wrc_WarrantyReplacement_v13">
+    <bpmn:startEvent id="wrc_StartEvent" name="Start Online Warranty Claim">
+      <bpmn:outgoing>wrc_to_agent</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="wrc_ValidateClaim" name="Validate the claim" incoming="wrc_to_agent">
+      <bpmn:outgoing>wrc_complete_valid</bpmn:outgoing>
+      <bpmn:outgoing>wrc_incomplete_valid</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="wrc_EndEvent_Rejection" name="Send Rejection Notice">
+      <bpmn:incoming>wrc_oow_warranty</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="wrc_RequestMissingInfo" name="Request missing information" incoming="wrc_incomplete_valid">
+      <bpmn:outgoing>wrc_revalidate_claim</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="wrc_ExclGate_Validation" name="Validate Claim Gateway" incoming="wrc_complete_valid" default="wrc_ValidateClaim">
+      <bpmn:outgoing>wrc_complete_valid</bpmn:outgoing>
+      <bpmn:outgoing>wrc_incomplete_valid</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="wrc_CheckWarrantyEligibility" name="Check warranty eligibility" incoming="wrc_complete_valid">
+      <bpmn:outgoing>wrc_WithinWarranty</bpmn:outgoing>
+      <bpmn:outgoing>wrc_oow_warranty</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="wrc_ExclGate_Warranty" name="Warranty Decision Gateway" incoming="wrc_complete_valid" default="wrc_ValidateClaim">
+      <bpmn:outgoing>wrc_WithinWarranty</bpmn:outgoing>
+      <bpmn:outgoing>wrc_oow_warranty</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:parallelGateway id="wrc_ParGate_Split" name="Parallel Split" incoming="wrc_WithinWarranty">
+      <bpmn:outgoing>wrc_CreateOrder</bpmn:outgoing>
+      <bpmn:outgoing>wrc_SchedulePickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="wrc_CreateOrder" name="Create shipment order" incoming="wrc_ParGate_Split">
+      <bpmn:outgoing>wrc_ParGate_Join</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="wrc_SchedulePickup" name="Schedule courier pickup" incoming="wrc_ParGate_Split">
+      <bpmn:outgoing>wrc_ParGate_Join</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:parallelGateway id="wrc_ParGate_Join" name="Parallel Join" incoming="wrc_CreateOrder" incoming="wrc_SchedulePickup">
+      <bpmn:outgoing>wrc_UpdateInventory</bpmn:outgoing>
+      <bpmn:outgoing>wrc_CloseClaim</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="wrc_EndEvent_Success" name="End Process" incoming="wrc_ParGate_Join">
+      <bpmn:incoming>wrc_UpdateInventory</bpmn:incoming>
+      <bpmn:incoming>wrc_CloseClaim</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="

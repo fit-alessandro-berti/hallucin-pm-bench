@@ -1,0 +1,46 @@
+```python
+# Calculate the SLA breaches and average waiting times for all activities
+import pandas as pd
+
+data = {
+    "Activity": ["Receive Application", "Verify Identity", "Credit Assessment",
+                 "Risk Review", "Draft Offer", "Legal Approval",
+                 "Customer Acceptance", "Fund Disbursement"],
+    "Avg_Throughput_Time[s]": [45, 120, 300, 600, 240, 900, 180, 60],
+    "Avg_Waiting_Time[s]": [10, 80, 200, 480, 30, 600, 15, 50],
+    "Cases": [1200, 1180, 1175, 480, 470, 465, 460, 455],
+    "Target_SLA[s]": [60, 90, 240, 300, 300, 600, 300, 120]
+}
+
+# Create a dataframe
+df = pd.DataFrame(data)
+
+# Calculate SLA breach in seconds and adherence rate
+df['SLA_Breach_s'] = df['Avg_Throughput_Time[s]'] - df['Target_SLA[s]']
+slavic_adherence_rate = df['SLA_Breach_s'].apply(lambda x: 1 if x <= 0 else 0)
+df['SLA_Adherence_Rate'] = slavic_adherence_rate
+
+# Identify the three worst-performing activities based on SLA breaches and waiting times
+worst_performers = df.sort_values(by=['SLA_Breach_s', 'Avg_Waiting_Time[s]'], ascending=[False, False]).head(3)
+
+# Generate executive memo
+memo = """
+Executive Memo for Orion Credit's COO: 
+
+Based on our analysis of performance, three activities stand out as having the most severe issues regarding SLA breaches and long customers' waiting times:
+
+1. **Legal Approval**: It's at a waiting time of 600 seconds, exceeding its SLA by 300 seconds (-60% SLA adherence rate).
+2. **Risk Review**: This activity has a significant SLA breach with 600 seconds more than the target SLA, with a waiting time of 480 seconds (-49.3% of SLA adherence rate).
+3. **Fund Disbursement** is concerning with 600 seconds of waiting time despite an SLA set-off of only 120 seconds, (-50% SLA adherence rate).
+
+Recommendations based on the analysis:
+
+- **Immediate Staff Augmentation or Workflow Optimization:** For Legal Approval, increasing legal staff or streamline the review process reduce the waiting times exponentially.
+- **Advanced AI-Human Collaboration Tech:** Risk Review should consider applying AI for faster initial assessment, freeing up human resources to combat breaches, while reducing the SLA breach.
+- **Prioritize Fund Disbursement Automation:** This could mean automating steps post-approval to minimize human intervention and reduce the waiting time.
+
+These recommendations will focus on increasing SLA adherence while also managing waiting times, enhancing customer satisfaction, and optimizing processes. 
+"""
+
+print(memo)
+```

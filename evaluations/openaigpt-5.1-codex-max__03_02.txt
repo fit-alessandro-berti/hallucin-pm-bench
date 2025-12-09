@@ -1,0 +1,11 @@
+**3.5**
+
+### Reasoning for score (strict evaluation vs ground truth):
+- **Structure mismatch (major penalty, -3.0 points)**: LLM uses `"process":{"id","name","nodes","flows","eventSubProcesses"}`; GT uses `"process_id","elements","flows"`. Completely incompatible schemas; not interchangeable as BPMN JSON reps.
+- **Extra hallucinated task (-1.5 points)**: LLM adds `"parseEmail"` task (not in description as separate step; "parsed and a Ticket is created" is one action in GT's `"Create Ticket"`). Violates "model *only* what is described; do not invent steps".
+- **Parallel gateway modeling mismatch (major, -1.5 points)**: LLM joins *after* `closeTicket` (`parallelJoin` from `logSolution` and `closeTicket`), making log parallel to entire post-response flow. GT joins *before* `awaitReply` (`joinAfterLogging` from `sendResponse`/`logSolution`). Different flow logic despite similar elements.
+- **Cancellation modeling mismatch (-0.5 points)**: LLM uses interrupting event subprocess (proper for "at any point" but absent from GT schema/elements); GT uses standalone `intermediateCatchEvent` -> `terminateEndEvent`. Both incomplete (no attachment), but schemas differ.
+- **ID/name/attribute diffs (small but penalized strictly, -0.5 points total)**: e.g., `startEmail`/"Support Email Received" vs `start`/"Email Received"; `initialClassification` vs `initialClassify`/`"Initial Classification"`; gw names ("Parallel Split" vs "Fork Log/Wait"); conditions "Simple" vs "simple"; timer `"timerDuration":"PT24H"` vs plain `"event":"timer"`.
+- **Partial matches (+3.5 base)**: Captures core flows (classification xor, root cause, resolution, event gw + catches for reply/timer, reminder/close, parallel log, end). No escalations invented. Well-formed JSON. Faithful to desc in logic (better parallel timing than GT in some reads).
+
+Total differences too numerous/significant for >4.0 under "utmost strictness"; small variances (names/attrs) compound losses. Equivalent JSON parse yields divergent diagrams.

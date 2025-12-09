@@ -1,0 +1,101 @@
+```python
+{
+  "process": {
+    "id": "CustomerSupportTicketProcess",
+    "start": {
+      "type": "None",
+      "name": "Receive Support Email"
+    },
+    "tasks": [
+      {
+        "id": "ParseEmail",
+        "type": "Service",
+        "name": "Parse Email",
+        "incoming": ["start"],
+        "outgoing": ["CreateTicket"]
+      },
+      {
+        "id": "CreateTicket",
+        "type": "Service",
+        "name": "Create Ticket",
+        "incoming": ["ParseEmail"],
+        "outgoing": ["InitialClassification"]
+      },
+      {
+        "id": "InitialClassification",
+        "type": "Service",
+        "name": "Initial Classification",
+        "incoming": ["CreateTicket"],
+        "outgoing": ["ProvideResolution", "RootCauseAnalysis"]
+      },
+      {
+        "id": "ProvideResolution",
+        "type": "Service",
+        "name": "Provide Resolution",
+        "incoming": ["InitialClassification"],
+        "outgoing": ["SendResponseToCustomer"]
+      },
+      {
+        "id": "RootCauseAnalysis",
+        "type": "Service",
+        "name": "Root Cause Analysis",
+        "incoming": ["InitialClassification"],
+        "outgoing": ["ProvideResolution"]
+      },
+      {
+        "id": "SendResponseToCustomer",
+        "type": "Service",
+        "name": "Send Response to Customer",
+        "incoming": ["ProvideResolution"],
+        "outgoing": ["LogSolution", "CustomerReply"]
+      },
+      {
+        "id": "LogSolution",
+        "type": "Service",
+        "name": "Log Solution in Knowledge Base",
+        "incoming": ["SendResponseToCustomer"],
+        "outgoing": ["CustomerReply"]
+      },
+      {
+        "id": "CustomerReply",
+        "type": "Message",
+        "name": "Customer Reply",
+        "incoming": ["SendResponseToCustomer", "LogSolution"],
+        "outgoing": ["CloseTicket", "Timeout"]
+      },
+      {
+        "id": "CloseTicket",
+        "type": "Service",
+        "name": "Close Ticket",
+        "incoming": ["CustomerReply", "Timeout"],
+        "outgoing": []
+      },
+      {
+        "id": "Timeout",
+        "type": "IntermediateThrowEvent",
+        "class": "TimerEventDefinition",
+        "duration": "PT24H",
+        "name": "Customer Reply (Timeout)",
+        "incoming": ["CustomerReply"],
+        "outgoing": ["SendReminder", "CloseTicket"]
+      },
+      {
+        "id": "SendReminder",
+        "type": "Service",
+        "name": "Send Reminder",
+        "incoming": ["Timeout"],
+        "outgoing": ["CloseTicket"]
+      },
+      {
+        "id": "Terminate",
+        "type": "BoundaryEvent",
+        "class": "ErrorEventDefinition",
+        "error": "ticketCancelled",
+        "name": "Terminate Ticket",
+        "incoming": ["CustomerReply", "SendResponseToCustomer", "LogSolution"],
+        "outgoing": []
+      }
+    ]
+  }
+}
+```

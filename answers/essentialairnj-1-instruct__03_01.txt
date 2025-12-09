@@ -1,0 +1,72 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             id="SupportTicketProcess">
+  <process id="process" isExecutable="true">
+    <startEvent id="se1">
+      <outgoing>Flow1</outgoing>
+    </startEvent>
+    <task id="tAutomaticClassification">
+      <incoming>Flow1</incoming>
+      <outgoing>Flow2</outgoing>
+    </task>
+    <exclusiveGateway id="gwTicketClassification" name="Ticket Classification">
+      <incoming>Flow2</incoming>
+      <outgoing>Flow3</outgoing>
+      <outgoing>Flow4</outgoing>
+    </exclusiveGateway>
+    <task id="tProvideResetInstructions" name="Provide Reset Instructions">
+      <incoming>Flow3</incoming>
+      <outgoing>Flow8</outgoing>
+    </task>
+    <startEvent id="se2" name="Initial Diagnosis" outgoing="Flow5">
+      <incoming>Flow4</incoming>
+    </startEvent>
+    <task id="tInitialDiagnosis" name="Initial Diagnosis">
+      <incoming>Flow5</incoming>
+      <outgoing>Flow6</outgoing>
+    </task>
+    <exclusiveGateway id="gwDiagnosisDecision" name="Diagnosis Decision">
+      <incoming>Flow6</incoming>
+      <outgoing>Flow7</outgoing>
+      <outgoing>Flow9</outgoing>
+    </exclusiveGateway>
+    <task id="tResolveIssue" name="Resolve Issue">
+      <incoming>Flow7</incoming>
+      <outgoing>Flow10</outgoing>
+    </task>
+    <task id="tForwardToSpecialist" name="Forward to Specialist">
+      <incoming>Flow9</incoming>
+      <outgoing>Flow10</outgoing>
+    </task>
+    <endEvent id="eeSpecialistResolution">
+      <incoming>Flow10</incoming>
+    </endEvent>
+    <endEvent id="eeCustomerConfirmation">
+      <incoming>Flow11</incoming>
+    </endEvent>
+    <endEvent id="eeIssuePersistence" name="Issue Persistence">
+      <incoming>Flow12</incoming>
+      <outgoing>Flow13</outgoing>
+    </endEvent>
+    <sequenceFlow id="Flow1" sourceRef="se1" targetRef="tAutomaticClassification"/>
+    <sequenceFlow id="Flow2" sourceRef="tAutomaticClassification" targetRef="gwTicketClassification"/>
+    <sequenceFlow id="Flow3" sourceRef="gwTicketClassification" targetRef="tProvideResetInstructions">
+      <conditionExpression xsi:type="tFormalExpression">$classification == 'Password Reset'</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow4" sourceRef="gwTicketClassification">
+      <conditionExpression xsi:type="tFormalExpression">$classification != 'Password Reset'</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow5" sourceRef="se2" targetRef="tInitialDiagnosis"/>
+    <sequenceFlow id="Flow6" sourceRef="tInitialDiagnosis" targetRef="gwDiagnosisDecision"/>
+    <sequenceFlow id="Flow7" sourceRef="gwDiagnosisDecision">
+      <conditionExpression xsi:type="tFormalExpression">$canBeResolved</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow9" sourceRef="gwDiagnosisDecision">
+      <conditionExpression xsi:type="tFormalExpression">!$canBeResolved</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow8" sourceRef="tProvideResetInstructions" targetRef="eeCustomerConfirmation"/>
+    <sequenceFlow id="Flow10" sourceRef="tResolveIssue" targetRef="eeSpecialistResolution"/>
+  </process>
+</definitions>
+```

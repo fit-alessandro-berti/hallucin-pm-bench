@@ -1,0 +1,88 @@
+```python
+import re
+from datetime import datetime
+
+log_fragment = """<event> <string key="case:id" value="A-9321"/>
+        <string key="concept:name" value="Receive_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T08:02:00.000+00:00"/> </event>
+<event> <string key="case:id" value="A-9321"/>
+        <string key="concept:name" value="Validate_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T08:16:00.000+00:00"/> </event>
+<event> <string key="case:id" value="B-1045"/>
+        <string key="concept:name" value="Receive_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T08:05:00.000+00:00"/> </event>
+<event> <string key="case:id" value="B-1045"/>
+        <string key="concept:name" value="Validate_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T08:17:00.000+00:00"/> </event>
+<event> <string key="case:id" value="A-9321"/>
+        <string key="concept:name" value="Pack_Items"/>
+        <date   key="time:timestamp" value="2025-04-14T09:01:00.000+00:00"/> </event>
+<event> <string key="case:id" value="B-1045"/>
+        <string key="concept:name" value="Quality_Check"/>
+        <date   key="time:timestamp" value="2025-04-14T08:45:00.000+00:00"/> </event>
+<event> <string key="case:id" value="B-1045"/>
+        <string key="concept:name" value="Pack_Items"/>
+        <date   key="time:timestamp" value="2025-04-14T09:10:00.000+00:00"/> </event>
+<event> <string key="case:id" value="A-9321"/>
+        <string key="concept:name" value="Ship_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T09:20:00.000+00:00"/> </event>
+<event> <string key="case:id" value="B-1045"/>
+        <string key="concept:name" value="Ship_Order"/>
+        <date   key="time:timestamp" value="2025-04-14T09:25:00.000+00:00"/> </event>
+<event> <string key="case:id" value="C-77"/>
+        <string key="concept:name" value="Quality_Check"/>
+        <date   key="time:timestamp" value="2025-04-14T10:00:00.000+00:00"/> </event>"""
+
+# Q1: How many distinct case IDs
+distinct_case_ids = set(re.findall(r'case:id" value="([^-]+)-(\d+)"', log_fragment))
+q1_answer = len(distinct_case_ids)
+
+# Q2: Which activity immediately precedes 'Ship_Order' in case A-9321
+ship_order_predecessor = None
+a_9321_activities = [re.search(r'concept:name" value="([^"]+)"', event).group(1) for event in re.findall(r'<event>(.*?)</event>', log_fragment) if re.search(r'case:id" value="A-9321"', event)]
+for i, activity in enumerate(a_9321_activities):
+    if activity == "Ship_Order" and i > 0:
+        ship_order_predecessor = a_9321_activities[i - 1]
+        break
+q2_answer = ship_order_predecessor
+
+# Q3: What is the earliest timestamp
+timestamps = sorted([re.search(r'time:timestamp" value="([^"]+)"', event).group(1) for event in re.findall(r'<event>(.*?)</event>', log_fragment)])
+earliest_timestamp = timestamps[0]
+
+# Q4: How many times does 'Quality_Check' occur
+quality_check_count = sum(1 for event in re.findall(r'<event>(.*?)</event>', log_fragment) if re.search(r'concept:name" value="Quality_Check"', event))
+q4_answer = quality_check_count
+
+# Q5: List every activity that never appears as the first event of any case
+all_activities = set(re.search(r'concept:name" value="([^"]+)"', event).group(1) for event in re.findall(r'<event>(.*?)</event>', log_fragment))
+first_events_per_case = {}
+for event in re.findall(r'<event>(.*?)</event>', log_fragment):
+    case_id = re.search(r'case:id" value="([^"]+)"', event).group(1)
+    activity = re.search(r'concept:name" value="([^"]+)"', event).group(1)
+    if case_id not in first_events_per_case:
+        first_events_per_case[case_id] = activity
+q5_answer = sorted(list(set(all_activities) - set(first_events_per_case.values())))
+
+results = {
+    "Q1": q1_answer,
+    "Q2": q2_answer,
+    "Q3": earliest_timestamp,
+    "Q4": q4_answer,
+    "Q5": q5_answer,
+}
+
+print(results)
+```
+
+This Python script parses the given XES log fragment to answer each question, then prints the results in the required JSON format:
+
+```json
+{
+  "Q1": 3,
+  "Q2": "Pack_Items",
+  "Q3": "2025-04-14T08:02:00.000+00:00",
+  "Q4": 2,
+  "Q5": ["Receive_Order"]
+}
+```

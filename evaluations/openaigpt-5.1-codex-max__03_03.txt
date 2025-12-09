@@ -1,0 +1,11 @@
+**7.0**
+
+### Evaluation Rationale (Strict Rubric Application)
+Semantically equivalent overall (10 base): The LLM XML correctly models the core process flow per the prompt—start event → validation loop (with completeness exclusive gateway) → warranty decision exclusive gateway → rejection path or parallel split/join (shipment/pickup) → update → close → success end. Exactly the required gateways, 2 end events, wrc_ ID prefix on all elements, and verbatim task names (e.g., "Validate the claim", "Request missing information", "Send rejection notice", "Create shipment order", "Schedule courier pickup", "Update inventory records", "Close the claim"). Includes explicitly mentioned "checks warranty eligibility" as task (omitted in ground truth, but required by prompt text), placed correctly before warranty gateway.
+
+Deductions (utmost strictness, significant loss per rubric for extras/hallucinations/omissions; small diffs like IDs/names/whitespace allowed no deduct):
+- **-2.0 for hallucinated extra flow elements**: IntermediateCatchEvent ("wrc_info_received"), messageEventDefinition, and associated flows (wrc_flow_request_wait, wrc_flow_info_received_validate). Not explicitly mentioned; invents message-based wait/error-handling beyond stated "waits until received" (prompt forbids inventing beyond stated). Ground truth uses simple direct loopback (wrc_sf4), which is minimal/compliant.
+- **-1.0 for extra non-flow details**: Full BPMNDiagram/DI (shapes, edges, ~100+ lines); makes XML valid "diagram" but bloated/non-minimal vs. ground truth's bare process (34 lines, no DI). Redundant <incoming>/<outgoing> attrs (flows defined via sequenceFlow sourceRef/targetRef).
+Minor diffs (no further deduct per rubric): Different IDs (e.g., "wrc_gw_completeness" vs. "wrc_complete_gw"; allowed), gateway/end names (descriptive but not verbatim-required), isExecutable="true" vs. "false", process name added.
+
+Net: Strong semantic match with required elements, but penalized heavily for single clear invention (catch event) violating "model **only** explicitly mentioned / do **not** invent". Ground truth omissions (e.g., no check task) irrelevant—LLM assessed on prompt + equivalence.

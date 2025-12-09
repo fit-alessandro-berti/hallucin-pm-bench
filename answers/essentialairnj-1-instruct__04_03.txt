@@ -1,0 +1,61 @@
+```python
+# Define the trace and attributes
+trace = ["create_case", "capture_event_details", "Quality_Engineer_Review", "Notify_Authorities", 
+         "Regulatory_Affairs_Review", "VP_Safety_Approval", "Close_Case"]
+
+severity = "High"
+
+# Function to check compliance with ruleset R
+def is_compliant(trace, severity):
+    # Rule 1: QE and RA must occur once each and in the order QE followed by RA
+    rule1_compliant = "Quality_Engineer_Review" in trace and "Regulatory_Affairs_Review" in trace
+    rule1_compliant = rule1_compliant and trace.index("Quality_Engineer_Review") < trace.index("Regulatory_Affairs_Review")
+    
+    # Rule 2: If severity is "High", VP must happen after both QE and RA
+    rule2_compliant = True  # Assume compliance unless RA or VP is missing or in wrong order
+    if severity == "High":
+        qe_index = trace.index("Quality_Engineer_Review") if "Quality_Engineer_Review" in trace else -1
+        ra_index = trace.index("Regulatory_Affairs_Review") if "Regulatory_Affairs_Review" in trace else -1
+        vp_index = trace.index("VP_Safety_Approval") if "VP_Safety_Approval" in trace else -1
+        rule2_compliant = ra_index != -1 and vp_index != -1 and vp_index > max(qe_index, ra_index)
+    
+    # Rule 3: NA must not occur until after both QE and RA
+    qe_index = trace.index("Quality_Engineer_Review") if "Quality_Engineer_Review" in trace else -1
+    ra_index = trace.index("Regulatory_Affairs_Review") if "Regulatory_Affairs_Review" in trace else -1
+    na_index = trace.index("Notify_Authorities") if "Notify_Authorities" in trace else -1
+    rule3_compliant = na_index == -1 or (qe_index != -1 and ra_index != -1 and na_index > max(qe_index, ra_index))
+    
+    # Rule 4: CC may occur only after NA and, if required, after VP
+    vp_index = trace.index("VP_Safety_Approval") if "VP_Safety_Approval" in trace else -1
+    cc_index = trace.index("Close_Case") if "Close_Case" in trace else -1
+    # For High severity, CC must be after both NA and VP
+    rule4_compliant = True
+    if severity == "High":
+        rule4_compliant = cc_index != -1 and cc_index > max(na_index, vp_index)
+    else:
+        rule4_compliant = cc_index != -1 and cc_index > na_index
+    
+    # Check if all rules are compliant
+    return rule1_compliant, rule2_compliant, rule3_compliant, rule4_compliant
+
+# Check if trace 2025-05-RX17 is compliant
+rule1, rule2, rule3, rule4 = is_compliant(trace, severity)
+
+# Determine overall compliance
+overall_compliant = rule1 and rule2 and rule3 and rule4
+
+# Provide the result and justification
+answer = "Yes" if overall_compliant else "No"
+rule_checkmarks = ["Yes" if condition else "No" for condition in (rule1, rule2, rule3, rule4)]
+justification = [
+    f"Rule 1: {'Yes' if rule1 else 'No'}. 'Quality_Engineer_Review' and 'Regulatory_Affairs_Review' occur in the correct order.",
+    f"Rule 2: {'Yes' if rule2 else 'No'}. 'VP_Safety_Approval' happens after both 'Quality_Engineer_Review' and 'Regulatory_Affairs_Review'.",
+    f"Rule 3: {'Yes' if rule3 else 'No'}. 'Notify_Authorities' does not occur until after both 'Quality_Engineer_Review' and 'Regulatory_Affairs_Review'.",
+    f"Rule 4: {'Yes' if rule4 else 'No'}. 'Close_Case' occurs only after 'Notify_Authorities' and 'VP_Safety_Approval' (if severity is 'High').",
+]
+
+print(f"Answer: {answer}")
+print("Justification:")
+for rule, checkmark in zip(justification, rule_checkmarks):
+    print(f"- {rule}")
+```

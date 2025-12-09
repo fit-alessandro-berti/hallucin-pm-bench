@@ -1,0 +1,10 @@
+**2.0**
+
+### Evaluation Rationale (strict line-by-line comparison to ground truth):
+- **Overall structure/format**: Ground truth uses a clean table with **A1**, **A2**, **A3** labels and direct textual answers. LLM provides buggy, executable Python code (not direct answers), with print statements for **Q1/Q2/Q3**, extra XML wrapper, typo notes, and an incomplete "Correcting XML" section. **Major mismatch** (-3.0); treats task as coding problem, fabricates XML root/typos.
+- **Q1/A1 (distinct cases = 3)**: Code computes correctly (`len(cases)=3`), print matches numerically. But typo `atrrib` crashes code; wrong label (Q1 vs A1). **Partial** (-1.0).
+- **Q2/A2 (sequence for C002)**: Extracts correct sequence in log order (matches timestamps/order: Receive_Order → Check_Stock → Arrange_Delivery → Ship_Order). No time parsing/sorting (assumes log order; fragile). Print matches exactly (no escapes needed). But wrong label (Q2), embedded in broken code. **Partial** (-1.5).
+- **Q3/A3 (predecessors: Arrange_Delivery, Check_Stock; alpha-sorted, one per line)**: Logic correctly identifies set via per-case tracking, sorts alpha, joins with `\n`. Output matches content ("Arrange_Delivery\nCheck_Stock"). But misses bullets (`-`), `<br>`, wrong label (Q3), plain text only; embedded in broken code. **Partial** (-1.5).
+- **Additional errors**: 8+ `atrrib` typos (code unrunnable = hallucinated/broken → -1.0); no timestamp parsing despite "order they occurred"; extra note/fabrications; incomplete final XML block. **Strict penalty for small errors amplified** (-1.0).
+
+Factual precision: 80% correct if fixed/run, but presentation/execution/bugs = hallucinations/extras. Total deductions yield 2.0.

@@ -1,0 +1,26 @@
+**1.0**
+
+The LLM answer is fundamentally invalid and mismatches the ground truth and prompt on nearly every level, warranting the minimum score under strict evaluation:
+
+- **Missing core elements**: No "Confirm with Customer" task (t6); no customer confirmation exclusive gateway (gw3); no re-work loop (f13 from gw3 "no" to t3 "Initial Diagnosis")—directly violates lines 7-9 and prompt's "model the re-work loop exactly."
+- **Incorrect flows**:
+  - "Provide Reset Instructions" → end event (wrong; ground truth → t6).
+  - "Forward to Specialist" → no "Resolve Issue" after (violates line 6; ground truth f9: t5 → t4).
+  - Diagnosis gateway → "Resolve" or "Forward", but no merge to confirm (both paths should → t6).
+  - Password reset skips confirm/diagnosis loop.
+- **Invalid BPMN**:
+  - Intermediate `<startEvent id="se2">` (invalid; no mid-process starts).
+  - Multiple end events (eeSpecialistResolution, eeCustomerConfirmation, eeIssuePersistence); ground truth has one.
+  - End event with `<outgoing>` (eeIssuePersistence → Flow13; invalid).
+  - Incomplete `<sequenceFlow>`s (Flow4/7/9 lack `targetRef`; Flow10 only from tResolveIssue, orphaning tForwardToSpecialist).
+- **Added/invented**:
+  - Extra end events; se2.
+  - Non-concise IDs (e.g., `tAutomaticClassification` vs. t1).
+  - Invented conditions (`$classification == 'Password Reset'`, `$canBeResolved` vs. ground truth's simple "yes"/"no").
+- **Structural**:
+  - No single end ("Ticket Closed").
+  - Malformed XML (missing targets make it unparseable).
+  - Exceeds ~40 lines; wrong namespace/id/name.
+  - Only ~30% element overlap (e.g., partial classify gw, tasks like tInitialDiagnosis).
+
+This is not a valid BPMN translation; it's a broken hallucination with critical omissions, invalid additions, and parse errors.

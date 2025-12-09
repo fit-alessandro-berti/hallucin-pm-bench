@@ -1,0 +1,12 @@
+**7.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer correctly models the process flow **exactly as described** (start → classify → gw1 (password? → reset or diagnosis) → gw2 (resolve/forward) → resolve → confirm → gw3 (confirm? → end or loop to diagnosis)), with no invented elements (e.g., no timers, SLAs, extra tasks/gateways/paths). It uses concise IDs (t1/gw1 etc.), exclusive gateways, the precise re-work loop to "Initial Diagnosis" (t3), 3 gateways (prompt says "two" but process logic requires the third for line 9; GT also uses 3), and is ≤40 lines (~33). Task names match description verbatim where specified.
+
+However, **significant strict deductions** for differences vs. ground truth (even small ones lose points heavily):
+- **Naming errors (-1.5)**: t1 "Classify Ticket" vs. GT "Auto-Classification" (misses "automatically"); gw2 "Diagnosis Decision" (vague) vs. "Resolved Internally?"; **gw3 "Issue Resolved?" (semantically wrong—decision is customer confirmation post-resolution) vs. "Customer Confirms?"**.
+- **Missing formal conditions (-1.0)**: GT specifies `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on all gw outflows (precise XOR logic); LLM uses informal `name=` attributes only (valid but incomplete/less exact).
+- **Structural/attribute diffs (-0.5)**: Different IDs (e.g., process "p1" vs. "support_ticket"; start "s1" vs. "start"; end "e1" vs. "end"); process `isExecutable="true"` vs. "false"; name="AcmeTech Support Ticket" vs. "Support-Ticket".
+- **XML diffs (-0.0 net)**: Extra `xmlns:xsi` & different `targetNamespace` (minor, both valid BPMN); no `<?xml>` header (matches prompt's "<definitions> block only").
+
+Core logic perfect (no hallucinations), but naming/precision gaps prevent higher score. Equivalent to ~70% match after strict diff penalties.

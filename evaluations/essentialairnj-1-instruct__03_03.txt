@@ -1,0 +1,16 @@
+**1.0**
+
+The LLM answer is invalid and fails on nearly every criterion with utmost strictness applied:
+
+- **Format violation**: Wrapped in invalid Python code (`bpdmn_xml = """`), not a "single self-contained BPMN 2.0 XML document". XML is incomplete (cuts off mid-element at `<bpmn:userTask id="`), unparsable.
+- **Missing required elements** (major omissions, per rubric): No `wrc_reject` task ("Send rejection notice" – prompt verbatim; LLM wrongly names end event instead). No `wrc_update_inventory` ("Update inventory records"). No `wrc_close` ("Close the claim"). Post-parallel flow sequential (update *then* close), not parallel join → end/missing tasks.
+- **Incorrect flow structure**:
+  - Validation loop broken: `ValidateClaim` direct outgoings → gateways with self-referential/misconnected IDs (e.g., `wrc_ExclGate_Validation` incoming `wrc_complete_valid`, outgoing back to it; default to `ValidateClaim`; duplicate `wrc_complete_valid` refs). No proper gateway *after* validate (as specified/in ground truth).
+  - Warranty check: `wrc_CheckWarrantyEligibility` and `wrc_ExclGate_Warranty` both incoming same invalid `wrc_complete_valid`; direct task outgoings duplicate gateway.
+  - Parallel join wrong: Outgoing `wrc_UpdateInventory`/`wrc_CloseClaim` (undefined); end incoming from join + undefined flows.
+  - No explicit `<sequenceFlow>` elements (uses inline `incoming`/`outgoing`, valid syntax but refs broken/missing targets).
+- **Task name mismatches/extra inventions**: "Start Online Warranty Claim" (hallucinated, not verbatim; ground truth uses neutral start). "Send Rejection Notice" on end event (wrong; must be task). Undocumented cutoff task. Uses `<userTask>` (unnecessary invention; ground truth `<task>`).
+- **Other violations**: Extraneous gateways/connections (hallucinated loops). Unnecessary DI/DC namespaces without diagram interchange (bloat). No sequential post-join. IDs prefixed correctly but irrelevant due to breakage.
+- **Semantically nonequivalent**: Does not model prompt (e.g., re-validate after request; parallel *only* create/schedule; exactly specified gateways/ends). Fails "model **only** explicitly mentioned" – invents errors.
+
+Zero functional BPMN; >50% elements wrong/missing vs. ground truth's minimal-correct 34-line XML. No credit beyond basic intent fragments.

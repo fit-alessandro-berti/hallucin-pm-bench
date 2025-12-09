@@ -1,0 +1,85 @@
+```python
+# Analyzing the changes between BPMN_v1 and BPMN_v2
+
+from xml.etree.ElementTree import fromstring, Element, SubElement, ElementTree
+
+# Parsing the BPMN XML strings for both versions
+BPMN_v1 = '''
+<definitions>
+  <process id="RMA_v1" isExecutable="true">
+    <startEvent id="start"/>
+    <sequenceFlow id="f1" sourceRef="start" targetRef="receive_request"/>
+    <task id="receive_request" name="Receive Return Request"/>
+    <sequenceFlow id="f2" sourceRef="receive_request" targetRef="validate_warranty"/>
+    <task id="validate_warranty" name="Validate Warranty"/>
+    <sequenceFlow id="f3" sourceRef="validate_warranty" targetRef="gw_valid"/>
+    <exclusiveGateway id="gw_valid" name="Warranty Valid?"/>
+    <sequenceFlow id="f4" sourceRef="gw_valid" targetRef="approve_return"/>
+    <task id="approve_return" name="Approve Return"/>
+    <sequenceFlow id="f5" sourceRef="approve_return" targetRef="send_rma_label"/>
+    <task id="send_rma_label" name="Send RMA Label"/>
+    <sequenceFlow id="f6" sourceRef="send_rma_label" targetRef="end"/>
+    <sequenceFlow id="f7" sourceRef="gw_valid" targetRef="reject_return"/>
+    <task id="reject_return" name="Reject Return"/>
+    <sequenceFlow id="f8" sourceRef="reject_return" targetRef="end"/>
+    <endEvent id="end"/>
+  </process>
+</definitions>
+'''
+
+BPMN_v2 = '''
+<definitions>
+  <process id="RMA_v2" isExecutable="true">
+    <startEvent id="start"/>
+    <sequenceFlow id="f1" sourceRef="start" targetRef="receive_request"/>
+    <task id="receive_request" name="Receive Return Request"/>
+    <sequenceFlow id="f2" sourceRef="receive_request" targetRef="check_vip"/>
+    <task id="check_vip" name="Check Customer VIP Status"/>
+    <sequenceFlow id="f3" sourceRef="check_vip" targetRef="validate_warranty"/>
+    <task id="validate_warranty" name="Validate Warranty"/>
+    <sequenceFlow id="f4" sourceRef="validate_warranty" targetRef="gw_valid"/>
+    <inclusiveGateway id="gw_valid" name="Warranty Valid?"/>
+    <sequenceFlow id="f5" sourceRef="gw_valid" targetRef="approve_return"/>
+    <task id="approve_return" name="Approve Return"/>
+    <sequenceFlow id="f6" sourceRef="approve_return" targetRef="generate_qr"/>
+    <task id="generate_qr" name="Generate RMA QR Code"/>
+    <sequenceFlow id="f7" sourceRef="generate_qr" targetRef="end"/>
+    <sequenceFlow id="f8" sourceRef="gw_valid" targetRef="reject_return"/>
+    <task id="reject_return" name="Reject Return"/>
+    <sequenceFlow id="f9" sourceRef="reject_return" targetRef="end"/>
+    <endEvent id="end"/>
+  </process>
+</definitions>
+'''
+
+# Functions to help with comparison
+def parse_bpmn(xml_str):
+    return fromstring(xml_str).findall('.//process')[0]
+
+def extract_tasks(process):
+    return {task.attrib['id']: task.attrib['name'] for task in process.findall('.//task')}
+
+def extract_gateways(process):
+    gateways = {}
+    for gateway in process.findall('.//gateway'):
+        gateways[gateway.attrib['id']] = (gateway.tag, gateway.attrib['name'])
+    return gateways
+
+def compare_tasks(v1_tasks, v2_tasks):
+    added = {id: name for id, name in v2_tasks.items() if id not in v1_tasks}
+    removed = {id: name for id, name in v1_tasks.items() if id not in v2_tasks}
+    return added, removed
+
+def compare_gateways(v1_gateways, v2_gateways):
+    changes = [{id: (tag1, name1, tag2)} for id, ((tag1, name1), (tag2, _)) in 
+               v2_gateways.items() if (tag1, name1) != (tag2, name2)]
+    if not changes:
+        return None
+    return changes
+
+# Parsing and working with the ElementTree objects
+process_v1 = parse_bpmn(BPMN_v1)
+process_v2 = parse_bpmn(BPMN_v2)
+
+tasks_v1 = extract_tasks(process_v1)
+tasks_v2 = extract_tasks(process_v

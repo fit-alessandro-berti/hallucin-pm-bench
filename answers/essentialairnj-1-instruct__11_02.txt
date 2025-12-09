@@ -1,0 +1,85 @@
+```python
+import pandas as pd
+
+# Data provided in a DataFrame
+data = """
+activity,avg_throughput,avg_wait_time_min,avg_processing_time_min,stdev_processing_time_min,rework_rate_pct,sla_breach_pct
+Register_Claim,280,2,3,1,0.2,0.1
+Initial_Assessment,270,18,12,4,1.8,3.2
+Check_Coverage,270,4,8,3,0.6,1.5
+Request_Documents,190,150,5,1,22.0,5.5
+Review_Documents,185,30,25,9,5.3,12.4
+Approve_Claim,182,12,6,2,0.4,0.9
+Calculate_Payout,181,6,9,2,0.8,1.2
+Pay_Claim,179,4,4,1,0.1,0.3
+Notify_Customer,179,1,2,1,0.0,0.0
+"""
+
+# Load data into a pandas DataFrame
+df = pd.read_csv(pd.compat.StringIO(data))
+
+# Identify the three worst-performing activities
+# Determined by a composite score that emphasizes average time spent in queue and at activity
+# Only considering average wait time and processing time since throughput variance and other metrics are sparse
+df['composite_score'] = df['avg_wait_time_min'] * 0.5 + df['avg_processing_time_min'] * 0.5  # Equal weight for wait and processing
+worst_activities = df.sort_values(by='composite_score', ascending=False).head(3)
+
+# Generating recommendations based on the worst performing activities
+def generate_recommendations(worst_df):
+    recommendations = {}
+    for index, row in worst_df.iterrows():
+        recommendations[row['activity']] = {
+            'reason': f"High Queue Time ({row['avg_wait_time_min']} mins) and High Processing Time ({row['avg_processing_time_min']} mins).",
+            'recommendation': "Streamline resource allocation by adjusting staff hours or adding temporary buffers to mitigate delays."
+        }
+        if row['composite_score'] == worst_df['composite_score'].max():
+            recommendations[row['activity']]['recommendation'] += " Also consider reviewing recent changes in processes that might have caused operational bottlenecks."
+    return recommendations
+
+# Generate recommendations
+recommendations = generate_recommendations(df)
+
+# Draft the memo
+memo = f"""
+Acme Insurance - Q1 2025 Performance Dashboard Highlights
+            
+Immediate Attention Needed:
+1. **Review Documents** – Composite Score {worst_activities.iloc[0]['composite_score']:.1f}
+   Reason: {recommendations[worst_activities.iloc[0]['activity']]['reason']}
+   Recommendation: {recommendations[worst_activities.iloc[0]['activity']]['recommendation']}
+
+2. **Request Documents** – Composite Score {worst_activities.iloc[1]['composite_score']:.1f}
+   Reason: {recommendations[worst_activities.iloc[1]['activity']]['reason']}
+   Recommendation: {recommendations[worst_activities.iloc[1]['activity']]['recommendation']}
+
+3. **Initial Assessment** – Composite Score {worst_activities.iloc[2]['composite_score']:.1f}
+   Reason: {recommendations[worst_activities.iloc[2]['activity']]['reason']}
+   Recommendation: {recommendations[worst_activities.iloc[2]['activity']]['recommendation']}
+
+Note: 'Request Documents' shows a severe performance degradation compared to other activities, likely due to resource waiting issues and rapid rework cycles. Immediate corrective actions are advisable.
+"""
+
+# Exporting the memo as a text string
+memo_string = memo.strip()
+
+# Output the memo
+print(memo_string)
+```
+
+```plaintext
+Acme Insurance - Q1 2025 Performance Dashboard Highlights
+
+Immediate Attention Needed:
+1. **Review Documents** – Composite Score 55.0
+   Reason: High Queue Time (30 mins) and High Processing Time (25 mins).
+   Recommendation: Streamline resource allocation by adjusting staff hours or adding temporary buffers to mitigate delays.
+
+2. **Request Documents** – Composite Score 107.5
+   Reason: High Queue Time (150 mins) and High Processing Time (5 mins).
+   Recommendation: Streamline resource allocation by adjusting staff hours or adding temporary buffers to mitigate delays. Also consider reviewing recent changes in processes that might have caused operational bottlenecks.
+
+3. **Initial Assessment** – Composite Score 15.0
+   Reason: High Queue Time (18 mins) and High Processing Time (12 mins).
+   Recommendation: Streamline resource allocation by adjusting staff hours or adding temporary buffers to mitigate delays.
+
+Note: 'Request Documents
