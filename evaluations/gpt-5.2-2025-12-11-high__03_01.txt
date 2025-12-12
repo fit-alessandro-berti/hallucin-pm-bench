@@ -1,0 +1,25 @@
+4.0
+
+### Evaluation Summary (Strict Line-by-Line and Structural Comparison)
+The LLM answer captures the semantic flow of the process correctly (paths for password reset, diagnosis/resolve/forward, confirm/loop/close are equivalent), models the re-work loop exactly to "Initial Diagnosis", uses only 2 gateways as per prompt ("the two decision points"), stays under 40 lines, uses concise IDs, and avoids hallucinations like timers or extra tasks. However, under utmost strictness against the ground truth XML, there are **numerous significant differences** warranting major point loss:
+
+#### Major Errors (-4.0 points total):
+- **Missing exclusive gateway for diagnosis decision** (GT gw2 "Resolved Internally?" after t3; LLM models it as conditional flows from t3 instead). This omits a core decision element in GT, altering structure (~2.0 loss).
+- **Invented/detailed condition expressions** (e.g., `classification = 'Password Reset'`, `diagnosisOutcome = 'Resolve Issue'`, `customerConfirmedResolution = true` with variables/outcomes not in text; GT uses generic `yes`/`no`) (~1.0 loss).
+- **Added task subtypes** (serviceTask for t1, userTask for t3; GT uses plain `<task>` for all) -- violates "exactly as stated, do not add" (~1.0 loss).
+
+#### Minor/Name/ID Errors (-1.5 points total, but significant per strictness rule):
+- Different process ID/name (`p1`/"AcmeTech Support Ticket Process" vs `support_ticket`/"Support-Ticket").
+- Different element IDs/names (e.g., start `s1`/"Customer Submits Support Ticket" vs `start`/"Ticket Submitted"; t1 "Classify Ticket" vs "Auto-Classification"; gw2 "Customer Confirms Resolution?" vs gw3 "Customer Confirms?").
+- Added `default` on gateways (f4, f12; absent in GT).
+- No `<?xml declaration?>` (present in GT).
+- Minor namespace diffs (extra `xmlns:xsi`; different `targetNamespace`).
+- Different sequenceFlow ordering/count (f1-f12 vs f1-f13; some flow targets/conditions reordered).
+
+#### Neutral/Positive:
+- No fabricated elements (e.g., no timers, approvals, parallels).
+- Correct loop (gw no → t3).
+- Concise, valid BPMN XML.
+- Semantic equivalence despite structural diff.
+
+Base 10.0 → deduct for diffs/missing = 4.0. Equivalent model but not faithful XML replica.

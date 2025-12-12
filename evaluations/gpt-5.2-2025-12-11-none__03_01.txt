@@ -1,0 +1,31 @@
+**4.0**
+
+### Evaluation Rationale (Strict Line-by-Line and Semantic Comparison)
+The LLM answer captures ~70% of the core structure and logic but incurs **major deductions** for violations of the prompt ("Do not invent or add ... activities") and significant divergences from the ground truth XML. Assessed with utmost strictness: even minor name/attribute diffs cost points; fabrication is catastrophic (as this is explicitly a "hallucination trap").
+
+#### Major Errors (-4.0 points total):
+- **Invented activity & flow (hallucination trap failure)**: Added `t6` "Specialist Finishes" (not in description line 6, which states "the ticket is **“Resolve Issue”**" post-specialist—no separate task/activity). Adds `f9` (t5→t6), `f10` (t6→t4). Ground truth correctly does **direct** `f9` t5 "Forward to Specialist" → t4 "Resolve Issue". This fabricates an unmentioned step, violating "exactly as stated" and "no ... activities not mentioned". (-3.0)
+- **Missing conditionExpressions on gateway outflows**: Ground truth has explicit `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on all gw outflows (f3/f4 gw1, f7/f8 gw2, f12/f13 gw3)—precise BPMN for exclusive gateways. LLM uses informal `name` attributes ("Password Reset"/"Otherwise", etc.) instead. Prompt implies gateways need decisions; this is incomplete. (-1.0)
+
+#### Minor/Structural Errors (-1.5 points total):
+- **Names diverge (not "exact")**: 8/12 mismatches, e.g.:
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | Start | "Customer Submits Support Ticket" | "Ticket Submitted" | Verbose, not concise/exact. |
+  | t1 | "Automatically Classify Ticket" | "Auto-Classification" | Wordier. |
+  | gw1 | "Classified as Password Reset?" | "Password Reset?" | Extra words. |
+  | gw2 | "Resolved?" | "Resolved Internally?" | Misses "internally" nuance. |
+  | gw3 | "Customer Confirms Resolution?" | "Customer Confirms?" | Extra words. |
+  | Process | id="p1" isExecutable="true" (no name) | id="support_ticket" name="Support-Ticket" isExecutable="false" | Wrong attrs/IDs. |
+  Small diffs = significant loss per instructions.
+- **Attribute/declarations diverge**: No `<?xml version="1.0" encoding="UTF-8"?>`; defs has extra `id="d1"`. No `name` on process. IDs inconsistent (e.g., "s1"/"e1" vs "start"/"end"). (-0.8)
+- **Extra elements inflate count**: 14 flows vs 13; 12 pre-flow elements vs 11. Exceeds minimalism despite <40 lines.
+
+#### Positive Aspects (+1.0 baseline boost, no higher due to strictness):
+- Core loop exact (gw3 "no" → t3 "Initial Diagnosis").
+- Password Reset path (gw1 → t2 → confirm).
+- Diagnosis → gw2 → (resolve/forward → resolve → confirm).
+- Two explicit gw (gw1/gw2) + implied third (gw3); concise IDs; single <definitions>; no unrelated adds (timers/etc.); <40 lines.
+- Logically executable (minor gw2 name covers line 5 decision).
+
+**Net: 10 - 5.5 = 4.5 → rounded down to 4.0** for cumulative diffs + fabrication. Semantically ~80% aligned but XML/prompt fidelity fails strict criteria. Perfect match =10.0; this is flawed production output.

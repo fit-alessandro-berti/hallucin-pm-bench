@@ -1,0 +1,68 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  id="wrc_definitions"
+                  targetNamespace="http://example.com/bpmn/warranty-replacement-v1-3">
+  <bpmn:process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+
+    <bpmn:startEvent id="wrc_start" name="customer submits an online warranty claim"/>
+    <bpmn:sequenceFlow id="wrc_flow_1" sourceRef="wrc_start" targetRef="wrc_task_validate"/>
+
+    <bpmn:task id="wrc_task_validate" name="validates the claim"/>
+    <bpmn:sequenceFlow id="wrc_flow_2" sourceRef="wrc_task_validate" targetRef="wrc_gw_complete"/>
+
+    <bpmn:exclusiveGateway id="wrc_gw_complete" name="claim is incomplete?"/>
+    <bpmn:sequenceFlow id="wrc_flow_3_incomplete" sourceRef="wrc_gw_complete" targetRef="wrc_task_request_missing">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[incomplete]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_4_complete" sourceRef="wrc_gw_complete" targetRef="wrc_task_check_eligibility">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[complete]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:task id="wrc_task_request_missing" name="requests missing information"/>
+    <bpmn:sequenceFlow id="wrc_flow_5" sourceRef="wrc_task_request_missing" targetRef="wrc_task_wait_received"/>
+
+    <bpmn:task id="wrc_task_wait_received" name="waits until it is received"/>
+    <bpmn:sequenceFlow id="wrc_flow_6" sourceRef="wrc_task_wait_received" targetRef="wrc_task_validate"/>
+
+    <bpmn:task id="wrc_task_check_eligibility" name="checks warranty eligibility"/>
+    <bpmn:sequenceFlow id="wrc_flow_7" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gw_warranty"/>
+
+    <bpmn:exclusiveGateway id="wrc_gw_warranty" name="product within warranty?"/>
+    <bpmn:sequenceFlow id="wrc_flow_8_within" sourceRef="wrc_gw_warranty" targetRef="wrc_gw_parallel_split">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[within warranty]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_9_out" sourceRef="wrc_gw_warranty" targetRef="wrc_task_send_rejection">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[out of warranty]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:task id="wrc_task_send_rejection" name="send rejection notice"/>
+    <bpmn:sequenceFlow id="wrc_flow_10" sourceRef="wrc_task_send_rejection" targetRef="wrc_end_rejection"/>
+
+    <bpmn:endEvent id="wrc_end_rejection" name="Rejected"/>
+
+    <bpmn:parallelGateway id="wrc_gw_parallel_split" name="Parallel split"/>
+    <bpmn:sequenceFlow id="wrc_flow_11" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_create_shipment"/>
+    <bpmn:sequenceFlow id="wrc_flow_12" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_schedule_pickup"/>
+
+    <bpmn:task id="wrc_task_create_shipment" name="Create shipment order"/>
+    <bpmn:sequenceFlow id="wrc_flow_13" sourceRef="wrc_task_create_shipment" targetRef="wrc_gw_parallel_join"/>
+
+    <bpmn:task id="wrc_task_schedule_pickup" name="Schedule courier pickup"/>
+    <bpmn:sequenceFlow id="wrc_flow_14" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gw_parallel_join"/>
+
+    <bpmn:parallelGateway id="wrc_gw_parallel_join" name="Parallel join"/>
+    <bpmn:sequenceFlow id="wrc_flow_15" sourceRef="wrc_gw_parallel_join" targetRef="wrc_task_update_inventory"/>
+
+    <bpmn:task id="wrc_task_update_inventory" name="update inventory records"/>
+    <bpmn:sequenceFlow id="wrc_flow_16" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim"/>
+
+    <bpmn:task id="wrc_task_close_claim" name="close the claim"/>
+    <bpmn:sequenceFlow id="wrc_flow_17" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success"/>
+
+    <bpmn:endEvent id="wrc_end_success" name="Completed"/>
+
+  </bpmn:process>
+</bpmn:definitions>
+```

@@ -1,0 +1,41 @@
+**3.2**
+
+### Evaluation Summary (Strict Line-by-Line and Structural Comparison)
+The LLM answer captures the overall flow and loop correctly but has **critical structural errors**, naming inconsistencies, unnecessary inventions, and omissions compared to the ground truth. Under utmost strictness, these warrant major deductions (e.g., missing gateway = -3.0 base, invalid BPMN split = -2.0, cumulative small errors -1.8). Breakdown:
+
+#### Major Errors (-4.0 total deduction from 10.0):
+- **Missing exclusiveGateway (gw2 "Resolved Internally?") after "Initial Diagnosis" (t3)**: Ground truth explicitly models the line 5 decision ("either Resolve Issue or Forward to Specialist") with gw2 + conditional flows (f6/f7 yes/no → t4/t5). LLM omits the gateway entirely, using invalid direct conditional sequence flows (f6/f7) from t3. This is **non-standard BPMN** (tasks do not perform XOR splits without gateways; leads to ambiguous execution if conditions overlap/undefined). Violates prompt's "exclusive gateways" for decisions and mismatches ground structure. Fatal omission.
+- **Invalid BPMN modeling of diagnosis decision**: Direct conditioned outflows from userTask t3 (f6 to t4, f7 to t5) bypass required gateway. Semantically approximates but syntactically/semantically incorrect vs. spec/prompt/ground.
+
+#### Significant Errors (-2.0 total):
+- **Task types invented/not matching**: Uses `serviceTask` (t1), `userTask` (t3-t6) vs. ground truth's plain `task` everywhere. Prompt says "exactly as stated"; no types specified, but differs from ground.
+- **Condition expressions differ substantially**:
+  | LLM Flow | Condition | Ground Equivalent | Issue |
+  |----------|-----------|-------------------|-------|
+  | f3 (gw1→t2) | `ticketType == "Password Reset"` | f3: `yes` | Invented variable/logic |
+  | f6 (t3→t4) | `resolvedAfterDiagnosis` | f7: `yes` | Invented |
+  | f7 (t3→t5) | `needsSpecialist` | f8: `no` | Invented |
+  | f11 (gw2→e1) | `customerConfirms` | f12: `yes` | Invented |
+  | f12 (gw2→t3) | `issuePersists` | f13: `no` | Invented |
+  | f4 (gw1→t3) | None (default) | f4: `no` | Missing explicit |
+  Ground uses simple `yes`/`no`; LLM hallucinates specific expressions (minor rule violation: "exactly as stated").
+
+#### Minor but Penalized Errors (cumulative -0.8):
+- **Names differ (4 instances)**:
+  | Element | LLM | Ground Truth | Deduction |
+  |---------|-----|--------------|-----------|
+  | StartEvent | `s1` "Customer Submits Support Ticket" | `start` "Ticket Submitted" | -0.2 |
+  | t1 | "Automatically Classify Ticket" | "Auto-Classification" | -0.2 |
+  | gw after confirm | `gw2` "Customer Confirms Resolution?" | `gw3` "Customer Confirms?" | -0.2 |
+  | Process | `id="p1"` no `name` | `id="support_ticket" name="Support-Ticket"` | -0.2 |
+- **Header/attrs**: No `<?xml version="1.0" encoding="UTF-8"?>`; extra `xmlns:xsi` (though ground uses undeclared `xsi:type`, invalid itself).
+- **IDs/ordering**: All differ (e.g., `p1/s1/t1` vs. `support_ticket/start/t1`); flows f1-f12 vs. f1-f13. Minor but every line affected.
+- **Element count mismatch**: 2 gateways + 7 tasks/activities vs. ground's 3 gateways + 6 tasks. 12 flows vs. 13.
+
+#### Positives (partial credit):
+- Correct loop (gw2→t3 on no/loop).
+- No hallucinations (no extra timers/events/gateways/activities; ≤40 lines; concise IDs).
+- Core paths match semantically (password→reset→confirm; diagnosis→resolve/forward→resolve→confirm; specialist→resolve).
+- Valid XML syntax; correct namespace.
+
+**Final Calculation**: 10.0 - 4.0 (structure) - 2.0 (inventions/types/conditions) - 0.8 (names/etc.) = **3.2**. Semantically ~70% but structurally divergent; strictness demands near-identical match for high score.

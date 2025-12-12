@@ -1,0 +1,12 @@
+**4.2**
+
+### Evaluation Rationale (strict assessment):
+- **Schema/Structure Mismatch (-3.5 points)**: Ground truth uses simple flat "process_id", "elements" (id/type/name/event/condition), "flows" (source/target/condition). LLM invents verbose BPMN-inspired hierarchy ("bpmn.process.nodes/sequenceFlows/subProcessSequenceFlows/messages"), subProcess, boundaryEvents, implementations, messageRefs. Unmatched keys/organization = major deviation.
+- **Cancel Handling Partial Match (-1.0)**: Ground truth: loose "cancelEvent" (intermediateCatchEvent message) → "terminate" (no attachment/incoming specified, incomplete). LLM: boundaryEvent on subProcess → terminate end (creative/"at any point", but adds subProcess/hierarchy not in GT, and "outgoing" malformed).
+- **Wait/Timeout Modeling Error (-1.0)**: GT: eventBasedGateway ("awaitReply") → messageCatch OR timerCatch (correct BPMN for first-to-arrive). LLM: invalid intermediateCatchEvent with dual eventDefinitions (message+timer, non-standard), then XOR gateway (wrong; BPMN prohibits). Significant fidelity loss.
+- **Parallel Log/Reply Overlap Minor Drift (-0.2)**: Both fork/join sendResponse+log before wait (GT "forkLogging"/"joinAfterLogging"; LLM "Gateway_Fork_ResponseAndKB"). Description implies log overlaps reply-wait, but neither perfect; no deduction beyond schema.
+- **Element/Name/Flow Nitpicks (-0.1 each, total -0.5)**: GT single "closeTicket"; LLM duplicates (Close_Immediate/Close_AfterReminder). GT "Create Ticket" (omits parse); LLM adds. Conditions "simple"/"complex" vs expressions. Extra GT elements like "cancelEvent" loose; LLM extras (messages). Flows malformed (e.g., outer flow to inner EndEvent_NormalClosure).
+- **Faithfulness/Non-Hallucination (+bonus to avoid 1.0)**: No invented escalation/approval. Covers all 10 steps: start/email/parse/classify/xor/RCA/resolution/fork-send-log/reminder/timer/reply/close/cancel-terminate. Executable intent preserved.
+- **JSON Well-Formedness**: LLM parses but BPMN-invalid (multi-catch, terminate endEvent?, sub-to-inner flow). GT simplified/custom.
+
+Semantically ~85% aligned but format/modeling differences dominate under "utmost strictness". No 10.0 (exact match); no 1.0 (total irrelevance).

@@ -1,0 +1,32 @@
+**3.0**
+
+### Evaluation Summary (Strict Rubric-Based)
+The LLM answer is semantically *close* to the process but incurs **major deductions** for violations of the prompt's core rules and significant structural/string differences from the ground truth. Utmost strictness applied: invention of elements = heavy penalty (-3.0 base), extra/non-minimal content (-2.0), name/ID/case mismatches (-1.0), omitted equivalence in flow paths (-1.0). Partial credit for correct elements like gateways, parallel branches, two ends, ID prefix, and verbatim task names where matching.
+
+### Key Differences & Penalties (vs Prompt + Ground Truth)
+1. **Hallucinated/extra flow elements (major violation, -3.0)**:
+   - Invented `intermediateCatchEvent` ("missing information is received") with `messageEventDefinition` to model "waits until received". Prompt explicitly forbids inventing elements "beyond what is stated"; "waits" is narrative, not an explicit event. Ground truth uses direct sequence flow loop (`request_info → validate`), no event.
+   - Added `wrc_task_check_warranty` ("checks warranty eligibility"). Explicit in prompt step 3, but **absent in ground truth** (direct `complete_gw → warranty_gw`), making it "extra" per diff rubric. Flow path now longer (validate → gw → check → warranty_gw vs ground's validate → gw → warranty_gw).
+
+2. **Non-minimal/extra content ( -2.0)**:
+   - Full `<bpmndi:BPMNDiagram>` section (~100+ lines with shapes/edges/positions). Ground truth is minimal 34-line model *without* DI (no layout namespaces like `bpmndi`, `dc`, `di`). Prompt asks for "BPMN 2.0 XML diagram" but expects minimal per key; DI is unnecessary bloat/unrequested.
+   - Invented conditionExpressions on flows (e.g., "incomplete", "within warranty"). Ground uses flow `name="Yes"/"No"` labels, no expressions.
+   - Extra names on non-task elements: parallel GWs ("Parallel"/"Join"), ends ("Rejection end"/"Successful completion end"), start ("Customer submits..."). Ground has unnamed parallels, simple ends ("Successful end"/"Rejected").
+
+3. **Task/start/gw name mismatches ( -1.0)**:
+   - Not 100% verbatim/case-sensitive to prompt bolded text (e.g., LLM "validates the claim" lower 'v'; "send rejection notice" lower 's'; good matches on "Create shipment order"/"Schedule courier pickup"/"update inventory records"/"close the claim"). Ground uses title-case ("Validate the claim", "Send rejection notice", etc.).
+   - Start name "Customer submits an online warranty claim" adds "Customer"/"an" vs prompt "customer submits an online warranty claim"; ground simplifies to "Online warranty claim submitted".
+
+4. **ID/flow structure differences ( -1.0)**:
+   - IDs semantically equivalent but stylistically different (e.g., `wrc_task_validate` vs ground `wrc_validate`; `wrc_flow_1` vs `wrc_sf1`; `wrc_gw_completeness` vs `wrc_complete_gw`). Allowed per rubric example, but contributes to non-equivalence.
+   - 17 sequence flows vs ground's 15; extra due to catch/check.
+   - Not byte-for-byte/whitespace equivalent; much longer XML.
+
+### Positives (partial credit toward 10.0 base)
+- Correct use of specified gateways (completeness exclusive, warranty exclusive, parallel split/join).
+- Exactly 2 end events.
+- All IDs prefixed "wrc_".
+- Core parallel branches, rejection path, update→close→end verbatim.
+- Valid BPMN 2.0 syntax; executable=false; process name matches description.
+
+Overall, not "semantically equivalent" due to extra steps altering paths (e.g., mandatory message catch in loop). Corrects ground truth's omission of check task but introduces worse invention. Equivalent minimal XML without extras/catch/DI would be ~9.5-10.0.

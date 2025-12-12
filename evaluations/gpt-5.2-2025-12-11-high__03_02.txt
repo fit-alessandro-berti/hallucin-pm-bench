@@ -1,0 +1,17 @@
+**7.0**
+
+### Evaluation Rationale (strict assessment)
+**Strengths (supporting higher score):**
+- Faithful to textual description: No invented escalation, supervisor approval, or unrelated steps. All modeled elements (start on email, parse/create ticket, classification xor gateway with simple/complex routing, root cause for complex, provide resolution, send response, parallel log KB, event-based wait for reply/timer 24h, reminder only on timeout, close on reply or after reminder, cancel to terminate) are present and connected correctly.
+- Semantic graph matches ground truth ~85%: Same core flow (start → create/classify → xor → (root cause) → resolution → parallel fork to send/log → wait/event GW → reply/close or timer/reminder/close → end), with parallel gateways, event-based gateway for wait/timer/message, conditions on xor.
+- BPMN 2.0 valid: Proper use of userTask/serviceTask/sendTask, message/timer event defs, PT24H duration, condition expressions, messages array.
+- Better in places: Distinguishes agent/system closes (matches "agent close immediately" vs system auto), log parallel spans wait (allows "finish later than customer reply"), event subprocess for interrupting cancel "at any point".
+
+**Weaknesses (significant deductions for strictness, small errors lose points):**
+- **Structural/format mismatch (-1.5)**: Full BPMN definitions/process/sequenceFlows vs ground truth's simple {process_id, elements[], flows[]}. Different keys, no matching IDs (e.g. "start" vs "StartEvent_SupportEmailReceived"), elements lack ground's exact schema (no "event": "message"/"timer", full defs instead).
+- **Name variations (-0.8)**: Many differ (e.g. "Email Received" vs "Support E-mail Received", "Create Ticket" vs "Parse E-mail and Create Ticket", "Simple or Complex?" vs "Route Ticket...", "Fork Log/Wait" vs "Parallel: Reply + Knowledge Base", "Terminate" vs subproc end).
+- **Modeling differences (-0.5)**: Parse+create combined (ground omits parse, minor invention?); two close tasks vs single "Close Ticket"; parallel join syncs log with *closure* (post-wait) vs ground's sync with *sendResponse* (pre-wait).
+- **Cancellation (-0.2)**: Event subprocess (advanced, accurate) vs loose intermediateCatch → terminateEndEvent (non-standard type, unattached).
+- No major hallucinations, but cumulative small diffs (e.g. extra Task_CloseSystem/Agent split, 3-in join vs 2-in, verbose gateways/names) deduct under strict rules.
+
+Overall: Excellent fidelity/semantics (9+/10), but strict JSON/graph diffs drop to 7.0. Identical JSON would be 10.0.

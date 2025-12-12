@@ -1,0 +1,22 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment)
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a low score under utmost strictness. Key differences include:
+
+- **JSON Structure/Format (catastrophic mismatch, -4.0 points)**: Ground truth uses a simple, custom schema (`process_id`, `elements` array with minimal fields like `id`/`type`/`name`/`event`/`condition`, `flows` array with `source`/`target`/`condition`). LLM uses a verbose, full BPMN 2.0 schema (`definitions`/`processes`/`flowElements`/`sequenceFlows`/`messages`, with `eventDefinition`/`conditionExpression`, etc.). This is not equivalent; it's an entirely different representation.
+
+- **Extra/Hallucinated Elements (-1.5 points)**: 
+  - Invented "Parse E-mail" task and flow (ground truth combines parsing/creation into direct `start` → `createTicket`; description treats as single conceptual step).
+  - Extraneous `messages` array, detailed `eventDefinition`s (e.g., `messageEventDefinition`), `serviceTask`/`userTask` subtypes (GT uses generic `task`), full `conditionExpression` like `${classification == 'Simple'}` (GT: simple `"condition": "simple"`).
+  - Complex `EventSubProcess` for cancel (GT: simple `intermediateCatchEvent` → `terminateEndEvent`).
+
+- **Flow Logic Errors (-1.5 points)**:
+  - Parallel gateway join timing incorrect: LLM joins *after* `closeTicket` (so `end` waits for late `logSolution` post-closure); GT joins *after* `sendResponse`/`logSolution` but *before* `awaitReply` (token reaches wait only post-log).
+  - No equivalent attachment for cancel event (GT has standalone flow; LLM's subProcess lacks explicit process-level/boundary linkage in simplified terms).
+  - Minor flow omissions/mismatches (e.g., LLM's event-based GW flows to intermediate events match BPMN but alter sequence vs. GT's direct `awaitReply` → events).
+
+- **Naming/ID Inconsistencies (-0.5 points)**: Slight variations (e.g., GT `start`/`"Email Received"` vs. LLM `StartEvent_EmailReceived`/`"Support E-mail Received"`; GT `"End"` vs. LLM detailed `EndEvent_Completed`). IDs/names don't match.
+
+- **Fidelity to Description (minor credit but penalized vs. GT)**: No escalation/supervisor inventions (good), captures core sequence/classification/parallel/timer/reply logic. However, extras and mismatches violate "model *only* what is described" and GT benchmark.
+
+Total raw alignment ~20% (core elements/flows partially match despite restructured). Strict deduction yields 2.0; any hallucination or structural deviation incurs outsized penalty.
