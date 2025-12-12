@@ -1,0 +1,22 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Major structural mismatch (fatal, -4.0)**: LLM uses full BPMN 2.0 `definitions`/`process`/`flowNodes`/`sequenceFlows` with messages and eventSubProcess; ground truth uses simple `{"process_id", "elements", "flows"}` flat schema. Completely different keys, organization, and serialization.
+- **Extra/invented elements absent from key (-2.0 total)**:
+  - `Task_ParseEmail` (hallucinated separate step; text combines "parsed and [...] created" into implied single action; ground truth skips, direct `start -> createTicket`).
+  - Separate `Task_CreateTicket` (ground truth has single `createTicket`).
+  - Two close tasks (`CloseTicket_Agent`, `CloseTicket_System`) + extra `Gateway_MergeClosure` exclusive gateway (hallucinated split/merge; ground truth uses single `closeTicket` with converging paths, no extra gateway).
+  - EventSubProcess for cancellation (complex addition; ground truth simple un-attached `cancelEvent -> terminate`).
+- **Flow/logic differences (-1.5 total)**:
+  - Parallel join positioned after closure merge (`Gateway_ParallelJoin`); ground truth joins *before* `awaitReply` (`joinAfterLogging -> awaitReply`), altering timing (LLM delays end until log post-closure; ground truth forces log before wait).
+  - Extra flows (e.g., `Flow_01/02` for parse/create, closure merge flows).
+  - Cancellation unattached in ground truth but properly scoped in LLM—still different modeling.
+- **Minor mismatches (-0.5 total)**:
+  - Task types (LLM `userTask`/`serviceTask`; ground truth generic `task`).
+  - Full conditions `${classification == 'Simple'}` vs short `"condition": "simple"`.
+  - IDs/names verbose (e.g., `StartEvent_EmailReceived` vs `"start"`; "24 Hours Passed (No Reply)" vs `"Timer 24h"`).
+  - Extra metadata (`isExecutable`, `targetNamespace`, messages).
+- **Matches (partial credit +1.0)**: Core sequence (classification gw, root cause branch, provide resolution, parallel fork to send/log, event gw wait -> reply/timer paths, reminder, close/end, cancel->terminate concept).
+- **No penalized hallucinations**: No escalation/supervisor elements.
+
+Overall: Faithful *semantics* in places (even superior timing for parallel log vs. flawed ground truth wait-after-join), but strict structural/content diffs dominate under "utmost strictness" and "differences -> lower grade". Not executable equivalent to key.

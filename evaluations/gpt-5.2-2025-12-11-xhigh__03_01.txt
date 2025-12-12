@@ -1,0 +1,30 @@
+**4.0**
+
+### Evaluation Rationale (Strict Comparison to Ground Truth)
+The LLM answer is functionally close to the described process (correct loop, password path, specialist handling, confirmation branch, no hallucinated timers/activities/parallelism) and adheres better to the prompt's "two exclusive gateways" limit and "do not invent/add gateways not mentioned" by using only gw1 (classification) and gw2 (confirmation), modeling the diagnosis branch via conditional sequence flows from t3 (valid BPMN, no extra gw). However, **utmost strictness demands near-exact XML/structure/name match to GT**, with significant deductions for differences:
+
+#### Major Structural Errors (-4.0 points total):
+- **Missing gw2 after diagnosis** (GT has `exclusiveGateway id="gw2" name="Resolved Internally?"` with f6 t3->gw2, f7 gw2->t4 "yes", f8 gw2->t5 "no"). LLM branches directly from t3 to t4/t5 (f6/f7), altering topology (#flows: 12 vs GT 13; no dedicated decision element for line 5 "either/or").
+- Flow connections differ: e.g., no f6 t3->gw2; LLM f6/f7 are direct/invented.
+
+#### Condition Expression Errors (-1.5 points):
+- Invented scripted conditions (e.g., `${classification=='Password Reset'}`, `${nextStep=='Resolve Issue'}` with CDATA/bpmn: prefix/variables) vs GT's simple literal `"yes"`/`"no"`.
+- gw1: LLM condition on "yes" flow + default=f4 vs GT conditions on both flows (f3 "yes", f4 "no").
+- Adds `${customerConfirmed}`/`${!customerConfirmed}` vs GT "yes"/"no".
+
+#### Naming/ID/Attribute Errors (-1.0 points each, total -2.0):
+- Process: `id="p1"` (no name) vs `id="support_ticket" name="Support-Ticket"`.
+- StartEvent: `id="s1" name="Customer Submits Support Ticket"` vs `id="start" name="Ticket Submitted"`.
+- t1: `name="Automatically Classify Ticket"` vs `"Auto-Classification"`.
+- Confirm gw: `id="gw2"` vs `id="gw3"`.
+- EndEvent: `id="e1"` vs `id="end"`.
+- gw1 extra `default="f4"` (GT none).
+- GT gw2 invented name "Resolved Internally?" (not in desc), but LLM lacks it entirely.
+
+#### XML/Format Errors (-0.5 points total):
+- No `<?xml version="1.0" encoding="UTF-8"?>`.
+- Extra/redundant: `id="d1"`, `xmlns:bpmn=...` (unused), `xmlns:xsi` (GT omits but uses xsi:type).
+- Flow IDs/names/ordering differ entirely.
+- Line count ~35 (ok ≤40), but not line-by-line match.
+
+Base 10.0 → deductions yield **4.0**. Semantically ~80% accurate to prompt/desc (good anti-hallucination), but XML diffs too numerous/large for higher under strict GT-matching criteria.
