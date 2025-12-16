@@ -1,0 +1,23 @@
+**2.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer deviates substantially from the ground truth and prompt in structure, validity, completeness, and fidelity, warranting a low score under utmost strictness (even minor naming/namespace issues deduct heavily; structural errors are fatal).
+
+**Critical Errors (Major Point Loss: -6.0 total)**:
+- **Invalid BPMN**: Task `t4` (Initial Diagnosis) has unsplit outgoing flows to `t5`/`t6` (no exclusiveGateway `gw2` for "either Resolve or Forward" per lines 4-5). BPMN rules forbid this; process is malformed.
+- **Dead-end path**: `t3` (Provide Reset Instructions) has no outgoing sequenceFlow (password reset path per line 3 cannot reach Confirm/Close). Ground truth routes `t2` → `t6`.
+- **Missing gateway**: No `gw2` after Initial Diagnosis (decision point implied by line 5 and required by "two decision points"; ground truth has 3 gateways total for all decisions).
+- **Extra invented tasks**: `t1` "Submit Ticket" (prompt line 1: starts *on* submission, not a task; ground truth uses named StartEvent). `t8` "Close Ticket" (line 8/10: ends directly, no task; ground truth uses named EndEvent).
+
+**Significant Errors (Further -1.5 total)**:
+- **Incomplete paths**: Password reset skips Confirm/Resolve flow (lines 3+7); specialist → Resolve (`t6` → `t5`) exists but unconnected properly due to upstream issues.
+- **Wrong loop modeling**: Loops from `gw2` → `t4` (correct target per line 9), but only after Confirm (good), undermined by missing `gw2` earlier and dead-ends.
+- **No conditions**: Missing `<conditionExpression>` on gateway flows (e.g., "yes"/"no" as in ground truth for `gw1`/`gw2`/`gw3`).
+- **Namespace/XML invalid**: Prefixed `xmlns:bpmn` unused (elements lack prefix/ns → invalid BPMN XML); no `<?xml>` decl; wrong `targetNamespace`. Ground truth uses correct default ns.
+
+**Minor Errors ( -0.5 total)**:
+- **Naming mismatches**: e.g., "Classify Ticket" vs. "Auto-Classification"; "Classify?" vs. "Password Reset?"; generic IDs/names on events (Start_1/End_1 vs. descriptive).
+- **Attributes**: `isExecutable="true"` vs. `"false"`; extra `id="Definitions_1"`.
+- **Gateway count**: Only 2 (prompt says "two", but description needs 3; matches neither perfectly but misses diagnosis gw).
+
+**Strengths (Minimal Credit)**: Concise IDs, ≤40 lines, core tasks/loop target present, no unrelated inventions (e.g., no timers/SLAs). But fatal flaws dominate; score reflects ~20% fidelity.

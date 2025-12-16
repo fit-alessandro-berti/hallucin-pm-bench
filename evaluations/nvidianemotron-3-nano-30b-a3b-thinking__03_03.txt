@@ -1,0 +1,24 @@
+**7.0**
+
+### Evaluation Rationale (Strict Rubric Application)
+**Strengths (Supporting High Base Score):**
+- Semantically equivalent to ground truth: Exact same process flow/logic (start → validate loop via completeness XOR gw → warranty XOR gw → reject/end or parallel split → create shipment & schedule pickup → join → update → close → success end). No omissions of required gateways (completeness XOR, warranty XOR, parallel split/join). Exactly two end events. No hallucinated/extra tasks, gateways, flows, escalations, or error paths.
+- All flow elements only from explicit prompt mentions.
+- All IDs for tasks/events/gateways/flows prefixed "wrc_" ✓.
+- 15 sequence flows matching required connections, including validation loop (request → re-validate).
+- Valid BPMN 2.0 XML structure (model-only, no DI needed).
+
+**Errors/Differences (Strict Deductions, Significant per Small Error Rule):**
+- **Task names not verbatim (explicit prompt requirement, -2.0 total)**: 4/7 mismatches vs. bolded prompt text.
+  | Prompt Bold | LLM Name | Issue |
+  |-------------|----------|-------|
+  | **validates the claim** | "validate the claim" | Missing 's' |
+  | **requests missing information** | "request missing information" | Missing 's' |
+  | **Create shipment order** | "create shipment order" | Wrong case (lowercase 'c') |
+  | **Schedule courier pickup** | "schedule courier pickup" | Wrong case (lowercase 's') |
+  - Others match exactly. Ground truth also alters (e.g., drops 's', capitalizes), but LLM has more/clearer verbatim deviations.
+- **Process ID not prefixed "wrc_" (explicit "every element’s id" rule, -1.0)**: id="Process_1" (vs. ground truth "wrc_process"). Definitions ID also unprefixed (minor consistency fail).
+- **Missing descriptive attributes (-0.5)**: No `name` on gateways (e.g., vs. ground "Claim complete?", "Within warranty?"), events, or decision flows ("Yes"/"No"). Not *required*, but significant diff from ground truth.
+- **Minor diffs from ground truth (-0.5 total)**: `isExecutable="true"` (vs. "false"); extra unused xmlns (bpmndi/dc/di); comments (not in ground); longer IDs/flow IDs; different targetNamespace; lower line count efficiency (not minimal 34 lines).
+
+**Total: 10.0 base (semantic perfection) - 4.0 deductions = 7.0**. Utmost strictness applied: verbatim names & ID prefix are non-negotiable (prompt-bolded); small diffs compound. No "missing check warranty eligibility task" deduction (neither LLM nor ground has it; step 3 gw substitutes per prompt gw instructions).

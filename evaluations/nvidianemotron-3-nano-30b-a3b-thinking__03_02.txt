@@ -1,0 +1,15 @@
+**1.0**
+
+### Evaluation Summary (strict assessment)
+The LLM answer fails catastrophically on fidelity to the description, BPMN semantics, JSON structure matching the ground truth schema, and completeness. Key violations (each warranting full deduction under "utmost strictness"):
+
+- **Critical logic error (description violation)**: No "Provide Resolution" for *Complex* tickets. LLM routes Complex directly to merge after "Root Cause Analysis" only; ground truth correctly sequences Root Cause → Provide Resolution (shared). This invents a divergent model, ignoring "before resolution."
+- **Wrong parallel modeling**: Fork *after* Send Response to Log + Await (log dangles without outgoing flow or join; process can "end" without logging). Ground truth forks *before* Send/Log (post-Provide Resolution), joins correctly before Await—matches "after resolution drafted, Send... In parallel, Log" and "may finish earlier/later than customer reply."
+- **Broken wait/timeout**: "AwaitReply" as plain task → exclusive gateway (no conditions; idiomatic BPMN fail). No intermediate catch events, timer, or event-based gateway. Ground truth uses eventBasedGateway → message/timer catches perfectly for "waits up to 24h... if reply/close immediately; else reminder."
+- **Incomplete/missing flows**: No flow *from* "Gateway_ReplyOrTimeout" to "Task_SendReminder" (outgoing claims it, but flows list absent); "Task_LogSolution" has no outgoing; "Task_CloseTicket" → "Task_Terminate" (wrong—Terminate is for cancel only).
+- **Schema/structure mismatch**: "processes"/arrays of gateways/tasks vs. ground truth "process_id"/"elements"/"flows". Not equivalent representation.
+- **Cancel handling hallucinated/incomplete**: Unattached "Cancel_Message" → "Task_Terminate"; no interrupting catch across process. Ground truth uses "intermediateCatchEvent" properly (though placement implicit).
+- **Other errors**: No gateway conditions ("simple"/"complex"); Close → Terminate (hallucinated); no flow to "End_Closed"; combined "Parse & Create" (ground truth separates); extra "Task_Terminate"; invented "Message_Email"/etc.; dangling timer def.
+- **No inventions like escalation**, but baseline failures dominate.
+
+Zero functional BPMN equivalence; unparsable/invalid as faithful translation. Minimal partial credit for listing ~most tasks and rough sequence outline.
