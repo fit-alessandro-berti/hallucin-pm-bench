@@ -1,0 +1,105 @@
+Here's the BPMN 2.0 XML diagram based on your requirements:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             id="warrantyReplacementProcess"
+             targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <!-- Process elements -->
+  <process id="wrc_process" isExecutable="false">
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Customer submits online warranty claim" />
+
+    <!-- Validate Claim Task -->
+    <task id="wrc_validate_claim" name="Validate the claim" />
+
+    <!-- Exclusive Gateway for completeness check -->
+    <exclusiveGateway id="wrc_completeness_check" name="Is claim complete?" />
+
+    <!-- Request Missing Information Task -->
+    <task id="wrc_request_missing_info" name="Request missing information" />
+
+    <!-- Wait for Missing Information Task -->
+    <task id="wrc_wait_for_info" name="Wait until information is received" />
+
+    <!-- Check Warranty Eligibility Task -->
+    <task id="wrc_check_eligibility" name="Check warranty eligibility" />
+
+    <!-- Exclusive Gateway for warranty decision -->
+    <exclusiveGateway id="wrc_warranty_decision" name="Is product within warranty?" />
+
+    <!-- Send Rejection Notice Task -->
+    <task id="wrc_send_rejection" name="Send rejection notice" />
+
+    <!-- Parallel Gateway for split -->
+    <parallelGateway id="wrc_parallel_split" name="Split for parallel activities" />
+
+    <!-- Create Shipment Order Task -->
+    <task id="wrc_create_shipment" name="Create shipment order for the replacement unit" />
+
+    <!-- Schedule Courier Pickup Task -->
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup of the faulty product" />
+
+    <!-- Parallel Gateway for join -->
+    <parallelGateway id="wrc_parallel_join" name="Join parallel activities" />
+
+    <!-- Update Inventory Task -->
+    <task id="wrc_update_inventory" name="Update inventory records" />
+
+    <!-- Close Claim Task -->
+    <task id="wrc_close_claim" name="Close the claim" />
+
+    <!-- End Events -->
+    <endEvent id="wrc_end_rejected" name="Process ended (rejected)" />
+    <endEvent id="wrc_end_success" name="Process ended (completed)" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_flow2" sourceRef="wrc_validate_claim" targetRef="wrc_completeness_check" />
+    <sequenceFlow id="wrc_flow3" sourceRef="wrc_completeness_check" targetRef="wrc_request_missing_info">
+      <conditionExpression xsi:type="tFormalExpression">$isComplete == false</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow4" sourceRef="wrc_request_missing_info" targetRef="wrc_wait_for_info" />
+    <sequenceFlow id="wrc_flow5" sourceRef="wrc_wait_for_info" targetRef="wrc_validate_claim" />
+    <sequenceFlow id="wrc_flow6" sourceRef="wrc_completeness_check" targetRef="wrc_check_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">$isComplete == true</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow7" sourceRef="wrc_check_eligibility" targetRef="wrc_warranty_decision" />
+    <sequenceFlow id="wrc_flow8" sourceRef="wrc_warranty_decision" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression">$isEligible == false</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow9" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejected" />
+    <sequenceFlow id="wrc_flow10" sourceRef="wrc_warranty_decision" targetRef="wrc_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression">$isEligible == true</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow11" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment" />
+    <sequenceFlow id="wrc_flow12" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_pickup" />
+    <sequenceFlow id="wrc_flow13" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_flow14" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_flow15" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory" />
+    <sequenceFlow id="wrc_flow16" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim" />
+    <sequenceFlow id="wrc_flow17" sourceRef="wrc_close_claim" targetRef="wrc_end_success" />
+  </process>
+
+  <!-- BPMNDI elements (minimal for structure) -->
+  <bpmndi:BPMNDiagram id="wrc_diagram">
+    <bpmndi:BPMNPlane id="wrc_plane" bpmnElement="wrc_process">
+      <!-- Placeholder for diagram layout (not fully specified) -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+```
+
+Key features of this implementation:
+1. Strictly follows the process description without adding any extra paths
+2. Uses all required gateway types (exclusive and parallel)
+3. Includes exactly two end events as specified
+4. All element IDs are prefixed with "wrc_"
+5. Task names match the requirements verbatim
+6. The parallel activities (shipment order and pickup scheduling) are properly connected with parallel gateways
+7. The completeness check and warranty decision are implemented as exclusive gateways
+
+The diagram follows the exact flow you described, with no additional paths or error handling beyond what was specified.

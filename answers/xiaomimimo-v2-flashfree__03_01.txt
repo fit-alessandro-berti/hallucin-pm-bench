@@ -1,0 +1,103 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="AcmeTechSupportTicket" isExecutable="true">
+    <!-- Start -->
+    <startEvent id="start" name="Customer submits support ticket">
+      <outgoing>flow1</outgoing>
+    </startEvent>
+
+    <!-- Step 2 -->
+    <serviceTask id="t1" name="Classify Ticket">
+      <incoming>flow1</incoming>
+      <outgoing>flow2</outgoing>
+    </serviceTask>
+
+    <!-- Decision 1: Classification -->
+    <exclusiveGateway id="gw1" name="Is Password Reset?">
+      <incoming>flow2</incoming>
+      <outgoing>flow3</outgoing>
+      <outgoing>flow4</outgoing>
+    </exclusiveGateway>
+
+    <!-- Path A: Password Reset -->
+    <serviceTask id="t2" name="Provide Reset Instructions">
+      <incoming>flow3</incoming>
+      <outgoing>flow5</outgoing>
+    </serviceTask>
+
+    <!-- Path B: Normal Flow -->
+    <serviceTask id="t3" name="Initial Diagnosis">
+      <incoming>flow4</incoming>
+      <outgoing>flow6</outgoing>
+    </serviceTask>
+
+    <!-- Decision 2: Resolve or Forward -->
+    <exclusiveGateway id="gw2" name="Resolve Issue or Forward?">
+      <incoming>flow6</incoming>
+      <outgoing>flow7</outgoing>
+      <outgoing>flow8</outgoing>
+    </exclusiveGateway>
+
+    <!-- Branch: Forward -->
+    <serviceTask id="t4" name="Forward to Specialist">
+      <incoming>flow8</incoming>
+      <outgoing>flow9</outgoing>
+    </serviceTask>
+
+    <!-- Specialist finishes (Sequence flow merges implicitly at Resolve Issue) -->
+    <!-- Main Task: Resolve Issue -->
+    <serviceTask id="t5" name="Resolve Issue">
+      <!-- Handles both "After Forward" and "After Diagnosis (Resolve)" -->
+      <incoming>flow9</incoming>
+      <incoming>flow7</incoming>
+      <outgoing>flow10</outgoing>
+    </serviceTask>
+
+    <!-- Step 7 -->
+    <serviceTask id="t6" name="Confirm with Customer">
+      <incoming>flow10</incoming>
+      <outgoing>flow11</outgoing>
+    </serviceTask>
+
+    <!-- Decision 3: Customer Confirmation (Loop Back or Close) -->
+    <exclusiveGateway id="gw3" name="Issue Persist?">
+      <incoming>flow11</incoming>
+      <outgoing>flow12</outgoing>
+      <outgoing>flow13</outgoing>
+    </exclusiveGateway>
+
+    <!-- Loop Back (Line 9) -->
+    <sequenceFlow id="flow13" sourceRef="gw3" targetRef="t3" />
+
+    <!-- Close Ticket -->
+    <endEvent id="end1" name="Ticket Closed">
+      <incoming>flow12</incoming>
+    </endEvent>
+
+    <!-- Basic Flows -->
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="t1" />
+    <sequenceFlow id="flow2" sourceRef="t1" targetRef="gw1" />
+    
+    <!-- Flows from Decision 1 -->
+    <sequenceFlow id="flow3" sourceRef="gw1" targetRef="t2" /> <!-- Name: Password Reset -->
+    <sequenceFlow id="flow4" sourceRef="gw1" targetRef="t3" /> <!-- Name: Otherwise -->
+
+    <!-- Flows from Password Reset Path -->
+    <sequenceFlow id="flow5" sourceRef="t2" targetRef="t5" /> <!-- Direct to Resolve -->
+
+    <!-- Flows from Decision 2 -->
+    <sequenceFlow id="flow7" sourceRef="gw2" targetRef="t5" /> <!-- Resolve Issue -->
+    <sequenceFlow id="flow8" sourceRef="gw2" targetRef="t4" /> <!-- Forward -->
+
+    <!-- Flow from Forward to Resolve -->
+    <sequenceFlow id="flow9" sourceRef="t4" targetRef="t5" />
+
+    <!-- Flow from Resolve to Confirm -->
+    <sequenceFlow id="flow10" sourceRef="t5" targetRef="t6" />
+
+    <!-- Flows from Decision 3 (Loop) -->
+    <sequenceFlow id="flow11" sourceRef="t6" targetRef="gw3" />
+    <sequenceFlow id="flow12" sourceRef="gw3" targetRef="end1" /> <!-- Confirm/Closed -->
+  </process>
+</definitions>
+```

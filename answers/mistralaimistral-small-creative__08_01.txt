@@ -1,0 +1,47 @@
+### **Answer: No, T5 cannot fire before T3 in any reachable marking.**
+
+---
+
+### **Proof of Impossibility**
+To show that **T5 cannot fire before T3**, we analyze the enabling conditions of **T5** and the dependencies between transitions.
+
+1. **Enabling Condition of T5**:
+   - **T5** requires:
+     - **1 token in p3** (normal arc from p3).
+     - **0 tokens in p4** (inhibitor arc from p4).
+   - Thus, **T5** can only fire when **p3 has a token and p4 is empty**.
+
+2. **How Tokens Reach p3 and p4**:
+   - The only way to get a token in **p3** is by firing **T2**, which consumes a token from **p1**.
+   - The only way to get a token in **p1** is by firing **T1**, which consumes the initial token from **p0** and produces tokens in **p1** and **p2** (in parallel).
+   - The only way to get a token in **p4** is by firing **T3**, which consumes the token from **p2**.
+
+3. **Key Observation**:
+   - **T2** (which produces the token in **p3**) **cannot fire until T1 fires** (since **p1** starts empty).
+   - **T3** (which produces the token in **p4**) **cannot fire until T1 fires** (since **p2** starts empty).
+   - **T5** requires **p4 to be empty**, but **T3** (the only transition that can put a token in **p4**) **must fire before T5 can fire** (because **p4 starts empty**, and **T3** is the only way to add a token to it).
+
+4. **Contradiction if T5 Fires Before T3**:
+   - If **T5** were to fire before **T3**, then **p4 would still be empty** (since **T3** hasn’t fired yet).
+   - However, for **T5** to fire, **p3 must have a token**, which requires **T2** to have fired.
+   - But **T2** cannot fire until **T1** fires, and **T1** produces tokens in **p1** and **p2** (which are inputs to **T2** and **T3**, respectively).
+   - If **T3** hasn’t fired yet, then the token in **p2** (produced by **T1**) is still available, meaning **T3 could fire at any time** (since it only requires **p2** to have a token).
+   - Thus, **T5 cannot fire before T3** because **T3 is always enabled as soon as T1 fires**, and **T5’s inhibitor condition (p4 = 0) is violated the moment T3 fires**.
+
+5. **Formal Justification**:
+   - The **only way T5 can fire** is if:
+     - **T1** has fired (to produce tokens in **p1** and **p2**),
+     - **T2** has fired (to consume the token in **p1** and produce a token in **p3**),
+     - **T3 has not yet fired** (so **p4 is still empty**).
+   - However, **T3 is enabled as soon as T1 fires** (since **p2** has a token), and **there is no constraint preventing T3 from firing immediately after T1**.
+   - If **T3 fires before T5**, then **p4 gains a token**, disabling **T5** (due to the inhibitor arc).
+   - If **T3 does not fire before T5**, then **T5 could fire**, but this would require **T3 to never fire**, which is impossible because **T3 is always enabled once T1 fires** and **the net is safe (no token is ever lost)**.
+   - Thus, **T5 can only fire after T3 has fired**, because **T3 must eventually fire to consume the token in p2**, and once it does, **p4 is no longer empty**, disabling **T5**.
+
+---
+
+### **Conclusion**
+**T5 cannot fire before T3 in any reachable marking** because:
+1. **T3 is always enabled as soon as T1 fires** (since **p2** has a token).
+2. **T5 requires p4 to be empty**, but **T3 is the only transition that can put a token in p4**, and it **must fire eventually** (since the net is safe and tokens cannot be lost).
+3. Thus, **T5 can only fire after T3 has already fired**, making it impossible for **T5 to fire before T3**.

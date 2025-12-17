@@ -1,0 +1,53 @@
+Let's analyze the Petri net step by step to determine whether **T5** can fire before **T3** in any reachable marking.
+
+---
+
+### **Key Observations:**
+1. **T5's Inputs:** `pd` and `pe` must both be marked for **T5** to fire.
+   - `pd` is produced by **T2b** (directly) or **T3** (via `pc`).
+   - `pe` is produced by **T4** (from `pb`).
+
+2. **T3's Input:** `pc` must be marked for **T3** to fire.
+   - `pc` is produced by **T2** (from `pa`).
+
+3. **Initial Marking:** Only `p0` is marked (`p0 = 1`), so the only initially enabled transition is **T1**.
+
+---
+
+### **Can T5 Fire Before T3?**
+For **T5** to fire before **T3**, the following must hold:
+- **T5** must be enabled (i.e., `pd` and `pe` are marked) **before** `pc` is marked (since **T3** requires `pc`).
+- However, `pd` is either:
+  - Produced directly by **T2b** (from `pa`), or
+  - Produced by **T3** (from `pc`).
+
+**Critical Insight:**
+- If **T5** fires before **T3**, then `pd` must come from **T2b** (not **T3**), because **T3** hasn't fired yet.
+- But **T2b** and **T2** both consume `pa` (they are in conflict). If **T2b** fires (producing `pd`), then **T2** cannot fire (since `pa` is consumed), and thus `pc` is never produced. This means **T3** cannot fire at all, which contradicts the requirement that **T5** fires *before* **T3**.
+
+**Formal Explanation:**
+- For **T5** to fire before **T3**, `pd` must be marked before `pc` is marked.
+- The only way to mark `pd` before `pc` is by firing **T2b** (since **T3** hasn't fired yet).
+- But firing **T2b** consumes `pa`, preventing **T2** from firing, which means `pc` is never marked. Thus, **T3** cannot fire at all.
+- This is a **deadlock**: **T5** cannot fire (since `pe` is not marked yet), and **T3** cannot fire (since `pc` is not marked).
+
+**Conclusion:** It is **impossible** for **T5** to fire before **T3** in any reachable marking.
+
+---
+
+### **Formal Proof (by Contradiction):**
+Assume there exists a firing sequence where **T5** fires before **T3**. Then:
+1. **T5** fires, meaning `pd` and `pe` are marked.
+   - `pd` must come from **T2b** (since **T3** hasn't fired yet).
+   - `pe` must come from **T4** (which requires `pb`).
+2. For **T2b** to fire, `pa` must be marked (from **T1**).
+   - Firing **T2b** consumes `pa`, so **T2** cannot fire (since `pa` is now empty).
+   - Thus, `pc` is never marked, and **T3** cannot fire.
+3. This contradicts the assumption that **T3** fires after **T5**.
+
+Therefore, no such firing sequence exists.
+
+---
+
+### **Short Answer:**
+**No**, it is impossible for **T5** to fire before **T3** in any reachable marking. The reason is that marking `pd` (required for **T5**) via **T2b** consumes `pa`, preventing **T2** from firing and thus leaving `pc` unmarked (so **T3** cannot fire). This creates a deadlock where neither **T5** nor **T3** can fire.

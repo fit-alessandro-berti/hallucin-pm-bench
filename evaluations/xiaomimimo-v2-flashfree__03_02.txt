@@ -1,0 +1,16 @@
+**3.2**
+
+### Key Differences and Errors (Strict Evaluation):
+- **JSON Structure/Format (Major penalty, -3.0)**: LLM uses full BPMN 2.0 JSON (definitions, collaboration, process, flowNode, sequenceFlow arrays, $type, etc.). Ground truth uses simplified custom schema ("process_id", "elements" array with type/name, "flows" array with source/target/condition). Completely incompatible; cannot parse one as the other. Utmost strictness demands near-exact match.
+- **Parallel Branching/Joining (Critical error, -1.5)**: LLM correctly forks at `ParallelGateway_1` but **fails to join** with a second parallel gateway—instead routes both to `ExclusiveGateway_1` (wrong semantics: exclusive join fires on first arrival, cancelling the other; violates "must log" and "may finish earlier/later"). Ground truth correctly uses `forkLogging` (parallelGateway) → tasks → `joinAfterLogging` (parallelGateway).
+- **Wait for Reply Logic (Critical error, -1.5)**: LLM's `ExclusiveGateway_1` decides "replyReceived" **immediately after send/log** (no actual wait; conditions premature). Then invalid `IntermediateCatchEvent_1` with **both timer AND message definitions** (BPMN violation: catch events are exclusive). Ground truth correctly uses `eventBasedGateway` (`awaitReply`) → `customerReply` (message catch) OR `timer24h` (timer catch) for "wait up to 24h".
+- **Classification Gateway (-0.3)**: LLM uses `InclusiveGateway` (allows multiple paths); ground truth `exclusiveGateway`. Mutually exclusive paths need XOR.
+- **Provide Resolution (-0.3)**: LLM invents **two tasks** (`ProvideResolution_Simple`, `_Complex`); ground truth one shared `provideResolution`. Minor hallucination.
+- **Parsing Step (-0.2)**: LLM adds explicit `Task_ParseEmail`; ground truth combines into `createTicket` post-start (text: "parsed and a Ticket is created"—one logical step).
+- **Cancellation (-0.5)**: LLM limits `BoundaryEvent_Cancel` to **only `Task_ParseEmail`** (interrupting); ground truth has global `cancelEvent` (intermediate message catch, implying anytime). Text: "at any point before closure".
+- **Extra/Hallucinated Elements (-0.3)**: LLM adds collaboration/participant, lanes, messages (`CustomerReplyMessage`), conditions (`${...}`), multiple ends. Ground truth minimal, no extras. No escalations, but additional gateways violate "model *only* what is described".
+- **Names/Minor Mismatches (-0.2)**: E.g., LLM "Parse Email and Create Ticket" vs. GT "Create Ticket"; "Is Simple?" vs. "Simple or Complex?"; extra flows/IDs.
+
+**Strengths (partial credit)**: Captures all core tasks (classification, root cause, resolution, send/log parallel intent, reminder, close), start/end, conditions. Only JSON output. No invented escalations.
+
+Total raw alignment ~35% (core elements present but flows/logic broken). Strict scaling: 10.0 = identical; major structural/logic diffs → 3.2.

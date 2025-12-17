@@ -1,0 +1,13 @@
+**2.5**
+
+### Key Evaluation Rationale (Strict Assessment)
+- **Invalid JSON structure (-3.0 major penalty)**: Duplicate keys under `process` (e.g., multiple `"task"`, `"intermediateCatchEvent"`, `"endEvent"`) render it unparsable as valid JSON. JSON objects cannot have duplicate keys; last one overwrites priors.
+- **Schema mismatch (-2.0)**: Uses verbose, pseudo-BPMN-XML format (`"bpmn"."definitions"`) vs. ground truth's simple `{"process_id": ..., "elements": [...], "flows": [...]}`. Not equivalent representation.
+- **Incorrect parallel modeling (-1.5)**: Parallel gateway after `SendResponse` forks to `LogSolution` (dead-ends, no join) and `WaitForReply`, but no synchronization. Violates BPMN parallel semantics; log doesn't integrate properly. Ground truth uses fork/join around `sendResponse`/`logSolution`.
+- **Faulty timer/reply wait (-1.0)**: `Event_WaitForReply` (timer?) with conditional flows (`${replyReceived}`) is non-standard/wrong; BPMN uses event-based gateway + catch events (as in ground truth). Extra `Event_NoReply` redundant.
+- **Cancel handling broken (-0.5)**: `CancelTicketEvent` wired incorrectly (`SequenceFlow_CancelCheck` from start event; odd `messageFlow`). Doesn't model "at any point before closure" (needs boundary/non-interrupting catches); ground truth lists as catch → terminate.
+- **Flow/ID inconsistencies (-0.5)**: Mismatches like `Task_InitialClassification` outgoing lists `RouteSimple/Complex` but flow `SequenceFlow_InitialClassification` to gateway. Duplicate/missing incomings (e.g., `Task_CloseTicket` flows overlap IDs).
+- **Minor inaccuracies (-0.5 total)**: Start splits "receive/parse/create" unnecessarily (description combines 1-2); no `"terminateEndEvent"` (ground truth specific); invented `timerEventDefinition`, exporter metadata; `Task_CloseTicket` incoming from `ReplyReceived` missing proper wiring.
+- **Positives (partial credit)**: Captures core sequence (classify → route → resolution → send → wait/close), no escalations hallucinated, conditions on XOR flows.
+
+Total differences are structural/fundamental, not faithful translation. Ground truth is clean, executable simplified BPMN; LLM is broken/inaccurate.

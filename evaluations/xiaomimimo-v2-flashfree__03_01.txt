@@ -1,0 +1,33 @@
+**2.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer deviates significantly from the ground truth (GT) in structure, flow logic, naming, BPMN elements, and adherence to the prompt's "exactly as stated" rule, warranting a low score under utmost strictness. Key differences:
+
+#### **Critical Flow Errors (Major Deductions: -5.0 points)**
+- **Password reset path hallucinated**: LLM routes `t2` (Provide Reset Instructions) → `t5` (Resolve Issue) → `t6` (Confirm). GT correctly routes `t2` → `t6` directly (`f5`), skipping "Resolve Issue" (as description line 3 states it "goes straight to Provide Reset Instructions"; no mention of routing to "Resolve Issue"). This invents an unmentioned path/merger at `t5`, violating "Do not invent or add".
+- Merges password path into "Resolve Issue" task semantically incorrectly ("Resolve Issue" is only for post-diagnosis/specialist per lines 5-6).
+
+#### **Missing/Invalid BPMN Elements (Deductions: -1.5 points)**
+- No `<conditionExpression>` on gateway outgoing flows (e.g., GT has `yes`/`no`/`Customer Confirms?` logic via `f3/f4/f7/f8/f12/f13`). LLM gateways lack conditions, making decisions implicit/unmodeled.
+- `serviceTask` used throughout (e.g., `t1`, `t3`). GT uses `task` (except implicit service nature); unnecessary specificity.
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration.
+- `isExecutable="true"` vs. GT `"false"`.
+
+#### **Naming & ID Inconsistencies (Deductions: -1.0 points)**
+- Names not exact/concise matches:
+  | Element | LLM | GT | Issue |
+  |---------|-----|----|-------|
+  | Start | "Customer submits support ticket" | "Ticket Submitted" | Verbose, not concise. |
+  | Classify | "Classify Ticket" | "Auto-Classification" | Not "automatically classified". |
+  | gw1 | "Is Password Reset?" | "Password Reset?" | Extra words. |
+  | gw2 | "Resolve Issue or Forward?" | "Resolved Internally?" | Invented phrasing. |
+  | gw3 | "Issue Persist?" | "Customer Confirms?" | Inverted/mismatched line 8-9. |
+  | Forward | `t4` | `t5` | ID swap, but minor. |
+- Process: `id="AcmeTechSupportTicket"` vs. GT `id="support_ticket" name="Support-Ticket"`.
+
+#### **Structural/Syntactic Issues (Deductions: -0.5 points)**
+- Extra `xmlns:bpmn` (redundant), `targetNamespace="http://bpmn.io/schema/bpmn"` vs. GT `"http://acmetech/support"`.
+- Inline `<sequenceFlow id="flow13"/>` + comments bloat XML (unnecessary; GT is clean list).
+- 3 gateways modeled (correct logically), but prompt specifies "two decision points" (minor, but GT has 3).
+
+The model captures the loop (`gw3` → `t3` Initial Diagnosis) and no extra activities/timers (avoids common traps), but core password flow invention + omissions make it non-equivalent. Equivalent to ~20% match; strict scaling yields 2.0.

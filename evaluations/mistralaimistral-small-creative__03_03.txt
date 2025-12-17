@@ -1,0 +1,22 @@
+**4.0**
+
+### Evaluation Rationale (Strict Rubric Application)
+- **Semantic equivalence to ground truth**: Low. Core flow matches in high-level structure (start → validate → completeness GW → loopback on incomplete → warranty GW → reject/end or parallel split/join → update → close → success end), gateways correct (2 exclusive, parallel split/join), 2 end events, all IDs prefixed "wrc_". However, **major deductions for hallucinated/extra elements**:
+  - Extra task `wrc_wait_for_info` ("Wait until information is received") + supporting flows (`wrc_flow4`, `wrc_flow5`): Not in ground truth or explicitly required as separate activity (prompt describes "requests ... and waits" as single loop behavior; GT uses direct `request_info → validate` loop).
+  - Extra task `wrc_check_eligibility` ("Check warranty eligibility") + flow (`wrc_flow7`): Ground truth omits (direct `complete_gw → warranty_gw`); prompt requires modeling explicitly mentioned activities, but LLM adds vs GT baseline.
+  - Results in ~20% more tasks/flows, altering loop and eligibility sequences semantically (extra steps not equivalent).
+- **Task names**: Partial match (~70% verbatim to prompt/GT). Correct: "Request missing information", "Send rejection notice", "Update inventory records", "Close the claim". Mismatches/diffs:
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | Validate | "Validate the claim" | "Validate the claim" | Match, but ID diff. |
+  | Shipment | Full verbatim ("...for the replacement unit") | Shortened ("Create shipment order") | Extra detail vs GT. |
+  | Pickup | Full verbatim ("...of the faulty product") | Shortened ("Schedule courier pickup") | Extra detail vs GT. |
+  - Strict verbatim loss on capitalization/imperative (e.g., prompt "validates/checks/send" vs nouns).
+- **Other elements**:
+  - Gateway/event names differ (e.g., LLM "Is claim complete?" vs GT "Claim complete?"; ends "Process ended..." vs "Successful end"/"Rejected"): Non-equivalent labels (-1.0).
+  - Parallel GWs named in LLM (unrequired); GT unnamed.
+  - ConditionExpressions added (with invalid `xsi:type`/`tFormalExpression` – missing `xmlns:xsi` → malformed XML): Hallucinated, absent in GT (-1.0).
+  - Namespaces: LLM default ns (valid but verbose); GT `bpmn:` prefixed (minor diff).
+- **Output format**: **Severe violation** (-2.0). Prompt requires "**single self-contained BPMN 2.0 XML document**". LLM wraps in prose ("Here's the...", "Key features...", bullet list) – not pure XML.
+- **Completeness to prompt**: No omissions of required gateways/ends/prefixes/parallel. No invented escalations/errors. But extras violate "Model **only** ... explicitly mentioned".
+- **Scoring**: Starts at 10, deduct 3.0 (extras/hallucinations), 1.5 (name diffs), 1.0 (format/wrapper), 0.5 (technical XML issues). Semantically ~80% aligned but strictness demands near-exact match for high score.

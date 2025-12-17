@@ -1,0 +1,210 @@
+```json
+{
+  "bpmn": {
+    "definitions": {
+      "id": "CustomerSupportTicketProcess",
+      "targetNamespace": "http://bpmn.io/schema/bpmn",
+      "exporter": "BPMN-2.0 Architect",
+      "exporterVersion": "1.0",
+      "process": {
+        "id": "CustomerSupportTicketProcess",
+        "isExecutable": "false",
+        "startEvent": {
+          "id": "StartEvent_ReceiveEmail",
+          "name": "Receive Support Email",
+          "incoming": [],
+          "outgoing": ["SequenceFlow_ParseEmail"]
+        },
+        "intermediateCatchEvent": {
+          "id": "CancelTicketEvent",
+          "name": "Ticket Cancelled",
+          "incoming": ["SequenceFlow_CancelCheck"],
+          "outgoing": ["SequenceFlow_TerminateProcess"]
+        },
+        "task": {
+          "id": "Task_CreateTicket",
+          "name": "Create Ticket in Help-Desk System",
+          "incoming": ["SequenceFlow_ParseEmail"],
+          "outgoing": ["SequenceFlow_InitialClassification"]
+        },
+        "task": {
+          "id": "Task_InitialClassification",
+          "name": "Initial Classification",
+          "incoming": ["SequenceFlow_CreateTicket"],
+          "outgoing": ["SequenceFlow_RouteSimple", "SequenceFlow_RouteComplex"]
+        },
+        "exclusiveGateway": {
+          "id": "Gateway_RouteTicket",
+          "name": "Route Ticket",
+          "incoming": ["SequenceFlow_InitialClassification"],
+          "outgoing": ["SequenceFlow_RouteSimple", "SequenceFlow_RouteComplex"]
+        },
+        "task": {
+          "id": "Task_ProvideResolution",
+          "name": "Provide Resolution",
+          "incoming": ["SequenceFlow_RouteSimple", "SequenceFlow_RootCauseDone"],
+          "outgoing": ["SequenceFlow_SendResponse"]
+        },
+        "task": {
+          "id": "Task_RootCauseAnalysis",
+          "name": "Root Cause Analysis",
+          "incoming": ["SequenceFlow_RouteComplex"],
+          "outgoing": ["SequenceFlow_RootCauseDone"]
+        },
+        "parallelGateway": {
+          "id": "Gateway_ParallelResolution",
+          "name": "Parallel Resolution & Logging",
+          "incoming": ["SequenceFlow_SendResponse"],
+          "outgoing": ["SequenceFlow_LogSolution", "SequenceFlow_WaitForReply"]
+        },
+        "task": {
+          "id": "Task_SendResponse",
+          "name": "Send Response to Customer",
+          "incoming": ["SequenceFlow_ProvideResolution"],
+          "outgoing": ["SequenceFlow_ParallelResolution"]
+        },
+        "task": {
+          "id": "Task_LogSolution",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": ["SequenceFlow_LogSolution"],
+          "outgoing": []
+        },
+        "intermediateCatchEvent": {
+          "id": "Event_WaitForReply",
+          "name": "Wait for Customer Reply (24h)",
+          "incoming": ["SequenceFlow_WaitForReply"],
+          "outgoing": ["SequenceFlow_ReplyReceived", "SequenceFlow_NoReply"]
+        },
+        "timerEventDefinition": {
+          "id": "TimerEventDefinition_24h",
+          "timeDuration": "PT24H"
+        },
+        "intermediateCatchEvent": {
+          "id": "Event_NoReply",
+          "name": "24h Elapsed (No Reply)",
+          "incoming": ["SequenceFlow_NoReply"],
+          "outgoing": ["SequenceFlow_SendReminder"]
+        },
+        "task": {
+          "id": "Task_SendReminder",
+          "name": "Send Reminder",
+          "incoming": ["SequenceFlow_SendReminder"],
+          "outgoing": ["SequenceFlow_CloseTicket"]
+        },
+        "task": {
+          "id": "Task_CloseTicket",
+          "name": "Close Ticket",
+          "incoming": ["SequenceFlow_ReplyReceived", "SequenceFlow_SendReminder"],
+          "outgoing": []
+        },
+        "endEvent": {
+          "id": "EndEvent_Terminate",
+          "name": "Terminate Process",
+          "incoming": ["SequenceFlow_TerminateProcess"],
+          "outgoing": []
+        },
+        "endEvent": {
+          "id": "EndEvent_ProcessComplete",
+          "name": "Process Complete",
+          "incoming": ["SequenceFlow_CloseTicket"],
+          "outgoing": []
+        },
+        "sequenceFlow": [
+          {
+            "id": "SequenceFlow_ParseEmail",
+            "sourceRef": "StartEvent_ReceiveEmail",
+            "targetRef": "Task_CreateTicket"
+          },
+          {
+            "id": "SequenceFlow_CreateTicket",
+            "sourceRef": "Task_CreateTicket",
+            "targetRef": "Task_InitialClassification"
+          },
+          {
+            "id": "SequenceFlow_InitialClassification",
+            "sourceRef": "Task_InitialClassification",
+            "targetRef": "Gateway_RouteTicket"
+          },
+          {
+            "id": "SequenceFlow_RouteSimple",
+            "sourceRef": "Gateway_RouteTicket",
+            "targetRef": "Task_ProvideResolution",
+            "conditionExpression": "${ticketType == 'Simple'}"
+          },
+          {
+            "id": "SequenceFlow_RouteComplex",
+            "sourceRef": "Gateway_RouteTicket",
+            "targetRef": "Task_RootCauseAnalysis",
+            "conditionExpression": "${ticketType == 'Complex'}"
+          },
+          {
+            "id": "SequenceFlow_RootCauseDone",
+            "sourceRef": "Task_RootCauseAnalysis",
+            "targetRef": "Task_ProvideResolution"
+          },
+          {
+            "id": "SequenceFlow_ProvideResolution",
+            "sourceRef": "Task_ProvideResolution",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "id": "SequenceFlow_SendResponse",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "Gateway_ParallelResolution"
+          },
+          {
+            "id": "SequenceFlow_LogSolution",
+            "sourceRef": "Gateway_ParallelResolution",
+            "targetRef": "Task_LogSolution"
+          },
+          {
+            "id": "SequenceFlow_WaitForReply",
+            "sourceRef": "Gateway_ParallelResolution",
+            "targetRef": "Event_WaitForReply"
+          },
+          {
+            "id": "SequenceFlow_ReplyReceived",
+            "sourceRef": "Event_WaitForReply",
+            "targetRef": "Task_CloseTicket",
+            "conditionExpression": "${replyReceived == true}"
+          },
+          {
+            "id": "SequenceFlow_NoReply",
+            "sourceRef": "Event_WaitForReply",
+            "targetRef": "Event_NoReply",
+            "conditionExpression": "${replyReceived == false}"
+          },
+          {
+            "id": "SequenceFlow_SendReminder",
+            "sourceRef": "Event_NoReply",
+            "targetRef": "Task_SendReminder"
+          },
+          {
+            "id": "SequenceFlow_CloseTicket",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "id": "SequenceFlow_TerminateProcess",
+            "sourceRef": "CancelTicketEvent",
+            "targetRef": "EndEvent_Terminate"
+          },
+          {
+            "id": "SequenceFlow_CancelCheck",
+            "sourceRef": "StartEvent_ReceiveEmail",
+            "targetRef": "CancelTicketEvent",
+            "isImmediate": "true"
+          }
+        ],
+        "messageFlow": [
+          {
+            "id": "MessageFlow_CancelTicket",
+            "sourceRef": "CancelTicketEvent",
+            "targetRef": "Task_CreateTicket"
+          }
+        ]
+      }
+    }
+  }
+}
+```

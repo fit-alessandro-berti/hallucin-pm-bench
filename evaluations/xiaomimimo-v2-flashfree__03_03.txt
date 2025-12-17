@@ -1,0 +1,21 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+Using utmost strictness per instructions, grading prioritizes **semantic equivalence** to the ground truth (minimal, 34-line XML without extras) while ensuring fidelity to prompt requirements (only explicit elements, verbatim task names, specified gateways/ends, wrc_ prefixes). Differences in structure, elements, names, and content result in major deductions. Base score 10.0, with cumulative penalties:
+
+- **Major deductions (-4.0 total)**:
+  - **Extra hallucinated elements (-2.5)**: Added `intermediateCatchEvent` ("information received") with `messageEventDefinition` and 2 extra sequence flows. Prompt forbids inventing beyond stated elements; wait is implied via loop (as in ground truth direct `request_info → validate`), not explicit message event. This alters semantics (adds unmentioned receive step).
+  - **Omitted/mismatched verbatim task name (-1.0)**: "validate the claim" ≠ "validates the claim" (tense mismatch; prompt "**validates the claim**"). Strict verbatim rule violated; small error = significant loss. Other tasks close but "Schedule courier pickup" omits "of the faulty product" qualifier (minor, no further deduct).
+  - **Extra check eligibility task (-0.5 relative to ground)**: Present (correct per prompt step 3), but ground truth omits it (direct gw→gw); adds divergence.
+
+- **Moderate deductions (-2.0 total)**:
+  - **Entire `<bpmndi:BPMNDiagram>` section + 50+ DI shapes/edges (-1.5)**: Massive extra (~200 lines); ground truth is minimal logical model without layout. Prompt requests "BPMN 2.0 XML document," not visual diagram. Hallucinated positions/waypoints.
+  - **Structural/misMatches (-0.5)**: Different process ID/name, `isExecutable="true"` vs "false"; extra xmlns (bpmn.io); gateway/end names diverge (e.g., "Is claim complete?" vs "Claim complete?", both ends "End" vs distinct); start name "online warranty claim" vs "Online warranty claim submitted".
+
+- **Minor/ignored**:
+  - Different IDs/namespaces/whitespace/sequenceFlow counts (20 vs 15): Allowed per rubric if semantically equivalent (but not here due to extras).
+  - wrc_ prefixes: Compliant.
+  - Core structure (start, 2 XOR gw, parallel pair, 2 ends): Matches prompt/ground.
+  - All 8 prompt tasks present (superior to ground's 7).
+
+**Net: 10.0 - 6.0 = 4.0**. Semantically similar flow but invalidated by extras, invention, and verbatim failure. Equivalent minimal XML (ignoring IDs/whitespace) would be ~10.0; this is over-engineered/non-matching.
