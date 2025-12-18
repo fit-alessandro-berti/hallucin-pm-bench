@@ -1,0 +1,29 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the overall structure (correct number of elements: 1 start, 7 tasks/activities, 3 exclusive gateways, 1 end; correct loop from gw3 → t3; no invented escalations/timers/parallel paths) but has **critical semantic errors** and numerous deviations from the ground truth (GT) and prompt:
+
+#### Major Errors (Severe Deductions: -4.0 total equivalent):
+- **Wrong process flow after "Provide Reset Instructions" (t2)**: LLM routes `t2 → t5` ("Resolve Issue") → t6. GT correctly routes `t2 → t6` directly (f5), skipping "Resolve Issue" as the description's "straight to Provide Reset Instructions" (line 3) bypasses diagnosis/resolve/forward (lines 4-6). This invents an unmentioned "Resolve Issue" step for password reset, violating "exactly as stated" and "do not invent."
+- **3 exclusive gateways instead of "the two decision points"**: Prompt specifies **two** (classify + confirm), but both add a third (post-diagnosis); however, LLM's gateway names are vague/inaccurate, amplifying error.
+
+#### Significant Errors (Major Deductions: -1.5 total):
+- **Inaccurate/poor names** (prompt requires exact translation):
+  | Element | LLM | GT | Issue |
+  |---------|-----|----|-------|
+  | t1 | "Classify" (serviceTask) | "Auto-Classification" (task) | Misses "automatically...by the system" (line 2). |
+  | gw1 | "Type?" | "Password Reset?" | Vague; doesn't reflect line 3. |
+  | gw2 | "Action?" | "Resolved Internally?" | Vague; doesn't capture resolve vs. forward (line 5). |
+  | gw3 | "Resolved?" | "Customer Confirms?" | Wrong; misrepresents customer feedback (lines 8-9). |
+  | end | "Closed" | "Ticket Closed" | Imprecise (line 10). |
+- **Task types invented**: serviceTask/userTask add unmentioned semantics (e.g., service for auto tasks ok-ish, but userTask assumes human everywhere); GT uses neutral `task`.
+- **Process attributes**: id="ticketProcess" (no name), `isExecutable="true"` vs. GT's "support_ticket"/"Support-Ticket"/`false`.
+
+#### Minor Errors (Cumulative -0.5):
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` header.
+- targetNamespace mismatch.
+- Condition expressions: LLM uses FEEL `#{...}` (only on some outflows, defaults implicit); GT uses consistent `tFormalExpression` "yes"/"no" on **all** outflows (BPMN best practice).
+- Extraneous flow `name` attributes (e.g., "Password").
+- ID ordering (t4 forward/t5 resolve vs. GT t5 forward/t4 resolve): arbitrary but inconsistent.
+
+**Overall**: ~60% structural match, but flow/logic error breaks fidelity to description (password path not "straight"), names imprecise, inventions in types/attrs. Strict policy docks heavily for any deviation—nothing "exact." No hallucinations like extras, but still far from GT.

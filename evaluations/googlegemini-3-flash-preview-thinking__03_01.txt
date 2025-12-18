@@ -1,0 +1,12 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the overall structure (start/classify/gw1/reset vs diagnosis path/gw2/resolve vs forward/rework loop from gw3 to diagnosis/end), uses concise IDs, stays under 40 lines, includes exactly the required tasks/events/gateways from the description (no inventions like timers or extra activities), and correctly models the loop back to "Initial Diagnosis". However, under utmost strictness vs. ground truth, there are **critical differences** warranting major deductions (small errors like naming lose ~0.5 each; structural/logic errors lose 2+ each):
+
+- **Major logic/flow error (-3.0)**: After "Provide Reset Instructions" (t2), LLM routes to "Resolve Issue" (f5: t2→t5), inserting an unmentioned "Resolve Issue" execution on the password path (violates "exactly as stated" and "do not invent"). Ground truth correctly routes directly to "Confirm with Customer" (f5: t2→t6), bypassing "Resolve Issue" since description doesn't place it there (it's only for post-diagnosis/agent or post-specialist).
+- **Missing conditionExpressions (-2.0)**: LLM uses informal `name` attributes on flows (e.g., "Password Reset", "Yes") for all 6 decision flows. Ground uses proper BPMN `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on gw1/gw2/gw3 outgoings—essential for executable BPMN decisions.
+- **Naming mismatches (-1.5 total)**: t1 ("Classify Ticket" vs "Auto-Classification"); gw1 ("Classification" vs "Password Reset?"); gw2 ("Diagnosis Outcome" vs "Resolved Internally?"); gw3 ("Resolution Confirmed?" vs "Customer Confirms?"). Even minor semantic shifts penalized strictly.
+- **Structural/attribute diffs (-1.0 total)**: No `<?xml declaration`; `targetNamespace="AcmeTech"` vs `"http://acmetech/support"`; process `id="p1" isExecutable="true"` vs `id="support_ticket" name="Support-Ticket" isExecutable="false"`; swapped t4/t5 IDs (forward/resolve).
+- **Minor completeness (-0.5)**: Ground declares `t4` Resolve before `t5` Forward (logical order matching description flow); LLM reverses.
+
+Base 10 → -8.0 deductions = 2.0 floor-adjusted to 4.0 for partial correctness (no hallucinations, loop/gw exact, all described elements present). Functionally ~80% match but strict XML/process fidelity fails.

@@ -1,0 +1,131 @@
+```json
+{
+  "definitions": {
+    "process": {
+      "id": "Process_SupportTicket",
+      "name": "Customer Support Ticket Process",
+      "isExecutable": true,
+      "flowElements": [
+        {
+          "id": "StartEvent_EmailReceived",
+          "type": "startEvent",
+          "name": "Support e-mail received"
+        },
+        {
+          "id": "Task_ParseEmail",
+          "type": "serviceTask",
+          "name": "Parse e-mail and Create Ticket"
+        },
+        {
+          "id": "Task_InitialClassification",
+          "type": "userTask",
+          "name": "Initial Classification"
+        },
+        {
+          "id": "Gateway_Classification",
+          "type": "exclusiveGateway",
+          "name": "Route?"
+        },
+        {
+          "id": "Task_RootCauseAnalysis",
+          "type": "userTask",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "Task_ProvideResolution",
+          "type": "userTask",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "Gateway_MergeResolution",
+          "type": "exclusiveGateway"
+        },
+        {
+          "id": "Gateway_ForkParallel",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "Task_SendResponse",
+          "type": "serviceTask",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "Task_LogKB",
+          "type": "serviceTask",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "Gateway_JoinParallel",
+          "type": "parallelGateway"
+        },
+        {
+          "id": "Gateway_WaitEvent",
+          "type": "eventBasedGateway"
+        },
+        {
+          "id": "Catch_CustomerReply",
+          "type": "intermediateCatchEvent",
+          "name": "Customer Reply",
+          "eventDefinition": "message"
+        },
+        {
+          "id": "Catch_24Hours",
+          "type": "intermediateCatchEvent",
+          "name": "24 hours",
+          "eventDefinition": "timer"
+        },
+        {
+          "id": "Task_SendReminder",
+          "type": "serviceTask",
+          "name": "Send Reminder"
+        },
+        {
+          "id": "Task_CloseTicket",
+          "type": "serviceTask",
+          "name": "Close Ticket"
+        },
+        {
+          "id": "EndEvent_Closed",
+          "type": "endEvent",
+          "name": "Process Finished"
+        },
+        {
+          "id": "BoundaryEvent_Cancel",
+          "type": "boundaryEvent",
+          "attachedToRef": "SubProcess_SupportLifecycle",
+          "cancelActivity": true,
+          "eventDefinition": "message",
+          "name": "Customer cancels ticket"
+        },
+        {
+          "id": "EndEvent_Terminated",
+          "type": "terminateEndEvent",
+          "name": "Terminate"
+        }
+      ],
+      "sequenceFlows": [
+        { "id": "f1", "source": "StartEvent_EmailReceived", "target": "Task_ParseEmail" },
+        { "id": "f2", "source": "Task_ParseEmail", "target": "Task_InitialClassification" },
+        { "id": "f3", "source": "Task_InitialClassification", "target": "Gateway_Classification" },
+        { "id": "f4", "source": "Gateway_Classification", "target": "Task_ProvideResolution", "condition": "Simple" },
+        { "id": "f5", "source": "Gateway_Classification", "target": "Task_RootCauseAnalysis", "condition": "Complex" },
+        { "id": "f6", "source": "Task_RootCauseAnalysis", "target": "Gateway_MergeResolution" },
+        { "id": "f7", "source": "Task_ProvideResolution", "target": "Gateway_MergeResolution" },
+        { "id": "f8", "source": "Gateway_MergeResolution", "target": "Gateway_ForkParallel" },
+        { "id": "f9", "source": "Gateway_ForkParallel", "target": "Task_SendResponse" },
+        { "id": "f10", "source": "Gateway_ForkParallel", "target": "Task_LogKB" },
+        { "id": "f11", "source": "Task_SendResponse", "target": "Gateway_JoinParallel" },
+        { "id": "f12", "source": "Task_LogKB", "target": "Gateway_JoinParallel" },
+        { "id": "f13", "source": "Gateway_JoinParallel", "target": "Gateway_WaitEvent" },
+        { "id": "f14", "source": "Gateway_WaitEvent", "target": "Catch_CustomerReply" },
+        { "id": "f15", "source": "Gateway_WaitEvent", "target": "Catch_24Hours" },
+        { "id": "f16", "source": "Catch_CustomerReply", "target": "Task_CloseTicket" },
+        { "id": "f17", "source": "Catch_24Hours", "target": "Task_SendReminder" },
+        { "id": "f18", "source": "Task_SendReminder", "target": "Task_CloseTicket" },
+        { "id": "f19", "source": "Task_CloseTicket", "target": "EndEvent_Closed" },
+        { "id": "f20", "source": "BoundaryEvent_Cancel", "target": "EndEvent_Terminated" }
+      ]
+    }
+  }
+}
+```

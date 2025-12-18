@@ -1,0 +1,100 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_WarrantyReplacementProcess" isExecutable="true">
+    <bpmn:startEvent id="wrc_StartEvent" name="online warranty claim submitted">
+      <bpmn:outgoing>wrc_Flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:task id="wrc_ValidateClaim" name="validates the claim">
+      <bpmn:incoming>wrc_Flow1</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow_RedoValidation</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow2</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="wrc_Gateway_Incomplete" name="Is complete?">
+      <bpmn:incoming>wrc_Flow2</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_Incomplete</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_Complete</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="wrc_RequestMissingInfo" name="requests missing information">
+      <bpmn:incoming>wrc_Flow_Incomplete</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_RedoValidation</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="wrc_CheckEligibility" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_Flow_Complete</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow3</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="wrc_Gateway_Eligibility" name="Within warranty?">
+      <bpmn:incoming>wrc_Flow3</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_OutOfWarranty</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_Eligible</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="wrc_SendRejection" name="send rejection notice">
+      <bpmn:incoming>wrc_Flow_OutOfWarranty</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow4</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="wrc_End_Rejected" name="Process ended (Rejected)">
+      <bpmn:incoming>wrc_Flow4</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:parallelGateway id="wrc_Split_Parallel">
+      <bpmn:incoming>wrc_Flow_Eligible</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_Shipment</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_Pickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:task id="wrc_CreateShipment" name="Create shipment order">
+      <bpmn:incoming>wrc_Flow_Shipment</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow5</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="wrc_SchedulePickup" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_Flow_Pickup</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow6</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:parallelGateway id="wrc_Join_Parallel">
+      <bpmn:incoming>wrc_Flow5</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow6</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow7</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:task id="wrc_UpdateInventory" name="update inventory records">
+      <bpmn:incoming>wrc_Flow7</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow8</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="wrc_CloseClaim" name="close the claim">
+      <bpmn:incoming>wrc_Flow8</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow9</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="wrc_End_Success" name="Process ended (Success)">
+      <bpmn:incoming>wrc_Flow9</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="wrc_Flow1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim" />
+    <bpmn:sequenceFlow id="wrc_Flow2" sourceRef="wrc_ValidateClaim" targetRef="wrc_Gateway_Incomplete" />
+    <bpmn:sequenceFlow id="wrc_Flow_Incomplete" name="Incomplete" sourceRef="wrc_Gateway_Incomplete" targetRef="wrc_RequestMissingInfo" />
+    <bpmn:sequenceFlow id="wrc_Flow_RedoValidation" sourceRef="wrc_RequestMissingInfo" targetRef="wrc_ValidateClaim" />
+    <bpmn:sequenceFlow id="wrc_Flow_Complete" name="Complete" sourceRef="wrc_Gateway_Incomplete" targetRef="wrc_CheckEligibility" />
+    <bpmn:sequenceFlow id="wrc_Flow3" sourceRef="wrc_CheckEligibility" targetRef="wrc_Gateway_Eligibility" />
+    <bpmn:sequenceFlow id="wrc_Flow_OutOfWarranty" name="Out of warranty" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_SendRejection" />
+    <bpmn:sequenceFlow id="wrc_Flow4" sourceRef="wrc_SendRejection" targetRef="wrc_End_Rejected" />
+    <bpmn:sequenceFlow id="wrc_Flow_Eligible" name="Within warranty" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_Split_Parallel" />
+    <bpmn:sequenceFlow id="wrc_Flow_Shipment" sourceRef="wrc_Split_Parallel" targetRef="wrc_CreateShipment" />
+    <bpmn:sequenceFlow id="wrc_Flow_Pickup" sourceRef="wrc_Split_Parallel" targetRef="wrc_SchedulePickup" />
+    <bpmn:sequenceFlow id="wrc_Flow5" sourceRef="wrc_CreateShipment" targetRef="wrc_Join_Parallel" />
+    <bpmn:sequenceFlow id="wrc_Flow6" sourceRef="wrc_SchedulePickup" targetRef="wrc_Join_Parallel" />
+    <bpmn:sequenceFlow id="wrc_Flow7" sourceRef="wrc_Join_Parallel" targetRef="wrc_UpdateInventory" />
+    <bpmn:sequenceFlow id="wrc_Flow8" sourceRef="wrc_UpdateInventory" targetRef="wrc_CloseClaim" />
+    <bpmn:sequenceFlow id="wrc_Flow9" sourceRef="wrc_CloseClaim" targetRef="wrc_End_Success" />
+  </bpmn:process>
+</bpmn:definitions>
+```

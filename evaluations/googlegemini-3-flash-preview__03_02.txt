@@ -1,0 +1,15 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment)
+- **Critical flow error (-4.0)**: LLM incorrectly models Complex path as Classification → Root Cause Analysis → Merge → Fork (skips "Provide Resolution" entirely, violating description step 4: "Complex tickets require Root Cause Analysis **before resolution**"). Ground truth correctly converges both paths **at** Provide Resolution (Simple → Provide Resolution; Complex → Root Cause → Provide Resolution). This is a fundamental unfaithful translation/hallucination.
+- **JSON structure mismatch (-2.0)**: LLM uses verbose BPMN 2.0-like schema ("definitions" → "process" → "flowElements"/"sequenceFlows") with extras (e.g., "isExecutable", detailed types like "serviceTask"). Ground truth uses simple custom schema ("process_id", "elements[]", "flows[]"). No semantic equivalence.
+- **Invalid elements/references (-1.0)**: BoundaryEvent_Cancel attached to undefined "SubProcess_SupportLifecycle" (hallucination; no subprocess in flowElements). Makes model ill-formed.
+- **Minor mismatches (-0.5 each, total -1.0)**: 
+  - Combined "Parse e-mail and Create Ticket" (LLM) vs. separate "Email Received" start → "Create Ticket" (GT; misses explicit parse).
+  - Event-based gateway modeling approximate but flows to intermediateCatchEvents (f14/f15); GT direct.
+  - ID/names/capitalization (e.g., "Simple" vs. "simple"; "Route?" vs. "Simple or Complex?").
+  - Unnecessary exclusive merge gateway before parallel fork (GT has no pre-resolution merge).
+  - Task types (userTask/serviceTask vs. generic "task").
+- **Partials (+1.0 total)**: Captures parallel fork/join for Send/Log, event wait (reply/timer → reminder/close), terminate end. No invented escalations.
+
+Total conceptual fidelity ~20%; strict penalty for differences yields 2.0.
