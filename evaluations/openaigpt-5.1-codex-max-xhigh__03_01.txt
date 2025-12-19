@@ -1,0 +1,22 @@
+**8.0**
+
+### Evaluation Summary (Strict Line-by-Line and Semantic Comparison)
+The LLM answer correctly models the process topology, sequence flows, loop (gw3 → t3), and uses exactly the required elements (start, end, 7 tasks, 3 exclusive gateways—no inventions like timers/escalations/parallel paths). No hallucinations. Flow connections match GT identically (password reset → confirm; diagnosis → gw2 → resolve/forward → resolve → confirm; confirm → close/loop). Uses concise IDs, single <definitions> block (<40 lines, 33 lines here). Three gateways despite prompt mentioning "two" (matches GT, likely prompt oversight).
+
+**Major Strengths (no point loss):**
+- Exact flow logic per lines 1-10 (e.g., f10: t2→t6; f8/f9: forward→resolve→confirm; f13 loop to "Initial Diagnosis").
+- Valid BPMN 2.0 XML (parses without errors; GT actually has undeclared `xsi` namespace, making it invalid).
+- No added elements/activities.
+
+**Point Losses (utmost strictness, -2.0 total):**
+- **Missing 6 `<conditionExpression>` blocks** on gateway outflows (GT labels branches "yes"/"no"): -1.5. Critical for explicit exclusive gateway decisions (BPMN best practice); omission makes branches implicit/ambiguous despite correct order.
+- **Name mismatches** (-0.5 total):
+  | Element | LLM | GT | Issue |
+  |---------|-----|----|-------|
+  | Process | id="p1" (no name) | id="support_ticket" name="Support-Ticket" | Different ID/name (-0.2) |
+  | t1 | "Classify Ticket" | "Auto-Classification" | Misses "automatically" from line 2 (-0.1) |
+  | gw2 | "Resolve or Forward?" | "Resolved Internally?" | Interpretive diff (-0.1) |
+  | gw3 | "Issue Resolved?" | "Customer Confirms?" | Misses customer focus (line 8/9) (-0.1) |
+- Minor: No `<?xml declaration?>` (-ignored, cosmetic/non-semantic).
+
+Semantically 95%+ match, but strict diff counting (13+ line-level variances from conditions/names) caps at 8.0. Perfect would be identical to GT.

@@ -1,0 +1,22 @@
+**8.2**
+
+### Evaluation Summary (Strict Line-by-Line and Structural Comparison)
+The LLM answer correctly models the process topology **perfectly**: start → classify → gw1 (password check) → [provide reset → confirm OR diagnosis → gw2 (resolve/forward) → [resolve → confirm OR forward → resolve → confirm]] → gw3 (confirm/loop) → [close OR back to diagnosis]. The re-work loop to "Initial Diagnosis" is exact, no inventions (e.g., no timers, SLAs, extra tasks, parallels), 3 exclusive gateways (prompt said "two" but description requires 3; ground truth matches LLM here), concise IDs, <40 lines. No criminal/add violations.
+
+**Strengths (no deduction)**:
+- Exact flow connections (f9/f5: reset→confirm; specialist→resolve; loop gw3→t3/diagnosis).
+- No hallucinations (matches trap notes).
+- isExecutable="false", proper sequenceFlows.
+
+**Strict Deductions (cumulative -1.8 total)**:
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration (-0.3; ground has it).
+- targetNamespace mismatch ("http://example.com/bpmn" vs "/acmetech/support") (-0.2).
+- Process: id="p1" (no name) vs "support_ticket" name="Support-Ticket" (-0.2).
+- Task t1 name "Automatically Classify Ticket" vs "Auto-Classification" (invents longer phrase vs concise; line 2 not quoted) (-0.2).
+- gw2 name "Resolve or Forward?" vs "Resolved Internally?" (-0.2).
+- gw3 name "Issue Resolved?" vs "Customer Confirms?" (minor semantic diff) (-0.1).
+- No `<conditionExpression>` on *any* gateway outflows (major omission: ground has 6 explicit yes/no blocks with xsi:type for all decisions; LLM uses flow `name=` only, incomplete for BPMN exclusiveGateway logic) (-0.4).
+- Minor ID/style: start="s1"/end="e1" vs "start"/"end"; t4/t5 swapped (forward/resolve order reversed in declaration) (-0.1 each, total -0.2).
+- Flow names descriptive ("Persists") but not matching ground's generic conditions (-0.1).
+
+Functional equivalence: 100%. Textual/precise match: ~75% (ids/names/conditions diverge). High score reflects no structural errors despite strictness on diffs.

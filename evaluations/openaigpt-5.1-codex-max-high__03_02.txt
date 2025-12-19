@@ -1,0 +1,15 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Major structural mismatch (fatal, -4.0 points)**: LLM outputs full BPMN 2.0 `definitions` object with `$type`, `messages`, `processes.flowElements` (mixed nodes/flows), `eventSubProcesses`, `incoming`/`outgoing` arrays, and explicit `SequenceFlow` objects. Ground truth uses simple custom format (`process_id`, `elements[]`, `flows[]` with `source`/`target`/`condition`). No overlap in keys or organization—completely incompatible representations.
+- **Extra hallucinated elements (-1.5 points)**: Added `Task_ParseEmail` ("Parse Email") not in ground truth or explicitly required (GT merges parsing into "Create Ticket"). Violates "model *only* what is described" strictness.
+- **Parallel branch logic difference (-1.0 point)**: LLM joins log + close *after* wait/timer/resolution (correctly parallels log with reply period per text). GT joins log + send *before* awaitReply (log blocks wait start, mismatches "may finish ... later than customer reply"). Semantically divergent.
+- **Cancel handling difference (-0.5 points)**: LLM uses `eventSubProcess` (triggered, interrupting message to terminate—valid BPMN but complex/added scope). GT uses loose `intermediateCatchEvent` ("cancelEvent") → `terminateEndEvent` with no integration into main flows (incomplete/invalid as interrupting).
+- **Small mismatches (-1.0 total)**: 
+  - Names differ (e.g., start: "Support Email Received" vs "Email Received"; end: "Process End" vs "End"; gw: "Simple or Complex" vs "Simple or Complex?").
+  - Types: `UserTask` for classification vs plain `task`.
+  - No flow `condition` expressions (GT has "simple"/"complex"; LLM implies via XOR gw).
+  - Extra verbosity: messages, namespaces, timer `timeDuration`, full refs—absent in GT.
+  - GT missing parse but LLM splits it (minor faithfulness issue).
+
+Total: Faithful to description in logic/flow but fails exact GT match on format/content. No escalations invented. Ceil at 2.0 for valid BPMN JSON output.

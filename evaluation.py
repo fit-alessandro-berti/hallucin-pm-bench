@@ -93,11 +93,10 @@ def main1():
     while True:
         modified_something = evaluate()
 
-        if not modified_something:
-            pass
-            #break
+        print("round finished")
 
-        time.sleep(10)
+        if not modified_something:
+            time.sleep(10)
 
 
 def main2():

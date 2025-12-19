@@ -1,0 +1,28 @@
+**2.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer has **significant structural and content differences** from the ground truth, warranting a very low score under utmost strictness (small errors = major deductions; extras/hallucinations heavily penalized per rubric and prompt rules). Key issues:
+
+#### 1. **Hallucinated/Extra Elements (Major Deduction: -5.0 points base)**:
+   - Added `intermediateCatchEvent id="wrc_missingInfoReceived"` and `<messageEventDefinition>` – not explicitly mentioned in prompt ("model **only** explicitly mentioned flow elements"; "do **not** invent"). Ground truth uses simple loopback flow (`wrc_sf4`). This alters semantics (explicit message wait invented).
+   - Added `task id="wrc_checkEligibility" name="checks warranty eligibility"` – ground truth omits entirely (flows directly `wrc_sf5` complete_gw → warranty_gw). Prompt requires modeling explicitly, but difference from GT is extra task + flows.
+   - Results in ~20 sequenceFlows vs GT's exact 15; extra flows like `wrc_flow_request_wait`, `wrc_flow_wait_validate`.
+
+#### 2. **Flow Structure Differences (Major Deduction: -1.5 points)**:
+   - Loop: LLM validate → gw → request → **catch → validate** vs GT validate → gw → request → validate (direct).
+   - Post-complete path: LLM → checkEligibility → warranty_gw vs GT → warranty_gw (direct). Changes diagram logic.
+   - Not semantically equivalent (extras add unmentioned behaviors/steps).
+
+#### 3. **Name Mismatches (Strict Small Errors: -0.5 points each, total -1.0)**:
+   - Task names not verbatim per prompt (e.g., LLM `request missing information` vs text "requests missing information" – missing 's').
+   - Other diffs: start ("Start" vs "Online warranty claim submitted"); ends ("End (Rejection)" vs "Rejected"); validate casing/person ("validates" vs GT "Validate"); reject/send casing; update casing.
+   - Added names on parallel gateways ("Parallel Activities Start/Join") vs GT blank.
+   - Invented conditions (`<conditionExpression><![CDATA[complete]]>` etc.) vs GT flow `name="Yes"/"No"`.
+
+#### 4. **XML/Format Differences (Minor but Cumulative: -0.5 points)**:
+   - Namespace: unprefixed `xmlns` vs GT `xmlns:bpmn` + `bpmn:` prefixes everywhere.
+   - Process: `id="wrc_WarrantyReplacement" isExecutable="true" name=...` vs GT `id="wrc_process" isExecutable="false"` (no name).
+   - All task/gw/flow IDs differ except `wrc_validate`, `wrc_start`, ends (e.g., `wrc_requestMissingInfo` vs `wrc_request_info`; `wrc_completenessGateway` vs `wrc_complete_gw`).
+   - Longer/not minimal (GT: 34 lines exact).
+
+No omissions in LLM (covers all GT elements + extras), but extras/hallucinations + mismatches make it non-equivalent. Semantically close but invalid per "only explicit" rule. Perfect match or equivalent (ids/whitespace only): 10.0; this fails on multiple axes.

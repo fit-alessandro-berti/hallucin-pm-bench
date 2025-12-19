@@ -1,0 +1,27 @@
+**9.5**
+
+### Evaluation Summary (Strict Rubric Application)
+- **Semantic Equivalence to Prompt (Full Credit Baseline: 10.0)**: The LLM answer perfectly models **all explicitly mentioned flow elements** without invention (no escalations, approvals, or error paths). It includes:
+  | Required Element | LLM Implementation | Status |
+  |------------------|--------------------|--------|
+  | Start event | `wrc_start` | ✓ |
+  | Validate task + completeness XOR gw + loop via request task | `wrc_task_validate` → `wrc_xg_completeness` → `wrc_task_requests` → loop back | ✓ |
+  | Checks eligibility task + warranty XOR gw | `wrc_task_checks` → `wrc_xg_warranty` | ✓ (Ground truth **omits** this required task, making LLM superior here) |
+  | Rejection path | `send rejection notice` → end | ✓ |
+  | Parallel split/join | `wrc_pg_split`/`wrc_pg_join` for create + schedule | ✓ |
+  | Sequential post-parallel | `update inventory records` → `close the claim` → end | ✓ |
+  | Exactly 2 end events | Rejection + success | ✓ |
+  | All IDs prefixed `wrc_` | Yes (descriptive, e.g., `wrc_sf_start_to_validate`) | ✓ |
+  | Task names **verbatim** to bolded prompt text | Exact matches (e.g., "validates the claim", "checks warranty eligibility", "Create shipment order") | ✓ (Ground truth alters casing/articles, e.g., "Validate the claim") |
+
+- **Deductions (Strict: -0.5 total for small errors)**:
+  - **Minor XML validity issue (-0.2)**: Duplicate waypoint in `wrc_edge_sf_warranty_out_to_send_reject` (`x="850" y="140"` repeated) – sloppy, though not breaking flow.
+  - **Non-minimal extras (-0.2)**: Full `<bpmndi:BPMNDiagram>` (shapes/edges, ~100+ lines) not required (prompt seeks "BPMN 2.0 XML diagram" but ground truth is process-only minimal); valid but bloats beyond "self-contained" essence.
+  - **Generic names (-0.1)**: Start="Start" (vague vs. prompt's "customer submits an **online warranty claim**"; ground truth better as "Online warranty claim submitted"). End names descriptive but not verbatim.
+
+- **No Deductions For**:
+  - Differences from ground truth (e.g., IDs, casing, namespaces, `isExecutable="true"`, flow/gw names, `incoming`/`outgoing` attrs) – all semantically equivalent per rubric (explicitly allows "different IDs or whitespace").
+  - No hallucinated/omitted flow elements vs. **prompt** (LLM includes all; ground truth omits required "checks warranty eligibility" task).
+  - Qualifiers like "for the replacement unit"/"of the faulty product" – not bolded verbatim task names (both LLM/ground omit consistently).
+
+Overall: Exemplary adherence to prompt > ground truth; tiny polish issues prevent perfect 10.0 under "utmost strictness".

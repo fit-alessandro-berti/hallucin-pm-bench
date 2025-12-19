@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment vs ground truth):
+- **Structural mismatch (major penalty, -4.0 points)**: LLM uses complex nested "definitions" > "process" > "elements"/"sequenceFlows" with BPMN-XML-like details (e.g., "sourceRef", "eventDefinitions" array, "isExecutable"). GT is flat custom schema ("process_id", "elements[]", "flows[]") with minimal props ("source", "target", "condition"/"event"). No matching keys, schema, or nesting—fundamentally different JSON.
+- **ID and name deviations (major, -1.5)**: All IDs differ (e.g., "startEvent" vs "start"; "taskParseCreate" vs no parse, just "createTicket"). Names differ (e.g., "Support Email Received" vs "Email Received"; "Parse E-mail and Create Ticket" adds undocumented parse step vs GT's omission).
+- **Topology/flow differences (major, -1.5)**: Parallel gateways positioned differently—LLM joins *after* closeTicket (log || (send + wait + close)); GT joins *after* sendResponse/log but *before* awaitReply (log || send, then wait). Flow props differ (e.g., "name": "Simple" vs "condition": "simple"). Extra flows/IDs in LLM.
+- **Element types/details mismatch (-0.5)**: LLM uses "serviceTask"/"userTask" vs GT's generic "task"; detailed "eventDefinitions" vs simple "event": "message"/"timer". GT has "terminateEndEvent"; LLM misuses endEvent with invalid ["terminate"].
+- **Cancellation modeling (minor but erroneous, -0.3)**: LLM's detached eventSubprocess (unconnected, internal flows) vs GT's floating intermediateCatchEvent -> terminateEndEvent. Both incomplete for "at any point," but different and non-GT.
+- **Extras/inventions (minor, -0.2)**: Undocumented details (e.g., targetNamespace, triggeredByEvent subproc, PT24H explicit). No hallucinations like escalation, but extras deviate.
+
+Total deductions yield 2.0 (attempts BPMN concepts and most steps but fails exact GT fidelity; strictness demands near-identical match for high score). Semantically closer to description in parallel/log timing, but grading is vs GT only.
