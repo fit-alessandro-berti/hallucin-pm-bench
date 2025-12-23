@@ -1,0 +1,16 @@
+**4.2**
+
+### Key Evaluation Breakdown (Strict Criteria Applied)
+- **Structural Mismatch (Major Deduction: -3.5 points)**: LLM uses full BPMN 2.0 JSON schema ("definitions", "rootElements", "sequenceFlow") vs. ground truth's custom simplified format ("process_id", "elements[]", "flows[]"). IDs, nesting, and keys do not match (e.g., no "process_id": "SupportTicket"). This alone is a significant deviation from the expected output format.
+- **Core Flow Mostly Faithful (+2.5 base)**: Correctly models start → create ticket → classification → XOR gateway (simple/complex) → provide resolution → parallel fork (send response + log KB) → join. Names and conditions align closely. No invented escalation/supervisor steps.
+- **Timer/Reply Wait Logic Critically Flawed (-2.0 points)**: LLM incorrectly uses `IntermediateThrowEvent` timer (always blocks full PT24H) + post-timer XOR with magic condition ("customerReplied"). No true "wait up to 24h" or immediate close on reply—reply not caught as event. Ground truth correctly uses `eventBasedGateway` → `intermediateCatchEvent` (message for reply → close; timer → reminder → close). Functional error violates "faithful" translation.
+- **Cancel Handling Over-Engineered & Inaccurate (-1.5 points)**: LLM hallucinates 8 interrupting boundary events on every task (including post-wait `closeTicket`/`sendReminder`, violating "before closure"). Improper for "at any point" (no global catch). Ground truth uses single `intermediateCatchEvent` message "Customer Cancel" → terminate (simplified but concise). Excess elements = unnecessary complexity.
+- **Minor Errors (-0.8 points)**: 
+  - Timer as throw event (not catch).
+  - No `eventBasedGateway`.
+  - Extra `terminateEventDefinition` on end (ground truth simplifies to "terminateEndEvent").
+  - Name variances (e.g., "Wait 24 hours for Customer Reply" vs. "Wait 24h for Reply"; "End" vs. "Ticket Closed"/"Process Terminated").
+  - Missing/incomplete event definitions (e.g., boundaries lack message/signal triggers).
+- **No Policy Violations**: No criminal content; follows BPMN task.
+
+Overall: Captures ~60% of flow but fails on format, critical wait logic, and cancel modeling. Strict penalty for differences yields 4.2 (not 10.0 perfect match, not 1.0 total hallucination).

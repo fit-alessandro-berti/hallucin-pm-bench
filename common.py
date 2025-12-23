@@ -83,6 +83,8 @@ class Shared:
                        "arcee-ai/trinity-mini",
                        "anthropic/claude-sonnet-4.5",
                        "z-ai/glm-4.6",
+                       "z-ai/glm-4.7",
+                       "minimax/minimax-m2.1",
                        "openai/gpt-5-pro",
                        "baidu/ernie-4.5-21b-a3b-thinking",
                        "inclusionai/ling-1t",

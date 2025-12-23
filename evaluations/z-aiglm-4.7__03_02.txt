@@ -1,0 +1,37 @@
+**2.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer deviates substantially from the ground truth in structure, format, fidelity, and validity, warranting a low score under utmost strictness. Key differences and errors:
+
+#### 1. **JSON Structure/Format (Major Failure, -4.0 points)**:
+   - Ground truth: Flat, custom schema with `"process_id"`, `"elements"` array (simple `{id, type, name, event?}`), `"flows"` array (`{source, target, condition?}`).
+   - LLM: Complex nested `"definitions" > "process" > "flowElements"` with `bpmn:`-prefixed types, `incoming`/`outgoing` arrays, `sourceRef`/`targetRef`, internal subproc `flowElements`. No matching top-level keys. Completely incompatible schemas—cannot be considered equivalent.
+
+#### 2. **Invented Elements & Hallucinations (Major Violation, -2.0 points)**:
+   - Invented `"SubProcess_TicketHandling"` (not described; violates "model *only* what is described").
+   - Internal `StartEvent_Sub`, `EndEvent_Sub` (invalid for embedded SubProcess—misuses event subprocess semantics).
+   - Extra gateways absent from key: `Gateway_Parallel_Split`, `Gateway_Outcome_Merge`, `Gateway_Parallel_Join` (penalty per evaluation focus).
+   - Extra flows/elements (e.g., `Flow_Sub_*`, `Event_Timer_24h` as boundary vs. ground truth catches).
+   - No equivalent to ground truth's `eventBasedGateway`, `intermediateCatchEvent`s, `terminateEndEvent`.
+
+#### 3. **Invalid BPMN Model (Critical Error, -1.5 points)**:
+   - SubProcess has `incoming: ["Flow_2"]` but **no `outgoing`** defined. Normal path (close ticket → `EndEvent_Sub`) cannot continue; process cannot reach a proper end (hangs). Only terminate via cancel works—broken execution semantics.
+   - `EndEvent_Terminate` with invalid `"terminateEventDefinition": true` (non-standard; confusing with subprocess terminate).
+   - SubProcess with explicit interrupting `StartEvent_Sub` invalid for main flow trigger.
+   - No main process EndEvent for normal closure.
+
+#### 4. **Name & Detail Mismatches (Small Errors, -0.5 points cumulative)**:
+   - Start: "Support E-mail Received" vs. "Email Received".
+   - Create: "Parse E-mail and Create Ticket" vs. "Create Ticket" (adds unseparated "parse").
+   - Fork: "Fork Log/Wait" vs. LLM split after send (logic closer to text, but mismatches).
+   - Types: `bpmn:UserTask`/`bpmn:ReceiveTask` vs. simple `"task"`/`"eventBasedGateway"`.
+   - No explicit `"condition": "simple"/"complex"` on flows.
+   - `Task_WaitReply` name vs. no single "wait" element.
+
+#### 5. **Logic Differences (Partial Match, no uplift)**:
+   - Parallel log: LLM correctly parallels log with *wait/reply* (matches text "parallel... may finish earlier/later than customer reply"). Ground truth incorrectly parallels log with *sendResponse* (finishes before wait).
+   - Timeout: LLM boundary timer on ReceiveTask (valid). Ground truth eventGateway + catches (also valid, but different).
+   - Cancel: LLM boundary on SubProcess (covers "at any point" better). Ground truth dangling `cancelEvent` (no incoming flows—untriggerable, invalid).
+   - Converge: LLM exclusive merge + parallel join (correct). Ground truth multi-in to `closeTicket` (works but implicit).
+
+Despite some superior logic fidelity to text (parallel, cancel), overwhelming structural/format differences, inventions, and invalidity dominate. No perfect matches in elements/flows. Equivalent to ~20% alignment → **2.0**.

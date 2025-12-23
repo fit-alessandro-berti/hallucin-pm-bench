@@ -1,0 +1,32 @@
+**4.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer captures the **correct process topology** (flows, loop to "Initial Diagnosis", post-reset/specialist paths to confirm/resolve), uses concise IDs, 3 exclusive gateways (necessary despite prompt mentioning "two"), and adds no prohibited elements (e.g., timers, extra activities). However, under **utmost strictness**, it has **numerous deviations** from the ground truth and prompt, warranting major deductions:
+
+#### Critical Errors (-3.0 total):
+- **Invented condition expressions** (major hallucination): All 6 `<conditionExpression>` use fabricated variables/logic (`ticketType == 'PasswordReset'`, `resolution == 'direct/specialist'`, `customerConfirmed == true/false`). Ground truth/prompt require simple/generic (e.g., `yes`/`no`). Prompt forbids inventing.
+- **Wrong task types** (5 instances): Uses `<serviceTask>` (t1,t2,t4) and `<userTask>` (t3,t5,t6) vs. ground truth's generic `<task>`. Unspecified in prompt = invention.
+- **Excessive length**: ~55 lines (with indents/conditions) exceeds ≤40-line limit. Ground truth is ~35 concise lines.
+
+#### Significant Errors (-2.0 total):
+- **Name mismatches/omissions** (10+ instances):
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | Process | id="supportTicketProcess" (no name) | id="support_ticket" name="Support-Ticket" | Diff |
+  | Start | id="start1" (no name) | id="start" name="Ticket Submitted" | Missing name |
+  | t1 | name="Classify Ticket" | name="Auto-Classification" | Wrong phrasing (prompt: "automatically classified") |
+  | gw1 | (no name) | name="Password Reset?" | Missing |
+  | gw2 | (no name) | name="Resolved Internally?" | Missing |
+  | gw3 | (no name) | name="Customer Confirms?" | Missing |
+  | End | id="end1" (no name) | id="end" name="Ticket Closed" | Missing name |
+  | t2-t6 | Correct names, but wrong types | Correct | Type error |
+- **XML structure deviations**:
+  - Missing `<?xml version="1.0" encoding="UTF-8"?>`.
+  - Extra/unnecessary xmlns (`bpmndi`, `dc`, `targetNamespace="http://bpmn.io/schema/bpmn"` vs. ground's minimal `targetNamespace="http://acmetech/support"`).
+  - Minor: `PasswordReset` (no space) vs. prompt's “Password Reset”.
+
+#### Minor Errors (-1.0 total):
+- ID styles slightly less concise (e.g., "start1"/"end1" vs. "start"/"end").
+- No other additions, but cumulative small diffs amplify loss.
+
+**Topology match: 100%**. But XML fidelity to ground truth/prompt is ~50% (core logic yes, but syntax/names/types/conditions no). 4.0 reflects correct logic minus heavy penalties for inventions, mismatches, and bloat.

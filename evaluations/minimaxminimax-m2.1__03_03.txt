@@ -1,0 +1,22 @@
+**4.0**
+
+### Evaluation Summary (Strict Rubric Application)
+The LLM answer is semantically close to the ground truth (GT) in core process logic (validation loop, warranty decision, parallel activities, rejection/success paths, exactly 2 end events, required gateways), but has **significant differences and errors** warranting major deductions under utmost strictness:
+
+#### Major Errors (-4.0 total impact):
+- **Invalid XML (duplicate element ID)**: `wrc_flow_5` is defined **twice** (once early after `wrc_request_info` task, once in the final sequence flows list). This makes the entire document malformed/non-parsable as BPMN 2.0 XML. Fatal error for a "self-contained BPMN 2.0 XML document."
+- **Extra/hallucinated task + flows (-1.5)**: Adds `wrc_check_eligibility` ("Check warranty eligibility") task + associated flows (`wrc_flow_4`, `wrc_flow_6`), omitted in GT. Prompt's output spec lists only specified gateways for decisions (no task for "step 3"); this violates "model **only** explicitly mentioned [without inventing]" and rubric deducts for extra tasks/flows. Changes structure (16 flows vs GT's 15).
+- **Extra/hallucinated DI section (-1.5)**: Full `<bpmndi:BPMNDiagram>` with ~150+ lines of shapes/edges/waypoints is bloat not in minimal GT (34 lines, no DI). Prompt requests "BPMN 2.0 XML diagram" but GT shows minimal process-only is expected; extra non-semantic content.
+
+#### Minor Errors (-1.0 total, significant loss per instructions):
+- **Task name differences**: Parallel tasks use full verbatim prompt text (good vs prompt, but differs from GT's truncated "Create shipment order" / "Schedule courier pickup"). Validate/reject/etc. match GT but not **verbatim** prompt tense/case (e.g., "validates the claim" → "Validate the claim"; rubric expects exact).
+- **Name differences**: Start event ("Customer submits online warranty claim" vs GT "Online warranty claim submitted"); gateways (named vs GT partial/minimal); ends ("Process Complete"/"Claim Rejected" vs GT "Successful end"/"Rejected"); no condition labels ("Yes"/"No") on flows like GT.
+- **ID/structure/whitespace diffs**: Different IDs (e.g., `wrc_flow_*` vs `wrc_sf*`), process ID/name, flow ordering, extra comments. Allowed per rubric example, but cumulative with others.
+
+#### Positives (no addition beyond baseline):
+- All required elements present (start, 2 exclusive GWs, parallel GW pair, 2 ends).
+- IDs prefixed "wrc_" correctly.
+- Loop, parallel, rejection/success logic equivalent.
+- Verbatim matches where GT also matches (e.g., "Request missing information").
+
+Overall: ~80% semantic match but broken by invalidity + extras. Equivalent modeling would score 10.0; each major diff drops ~2.0+. Not 10.0 (diffs > whitespace/IDs), not 1.0 (functional core intact if XML fixed).
