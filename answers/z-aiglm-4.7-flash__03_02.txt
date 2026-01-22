@@ -1,0 +1,332 @@
+```json
+{
+  "name": "Customer Support Ticket Process",
+  "Process": {
+    "id": "support_ticket_process",
+    "flowElements": [
+      {
+        "id": "start_1",
+        "name": "Support e-mail received",
+        "incoming": [],
+        "outgoing": "flow_1",
+        "type": "bpmn:startEvent"
+      },
+      {
+        "id": "task_parse",
+        "name": "Parse e-mail",
+        "incoming": ["flow_1"],
+        "outgoing": "flow_2",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "task_create",
+        "name": "Create Ticket",
+        "incoming": ["flow_2"],
+        "outgoing": "flow_3",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "task_classify",
+        "name": "Initial Classification",
+        "incoming": ["flow_3"],
+        "outgoing": "flow_4",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "gateway_complex",
+        "name": "Complex Ticket?",
+        "incoming": ["flow_4"],
+        "outgoing": ["flow_5_true", "flow_5_false"],
+        "type": "bpmn:exclusiveGateway"
+      },
+      {
+        "id": "task_rca",
+        "name": "Root Cause Analysis",
+        "incoming": ["flow_5_true"],
+        "outgoing": "flow_6",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "gateway_merge",
+        "incoming": ["flow_5_false", "flow_6"],
+        "outgoing": "flow_7",
+        "type": "bpmn:exclusiveGateway"
+      },
+      {
+        "id": "task_resolution",
+        "name": "Provide Resolution",
+        "incoming": ["flow_7"],
+        "outgoing": "flow_8",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "task_send",
+        "name": "Send Response to Customer",
+        "incoming": ["flow_8"],
+        "outgoing": "flow_9",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "gateway_parallel",
+        "incoming": ["flow_9"],
+        "outgoing": ["flow_10a", "flow_10b"],
+        "type": "bpmn:parallelGateway"
+      },
+      {
+        "id": "task_log",
+        "name": "Log Solution in Knowledge Base",
+        "incoming": ["flow_10a"],
+        "outgoing": "flow_11",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "timer_wait",
+        "name": "Wait for 24h",
+        "incoming": ["flow_10b"],
+        "outgoing": "flow_12",
+        "type": "bpmn:intermediateTimerEvent",
+        "timeDuration": "PT24H"
+      },
+      {
+        "id": "gateway_reply",
+        "name": "Customer Reply?",
+        "incoming": ["flow_12", "flow_13"],
+        "outgoing": ["flow_14_no_reply", "flow_15_yes_reply"],
+        "type": "bpmn:exclusiveGateway",
+        "default": "flow_14_no_reply"
+      },
+      {
+        "id": "task_reminder",
+        "name": "Send Reminder",
+        "incoming": ["flow_14_no_reply"],
+        "outgoing": "flow_16",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "task_close",
+        "name": "Close Ticket",
+        "incoming": ["flow_15_yes_reply", "flow_16"],
+        "outgoing": "flow_17",
+        "type": "bpmn:task"
+      },
+      {
+        "id": "end_1",
+        "name": "End Process",
+        "incoming": ["flow_17"],
+        "outgoing": [],
+        "type": "bpmn:endEvent"
+      },
+      {
+        "id": "start_cancel",
+        "name": "Cancel Request",
+        "incoming": [],
+        "outgoing": "flow_cancel",
+        "type": "bpmn:startEvent"
+      },
+      {
+        "id": "end_terminate",
+        "name": "Terminate",
+        "incoming": ["flow_cancel"],
+        "outgoing": [],
+        "type": "bpmn:endEvent"
+      },
+      {
+        "id": "flow_1",
+        "sourceRef": "start_1",
+        "targetRef": "task_parse"
+      },
+      {
+        "id": "flow_2",
+        "sourceRef": "task_parse",
+        "targetRef": "task_create"
+      },
+      {
+        "id": "flow_3",
+        "sourceRef": "task_create",
+        "targetRef": "task_classify"
+      },
+      {
+        "id": "flow_4",
+        "sourceRef": "task_classify",
+        "targetRef": "gateway_complex"
+      },
+      {
+        "id": "flow_5_true",
+        "name": "Complex",
+        "sourceRef": "gateway_complex",
+        "targetRef": "task_rca"
+      },
+      {
+        "id": "flow_5_false",
+        "name": "Simple",
+        "sourceRef": "gateway_complex",
+        "targetRef": "gateway_merge"
+      },
+      {
+        "id": "flow_6",
+        "sourceRef": "task_rca",
+        "targetRef": "gateway_merge"
+      },
+      {
+        "id": "flow_7",
+        "sourceRef": "gateway_merge",
+        "targetRef": "task_resolution"
+      },
+      {
+        "id": "flow_8",
+        "sourceRef": "task_resolution",
+        "targetRef": "task_send"
+      },
+      {
+        "id": "flow_9",
+        "sourceRef": "task_send",
+        "targetRef": "gateway_parallel"
+      },
+      {
+        "id": "flow_10a",
+        "sourceRef": "gateway_parallel",
+        "targetRef": "task_log"
+      },
+      {
+        "id": "flow_10b",
+        "sourceRef": "gateway_parallel",
+        "targetRef": "timer_wait"
+      },
+      {
+        "id": "flow_11",
+        "sourceRef": "task_log",
+        "targetRef": "gateway_reply"
+      },
+      {
+        "id": "flow_12",
+        "name": "Timeout",
+        "sourceRef": "timer_wait",
+        "targetRef": "gateway_reply"
+      },
+      {
+        "id": "flow_13",
+        "name": "Reply Received",
+        "sourceRef": "start_reply_external",
+        "targetRef": "gateway_reply"
+      },
+      {
+        "id": "flow_14_no_reply",
+        "name": "No Reply",
+        "sourceRef": "gateway_reply",
+        "targetRef": "task_reminder"
+      },
+      {
+        "id": "flow_15_yes_reply",
+        "name": "Yes Reply",
+        "sourceRef": "gateway_reply",
+        "targetRef": "task_close"
+      },
+      {
+        "id": "flow_16",
+        "sourceRef": "task_reminder",
+        "targetRef": "task_close"
+      },
+      {
+        "id": "flow_17",
+        "sourceRef": "task_close",
+        "targetRef": "end_1"
+      },
+      {
+        "id": "flow_cancel",
+        "sourceRef": "start_cancel",
+        "targetRef": "end_terminate"
+      },
+      {
+        "id": "start_reply_external",
+        "name": "Customer Reply Event",
+        "incoming": [],
+        "outgoing": "flow_13",
+        "type": "bpmn:startEvent"
+      }
+    ]
+  },
+  "diagrams": [
+    {
+      "id": "diagram",
+      "plane": {
+        "id": "plane_support_ticket_process",
+        "rootElement": "support_ticket_process",
+        "waypoints": [
+          {"x": 50, "y": 150},
+          {"x": 90, "y": 150},
+          {"x": 110, "y": 150},
+          {"x": 210, "y": 150},
+          {"x": 310, "y": 150},
+          {"x": 410, "y": 150},
+          {"x": 470, "y": 150},
+          {"x": 480, "y": 80},
+          {"x": 490, "y": 80},
+          {"x": 490, "y": 220},
+          {"x": 540, "y": 220},
+          {"x": 550, "y": 150},
+          {"x": 610, "y": 150},
+          {"x": 720, "y": 150},
+          {"x": 730, "y": 80},
+          {"x": 740, "y": 80},
+          {"x": 740, "y": 220},
+          {"x": 780, "y": 220},
+          {"x": 780, "y": 150},
+          {"x": 880, "y": 150},
+          {"x": 890, "y": 250},
+          {"x": 900, "y": 250},
+          {"x": 900, "y": 250},
+          {"x": 900, "y": 250},
+          {"x": 910, "y": 200},
+          {"x": 1010, "y": 200},
+          {"x": 50, "y": 50},
+          {"x": 50, "y": 350},
+          {"x": 100, "y": 350}
+        ],
+        "edge": [
+          {"id": "di_flow_1", "source": "start_1", "target": "task_parse", "waypointIndex": 1},
+          {"id": "di_flow_2", "source": "task_parse", "target": "task_create", "waypointIndex": 2},
+          {"id": "di_flow_3", "source": "task_create", "target": "task_classify", "waypointIndex": 3},
+          {"id": "di_flow_4", "source": "task_classify", "target": "gateway_complex", "waypointIndex": 4},
+          {"id": "di_flow_5_true", "source": "gateway_complex", "target": "task_rca", "waypointIndex": 6},
+          {"id": "di_flow_5_false", "source": "gateway_complex", "target": "gateway_merge", "waypointIndex": 5},
+          {"id": "di_flow_6", "source": "task_rca", "target": "gateway_merge", "waypointIndex": 8},
+          {"id": "di_flow_7", "source": "gateway_merge", "target": "task_resolution", "waypointIndex": 9},
+          {"id": "di_flow_8", "source": "task_resolution", "target": "task_send", "waypointIndex": 10},
+          {"id": "di_flow_9", "source": "task_send", "target": "gateway_parallel", "waypointIndex": 11},
+          {"id": "di_flow_10a", "source": "gateway_parallel", "target": "task_log", "waypointIndex": 12},
+          {"id": "di_flow_10b", "source": "gateway_parallel", "target": "timer_wait", "waypointIndex": 13},
+          {"id": "di_flow_11", "source": "task_log", "target": "gateway_reply", "waypointIndex": 14},
+          {"id": "di_flow_12", "source": "timer_wait", "target": "gateway_reply", "waypointIndex": 15},
+          {"id": "di_flow_14_no_reply", "source": "gateway_reply", "target": "task_reminder", "waypointIndex": 17},
+          {"id": "di_flow_15_yes_reply", "source": "gateway_reply", "target": "task_close", "waypointIndex": 16},
+          {"id": "di_flow_16", "source": "task_reminder", "target": "task_close", "waypointIndex": 18},
+          {"id": "di_flow_17", "source": "task_close", "target": "end_1", "waypointIndex": 19},
+          {"id": "di_flow_cancel", "source": "start_cancel", "target": "end_terminate", "waypointIndex": 20},
+          {"id": "di_start_reply_external", "source": "start_reply_external", "target": "gateway_reply", "waypointIndex": -1}
+        ],
+        "shape": [
+          {"id": "di_start_1", "type": "bpmndi:BPMNShape", "bpmnElement": "start_1", "bounds": {"x": 50, "y": 150, "width": 36, "height": 36}},
+          {"id": "di_task_parse", "type": "bpmndi:BPMNShape", "bpmnElement": "task_parse", "bounds": {"x": 110, "y": 150, "width": 100, "height": 80}},
+          {"id": "di_task_create", "type": "bpmndi:BPMNShape", "bpmnElement": "task_create", "bounds": {"x": 230, "y": 150, "width": 100, "height": 80}},
+          {"id": "di_task_classify", "type": "bpmndi:BPMNShape", "bpmnElement": "task_classify", "bounds": {"x": 350, "y": 150, "width": 100, "height": 80}},
+          {"id": "di_gateway_complex", "type": "bpmndi:BPMNShape", "bpmnElement": "gateway_complex", "bounds": {"x": 470, "y": 150, "width": 40, "height": 40}},
+          {"id": "di_task_rca", "type": "bpmndi:BPMNShape", "bpmnElement": "task_rca", "bounds": {"x": 470, "y": 80, "width": 100, "height": 80}},
+          {"id": "di_gateway_merge", "type": "bpmndi:BPMNShape", "bpmnElement": "gateway_merge", "bounds": {"x": 470, "y": 220, "width": 40, "height": 40}},
+          {"id": "di_task_resolution", "type": "bpmndi:BPMNShape", "bpmnElement": "task_resolution", "bounds": {"x": 610, "y": 150, "width": 100, "height": 80}},
+          {"id": "di_task_send", "type": "bpmndi:BPMNShape", "bpmnElement": "task_send", "bounds": {"x": 720, "y": 150, "width": 100, "height": 80}},
+          {"id": "di_gateway_parallel", "type": "bpmndi:BPMNShape", "bpmnElement": "gateway_parallel", "bounds": {"x": 830, "y": 150, "width": 40, "height": 40}},
+          {"id": "di_task_log", "type": "bpmndi:BPMNShape", "bpmnElement": "task_log", "bounds": {"x": 830, "y": 80, "width": 100, "height": 80}},
+          {"id": "di_timer_wait", "type": "bpmndi:BPMNShape", "bpmnElement": "timer_wait", "bounds": {"x": 730, "y": 220, "width": 40, "height": 40}},
+          {"id": "di_gateway_reply", "type": "bpmndi:BPMNShape", "bpmnElement": "gateway_reply", "bounds": {"x": 880, "y": 150, "width": 40, "height": 40}},
+          {"id": "di_task_reminder", "type": "bpmndi:BPMNShape", "bpmnElement": "task_reminder", "bounds": {"x": 880, "y": 220, "width": 100, "height": 80}},
+          {"id": "di_task_close", "type": "bpmndi:BPMNShape", "bpmnElement": "task_close", "bounds": {"x": 1000, "y": 200, "width": 100, "height": 80}},
+          {"id": "di_end_1", "type": "bpmndi:BPMNShape", "bpmnElement": "end_1", "bounds": {"x": 1010, "y": 200, "width": 36, "height": 36}},
+          {"id": "di_start_cancel", "type": "bpmndi:BPMNShape", "bpmnElement": "start_cancel", "bounds": {"x": 50, "y": 50, "width": 36, "height": 36}},
+          {"id": "di_end_terminate", "type": "bpmndi:BPMNShape", "bpmnElement": "end_terminate", "bounds": {"x": 50, "y": 350, "width": 36, "height": 36}},
+          {"id": "di_start_reply_external", "type": "bpmndi:BPMNShape", "bpmnElement": "start_reply_external", "bounds": {"x": 880, "y": 250, "width": 36, "height": 36}}
+        ]
+      }
+    }
+  ]
+}
+```

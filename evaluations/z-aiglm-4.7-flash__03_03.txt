@@ -1,0 +1,30 @@
+**5.0**
+
+### Evaluation Rationale (Strict Rubric Application)
+Using utmost strictness per instructions: full credit only for semantic equivalence *and* technical validity matching prompt/ground truth (minimal, valid BPMN 2.0 XML). Deduct significantly for *any* differences, including small ones (e.g., id prefixes, casing, extras). Ground truth is minimal (34 lines, no DI, perfect refs/ids, unique elements).
+
+#### Major Deductions (Fatal/High-Impact Errors, -4.0 total):
+- **Invalid BPMN XML (breaks parsing/tools)**: 
+  - Duplicate `id="wrf_seq_to_join"` on two `<sequenceFlow>` (lines ~70-71). IDs must be unique in BPMN 2.0 → invalid model.
+  - Mismatched ref in `wrc_validate_claim`: `<incoming>wrf_seq_back_from_request</incoming>` but flow `id="wrf_seq_back_to_validate"`. Dangling reference → broken flow.
+- **Violates "Prefix every element’s **id** with “wrc_”"**: All ~18 `<sequenceFlow>` use `wrf_` prefix (e.g., `wrf_seq_to_validate`). Ground truth uses `wrc_sf#`. Direct prompt violation on half of elements.
+
+#### Medium Deductions (Structural/Verbatim Mismatches, -1.0 total):
+- **Task names not verbatim** (prompt: "match the text **verbatim**"): 
+  - `create shipment order` vs. "**Create shipment order**" (wrong case).
+  - `schedule courier pickup` vs. "**Schedule courier pickup**" (wrong case).
+  - Others partial (e.g., ground truth alters to title case like "Validate the claim", but LLM inconsistent with source text casing).
+- **Extra content**: Full `<bpmndi:BPMNDiagram>` (~100+ lines with shapes/edges/waypoints). Ground truth minimal (no DI). Unnecessary bloat violates "minimal-yet-complete" spirit.
+
+#### Minor Deductions (Non-Fatal Differences, reflected significantly per instructions, -0.5 total):
+- Extra gateway names (e.g., "Gateway for step 2 completeness") vs. ground truth's concise ("Claim complete?").
+- No start event name ("online warranty claim" implied). Ground has it.
+- Extra namespaces/attrs (e.g., `default=` on gateways, unneeded).
+- Flow condition names ("Incomplete") vs. ground ("No").
+
+#### Credits (+1.0 base):
+- Correct topology: Start → validate (loop on incomplete) → completeness XOR → eligibility XOR → (reject/end OR parallel split → create shipment & schedule pickup → join → update → close → success end). Exactly required gateways/events/tasks, no hallucinations/omissions/extras in *model flows*.
+- All required elements present (2 ends, exact tasks like "update inventory records", parallel pair).
+- Self-contained BPMN 2.0 XML format.
+
+**Net: 5.0**. Semantically equivalent flow (full credit there), but technical invalidity + prompt violations (ids/refs/verbatims/extras) = halfway. Lower would undervalue structure; higher ignores strictness/fatal bugs.

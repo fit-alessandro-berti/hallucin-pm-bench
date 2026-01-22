@@ -1,0 +1,12 @@
+**1.2**
+
+### Key Differences Penalized (Strict Evaluation):
+- **Structural mismatch (major deduction: -4.0)**: LLM uses verbose BPMN 2.0 JSON with `flowElements`, mixed nodes/flows, and extraneous `diagrams`/`bpmndi` section (broken waypoints, incomplete edges). Ground truth is compact custom JSON with `"process_id"`, `"elements"`, `"flows"`. Unmatched format = failure to replicate expected output.
+- **Extra/hallucinated elements absent from ground truth (-2.5)**: Added "Parse e-mail" task (invents split of step 2); "gateway_merge" (unneeded exclusive join); "gateway_parallel" (fork without matching join = invalid BPMN); "timer_wait" (wrong timer type/placement); "start_reply_external" (hacky startEvent for reply); separate cancel subprocess ("start_cancel"/"end_terminate"). Penalized as hallucination per instructions.
+- **Incorrect modeling of wait/reply/reminder (-1.8)**: No `eventBasedGateway` + `intermediateCatchEvent` (message/timer) as in ground truth. LLM's XOR `gateway_reply` with 3 inputs (log/timer/reply-start), parallel without join, non-interrupting timer = broken logic (tokens race/misbehave). Reply as startEvent doesn't interrupt wait. Reminder/close sequencing flawed.
+- **Wrong parallel branch (-0.3)**: Fork after "Send Response" to log/timer (log joins XOR early). Ground truth forks *before* send/log, joins after (flawed but matches key).
+- **Cancel mismatch (-0.1)**: Separate start/end (doesn't terminate main process). Ground truth: `intermediateCatchEvent` (message) → `terminateEndEvent`.
+- **Naming/ID/minor diffs (-0.1)**: Start "Support e-mail received" vs "Email Received"; extra names/flows/IDs; no flow `condition: "simple"/"complex"`.
+- **No inventions like escalation (no penalty)**.
+
+Total fidelity ~12%; invalid BPMN semantics amplify strictness.

@@ -1,0 +1,20 @@
+**2.5**
+
+### Key Errors (Strict Evaluation Against Ground Truth and Prompt):
+- **Invalid BPMN XML**: Task `t5` (Resolve Issue on direct path) referenced in flows (`s5`, `s7`, `s9`) but **never defined**. Duplicate outgoing flows from `t3` (`s5` to `t5`, extra `s11` to `t8`) violates BPMN rules (tasks have single outgoing sequence flow). Unparseable/malformed.
+- **Invented elements (forbidden by prompt)**: Extra `t1` "Submit Ticket" task (prompt: process *starts* on submit; GT uses start event only). Extra `t9` "Close Ticket" task (GT uses end event "Ticket Closed"; prompt has no explicit close activity).
+- **Wrong process flow/structure**:
+  - Password Reset path (`t3`): Goes to missing `t5` Resolve → Confirm (invents Resolve after reset; GT direct `t2` → `t6` Confirm, bypassing diagnosis/resolve/forward as per lines 3+7).
+  - Diagnosis (`t4`) → `gw2`: "Resolve" path to missing `t5`; Forward → `t6` → `t7` Resolve (partial OK, but incomplete/missing direct resolve).
+  - Extra invalid `s11` direct `t3` → `t8`.
+- **Gateway errors**:
+  - `gw1` condition inverted: "No"/`password_reset` → diagnosis (wrong; GT "yes" → reset, "no" → diagnosis).
+  - `gw2` unlabeled default to resolve (minor), but name "Resolve or Forward?" vs GT "Resolved Internally?".
+  - Prompt specifies **two** decision points (classify + diagnosis); LLM has three named gateways (OK in GT too, but inconsistent execution).
+- **Task mismatches**:
+  - Types: `userTask`/`serviceTask` vs GT generic `<task>` (unnecessary specification).
+  - Names: "Classify Ticket" vs "Auto-Classification"; "Forward to Specialist" OK but positioned wrong.
+- **Minor diffs**: Arbitrary conditions (`password_reset`, `forward`, `persist`) vs GT `yes`/`no`. Extra `s11`. Definitions namespace/ID diffs. Start/end unnamed vs GT named.
+- **Line count**: LLM ~55 lines (exceeds prompt ≤40).
+
+LLM captures loop (`gw3` "no" → diagnosis) and core tasks/gateways partially (+1.5 points), but catastrophic structural/validity issues, inventions, and flow mismatches warrant severe deduction (near-total deviation from GT/prompt).
