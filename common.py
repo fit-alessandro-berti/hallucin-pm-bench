@@ -87,6 +87,7 @@ class Shared:
                        "liquid/lfm-2.5-1.2b-thinking:free",
                        "liquid/lfm-2.5-1.2b-instruct:free",
                        "z-ai/glm-4.7-flash",
+                       "writer/palmyra-x5",
                        "minimax/minimax-m2.1",
                        "openai/gpt-5-pro",
                        "baidu/ernie-4.5-21b-a3b-thinking",

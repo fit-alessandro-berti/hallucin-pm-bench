@@ -1,0 +1,60 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             targetNamespace="http://bpmn.io/schema/bpmn"
+             id="Definitions_1">
+  <process id="wrc_Process_1" isExecutable="false">
+    <!-- Flow Elements -->
+    <startEvent id="wrc_StartEvent" name="Start" />
+    
+    <userTask id="wrc_ValidateClaim" name="validates the claim" />
+    <exclusiveGateway id="wrc_Gateway_Complete" name="Claim Complete?" />
+    <userTask id="wrc_RequestInfo" name="requests missing information" />
+    
+    <userTask id="wrc_CheckEligibility" name="checks warranty eligibility" />
+    <exclusiveGateway id="wrc_Gateway_Eligible" name="Within Warranty?" />
+    
+    <endEvent id="wrc_End_Rejected" name="Reject" />
+    <sendTask id="wrc_SendRejection" name="send rejection notice" />
+    
+    <parallelGateway id="wrc_ParallelSplit" name="Parallel Split" />
+    <userTask id="wrc_CreateShipment" name="Create shipment order" />
+    <userTask id="wrc_ScheduleCourier" name="Schedule courier pickup" />
+    <parallelGateway id="wrc_ParallelJoin" name="Parallel Join" />
+    
+    <userTask id="wrc_UpdateInventory" name="update inventory records" />
+    <userTask id="wrc_CloseClaim" name="close the claim" />
+    <endEvent id="wrc_End_Complete" name="Complete" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="wrc_Flow_1" sourceRef="wrc_StartEvent" targetRef="wrc_ValidateClaim" />
+    <sequenceFlow id="wrc_Flow_2" sourceRef="wrc_ValidateClaim" targetRef="wrc_Gateway_Complete" />
+    <sequenceFlow id="wrc_Flow_3" sourceRef="wrc_Gateway_Complete" targetRef="wrc_CheckEligibility">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[true]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_Flow_4" sourceRef="wrc_Gateway_Complete" targetRef="wrc_RequestInfo">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[false]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_Flow_5" sourceRef="wrc_RequestInfo" targetRef="wrc_ValidateClaim" />
+
+    <sequenceFlow id="wrc_Flow_6" sourceRef="wrc_CheckEligibility" targetRef="wrc_Gateway_Eligible" />
+    <sequenceFlow id="wrc_Flow_7" sourceRef="wrc_Gateway_Eligible" targetRef="wrc_ParallelSplit">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[true]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_Flow_8" sourceRef="wrc_Gateway_Eligible" targetRef="wrc_SendRejection">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[false]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_Flow_9" sourceRef="wrc_SendRejection" targetRef="wrc_End_Rejected" />
+
+    <sequenceFlow id="wrc_Flow_10" sourceRef="wrc_ParallelSplit" targetRef="wrc_CreateShipment" />
+    <sequenceFlow id="wrc_Flow_11" sourceRef="wrc_ParallelSplit" targetRef="wrc_ScheduleCourier" />
+    <sequenceFlow id="wrc_Flow_12" sourceRef="wrc_CreateShipment" targetRef="wrc_ParallelJoin" />
+    <sequenceFlow id="wrc_Flow_13" sourceRef="wrc_ScheduleCourier" targetRef="wrc_ParallelJoin" />
+    <sequenceFlow id="wrc_Flow_14" sourceRef="wrc_ParallelJoin" targetRef="wrc_UpdateInventory" />
+    <sequenceFlow id="wrc_Flow_15" sourceRef="wrc_UpdateInventory" targetRef="wrc_CloseClaim" />
+    <sequenceFlow id="wrc_Flow_16" sourceRef="wrc_CloseClaim" targetRef="wrc_End_Complete" />
+  </process>
+</definitions>
+```

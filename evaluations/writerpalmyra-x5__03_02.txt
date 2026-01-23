@@ -1,0 +1,13 @@
+**1.0**
+
+The LLM answer deviates critically from the ground truth in both structure and modeling fidelity:
+
+- **JSON structure mismatch**: Completely different schema (verbose BPMN-like with `process.flowElements`, `sequenceFlows`, etc., vs. ground truth's compact `"process_id"`, `"elements"`, `"flows"`). This alone warrants minimal score under strict difference-based grading.
+- **Incorrect parallel logging**: LogSolution incorrectly branches from `Task_CreateTicket` (`Flow_AfterCreateTicket_To_LogSolution`, a hallucinated early split without fork), violating "in parallel after resolution drafted." Ground truth correctly forks post-`provideResolution` via `forkLogging`.
+- **Broken 24h wait logic**: No event-based gateway (`awaitReply`); mangled flows (e.g., `ParallelJoin` → `IntermediateMsgEvent_Reply` → `IntermediateTimerEvent`, plus both to `Gateway_AfterWait`). Invalid BPMN (reply triggers timer); inverts "wait up to 24h for reply." Ground truth uses proper event-based gateway to message/timer catches.
+- **Customer cancel mishandled**: `IntermediateCancelEvent` as *throw* event (wrong; should be catch like ground truth's message `"Customer Cancel"`); unconnected to main flow, no interrupting semantics.
+- **Closure errors**: `EndEvent_Close` as end event (not task like ground truth's `closeTicket` task); shared for reply/reminder paths without distinction.
+- **Other diffs**: Duplicate `Provide Resolution` tasks vs. shared; invented conditions/flows (e.g., `Flow_WaitReply_To_Timer`); no `terminateEndEvent`; minor name variances (e.g., start event); extras like empty arrays, `schemaVersion`.
+- **BPMN validity**: Multiple invalid flows/logic (e.g., no fork for parallel, orphaned cancel, post-event gateway unnecessary).
+
+No credit for partial early flows (start/classify/resolution/send) due to cascading errors and strictness on *any* small/medium deviations (e.g., task vs. event for close). Model unfaithful to description; hallucinations present.

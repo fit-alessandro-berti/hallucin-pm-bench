@@ -1,0 +1,23 @@
+**3.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the **core process flow and logic correctly** (password reset bypasses diagnosis/resolve, diagnosis → resolve/forward → resolve → confirm, confirm → close or loop to diagnosis), uses exclusive gateways for decisions, models the re-work loop exactly (gw3 "no" → diagnose), avoids unmentioned elements (no timers/escalations/parallel paths), stays ≤40 lines, and uses concise IDs. No major inventions beyond minor details. **However, under utmost strictness, it diverges significantly from the ground truth in ~20+ ways** (small errors penalized heavily, e.g., -0.3 to -0.5 each):
+
+#### Critical Errors (-4.0 total deduction from 10.0 base):
+- **Extra invalid `<sequenceFlow id="f14">`** (gw3 → end, unconditional): Hallucination/typo breaking exclusive gateway semantics (duplicate path to end without default; BPMN invalid). Ground truth has exactly 13 flows, no extras.
+- **Wrong conditionExpression format/expressions everywhere** (6 flows): LLM uses invalid shorthand `[type='Password Reset']`, `[action='Resolve']`, etc. (FEEL-like, no `xsi:type="tFormalExpression"` or namespaces). Ground truth uses precise `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>`.
+- **Missing `<?xml version="1.0" encoding="UTF-8"?>`**: Ground truth has it.
+
+#### Semantic/Structural Mismatches (-2.0 total):
+- **Task types invented** (not plain `<task>` as in ground truth): `serviceTask` for classify, `userTask` for all others (violates "exactly as stated"; sub-types add unmentioned automation/human semantics).
+- **Process attributes wrong**: `id="supportProcess" isExecutable="true"` vs. `id="support_ticket" name="Support-Ticket" isExecutable="false"`.
+- **targetNamespace**: `"http://acmetech/process"` vs. `"http://acmetech/support"`.
+
+#### Naming/Labeling Errors (-0.8 total):
+- **classify**: `"Classify Ticket"` (serviceTask) vs. `"Auto-Classification"` (task). "Automatically classified" → "Auto-Classification" exact.
+- **Missing names** (9 elements): No names on start (`"Ticket Submitted"`), end (`"Ticket Closed"`), gw1 (`"Password Reset?"`), gw2 (`"Resolved Internally?"`), gw3 (`"Customer Confirms?"`). Ground truth labels all for clarity.
+
+#### Minor XML/Compliance (-0.2 total):
+- No `xmlns:xsi` (needed for `xsi:type` in ground truth, though both incomplete).
+
+**Strengths (why not <3.0)**: Exact flow topology (13/14 flows match targets/sources), correct loop to "Initial Diagnosis", no added gateways/activities, concise, valid XML skeleton. ~70% structural match, but strict diff-counting (21+ variances) caps at 3.0. Perfect match would be 10.0; this is functional but not "exact."
