@@ -1,0 +1,21 @@
+**3.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures ~70% of the structure (tasks, main flows, loop) but has **critical functional errors** and multiple deviations from the ground truth and prompt, warranting major deductions under utmost strictness:
+
+#### Major Errors (-4.0 points total):
+- **Missing critical sequenceFlow from "Provide Reset Instructions" (reset/t2) to "Confirm with Customer" (confirm/t6)**: Password Reset path dead-ends (no outgoing flow from `reset`). This breaks the process for ~50% of cases (line 3), preventing confirmation/closure. Ground truth has `f5` explicitly. Process is invalid/incomplete vs. description ("once resolved" implies all resolutions → confirm).
+- **Invented condition expressions with undefined variables** (e.g., `classification`, `resolveDirectly`, `forwardToSpecialist`, `confirmed`): Not in description/prompt. Ground truth uses simple `"yes"`/`"no"`. Adds unreferenced code-like logic (-executable intent violation).
+
+#### Significant Errors (-2.0 points total):
+- **Task name mismatch**: `"Classify Ticket"` vs. ground truth `"Auto-Classification"` (line 2: "automatically classified"). Small wording, but strict rule: significant loss.
+- **Missing event/process names**: No `name="Ticket Submitted"` on start, `name="Ticket Closed"` on end, `name="Support-Ticket"` on process. Ground truth has them exactly.
+- **Gateway name mismatches**: gw2 `"Resolve or Forward?"` vs. `"Resolved Internally?"`; gw3 `"Customer Confirmed?"` vs. `"Customer Confirms?"`. Deviates from descriptive fidelity.
+- **Topology nuance**: Password path skips "Resolve Issue" (correct per ground truth), but LLM doesn't route it to confirm post-resolution.
+
+#### Minor Errors (-1.0 point total):
+- **IDs/conciseness**: Uses descriptive IDs (`classify`, `diagnosis`) vs. ground truth's `t1`-`t6`, `gw1`-`gw3`. Prompt example is `t1`, `gw1`—not followed precisely.
+- **Structural diffs**: No `<?xml declaration>`, extra `xmlns:xsi` on `<definitions>`, different `targetNamespace`, `process id`. Flow order/indentation differs; likely >40 lines when formatted.
+- **Extra gateway**: Prompt specifies "two decision points"; both have 3 (including confirm), but LLM adds descriptive names unnecessarily.
+
+The model partially traps hallucinations (no added tasks/timers), but fails exact translation (line-by-line topology/names/conditions mismatch ground truth ~60%). Valid BPMN XML but semantically/process-incorrect. Baseline 10 → deductions = 3.0.

@@ -1,0 +1,42 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment)
+The LLM answer deviates substantially from the ground truth in structure, modeling fidelity, and BPMN accuracy, warranting a low score under utmost strictness. Key differences and errors:
+
+#### 1. **JSON Structure/Schema (major penalty: -3.0)**:
+   - LLM uses verbose BPMN 2.0-style JSON (`definitions.process.sequenceFlow`, `task[]`, `exclusiveGateway[]`, etc.).
+   - Ground truth uses simple flat schema (`process_id`, `elements[]`, `flows[]`).
+   - IDs/names differ entirely (e.g., LLM `taskSendResponse` vs. GT `sendResponse`; LLM `gatewaySimpleComplex` vs. GT `classifyDecision`).
+   - Extra fields in LLM: `isExecutable`, `processType`, `lane[]`, `taskType` (User/Service), `gatewayDirection`, etc.—absent in GT.
+
+#### 2. **Fidelity to Description/GT Process Model (major penalties)**:
+   - **Parse step**: LLM adds `taskParseEmail` (faithful to desc. step 2, but absent in GT `createTicket`—difference penalized).
+   - **Classification/branching**: Mostly matches (excl. gw, simple/complex conditions, Root Cause → Provide Resolution).
+   - **Parallel logging**: Broken/inaccurate.
+     - No incoming flow to `taskLogSolution` (unreachable!).
+     - `parallelGateway1` (diverging) after `sendResponse` has **no outgoing flows** (dead end).
+     - `parallelGateway2` (converging) has partial sync, but model invalid.
+     - GT correctly forks *after* `provideResolution` to `sendResponse` **||** `logSolution` → join → await.
+   - **Wait/Reply/Timer**: Fundamentally wrong.
+     - LLM: `taskCustomerReplyWait` (ReceiveTask, message-only) → excl. gw (`replyReceived`/`timeout`)—no true timer modeling.
+     - GT: `eventBasedGateway` (`awaitReply`) → `customerReply` (msg catch) **||** `timer24h` (timer catch)—precise BPMN for "wait up to 24h".
+   - **Close/Reminder**: Partial match, but **no flow from `taskCloseTicket` to `endClose`** (process dead-ends).
+   - **Ends**: LLM splits `endClose`/`endTerminate`; GT `end`/`terminate`. Matches intent but extra split.
+
+#### 3. **Cancel Handling (hallucination penalty: -2.0)**:
+   - LLM invents **extra `taskCancelTicket`** (absent in desc./GT—direct violation "Do not invent").
+   - Adds **7x boundaryEvents** (`cancelBoundaryEvent1-7`) on tasks—wrong type (`"type": "cancel"` for transactions, not customer message); overkill/absent in GT.
+   - GT: Single `cancelEvent` (msg intermediateCatchEvent) → `terminate` (minimal, correct event).
+   - LLM: Interrupting boundaries + phantom task = hallucination/additional flows/gateways absent from key.
+
+#### 4. **Additional Hallucinations/Extras (penalty: -1.5)**:
+   - Extra gateways: `parallelGateway1/2`, `gatewayCustomerReply` (excl. for timeout—GT uses events).
+   - `lane[]` (absent in GT).
+   - Unconnected nodes: `taskCancelTicket`, `taskLogSolution`, `endClose`.
+   - Minor name diffs: e.g., LLM "Wait for Customer Reply (24h)" vs. GT "Wait 24h for Reply"; start "Support e-mail received" vs. "Email Received".
+
+#### 5. **BPMN Validity (penalty: -1.0)**:
+   - Invalid executable model: Unreachable tasks, dead-end gateways, missing end flows.
+   - No violations of "no escalation/supervisor" rule, but extras mimic invented steps.
+
+**Base 10.0 → deductions = 2.0**. Captures core sequence vaguely but broken/inaccurate/expanded vs. GT. Small errors (names, types) compound; model non-functional.

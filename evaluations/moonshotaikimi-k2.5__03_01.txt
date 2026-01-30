@@ -1,0 +1,23 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the core process logic correctly (password reset bypass, diagnosis → resolve/forward → resolve → confirm, loop from confirm rejection back to **Initial Diagnosis** exactly per line 9, no invented elements like timers/SLAs/extra gateways/tasks). No hallucinations—only the specified 7 tasks, 3 exclusive gateways (prompt said "two" but description requires 3 for decisions in lines 3,5,8; GT also has 3), start/end. ≤40 lines, concise IDs, single <definitions> block.
+
+However, **utmost strictness** demands near-exact match to GT XML. Significant differences/omissions/errors deduct heavily:
+
+- **Major structural/XML validity issues (-3.0 points)**:
+  - No `<?xml version="1.0" encoding="UTF-8"?>` declaration (GT has it).
+  - `<definitions>`: extra `id="defs"`, wrong `targetNamespace` ("http://acme" vs "http://acmetech/support").
+  - `<process>`: `id="p1"` (no name="Support-Ticket", missing `isExecutable="false"`).
+  - **No `<conditionExpression>` on ANY gateway outgoing flows** (GT has 6 explicit "yes"/"no" on f3/f4/f7/f8/f12/f13—critical for exclusiveGateway semantics in BPMN 2.0; LLM gateways are underspecified/invalid).
+  - Element order intermixed (flows before targets); GT separates tasks/gateways then flows.
+
+- **Naming mismatches (-2.0 points)**:
+  - Classify task: "Classify ticket" vs GT/description-exact "Auto-Classification" (omits "automatically"; small but per strictness = big loss).
+  - Missing GT names: startEvent ("Ticket Submitted"), gw1 ("Password Reset?"), gw2 ("Resolved Internally?"), gw3 ("Customer Confirms?"), endEvent ("Ticket Closed"—LLM "Ticket closed" minor but differs).
+  - Invented flow name="Password Reset" on s3 (unmentioned; use conditions instead).
+
+- **ID/attribute diffs (-1.0 point)**:
+  - IDs inconsistent (tCls/tResInst/tDiag/tRes/tFwd/tConf vs sequential t1-t6; flows s1-s13 vs f1-f13). Prompt example "t1, gw1"—GT matches better.
+
+Semantically faithful (8/10 logic), but XML differs line-by-line (~70% mismatch: no conditions alone spans 12+ GT lines, names/attrs absent). From 10.0 max, deducts total to 4.0.

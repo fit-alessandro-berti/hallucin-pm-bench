@@ -1,0 +1,14 @@
+**3.0**
+
+### Evaluation Rationale (strict assessment):
+- **JSON Structure Mismatch (-4.0 major penalty)**: Ground truth uses a simple flat schema (`"process_id"`, `"elements"` array, `"flows"` array with basic `{source, target, condition?}`). LLM uses a completely different nested BPMN-style schema (`"process"` with categorized arrays like `"startEvents"`, `"tasks"`, `"sequenceFlows"` with `sourceRef/targetRef`). This is not faithful to the expected format; it's a fundamental deviation.
+- **Flow Logic Differences (-2.0 major penalty)**:
+  - Parallel fork placement: GT forks *after* `provideResolution` (parallel `sendResponse` + `logSolution`, synced by `joinAfterLogging` before wait). LLM forks *after* `send_response` (parallel `log_solution` + wait, no sync/join). This alters the described timing ("in parallel" to customer reply after send).
+  - Unnecessary `gateway_close_merge` (exclusiveGateway): Absent in GT; event-based paths are mutually exclusive, no merge needed. Direct flows in GT from catches to `closeTicket`/`sendReminder`.
+  - No parallel join for log branch in LLM (ends at separate `"end_solution_logged"`); GT syncs via join.
+- **Element/Handling Differences (-0.5 each, total -1.0)**:
+  - Multiple ends (`end_solution_logged`, `end_ticket_closed`) vs GT single `"end"`.
+  - Cancel: LLM uses `eventSubProcesses` (interrupting subproc, good semantics but extra structure absent in GT); GT loose `intermediateCatchEvent` -> `terminateEndEvent` (poorly attached, no main interruption flows).
+  - Minor: ID styles (snake_case vs camelCase), names (e.g., "Email Received" vs "Support E-mail Received"), conditions ("simple/complex" lowercase vs titlecase), timer lacks "PT24H" in GT, invented `messageRef`s, `isExecutable`.
+- **Strengths (partial credit)**: All core tasks/gateways present, no invented escalations, types mostly correct (e.g., eventBasedGateway, timerCatch PT24H faithful), sequence mostly covers description without extras like approvals. Captures parallelism, wait/timer logic.
+- **Overall**: ~70% semantic fidelity but format/flow mismatches prevent >3.0 under "utmost strictness" and "small errors significant loss". Hallucinated extra gateways/ends/subprocs penalized per focus.

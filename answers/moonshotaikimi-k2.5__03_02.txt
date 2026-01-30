@@ -1,0 +1,230 @@
+```json
+{
+  "process": {
+    "id": "customer-support-ticket-process",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "startEvents": [
+      {
+        "id": "start_email_received",
+        "name": "Support E-mail Received",
+        "type": "messageStartEvent",
+        "messageRef": "supportEmail"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "create_ticket",
+        "name": "Create Ticket",
+        "type": "task"
+      },
+      {
+        "id": "initial_classification",
+        "name": "Initial Classification",
+        "type": "task"
+      },
+      {
+        "id": "root_cause_analysis",
+        "name": "Root Cause Analysis",
+        "type": "task"
+      },
+      {
+        "id": "provide_resolution",
+        "name": "Provide Resolution",
+        "type": "task"
+      },
+      {
+        "id": "send_response",
+        "name": "Send Response to Customer",
+        "type": "task"
+      },
+      {
+        "id": "log_solution",
+        "name": "Log Solution in Knowledge Base",
+        "type": "task"
+      },
+      {
+        "id": "send_reminder",
+        "name": "Send Reminder",
+        "type": "task"
+      },
+      {
+        "id": "close_ticket",
+        "name": "Close Ticket",
+        "type": "task"
+      }
+    ],
+    "gateways": [
+      {
+        "id": "gateway_simple_complex",
+        "type": "exclusiveGateway",
+        "name": "Simple or Complex?"
+      },
+      {
+        "id": "fork_parallel",
+        "type": "parallelGateway",
+        "name": "Parallel Fork"
+      },
+      {
+        "id": "event_gateway_wait",
+        "type": "eventBasedGateway",
+        "name": "Wait for Reply or Timeout"
+      },
+      {
+        "id": "gateway_close_merge",
+        "type": "exclusiveGateway",
+        "name": "Merge"
+      }
+    ],
+    "intermediateCatchEvents": [
+      {
+        "id": "catch_customer_reply",
+        "name": "Customer Reply",
+        "type": "messageCatchEvent",
+        "messageRef": "customerReply"
+      },
+      {
+        "id": "catch_24h_timer",
+        "name": "24 Hours Passed",
+        "type": "timerCatchEvent",
+        "timerDefinition": "PT24H"
+      }
+    ],
+    "endEvents": [
+      {
+        "id": "end_solution_logged",
+        "name": "Solution Logged",
+        "type": "noneEndEvent"
+      },
+      {
+        "id": "end_ticket_closed",
+        "name": "Ticket Closed",
+        "type": "noneEndEvent"
+      }
+    ],
+    "eventSubProcesses": [
+      {
+        "id": "subprocess_cancel",
+        "triggeredByEvent": true,
+        "startEvents": [
+          {
+            "id": "start_cancel",
+            "name": "Customer Cancels Ticket",
+            "type": "messageStartEvent",
+            "messageRef": "cancelTicket",
+            "isInterrupting": true
+          }
+        ],
+        "endEvents": [
+          {
+            "id": "end_terminate",
+            "name": "Terminate",
+            "type": "terminateEndEvent"
+          }
+        ],
+        "sequenceFlows": [
+          {
+            "id": "flow_cancel",
+            "sourceRef": "start_cancel",
+            "targetRef": "end_terminate"
+          }
+        ]
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "flow_1",
+        "sourceRef": "start_email_received",
+        "targetRef": "create_ticket"
+      },
+      {
+        "id": "flow_2",
+        "sourceRef": "create_ticket",
+        "targetRef": "initial_classification"
+      },
+      {
+        "id": "flow_3",
+        "sourceRef": "initial_classification",
+        "targetRef": "gateway_simple_complex"
+      },
+      {
+        "id": "flow_4_simple",
+        "sourceRef": "gateway_simple_complex",
+        "targetRef": "provide_resolution",
+        "condition": "Simple"
+      },
+      {
+        "id": "flow_4_complex",
+        "sourceRef": "gateway_simple_complex",
+        "targetRef": "root_cause_analysis",
+        "condition": "Complex"
+      },
+      {
+        "id": "flow_5",
+        "sourceRef": "root_cause_analysis",
+        "targetRef": "provide_resolution"
+      },
+      {
+        "id": "flow_6",
+        "sourceRef": "provide_resolution",
+        "targetRef": "send_response"
+      },
+      {
+        "id": "flow_7",
+        "sourceRef": "send_response",
+        "targetRef": "fork_parallel"
+      },
+      {
+        "id": "flow_8_parallel_1",
+        "sourceRef": "fork_parallel",
+        "targetRef": "log_solution"
+      },
+      {
+        "id": "flow_9_log_end",
+        "sourceRef": "log_solution",
+        "targetRef": "end_solution_logged"
+      },
+      {
+        "id": "flow_8_parallel_2",
+        "sourceRef": "fork_parallel",
+        "targetRef": "event_gateway_wait"
+      },
+      {
+        "id": "flow_10_event_1",
+        "sourceRef": "event_gateway_wait",
+        "targetRef": "catch_customer_reply"
+      },
+      {
+        "id": "flow_10_event_2",
+        "sourceRef": "event_gateway_wait",
+        "targetRef": "catch_24h_timer"
+      },
+      {
+        "id": "flow_11_reply",
+        "sourceRef": "catch_customer_reply",
+        "targetRef": "gateway_close_merge"
+      },
+      {
+        "id": "flow_12_timeout",
+        "sourceRef": "catch_24h_timer",
+        "targetRef": "send_reminder"
+      },
+      {
+        "id": "flow_13_reminder",
+        "sourceRef": "send_reminder",
+        "targetRef": "gateway_close_merge"
+      },
+      {
+        "id": "flow_14_merge",
+        "sourceRef": "gateway_close_merge",
+        "targetRef": "close_ticket"
+      },
+      {
+        "id": "flow_15_close",
+        "sourceRef": "close_ticket",
+        "targetRef": "end_ticket_closed"
+      }
+    ]
+  }
+}
+```
