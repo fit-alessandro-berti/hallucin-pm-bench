@@ -1,0 +1,13 @@
+1.5
+
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a very low score under strict evaluation criteria:
+
+- **Schema mismatch (major hallucination/structural error)**: Uses `"sequenceFlows"` with `sourceRef`/`targetRef`/flow `id`s instead of simple `"flows"` with direct `"source"`/`"target"`/`"condition"`. Lacks `"process_id"`. Element types differ (e.g., `"gateway"` + `"gatewayType"` vs. `"exclusiveGateway"`/`"parallelGateway"`/`"eventBasedGateway"`). Event defs differ (e.g., `"eventDefinition"` nested vs. flat `"event"`). This renders it incompatible with the ground truth format.
+- **Extra hallucinated elements absent from key**: Unnecessary `"gateway5"` (exclusive merge, not in GT), entire event subprocess (`"esp1"`, `"startCancel"`, `"endTerminate"`). 20 elements vs. GT's 18. Penalized as hallucination per focus.
+- **Topological differences**: Parallel fork after `"task3"` with event gateway in send branch + join after wait/merge (flows: send → eventGW → events → merge → parJoin ← log). GT forks send/log → join → eventGW. Different flow paths.
+- **Missing conditions**: No `"condition": "simple"`/`"complex"` on classification flows (GT has explicit).
+- **Name mismatches** (small but penalized heavily): e.g., `"Parse e-mail and create Ticket"` (extra task, GT `"Create Ticket"`), `"Support e-mail received"` vs. `"Email Received"`, `"Classification Gateway"` vs. `"Simple or Complex?"`, `"Parallel Split"` vs. `"Fork Log/Wait"`, etc. Timer `"24 hours"`/`PT24H` vs. `"Timer 24h"`.
+- **Cancellation mismatch**: Complex interrupting event subprocess vs. GT's simple (inactive) `"cancelEvent"` → `"terminate"`. Different and more elaborate.
+- **Other**: Unnecessary ids/names on flows/elements, different event types (`"intermediateCatchingEvent"` vs. `"intermediateCatchEvent"`).
+
+Core logic partially aligns but extras, omissions, and mismatches accumulate to near-total divergence. No invented escalations, but extras violate "model *only* what is described" indirectly via hallucinated nodes.

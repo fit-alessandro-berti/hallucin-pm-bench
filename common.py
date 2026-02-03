@@ -105,6 +105,7 @@ class Shared:
                        "mistralai/mistral-small-creative",
                        "moonshotai/kimi-k2.5",
                        "arcee-ai/trinity-large-preview:free",
+                       "stepfun/step-3.5-flash:free",
                        ("gpt-5.1-2025-11-13",
                         {"api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
                        ("gpt-5.1-2025-11-13-high",

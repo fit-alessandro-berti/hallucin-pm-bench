@@ -1,0 +1,16 @@
+**4.2**
+
+### Evaluation Rationale (Strict Rubric Application)
+Using utmost strictness, grading based on **semantic equivalence** to ground truth (minimal valid BPMN 2.0 XML per prompt), deducting significantly for **any** differences, extras, omissions, invalidity, or non-verbatim compliance. Full credit only for near-identical valid XML modeling *only* explicit elements (no inventions). Ground truth (34 lines) is the benchmark: simple loop (no catch event), no "checks warranty eligibility" task, plain `<task>`, flow names for conditions ("Yes"/"No"), no extras like messages/events/diagram/namespaces/conditions.
+
+#### Major Deductions (-5.8 total from 10.0):
+- **Invalid XML syntax (critical failure, -3.0)**: Loose `<bpmn:incoming>`/`<bpmn:outgoing>` tags outside elements (after sequence flows) are not valid BPMN children; parser error. Start event wrongly declares `<incoming>` (starts have none). Makes document non-self-contained/usable.
+- **Hallucinated/extra elements (-1.5)**: Invented `<intermediateCatchEvent>` + `<message>` for "waits" (not explicitly mentioned; violates "model **only** explicitly mentioned"/no inventions). Extra `check_warranty` task (present in prompt but omitted in ground truth; structural diff). Extra namespaces (`bpmndi` etc.), empty `<BPMNDiagram>`.
+- **Wrong structure (-0.8)**: Loop uses event-based (catch → validate) vs ground truth's simple task→task loop. Parallel gateways lack inline `<incoming>`/`<outgoing>` (relies on flows but incomplete/misplaced). Task types wrong (`userTask`/`serviceTask` vs `<task>`).
+- **Non-verbatim/non-matching details (-0.5)**: Task names match prompt verbatim (e.g., "validates the claim") better than ground truth's capitalized variants, but diffs from ground (e.g., no gw/flow names like "Claim complete?"/"Yes"). Conditions as XPath expressions vs flow `name`s.
+
+#### Minor Credits (+0.0; no uplift for partial matches):
+- Correct: All explicit tasks verbatim (8 vs ground's 7), 2 ends, exact gateways (2 exclusive + parallel pair), "wrc_" IDs, parallel flows, rejection path.
+- Semantically ~80% equivalent if syntax fixed (flows connect properly), but strict diff count + invalidity dominate.
+
+Equivalent valid XML gets 10.0; this fails validity + adds hallucinations = low-mid score.
