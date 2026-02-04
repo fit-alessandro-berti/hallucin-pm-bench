@@ -106,6 +106,7 @@ class Shared:
                        "moonshotai/kimi-k2.5",
                        "arcee-ai/trinity-large-preview:free",
                        "stepfun/step-3.5-flash:free",
+                       "qwen/qwen3-coder-next",
                        ("gpt-5.1-2025-11-13",
                         {"api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
                        ("gpt-5.1-2025-11-13-high",

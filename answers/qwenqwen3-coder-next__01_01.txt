@@ -1,0 +1,31 @@
+### Decision Points in Contoso Airlines’ Flight-Refund Process  
+
+1. **Eligibility Determination** (during *Triage_Agent_Validate_Eligibility*)  
+   - *Triggered by*: Submission of *RefundRequestForm*  
+   - *Decision*: Whether the claim is **eligible** based on cross-referencing the *FlightManifest* and *WeatherReport*.  
+   - *Branches*:  
+     - **Eligible** → proceeds to *Finance_Controller_PreApprove*  
+     - **Ineligible** → process terminates (no further steps)  
+
+2. **High-value Threshold Check** (after *Finance_Controller_PreApprove* succeeds)  
+   - *Triggered by*: Successful pre-approval  
+   - *Decision*: Is the refund amount **> €1,000**?  
+   - *Branches*:  
+     - **Yes (high-value)** → proceed to *Senior_Auditor_Review* (requires *AuditTrail*)  
+     - **No (≤ €1,000)** → skip *Senior_Auditor_Review* and proceed directly to *Process_Refund_Payment*  
+
+---
+
+### Required Documents (Artefacts)  
+
+| Document                      | Used in Activity / Decision Point(s)                                  | Purpose (per process definition) |
+|-------------------------------|-----------------------------------------------------------------------|----------------------------------|
+| *RefundRequestForm*           | Customer_Submit_Claim                                                 | Submitted by passenger to initiate claim |
+| *FlightManifest*              | Triage_Agent_Validate_Eligibility                                     | Used to verify booking/status of flight |
+| *WeatherReport*               | Triage_Agent_Validate_Eligibility                                     | Used to assess weather-related disruption eligibility |
+| *EligibilityChecklist*        | Finance_Controller_PreApprove                                         | Used by finance controller to sign off on eligibility |
+| *AuditTrail*                  | Senior_Auditor_Review (only for high-value claims)                   | Required input for senior auditor review |
+| *BankTransferAuthorization*   | Process_Refund_Payment (must be signed, present, and precede payment) | Authorises payment execution |
+| *RefundConfirmationPDF*       | Issue_Confirmation_Letter                                             | Sent via email to passenger as confirmation |
+
+> **Note**: No other documents (e.g., "customer service decision form", "escalation log", etc.) are defined or required per the process.

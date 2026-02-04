@@ -1,0 +1,28 @@
+**7.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer is semantically and functionally correct per the prompt (correctly models the start, 3 exclusive gateways for the 3 decisions despite prompt mentioning "two", re-work loop to "Initial Diagnosis", no invented escalations/SLA/parallel/approve tasks, concise IDs, ≤40 lines, single <definitions>). However, under **utmost strictness** against the ground truth, there are **numerous differences** (structural, naming, attributes, conditions), warranting significant deductions:
+
+#### Major Structural Differences (-2.0 points):
+- **Extra task & shifted IDs**: LLM introduces a 2nd distinct "Resolve Issue" task (`t6`) after `t5` "Forward to Specialist", leading to `t7` "Confirm with Customer". Ground truth merges specialist/specialist "Resolve Issue" into single reusable `t4`, with confirm as `t6`. This adds an unnecessary activity instance (12 flow objects vs ground's 11), alters flow paths (e.g., LLM `sf8 t5→t6→sf11 t7`; ground `f9 t5→t4→f10 t6`), and adds 1 extra sequenceFlow (14 vs 13).
+- Not "exactly as stated" (duplicates activity vs concise merge).
+
+#### Naming Differences (-1.5 points):
+8+ small-but-significant mismatches (each deducting ~0.2):
+- Process `id/name`: "AcmeTech_SupportTicket"/"AcmeTech Support Ticket Process" vs "support_ticket"/"Support-Ticket".
+- StartEvent: "Customer Submits Ticket" vs "Ticket Submitted".
+- `t1`: "Classify Ticket" vs "Auto-Classification" (ignores "automatically").
+- Gateways: "Check Classification" vs "Password Reset?"; "Resolution Decision" vs "Resolved Internally?"; "Customer Confirmation" vs "Customer Confirms?".
+
+#### Attribute/Format Differences (-0.5 points):
+- Missing `<?xml declaration>`, `targetNamespace`, `isExecutable="false"`.
+- Extra `xmlns:xsi`.
+- Flow ID prefix "sf" vs "f".
+
+#### Condition Expression Differences (-1.0 points):
+All 6+ branches differ:
+- LLM uses descriptive/invented text ("Password Reset", "Resolved", "Confirmed", "Issue Persists") + defaults (no cond on some outflows).
+- Ground uses consistent generic "yes"/"no" on **all** outflows (no defaults).
+Prompt doesn't specify text, but mismatch to ground is exact diff.
+
+**Base: 10.0 → Deducted 5.0 = 7.0**. Close enough for passing (no hallucinations, correct logic/loop), but strict line-by-line parsing shows ~25% divergence (names ~30% diff, structure ~15% diff, minor ~10%). Identical XML would be 10.0; this is strong but flawed replica.

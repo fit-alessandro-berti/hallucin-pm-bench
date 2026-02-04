@@ -1,0 +1,216 @@
+{
+  "process": {
+    "id": "customer_support_ticket_process",
+    "name": "Customer Support Ticket Process",
+    "tasks": [
+      {
+        "id": "receive_email",
+        "name": "Receive Support E-mail",
+        "type": "startEvent",
+        "category": "messageEventDefinition",
+        "incoming": [],
+        "outgoing": ["to_parse"]
+      },
+      {
+        "id": "parse_email",
+        "name": "Parse E-mail",
+        "type": "task",
+        "category": "manualTask",
+        "incoming": ["to_parse"],
+        "outgoing": ["create_ticket"]
+      },
+      {
+        "id": "create_ticket",
+        "name": "Create Ticket",
+        "type": "task",
+        "category": "serviceTask",
+        "incoming": ["create_ticket"],
+        "outgoing": ["classify"]
+      },
+      {
+        "id": "initial_classification",
+        "name": "Initial Classification",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["classify"],
+        "outgoing": ["gateway_classify"]
+      },
+      {
+        "id": "gateway_classify",
+        "name": "Simple or Complex?",
+        "type": "exclusiveGateway",
+        "category": "choice",
+        "incoming": ["gateway_classify"],
+        "outgoing": ["simple_path", "complex_path"]
+      },
+      {
+        "id": "simple_path",
+        "name": "Simple",
+        "type": "sequenceFlow",
+        "category": "default",
+        "sourceRef": "gateway_classify",
+        "targetRef": "provide_resolution_simple"
+      },
+      {
+        "id": "complex_path",
+        "name": "Complex",
+        "type": "sequenceFlow",
+        "category": "conditional",
+        "sourceRef": "gateway_classify",
+        "targetRef": "root_cause_analysis"
+      },
+      {
+        "id": "provide_resolution_simple",
+        "name": "Provide Resolution",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["simple_path"],
+        "outgoing": ["send_response"]
+      },
+      {
+        "id": "root_cause_analysis",
+        "name": "Root Cause Analysis",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["complex_path"],
+        "outgoing": ["provide_resolution_complex"]
+      },
+      {
+        "id": "provide_resolution_complex",
+        "name": "Provide Resolution",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["root_cause_analysis"],
+        "outgoing": ["send_response"]
+      },
+      {
+        "id": "send_response",
+        "name": "Send Response to Customer",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["provide_resolution_simple", "provide_resolution_complex"],
+        "outgoing": ["parallel_gateway_start"]
+      },
+      {
+        "id": "parallel_gateway_start",
+        "name": "",
+        "type": "parallelGateway",
+        "category": "merge",
+        "incoming": ["send_response"],
+        "outgoing": ["kb_logging", "wait_customer_reply"]
+      },
+      {
+        "id": "kb_logging",
+        "name": "Log Solution in Knowledge Base",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["parallel_gateway_start"],
+        "outgoing": ["parallel_gateway_end_kb"]
+      },
+      {
+        "id": "parallel_gateway_end_kb",
+        "name": "",
+        "type": "parallelGateway",
+        "category": "join",
+        "incoming": ["kb_logging"],
+        "outgoing": ["customer_reply_gateway"]
+      },
+      {
+        "id": "wait_customer_reply",
+        "name": "Wait for Customer Reply (24h)",
+        "type": "intermediateCatchEvent",
+        "category": "messageEventDefinition",
+        "incoming": ["parallel_gateway_start"],
+        "outgoing": ["customer_reply_gateway"]
+      },
+      {
+        "id": "customer_reply_gateway",
+        "name": "",
+        "type": "parallelGateway",
+        "category": "merge",
+        "incoming": ["parallel_gateway_end_kb", "wait_customer_reply"],
+        "outgoing": ["gateway_reply_timeout"]
+      },
+      {
+        "id": "gateway_reply_timeout",
+        "name": "Reply Received?",
+        "type": "exclusiveGateway",
+        "category": "choice",
+        "incoming": ["customer_reply_gateway"],
+        "outgoing": ["reply_yes", "reply_no"]
+      },
+      {
+        "id": "reply_yes",
+        "name": "Yes",
+        "type": "sequenceFlow",
+        "category": "default",
+        "sourceRef": "gateway_reply_timeout",
+        "targetRef": "close_ticket"
+      },
+      {
+        "id": "reply_no",
+        "name": "No",
+        "type": "sequenceFlow",
+        "category": "conditional",
+        "sourceRef": "gateway_reply_timeout",
+        "targetRef": "send_reminder"
+      },
+      {
+        "id": "send_reminder",
+        "name": "Send Reminder",
+        "type": "task",
+        "category": "userTask",
+        "incoming": ["reply_no"],
+        "outgoing": ["close_ticket"]
+      },
+      {
+        "id": "close_ticket",
+        "name": "Close Ticket",
+        "type": "endEvent",
+        "category": "terminateEventDefinition",
+        "incoming": ["reply_yes", "send_reminder"],
+        "outgoing": []
+      },
+      {
+        "id": "terminate_event",
+        "name": "Terminate",
+        "type": "endEvent",
+        "category": "terminateEventDefinition",
+        "incoming": ["cancel_ticket"],
+        "outgoing": []
+      },
+      {
+        "id": "cancel_ticket",
+        "name": "Cancel Ticket",
+        "type": "intermediateCatchEvent",
+        "category": "messageEventDefinition",
+        "incoming": ["receive_email", "parse_email", "create_ticket", "classify", "initial_classification", "gateway_classify", "simple_path", "complex_path", "provide_resolution_simple", "root_cause_analysis", "provide_resolution_complex", "send_response", "parallel_gateway_start", "kb_logging", "wait_customer_reply", "customer_reply_gateway", "gateway_reply_timeout"],
+        "outgoing": ["terminate_event"]
+      }
+    ],
+    "sequenceFlows": [
+      {"id": "to_parse", "sourceRef": "receive_email", "targetRef": "parse_email"},
+      {"id": "create_ticket", "sourceRef": "parse_email", "targetRef": "create_ticket"},
+      {"id": "classify", "sourceRef": "create_ticket", "targetRef": "initial_classification"},
+      {"id": "gateway_classify", "sourceRef": "initial_classification", "targetRef": "gateway_classify"},
+      {"id": "simple_path", "sourceRef": "gateway_classify", "targetRef": "provide_resolution_simple"},
+      {"id": "complex_path", "sourceRef": "gateway_classify", "targetRef": "root_cause_analysis"},
+      {"id": "provide_resolution_simple", "sourceRef": "provide_resolution_simple", "targetRef": "send_response"},
+      {"id": "provide_resolution_complex", "sourceRef": "root_cause_analysis", "targetRef": "provide_resolution_complex"},
+      {"id": "send_response", "sourceRef": "send_response", "targetRef": "parallel_gateway_start"},
+      {"id": "kb_logging", "sourceRef": "parallel_gateway_start", "targetRef": "kb_logging"},
+      {"id": "wait_customer_reply", "sourceRef": "parallel_gateway_start", "targetRef": "wait_customer_reply"},
+      {"id": "parallel_gateway_end_kb", "sourceRef": "kb_logging", "targetRef": "parallel_gateway_end_kb"},
+      {"id": "customer_reply_gateway", "sourceRef": "parallel_gateway_end_kb", "targetRef": "customer_reply_gateway"},
+      {"id": "gateway_reply_timeout", "sourceRef": "customer_reply_gateway", "targetRef": "gateway_reply_timeout"},
+      {"id": "reply_yes", "sourceRef": "gateway_reply_timeout", "targetRef": "close_ticket"},
+      {"id": "reply_no", "sourceRef": "gateway_reply_timeout", "targetRef": "send_reminder"},
+      {"id": "send_reminder", "sourceRef": "send_reminder", "targetRef": "close_ticket"},
+      {"id": "terminate_event", "sourceRef": "cancel_ticket", "targetRef": "terminate_event"}
+    ],
+    "pools": [],
+    "lanes": [],
+    "dataObjects": [],
+    "artifact": []
+  }
+}

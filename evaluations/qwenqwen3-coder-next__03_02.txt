@@ -1,0 +1,16 @@
+**2.0**
+
+### Evaluation Summary (strict assessment)
+The LLM answer deviates substantially from the ground truth in **structure**, **logic**, **BPMN fidelity**, and **description faithfulness**, warranting a very low score under utmost strictness:
+
+- **Schema mismatch (-3.0)**: Completely different JSON format (detailed "tasks"/"incoming-outgoing"/"sequenceFlows" vs. ground truth's simple "elements"/"flows"). Incompatible; cannot parse equivalently.
+- **Flow logic errors (-2.5)**:
+  - Parallelism wrong: Send Response is sequential *before* fork to Log/Wait (should parallel Log after resolution; ground truth forks to Send/Log).
+  - Wait/timeout broken: No timer event or eventBasedGateway; uses messageCatchEvent without timeout path, then post-hoc exclusiveGateway "Reply Received?" (invalidates 24h logic). Ground truth correctly uses eventBasedGateway -> message/timer catches.
+  - No proper join after parallel Log/Wait; malformed gateways (e.g., "parallel_gateway_end_kb" has single incoming despite "join" label).
+- **Extra/invented elements (-1.5)**: Added "Parse E-mail" task (not in description or ground truth); duplicated "Provide Resolution" tasks (should merge as single post-RCA/ simple).
+- **Cancel handling invalid (-0.5)**: Single catch event with "incoming" from *all* prior elements/flows (BPMN-invalid; can't attach to flows). Ground truth simplifies but connects cleanly to terminate.
+- **Other inconsistencies (-0.5)**: Mismatched names/IDs (e.g., start "receive_email" vs. "start"/"Email Received"); close as terminateEndEvent (wrong); redundant/broken "sequenceFlows" (e.g., IDs overlap tasks, missing connections).
+- **No major hallucinations** (no escalation/approval, +0.5 partial credit).
+
+Total conceptual coverage ~20-30% despite attempting most steps; multiple small-medium errors compound to disqualify.

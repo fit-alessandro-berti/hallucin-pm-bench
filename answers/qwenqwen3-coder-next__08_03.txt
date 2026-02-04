@@ -1,0 +1,173 @@
+We are given a Petri net with places:
+
+**PLACES**: p0, pa, pb, pc, pd, pe, pf  
+**INITIAL MARKING**: p0 = 1, all others = 0.
+
+Let’s reconstruct the net step-by-step and analyze reachability, especially focusing on whether **T5 can fire before T3**.
+
+---
+
+### **Transition firing conditions (enabledness)**
+
+Recall: A transition *t* is enabled at marking *M* if every place in its *input* set has at least 1 token in *M*.
+
+We list transitions with their input and output:
+
+| Transition | Input | Output |
+|------------|-------|--------|
+| T1         | p0    | pa, pb |
+| T2         | pa    | pc     |
+| T2b        | pa    | pd     |
+| T3         | pc    | pd     |
+| T4         | pb    | pe     |
+| T5         | pd, pe| pf     |
+| T6         | pf    | pc     |
+
+Initial marking:  
+**M0 = {p0:1}**
+
+---
+
+### Step-by-step reachable markings:
+
+#### Step 0 (initial):
+M0 = [p0:1, others:0]  
+Only **T1** is enabled (needs p0).
+
+#### After T1:
+M1 = [pa:1, pb:1]  
+(removed p0, added pa, pb)
+
+Now, transitions enabled:  
+- **T2** (needs pa)  
+- **T2b** (needs pa)  
+- **T4** (needs pb)
+
+So T2, T2b, T4 are *all* enabled.
+
+Let’s consider **paths**.
+
+We want to know: can **T5 fire before T3**?
+
+Note:  
+- **T3 requires pc**.  
+- **pc is only produced by T2** (input: pa → output: pc).  
+- No other transition produces pc.  
+- T6 produces pc (from pf), but pf only comes after T5.
+
+So to get pc, either:
+
+1. **T2 fires** (from pa), or  
+2. T6 fires (but requires pf, which requires T5 → so circular: T5 before T6, but T6 needed for pc before T5? impossible without T2 first).
+
+Thus, **pc cannot be produced before T2 fires**, *unless* there is a feedback from T6, but T6 requires pf, which requires pd and pe.
+
+Let’s see dependencies:
+
+- To fire **T5**, need **pd and pe**.
+- **pe** comes only from **T4**, which needs **pb**.
+- **pb** is produced by **T1**, so T4 is reachable after T1.
+- **pd** can come from:
+  - T2b (requires pa) — *no need for pc*
+  - T3 (requires pc)
+So: **pd can be produced without pc**, via T2b.
+
+That’s key.
+
+So, possible way to get **pd** *without* firing T3:
+
+- After M1 = [pa:1, pb:1], fire **T2b**, which consumes pa, produces pd.
+
+Then M2 = [pb:1, pd:1]
+
+Then fire **T4** (needs pb), consumes pb, produces pe → M3 = [pd:1, pe:1]
+
+Now **T5** is enabled: needs pd and pe.
+
+So sequence:  
+**T1 → T2b → T4 → T5**
+
+Let’s verify:
+
+- M0: p0=1  
+- T1 fires ⇒ p0−, pa+1, pb+1 ⇒ [pa:1, pb:1]  
+- T2b fires ⇒ pa−, pd+1 ⇒ [pb:1, pd:1]  
+- T4 fires ⇒ pb−, pe+1 ⇒ [pd:1, pe:1]  
+- T5 fires ⇒ pd−, pe−, pf+1 ⇒ [pf:1]
+
+At this point, T3 has **not fired**, and T5 has fired.
+
+✅ So yes — **T5 can fire before T3**.
+
+Now: Is this the **shortest** firing sequence to enable T5 *before* T3?
+
+Let’s count transitions:  
+T1 → T2b → T4 → T5 = **4 transitions**.
+
+Can we do it in fewer? Let’s check.
+
+We need **pd** and **pe** for T5.
+
+- pe requires T4, which needs pb → pb comes only from T1. So to get pe, must fire T1 and T4 (at least 2 transitions before T5, unless pe comes from elsewhere — but no, only T4 produces pe).
+
+- pd can come from T2b (needs pa), and pa comes from T1.
+
+So minimal path to pd: T1 (gives pa), then T2b (gives pd) → 2 transitions to pd.
+
+But to get pe: T1 (pb), then T4 → 2 transitions to pe.
+
+Note: T1 is shared.
+
+So combined minimal:  
+T1 (→ pa, pb)  
+→ then do T2b and T4 (order doesn’t matter for token availability)  
+→ then T5.
+
+So length = **4**.
+
+Can we interleave? Still need T1, T2b, T4, T5 — four distinct transitions.
+
+No way to skip any:  
+- Need T1 to get pa and pb.  
+- Need T2b (or T3, but we want to avoid T3) to get pd.  
+- Need T4 to get pe.  
+- Then T5.
+
+So **shortest sequence** is length 4.
+
+Sequence options:
+
+- T1 → T2b → T4 → T5  
+- T1 → T4 → T2b → T5  
+
+Both work: after T1, both pb and pa present; T4 and T2b are independent (no shared resources), so can fire in any order.
+
+Check second:
+
+- M0: p0=1  
+- T1: [pa:1, pb:1]  
+- T4: pb−, pe+1 ⇒ [pa:1, pe:1]  
+- T2b: pa−, pd+1 ⇒ [pe:1, pd:1]  
+- T5: pd−, pe−, pf+1 ⇒ [pf:1]
+
+Same result — T5 fires, T3 never fired.
+
+✅ So yes.
+
+**Answer: Yes. Shortest firing sequences** (length 4):
+
+1. **T1, T2b, T4, T5**  
+2. **T1, T4, T2b, T5**
+
+Either is acceptable.
+
+Let’s write one as requested.
+
+---
+
+### ✅ Final Answer:
+
+**Yes.** One shortest firing sequence is:  
+**T1 → T2b → T4 → T5**
+
+This fires T5 before T3 (in fact, T3 never fires in this sequence).
