@@ -1,0 +1,25 @@
+
+
+# Yes — T5 Can Fire Before T3
+
+## Concrete Firing Sequence: **T1 → T2 → T5**
+
+| Step | Fire | Marking (p0 p1 p2 p3 p4 p5 p6) | Reason |
+|------|------|---------------------------------|--------|
+| — | — | **1 0 0 0 0 0 0** | Initial marking |
+| 1 | **T1** | **0 1 1 0 0 0 0** | p0 ≥ 1 ✓ → consume p0, produce p1 & p2 |
+| 2 | **T2** | **0 0 1 1 0 0 0** | p1 ≥ 1 ✓ → consume p1, produce p3 |
+| 3 | **T5** | **0 0 1 0 0 0 1** | p3 ≥ 1 ✓ **and** p4 = 0 ✓ (inhibitor) → consume p3, produce p6 |
+
+At step 3, **T3 has never fired** (p4 has been 0 throughout), yet T5 fires successfully.
+
+## Justification
+
+After the parallel split (T1), the two branches deposit tokens in **p1** and **p2** independently. Nothing forces T3 (which consumes p2 to produce p4) to fire before T2 (which consumes p1 to produce p3). If the **left branch finishes first** (T2 fires, placing a token in p3) while the **right branch has not yet started** (p2 still holds its token, p4 is still empty), the enabling condition of T5 is met:
+
+* **Normal arc from p3:** p3 = 1 ≥ 1 ✓
+* **Inhibitor arc from p4:** p4 = 0 ✓
+
+Hence T5 is enabled and can fire, all before T3 ever fires.
+
+> **Operational takeaway:** The inhibitor-arc guard on T5 was presumably meant to detect the case "the right branch *never completes*," but because the two branches run concurrently and asynchronously, a mere *delay* in T3 is indistinguishable from its permanent absence, allowing T5 to pre-empt the normal synchronising join (T4).

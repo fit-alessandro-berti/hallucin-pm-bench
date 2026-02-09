@@ -1,0 +1,379 @@
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/warranty-replacement"
+             exporter="business-process-architect"
+             exporterVersion="1.0">
+
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="true">
+
+    <!-- ================================================================ -->
+    <!--  START EVENT                                                      -->
+    <!-- ================================================================ -->
+    <startEvent id="wrc_start_event" name="Customer submits online warranty claim">
+      <outgoing>wrc_flow_start_to_validate</outgoing>
+    </startEvent>
+
+    <!-- ================================================================ -->
+    <!--  STEP 2 – Validate / request-info loop                           -->
+    <!-- ================================================================ -->
+    <task id="wrc_task_validate_claim" name="Validate the claim">
+      <incoming>wrc_flow_start_to_validate</incoming>
+      <incoming>wrc_flow_request_info_to_validate</incoming>
+      <outgoing>wrc_flow_validate_to_gw_completeness</outgoing>
+    </task>
+
+    <exclusiveGateway id="wrc_gw_completeness" name="Claim complete?" gatewayDirection="Diverging">
+      <incoming>wrc_flow_validate_to_gw_completeness</incoming>
+      <outgoing>wrc_flow_incomplete</outgoing>
+      <outgoing>wrc_flow_complete</outgoing>
+    </exclusiveGateway>
+
+    <task id="wrc_task_request_missing_information" name="Request missing information">
+      <incoming>wrc_flow_incomplete</incoming>
+      <outgoing>wrc_flow_request_info_to_validate</outgoing>
+    </task>
+
+    <!-- ================================================================ -->
+    <!--  STEP 3 – Check warranty eligibility                              -->
+    <!-- ================================================================ -->
+    <task id="wrc_task_check_warranty_eligibility" name="Check warranty eligibility">
+      <incoming>wrc_flow_complete</incoming>
+      <outgoing>wrc_flow_check_to_gw_warranty</outgoing>
+    </task>
+
+    <exclusiveGateway id="wrc_gw_warranty_decision" name="Within warranty?" gatewayDirection="Diverging">
+      <incoming>wrc_flow_check_to_gw_warranty</incoming>
+      <outgoing>wrc_flow_out_of_warranty</outgoing>
+      <outgoing>wrc_flow_within_warranty</outgoing>
+    </exclusiveGateway>
+
+    <!-- Out-of-warranty path -->
+    <task id="wrc_task_send_rejection_notice" name="Send rejection notice">
+      <incoming>wrc_flow_out_of_warranty</incoming>
+      <outgoing>wrc_flow_rejection_to_end</outgoing>
+    </task>
+
+    <endEvent id="wrc_end_rejection" name="Claim rejected">
+      <incoming>wrc_flow_rejection_to_end</incoming>
+    </endEvent>
+
+    <!-- ================================================================ -->
+    <!--  STEP 4 – Parallel activities                                     -->
+    <!-- ================================================================ -->
+    <parallelGateway id="wrc_gw_parallel_split" name="Split – shipment and pickup" gatewayDirection="Diverging">
+      <incoming>wrc_flow_within_warranty</incoming>
+      <outgoing>wrc_flow_split_to_shipment</outgoing>
+      <outgoing>wrc_flow_split_to_pickup</outgoing>
+    </parallelGateway>
+
+    <task id="wrc_task_create_shipment_order" name="Create shipment order">
+      <incoming>wrc_flow_split_to_shipment</incoming>
+      <outgoing>wrc_flow_shipment_to_join</outgoing>
+    </task>
+
+    <task id="wrc_task_schedule_courier_pickup" name="Schedule courier pickup">
+      <incoming>wrc_flow_split_to_pickup</incoming>
+      <outgoing>wrc_flow_pickup_to_join</outgoing>
+    </task>
+
+    <parallelGateway id="wrc_gw_parallel_join" name="Join – shipment and pickup" gatewayDirection="Converging">
+      <incoming>wrc_flow_shipment_to_join</incoming>
+      <incoming>wrc_flow_pickup_to_join</incoming>
+      <outgoing>wrc_flow_join_to_update_inventory</outgoing>
+    </parallelGateway>
+
+    <!-- ================================================================ -->
+    <!--  STEP 5 – Wrap-up                                                 -->
+    <!-- ================================================================ -->
+    <task id="wrc_task_update_inventory_records" name="Update inventory records">
+      <incoming>wrc_flow_join_to_update_inventory</incoming>
+      <outgoing>wrc_flow_update_inventory_to_close</outgoing>
+    </task>
+
+    <task id="wrc_task_close_the_claim" name="Close the claim">
+      <incoming>wrc_flow_update_inventory_to_close</incoming>
+      <outgoing>wrc_flow_close_to_end</outgoing>
+    </task>
+
+    <endEvent id="wrc_end_success" name="Claim completed successfully">
+      <incoming>wrc_flow_close_to_end</incoming>
+    </endEvent>
+
+    <!-- ================================================================ -->
+    <!--  SEQUENCE FLOWS                                                   -->
+    <!-- ================================================================ -->
+
+    <!-- Start → Validate -->
+    <sequenceFlow id="wrc_flow_start_to_validate"
+                  sourceRef="wrc_start_event"
+                  targetRef="wrc_task_validate_claim"/>
+
+    <!-- Validate → Completeness gateway -->
+    <sequenceFlow id="wrc_flow_validate_to_gw_completeness"
+                  sourceRef="wrc_task_validate_claim"
+                  targetRef="wrc_gw_completeness"/>
+
+    <!-- Incomplete → Request missing information -->
+    <sequenceFlow id="wrc_flow_incomplete" name="Claim incomplete"
+                  sourceRef="wrc_gw_completeness"
+                  targetRef="wrc_task_request_missing_information">
+      <conditionExpression xsi:type="tFormalExpression">#{claimIncomplete == true}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Request missing information → loop back to Validate -->
+    <sequenceFlow id="wrc_flow_request_info_to_validate"
+                  sourceRef="wrc_task_request_missing_information"
+                  targetRef="wrc_task_validate_claim"/>
+
+    <!-- Complete → Check warranty eligibility -->
+    <sequenceFlow id="wrc_flow_complete" name="Claim complete"
+                  sourceRef="wrc_gw_completeness"
+                  targetRef="wrc_task_check_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">#{claimIncomplete == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Check warranty eligibility → Warranty gateway -->
+    <sequenceFlow id="wrc_flow_check_to_gw_warranty"
+                  sourceRef="wrc_task_check_warranty_eligibility"
+                  targetRef="wrc_gw_warranty_decision"/>
+
+    <!-- Out of warranty → Send rejection notice -->
+    <sequenceFlow id="wrc_flow_out_of_warranty" name="Out of warranty"
+                  sourceRef="wrc_gw_warranty_decision"
+                  targetRef="wrc_task_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression">#{withinWarranty == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Send rejection notice → End (rejection) -->
+    <sequenceFlow id="wrc_flow_rejection_to_end"
+                  sourceRef="wrc_task_send_rejection_notice"
+                  targetRef="wrc_end_rejection"/>
+
+    <!-- Within warranty → Parallel split -->
+    <sequenceFlow id="wrc_flow_within_warranty" name="Within warranty"
+                  sourceRef="wrc_gw_warranty_decision"
+                  targetRef="wrc_gw_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression">#{withinWarranty == true}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Parallel split → Create shipment order -->
+    <sequenceFlow id="wrc_flow_split_to_shipment"
+                  sourceRef="wrc_gw_parallel_split"
+                  targetRef="wrc_task_create_shipment_order"/>
+
+    <!-- Parallel split → Schedule courier pickup -->
+    <sequenceFlow id="wrc_flow_split_to_pickup"
+                  sourceRef="wrc_gw_parallel_split"
+                  targetRef="wrc_task_schedule_courier_pickup"/>
+
+    <!-- Create shipment order → Parallel join -->
+    <sequenceFlow id="wrc_flow_shipment_to_join"
+                  sourceRef="wrc_task_create_shipment_order"
+                  targetRef="wrc_gw_parallel_join"/>
+
+    <!-- Schedule courier pickup → Parallel join -->
+    <sequenceFlow id="wrc_flow_pickup_to_join"
+                  sourceRef="wrc_task_schedule_courier_pickup"
+                  targetRef="wrc_gw_parallel_join"/>
+
+    <!-- Parallel join → Update inventory records -->
+    <sequenceFlow id="wrc_flow_join_to_update_inventory"
+                  sourceRef="wrc_gw_parallel_join"
+                  targetRef="wrc_task_update_inventory_records"/>
+
+    <!-- Update inventory records → Close the claim -->
+    <sequenceFlow id="wrc_flow_update_inventory_to_close"
+                  sourceRef="wrc_task_update_inventory_records"
+                  targetRef="wrc_task_close_the_claim"/>
+
+    <!-- Close the claim → End (success) -->
+    <sequenceFlow id="wrc_flow_close_to_end"
+                  sourceRef="wrc_task_close_the_claim"
+                  targetRef="wrc_end_success"/>
+
+  </process>
+
+  <!-- ================================================================== -->
+  <!--  BPMN DIAGRAM (layout)                                             -->
+  <!-- ================================================================== -->
+  <bpmndi:BPMNDiagram id="wrc_diagram" name="Warranty-Replacement v1.3 Diagram">
+    <bpmndi:BPMNPlane id="wrc_plane" bpmnElement="wrc_process">
+
+      <!-- Start Event -->
+      <bpmndi:BPMNShape id="wrc_shape_start_event" bpmnElement="wrc_start_event">
+        <dc:Bounds x="160" y="260" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Validate the claim -->
+      <bpmndi:BPMNShape id="wrc_shape_validate_claim" bpmnElement="wrc_task_validate_claim">
+        <dc:Bounds x="260" y="238" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Completeness gateway -->
+      <bpmndi:BPMNShape id="wrc_shape_gw_completeness" bpmnElement="wrc_gw_completeness" isMarkerVisible="true">
+        <dc:Bounds x="480" y="253" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Request missing information -->
+      <bpmndi:BPMNShape id="wrc_shape_request_missing_info" bpmnElement="wrc_task_request_missing_information">
+        <dc:Bounds x="340" y="100" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Check warranty eligibility -->
+      <bpmndi:BPMNShape id="wrc_shape_check_warranty" bpmnElement="wrc_task_check_warranty_eligibility">
+        <dc:Bounds x="600" y="238" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Warranty decision gateway -->
+      <bpmndi:BPMNShape id="wrc_shape_gw_warranty" bpmnElement="wrc_gw_warranty_decision" isMarkerVisible="true">
+        <dc:Bounds x="840" y="253" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Send rejection notice -->
+      <bpmndi:BPMNShape id="wrc_shape_send_rejection" bpmnElement="wrc_task_send_rejection_notice">
+        <dc:Bounds x="815" y="390" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- End – rejection -->
+      <bpmndi:BPMNShape id="wrc_shape_end_rejection" bpmnElement="wrc_end_rejection">
+        <dc:Bounds x="1060" y="412" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Parallel split -->
+      <bpmndi:BPMNShape id="wrc_shape_parallel_split" bpmnElement="wrc_gw_parallel_split">
+        <dc:Bounds x="960" y="253" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Create shipment order -->
+      <bpmndi:BPMNShape id="wrc_shape_create_shipment" bpmnElement="wrc_task_create_shipment_order">
+        <dc:Bounds x="1070" y="160" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Schedule courier pickup -->
+      <bpmndi:BPMNShape id="wrc_shape_schedule_pickup" bpmnElement="wrc_task_schedule_courier_pickup">
+        <dc:Bounds x="1070" y="310" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Parallel join -->
+      <bpmndi:BPMNShape id="wrc_shape_parallel_join" bpmnElement="wrc_gw_parallel_join">
+        <dc:Bounds x="1310" y="253" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Update inventory records -->
+      <bpmndi:BPMNShape id="wrc_shape_update_inventory" bpmnElement="wrc_task_update_inventory_records">
+        <dc:Bounds x="1420" y="238" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Close the claim -->
+      <bpmndi:BPMNShape id="wrc_shape_close_claim" bpmnElement="wrc_task_close_the_claim">
+        <dc:Bounds x="1660" y="238" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- End – success -->
+      <bpmndi:BPMNShape id="wrc_shape_end_success" bpmnElement="wrc_end_success">
+        <dc:Bounds x="1880" y="260" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- ============================================================ -->
+      <!--  EDGES                                                        -->
+      <!-- ============================================================ -->
+
+      <bpmndi:BPMNEdge id="wrc_edge_start_to_validate" bpmnElement="wrc_flow_start_to_validate">
+        <di:waypoint x="196" y="278"/>
+        <di:waypoint x="260" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_validate_to_gw_completeness" bpmnElement="wrc_flow_validate_to_gw_completeness">
+        <di:waypoint x="420" y="278"/>
+        <di:waypoint x="480" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_incomplete" bpmnElement="wrc_flow_incomplete">
+        <di:waypoint x="505" y="253"/>
+        <di:waypoint x="505" y="140"/>
+        <di:waypoint x="520" y="140"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_request_info_to_validate" bpmnElement="wrc_flow_request_info_to_validate">
+        <di:waypoint x="340" y="140"/>
+        <di:waypoint x="300" y="140"/>
+        <di:waypoint x="300" y="238"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_complete" bpmnElement="wrc_flow_complete">
+        <di:waypoint x="530" y="278"/>
+        <di:waypoint x="600" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_check_to_gw_warranty" bpmnElement="wrc_flow_check_to_gw_warranty">
+        <di:waypoint x="780" y="278"/>
+        <di:waypoint x="840" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_out_of_warranty" bpmnElement="wrc_flow_out_of_warranty">
+        <di:waypoint x="865" y="303"/>
+        <di:waypoint x="865" y="390"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_rejection_to_end" bpmnElement="wrc_flow_rejection_to_end">
+        <di:waypoint x="995" y="430"/>
+        <di:waypoint x="1060" y="430"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_within_warranty" bpmnElement="wrc_flow_within_warranty">
+        <di:waypoint x="890" y="278"/>
+        <di:waypoint x="960" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_split_to_shipment" bpmnElement="wrc_flow_split_to_shipment">
+        <di:waypoint x="985" y="253"/>
+        <di:waypoint x="985" y="200"/>
+        <di:waypoint x="1070" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_split_to_pickup" bpmnElement="wrc_flow_split_to_pickup">
+        <di:waypoint x="985" y="303"/>
+        <di:waypoint x="985" y="350"/>
+        <di:waypoint x="1070" y="350"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_shipment_to_join" bpmnElement="wrc_flow_shipment_to_join">
+        <di:waypoint x="1250" y="200"/>
+        <di:waypoint x="1335" y="200"/>
+        <di:waypoint x="1335" y="253"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_pickup_to_join" bpmnElement="wrc_flow_pickup_to_join">
+        <di:waypoint x="1250" y="350"/>
+        <di:waypoint x="1335" y="350"/>
+        <di:waypoint x="1335" y="303"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_join_to_update_inventory" bpmnElement="wrc_flow_join_to_update_inventory">
+        <di:waypoint x="1360" y="278"/>
+        <di:waypoint x="1420" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_update_inventory_to_close" bpmnElement="wrc_flow_update_inventory_to_close">
+        <di:waypoint x="1600" y="278"/>
+        <di:waypoint x="1660" y="278"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="wrc_edge_close_to_end" bpmnElement="wrc_flow_close_to_end">
+        <di:waypoint x="1820" y="278"/>
+        <di:waypoint x="1880" y="278"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
+```

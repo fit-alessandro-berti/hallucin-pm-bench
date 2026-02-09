@@ -1,0 +1,37 @@
+
+
+# Yes — T5 Can Fire Before T3
+
+## Key Insight
+
+Transition **T2b** provides a *shortcut* from `pa` directly to `pd`, completely bypassing the `pa → pc → pd` path (T2 then T3). This means `pd` can be filled without T3 ever firing.
+
+## Shortest Firing Sequence
+
+| Step | Transition | Precondition consumed | Tokens produced | Marking after firing |
+|------|------------|-----------------------|-----------------|----------------------|
+| 0 | *(start)* | — | — | **p0**=1 |
+| 1 | **T1** | p0 | pa, pb | **pa**=1, **pb**=1 |
+| 2 | **T2b** | pa | pd | **pb**=1, **pd**=1 |
+| 3 | **T4** | pb | pe | **pd**=1, **pe**=1 |
+| 4 | **T5** | pd, pe | pf | **pf**=1 |
+
+$$\boxed{\sigma = \langle\, T1,\; T2b,\; T4,\; T5 \,\rangle}$$
+
+## Verification
+
+1. **T1** is enabled (p0=1). Fires → pa=1, pb=1.
+2. **T2b** is enabled (pa=1). Fires → pd=1. *(shortcut: skips pc entirely)*
+3. **T4** is enabled (pb=1). Fires → pe=1.
+4. **T5** is enabled (pd=1 ∧ pe=1). Fires → pf=1. ✓
+
+**T3 has input place `pc`, which was never marked in this sequence, so T3 was never even enabled — let alone fired — before T5.**
+
+## Why 4 Is Minimal
+
+T5 requires tokens in both `pd` and `pe`. Working backward:
+
+- `pe` needs T4, which needs `pb`, which needs T1.
+- `pd` needs either T3 or **T2b**; choosing T2b needs `pa`, which needs T1.
+
+So the minimum causal chain is **T1 → T2b, T1 → T4 → T5**, giving exactly **4 firings**. No shorter sequence can enable T5.

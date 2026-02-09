@@ -1,0 +1,26 @@
+**9.2**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer is **semantically equivalent** to the ground truth and faithful to the prompt, warranting a very high score. It correctly models **all explicitly mentioned flow elements** (including the "checks warranty eligibility" task that the ground truth **omits**, despite being explicitly stated in step 3), uses exactly the required gateways (completeness exclusive GW, warranty exclusive GW, parallel split/join), exactly two end events, "wrc_" ID prefix everywhere, and no invented paths/error-handling/escalations. The process flow (validation loop, eligibility check/decision, parallel shipment/pickup, sequential update/close) matches the description precisely.
+
+**Strengths (full credit areas)**:
+- Complete, valid BPMN 2.0 XML (parsable and executable).
+- Includes all 8 explicit activities as tasks (ground truth misses 1).
+- Correct loopback for incomplete claims.
+- Parallel activities join before update/close.
+- Two distinct end events.
+- Descriptive flow/sequenceFlow IDs and wiring (incoming/outgoing + sourceRef/targetRef) is standard-compliant and more complete than ground truth's refs-only.
+- Self-contained with full namespaces/exporter info.
+
+**Deductions (utmost strictness for small errors/differences, -0.8 total)**:
+- **Task names not verbatim** (-0.4): Prompt requires **verbatim** match to bolded text (e.g., "validates the claim" ≠ "Validate the claim"; "checks warranty eligibility" ≠ "Check warranty eligibility"; "send rejection notice" ≠ "Send rejection notice"; "update inventory records" ≠ "Update inventory records" due to tense/case). Ground truth has identical issues, but strict per prompt spec = loss. Infinitive title-case is conventional but not verbatim.
+- **Invented conditionExpressions on flows** (-0.2): Adds unmentioned logic/variables (e.g., `#{claimIncomplete == true}`), violating "Do **not** invent ... beyond what is stated." Ground truth uses simple flow names ("No"/"Yes") instead.
+- **Minor inventive naming** (-0.2): Parallel GW names ("Split – shipment and pickup"), start event name ("Customer submits..."), end names ("Claim rejected"/"Claim completed successfully") interpretive, not verbatim from prompt. Ground truth more neutral/minimal.
+
+No deductions for:
+- Extra "check" task (explicitly required, not hallucinated; improves over ground truth omission).
+- Full DI diagram (prompt requests "BPMN 2.0 XML **diagram**"; enhances self-containment, no rubric penalty for non-flow extras).
+- Descriptive IDs/attributes (rubric explicitly allows "different IDs ... full credit").
+- Length/comments/isExecutable (not prohibited; minimal ground truth is example only).
+
+Semantically perfect + no omissions/extras per prompt = near-max score. Ground truth itself deviates (omission, non-verbatim names), but LLM exceeds it in completeness/accuracy.

@@ -1,0 +1,9 @@
+
+
+## Improvement: Boundary Timer Event on Task_RequestDocs
+
+Attach a **boundary interrupting timer intermediate event** to **Task_RequestDocs** with a duration of `PT44H` (leaving ~4 hours buffer for Task_Receive and Task_Check). Connect this timer event directly to **Task_Triage** via a new sequence flow.
+
+**Why this works:** The only path that risks breaching the 48-hour SLA is the "missing docs" branch (f4 → **Task_RequestDocs** → f6), where the process can stall indefinitely waiting for the claimant. The boundary timer caps that wait. When it fires, it interrupts **Task_RequestDocs** and routes the claim straight to **Task_Triage**, effectively auto-escalating it into triage with incomplete documents rather than missing the SLA.
+
+No new tasks or subprocesses are introduced—only one timer event and one sequence flow.

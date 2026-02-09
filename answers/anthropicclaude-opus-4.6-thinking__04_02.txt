@@ -1,0 +1,62 @@
+
+
+# Compliance Audit — Case #47291
+
+## Event Trace (re-sorted by timestamp for clarity)
+
+| # | Event | Timestamp |
+|---|-------|-----------|
+| 1 | Create_PO (€12 450, expedited, non-hazardous) | 03-03 09:12 |
+| 2 | Manager_Approval | 03-03 11:05 |
+| 3 | Finance_Approval | 03-04 08:17 |
+| 4 | Change_Request | 03-04 15:42 |
+| 5 | Ship_Goods | 03-05 10:26 |
+| 7 | **Pay_Invoice** | **03-06 09:00** |
+| 6 | **Receive_Goods** | **03-07 14:13** |
+| 8 | Manager_Approval (re-approval) | 03-07 15:10 |
+| 9 | Store_Goods | 03-07 16:02 |
+| 10 | Archive_Record | 03-07 16:20 |
+
+*(Note: events 6 & 7 are listed out of timestamp order in the source log — timestamps govern actual sequence.)*
+
+---
+
+## Rule-by-Rule Analysis
+
+**R1 — Manager_Approval → Finance_Approval for orders > €10 000**
+**Compliant.** €12 450 triggers the rule; Manager_Approval (03-03) correctly precedes Finance_Approval (03-04).
+
+---
+
+**R2 — Ship_Goods within 2 calendar days of last required approval (expedited)**
+**Compliant.** Last required approval (Finance_Approval) was 03-04 08:17; Ship_Goods was 03-05 10:26 — ~1 day later, within the 2-day window.
+
+---
+
+**R3 — Pay_Invoice must not occur before Receive_Goods**
+**Violated.** Pay_Invoice (03-06 09:00) occurred **one full day before** Receive_Goods (03-07 14:13).
+
+---
+
+**R4 — Safety_Inspection required between Receive_Goods and Store_Goods (hazardous)**
+**Not Applicable.** `hazardous = false`; rule is not triggered.
+
+---
+
+**R5 — Change_Request after approval requires new Manager_Approval before any further processing**
+**Violated.** Change_Request (event 4, 03-04 15:42) occurred after both approvals. Ship_Goods, Pay_Invoice, and Receive_Goods all proceeded **before** the re-approval (event 8, 03-07 15:10).
+
+---
+
+**R6 — Case must terminate with Archive_Record**
+**Compliant.** The final event in the trace is Archive_Record (03-07 16:20).
+
+---
+
+## Overall Result
+
+> **NON-COMPLIANT**
+
+Two rules are violated:
+- **R3** — Payment was made before goods were received (financial control breach).
+- **R5** — Multiple processing steps executed after a Change_Request without the required re-approval (authorization control breach).

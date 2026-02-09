@@ -1,0 +1,35 @@
+
+
+## Added / Changed Elements
+
+```xml
+<!-- Attach an interrupting boundary timer to the service task -->
+<bpmn:boundaryEvent id="Timer_SLA_48h" name="48 h SLA breached"
+                     attachedToRef="Activity_CreateAccount" cancelActivity="true">
+  <bpmn:timerEventDefinition id="TimerDef_01">
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<!-- Wire the timer to the already-existing (but currently orphaned) AM Review task -->
+<bpmn:sequenceFlow id="Flow_09" sourceRef="Timer_SLA_48h" targetRef="Activity_AMReview"/>
+```
+
+## How it fits into the model
+
+```
+Verify Identity
+      │
+      ▼
+ ─────────────────────────────
+│ Create Account in Core System │──(ok)──▶ Activate Account ──▶ End ✓
+ ─────────────────────────────
+      ⏱ 48 h
+      │ (interrupting)
+      ▼
+ Account-Manager Review ──Flow_08──▶ Activate Account ──▶ End ✓
+```
+
+## Justification
+
+An **interrupting boundary timer event** (`PT48H`) on `Activity_CreateAccount` cancels the stalled service task after 48 hours and routes the token to the **already-existing but orphaned** `Activity_AMReview`, which in turn flows (via the existing `Flow_08`) into `Activity_ActivateAccount` — thereby enforcing the SLA deadline with a manual escalation path **without introducing any new activities**.
