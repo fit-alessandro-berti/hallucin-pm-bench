@@ -1,0 +1,12 @@
+**3.0**
+
+### Key Differences Penalized (Strict Evaluation):
+- **Schema mismatch (major deduction)**: LLM uses `"nodes"`/`"flows"` with flow `"id"`s, `"condition"`s, and non-standard fields like `"attachedTo"`, `"eventDefinition"`. Ground truth (GT) uses `"process_id"`, `"elements"`, `"flows"` (no IDs, simpler `"condition"`, `"event"`). This fundamentally differs in structure.
+- **Extra invented task (hallucination, -2.0)**: LLM adds `"parseEmail"` task (absent in description as separate step; desc combines "parsed and created" into one). GT merges into `"createTicket"`.
+- **Incorrect event-based gateway handling (-1.5)**: LLM funnels both `"customerReply"` and `"timeoutEvent"` to unnecessary `"afterReplyGateway"` (exclusiveGW with redundant `"Reply Received"`/`"Timeout"` conditions). GT correctly flows directly: reply → close; timer → reminder → close. LLM's model is broken (no distinction post-merge).
+- **Wrong parallel join position (-1.0)**: LLM joins `"logSolution"` and post-`"closeTicket"` at final `"joinGateway"` (after reply handling). GT joins send/log at `"joinAfterLogging"` *before* `"awaitReply"`. Different semantics.
+- **Incomplete/wrong cancel handling (-0.5)**: Both dangling (no incoming flows), but LLM uses invalid `"cancelEventDefinition"` (not standard for intermediate catch; GT `"event": "message"`). LLM's `"attachedTo"` non-standard.
+- **Node count/ID/name mismatches (-0.5)**: LLM 20 nodes vs GT 18; extras like `"parseEmail"`, `"replyGateway"`, `"afterReplyGateway"`. Names/IDs differ (e.g., start `"Start"` vs `"Email Received"`; gw `"Routing Decision"` vs `"Simple or Complex?"`; conditions `"Simple"` vs `"simple"`). Missing faithful names (e.g., no "Email Received").
+- **Minor strict losses (-0.5)**: Timer lacks duration detail matching desc in GT (LLM adds `"PT24H"`, arguably good but deviates); extra gw names like `"Parallel Split"` absent in GT.
+
+Core flow partially aligns (classification, parallel intent, events), but cumulative inventions, structural errors, and absent GT fidelity yield low score. No escalations, but extras penalized per focus.

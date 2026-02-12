@@ -1,0 +1,139 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "name": "Start",
+      "type": "startEvent"
+    },
+    {
+      "id": "parseEmail",
+      "name": "Parse Email",
+      "type": "task"
+    },
+    {
+      "id": "createTicket",
+      "name": "Create Ticket",
+      "type": "task"
+    },
+    {
+      "id": "initialClassification",
+      "name": "Initial Classification",
+      "type": "task"
+    },
+    {
+      "id": "routingGateway",
+      "name": "Routing Decision",
+      "type": "exclusiveGateway"
+    },
+    {
+      "id": "rootCauseAnalysis",
+      "name": "Root Cause Analysis",
+      "type": "task"
+    },
+    {
+      "id": "provideResolution",
+      "name": "Provide Resolution",
+      "type": "task"
+    },
+    {
+      "id": "splitGateway",
+      "name": "Parallel Split",
+      "type": "parallelGateway"
+    },
+    {
+      "id": "sendResponse",
+      "name": "Send Response to Customer",
+      "type": "task"
+    },
+    {
+      "id": "logSolution",
+      "name": "Log Solution in Knowledge Base",
+      "type": "task"
+    },
+    {
+      "id": "replyGateway",
+      "name": "Wait for Reply",
+      "type": "eventBasedGateway"
+    },
+    {
+      "id": "customerReply",
+      "name": "Customer Reply",
+      "type": "intermediateCatchEvent",
+      "eventDefinition": {
+        "type": "messageEventDefinition"
+      }
+    },
+    {
+      "id": "timeoutEvent",
+      "name": "24‑Hour Timeout",
+      "type": "intermediateCatchEvent",
+      "eventDefinition": {
+        "type": "timerEventDefinition",
+        "timer": "PT24H"
+      }
+    },
+    {
+      "id": "afterReplyGateway",
+      "name": "Reply Decision",
+      "type": "exclusiveGateway"
+    },
+    {
+      "id": "sendReminder",
+      "name": "Send Reminder",
+      "type": "task"
+    },
+    {
+      "id": "closeTicket",
+      "name": "Close Ticket",
+      "type": "task"
+    },
+    {
+      "id": "joinGateway",
+      "name": "Parallel Join",
+      "type": "parallelGateway"
+    },
+    {
+      "id": "end",
+      "name": "End",
+      "type": "endEvent"
+    },
+    {
+      "id": "cancelEvent",
+      "name": "Cancel Ticket",
+      "type": "intermediateCatchEvent",
+      "eventDefinition": {
+        "type": "cancelEventDefinition"
+      },
+      "attachedTo": "joinGateway"
+    },
+    {
+      "id": "terminateEnd",
+      "name": "Terminate",
+      "type": "terminateEndEvent"
+    }
+  ],
+  "flows": [
+    { "id": "f1", "source": "start", "target": "parseEmail" },
+    { "id": "f2", "source": "parseEmail", "target": "createTicket" },
+    { "id": "f3", "source": "createTicket", "target": "initialClassification" },
+    { "id": "f4", "source": "initialClassification", "target": "routingGateway" },
+    { "id": "f5", "source": "routingGateway", "target": "provideResolution", "condition": "Simple" },
+    { "id": "f6", "source": "routingGateway", "target": "rootCauseAnalysis", "condition": "Complex" },
+    { "id": "f7", "source": "rootCauseAnalysis", "target": "provideResolution" },
+    { "id": "f8", "source": "provideResolution", "target": "splitGateway" },
+    { "id": "f9", "source": "splitGateway", "target": "sendResponse" },
+    { "id": "f10", "source": "splitGateway", "target": "logSolution" },
+    { "id": "f11", "source": "sendResponse", "target": "replyGateway" },
+    { "id": "f12", "source": "logSolution", "target": "joinGateway" },
+    { "id": "f13", "source": "replyGateway", "target": "customerReply" },
+    { "id": "f14", "source": "replyGateway", "target": "timeoutEvent" },
+    { "id": "f15", "source": "customerReply", "target": "afterReplyGateway" },
+    { "id": "f16", "source": "timeoutEvent", "target": "afterReplyGateway" },
+    { "id": "f17", "source": "afterReplyGateway", "target": "closeTicket", "condition": "Reply Received" },
+    { "id": "f18", "source": "afterReplyGateway", "target": "sendReminder", "condition": "Timeout" },
+    { "id": "f19", "source": "sendReminder", "target": "closeTicket" },
+    { "id": "f20", "source": "closeTicket", "target": "joinGateway" },
+    { "id": "f21", "source": "joinGateway", "target": "end" },
+    { "id": "f22", "source": "cancelEvent", "target": "terminateEnd" }
+  ]
+}

@@ -107,6 +107,7 @@ class Shared:
                        "arcee-ai/trinity-large-preview:free",
                        "stepfun/step-3.5-flash:free",
                        "qwen/qwen3-coder-next",
+                       "openrouter/aurora-alpha",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),

@@ -1,0 +1,20 @@
+**2.0**
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under utmost strictness. Key failures:
+
+- **Invented activity (critical violation)**: Added `t6` "Specialist Finish" (lines ~15, f8/f9), not mentioned in description (line 6 states specialist finish *is* "Resolve Issue"). Prompt explicitly forbids inventing activities. Ground truth merges directly `t5` → `t4` Resolve (f9).
+- **Invalid BPMN structure**: No exclusive gateway after `t7` Confirm (f11/f12 branch directly from task with conditions). BPMN requires gateways for exclusive decisions; this is malformed. Ground truth uses `gw3` "Customer Confirms?" (f11-f13). Prompt mandates gateways for decision points; LLM misapplies to only two, botching the rework loop.
+- **Mismatch in elements**:
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | Gateways | 2 (`gw1`, `gw2`) | 3 (`gw1`-`gw3`) | Missing `gw3`; prompt says "two" but ground/loop requires third. |
+  | Tasks | 7 (extra `t6`) | 6 | Extra task shifts IDs (`t6` vs `t6` Confirm). |
+  | Task names | `t1` "Classify Ticket"; gw names generic | `t1` "Auto-Classification"; descriptive gw ("Password Reset?") | Inexact translation ("automatically classified"). |
+  | Conditions | Descriptive (`"Password Reset"`, `"Resolve"`, etc.) | Simple `yes`/`no` | Invented logic; gw1 uses `default=true` vs explicit `no`. |
+  | Process | ID `supportTicketProcess`; extra `xmlns:xsi`, `exporter`, no `name` | ID `support_ticket`; `name="Support-Ticket"`; clean NS | Extraneous attributes bloat XML. |
+  | Flows | 13 flows; comments; wrong targets post-specialist | 13 flows; no comments; precise | Invalid task branching; invented paths. |
+
+- **Other strict deducts**: > Minor name diffs (e.g., gw2 "Diagnosis Decision" vs "Resolved Internally?"), different NS/targetNS, condition styles, flow IDs. Line count ~45 w/ comments/headers > spirit of ≤40 clean lines. Fails "exactly as stated" and no-add rule.
+
+Partial credit for core flow (start → classify → gw1 → reset/diag → gw2 → resolve/forward → resolve → confirm → end/loop to diag), but hallucinations and invalidity dominate. Equivalent to ~20% match.
