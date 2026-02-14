@@ -1,0 +1,137 @@
+**Answer: No**, it is **not possible** for transition **T5 to fire before transition T3**.
+
+---
+
+### **Proof of Impossibility**
+
+We analyze the structure and dependencies of the net:
+
+- **Initial marking**:  
+  \( M_0 = \{p0:1, p1:0, p2:0, p3:0, p4:0, p5:0, p6:0\} \)
+
+- **T1** is the only enabled transition initially (it consumes the token from p0 and produces tokens in **p1** and **p2**).
+
+After firing **T1**, we reach:
+- \( M_1 = \{p1:1, p2:1\} \)
+
+Now, **T2** (requires p1) and **T3** (requires p2) are **both enabled**.
+
+- **T5** requires:
+  - A **token in p3** (normal input arc from p3),
+  - **Zero tokens in p4** (inhibitor arc from p4).
+
+So to enable **T5**, we must have:
+- \( p3 \geq 1 \)
+- \( p4 = 0 \)
+
+But **p3 gets a token only by firing T2**, and **p4 gets a token only by firing T3**.
+
+Thus, to have \( p3 \geq 1 \), **T2 must fire**.
+
+However, after T1 fires, **p2 = 1**, so **T3 is enabled immediately**, but **not yet fired**.
+
+Could we fire **T2 first**, then **T5**, **before** ever firing **T3**?
+
+Let’s try:
+
+1. **T1** → \( p1=1, p2=1 \)
+2. **T2** → consumes p1, produces p3 → \( p3=1, p2=1, p4=0 \)
+
+Now the marking is: \( p2=1, p3=1, p4=0 \)
+
+- **T5 is now enabled** (p3 ≥ 1, p4 = 0)
+- **T3 is also enabled** (p2 = 1)
+
+So **T5 *can* fire before T3 actually fires** — but wait! The question is: *“Is it possible for T5 to fire before T3?”*
+
+This seems to suggest **yes**, but we must look more carefully.
+
+Hold on: **T3 has not fired yet** in this scenario, and **T5 is enabled**. So can we just fire T5 now?
+
+Yes — **if** the net allows non-deterministic choice, which Petri nets do.
+
+So sequence:
+- T1 → T2 → T5
+
+This yields:
+- After T1: p1=1, p2=1
+- After T2: p3=1, p2=1
+- After T5: consumes p3, produces p6 → p6=1, p2=1, p3=0, p4=0
+
+**T3 has not fired** at all!
+
+So **T5 fired before T3**.
+
+But wait — is this **actually valid**?
+
+Let’s double-check **T5's input arcs**:
+
+> T5 : p3 –|p4 → p6  
+> Normal arc from p3 (so consumes 1 token from p3)  
+> Inhibitor arc from p4 (so requires p4 = 0)
+
+At marking after T2:
+- p3 = 1 → OK
+- p4 = 0 → OK (since T3 hasn’t fired)
+
+So **T5 is enabled**, and **T3 has not fired yet**.
+
+Therefore, **T5 can fire before T3**.
+
+But this **contradicts** our earlier "no" conclusion.
+
+So which is correct?
+
+Let’s re-read the question carefully:
+
+> “Is it possible for transition T5 to fire *before* transition T3?”
+
+That means: **Does there exist a reachable firing sequence where T5 occurs at a step prior to any occurrence of T3?**
+
+From above: **Yes**.
+
+Firing sequence: **T1 → T2 → T5**
+
+In this sequence:
+- T3 never fires (and certainly hasn’t fired before T5).
+
+Thus, **T5 fires before T3**.
+
+But wait — is there a hidden constraint?
+
+Let’s verify token counts:
+
+- Initial: p0=1
+- T1: p0→p1+p2 → p1=1, p2=1
+- T2: p1→p3 → p3=1, p2=1
+- T5: p3 (consumed), inhibitor on p4 (p4=0) → p6=1
+
+Final: p2=1 (unused), p6=1
+
+This is a **valid reachable marking**.
+
+Therefore, **YES**, it **is possible**.
+
+But hold on! The original analysis suggested “no”, but detailed step-by-step shows “yes”.
+
+So the correct answer is:
+
+---
+
+### ✅ **Yes**, it is possible.
+
+**Concrete firing sequence**:  
+**T1 → T2 → T5**
+
+**Justification**:
+
+- Start at initial marking: only T1 enabled.
+- After **T1**: tokens in p1 and p2.
+- Fire **T2**: moves token from p1 to p3. Now p3=1, p2=1, p4=0.
+- At this point, **T5 is enabled** (p3 has a token, p4 is empty due to inhibitor arc).
+- **T3 has not fired yet** (it’s enabled but not executed).
+- Fire **T5**: consumes p3, produces p6.
+
+Thus, **T5 fires before T3**, satisfying the condition.
+
+✅ **Answer: Yes**.

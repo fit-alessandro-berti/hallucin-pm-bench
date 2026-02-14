@@ -1,0 +1,18 @@
+**2.0**
+
+### Key Differences and Errors (Strict Evaluation):
+- **JSON Structure (Major Deduction: -4.0)**: Completely mismatched schema. LLM uses verbose, nested BPMN-like structure (`process`, `sequenceFlows`, `tasks`, `gateways`, etc., with duplicate `"sequenceFlows"`/`"sequenceFlow"` arrays). Ground truth uses flat `"process_id"`, `"elements"`, `"flows"`. Incompatible formats; not "well-formed" equivalent.
+- **Missing/Invented Elements (-2.0)**:
+  - No explicit "Create Ticket" task (description step 2); LLM invents "Parse Email" instead, skipping faithful "Ticket created".
+  - Two "Close Ticket" tasks vs. ground truth's single `closeTicket`.
+  - No proper `end` after closes; loose ends/null outgoings.
+  - Invented multiple boundary events (6+) for cancel vs. ground truth's single loose `cancelEvent`.
+- **Flow and Logic Errors (-1.5)**:
+  - Parallel handling wrong: LLM splits post-resolution to send/log (no join, log dangling) vs. ground truth fork→send/log→**join**→wait.
+  - Wait mechanism: LLM single `intermediateCatchEvent` with timeout vs. ground truth `eventBasedGateway` → `customerReply`/`timer24h`.
+  - Classification gateway `incoming` ref wrong (`"flow_ticket_created"` vs. actual `flow_gateway_classification`).
+  - No flows for cancel "at any point"; LLM's boundaries incomplete (misses parse/reminder) and over-invented.
+- **Naming/ID Mismatches (-0.3)**: E.g., start "Support Email Received" vs. "Email Received"; conditions `ticketType == 'Simple'` vs. `"simple"`; inconsistent flow IDs (e.g., `flow_send_response` reused).
+- **BPMN Validity Issues (-0.2)**: Boundary on event (`event_wait_customer_reply`); no `endEvent` convergence; loose `event_customer_cancel`.
+
+Semantically ~60% aligned on core path but faithful translation fails on structure, elements, parallel sync, cancel modeling, and no hallucinations but inventions/omissions. Strictness demands near-exact match.

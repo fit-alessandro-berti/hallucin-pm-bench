@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_warranty_replacement" isExecutable="false">
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_start" name="online warranty claim" />
+    
+    <!-- Sequence Flow to Validate Claim -->
+    <bpmn:sequenceFlow id="wrc_flow1" sourceRef="wrc_start" targetRef="wrc_task_validate" />
+    
+    <!-- Validate Claim Task -->
+    <bpmn:task id="wrc_task_validate" name="validates the claim" />
+    
+    <!-- Exclusive Gateway for Completeness Check -->
+    <bpmn:exclusiveGateway id="wrc_gateway_completeness" />
+    <bpmn:sequenceFlow id="wrc_flow2" sourceRef="wrc_task_validate" targetRef="wrc_gateway_completeness" />
+    
+    <!-- Request Missing Information Task -->
+    <bpmn:task id="wrc_task_request_info" name="requests missing information" />
+    
+    <!-- Sequence Flow from Gateway back to Request Info (incomplete) -->
+    <bpmn:sequenceFlow id="wrc_flow3" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_request_info">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">incomplete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- Sequence Flow from Request Info back to Validate -->
+    <bpmn:sequenceFlow id="wrc_flow4" sourceRef="wrc_task_request_info" targetRef="wrc_task_validate" />
+    
+    <!-- Sequence Flow from Gateway to Check Warranty Eligibility (complete) -->
+    <bpmn:sequenceFlow id="wrc_flow5" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_check_eligibility">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">complete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- Check Warranty Eligibility Task -->
+    <bpmn:task id="wrc_task_check_eligibility" name="checks warranty eligibility" />
+    
+    <!-- Exclusive Gateway for Warranty Decision -->
+    <bpmn:exclusiveGateway id="wrc_gateway_warranty" />
+    <bpmn:sequenceFlow id="wrc_flow6" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gateway_warranty" />
+    
+    <!-- Out of Warranty Path -->
+    <bpmn:task id="wrc_task_reject" name="send rejection notice" />
+    <bpmn:sequenceFlow id="wrc_flow7" sourceRef="wrc_gateway_warranty" targetRef="wrc_task_reject">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">outOfWarranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- End Event for Rejection -->
+    <bpmn:endEvent id="wrc_end_reject" />
+    <bpmn:sequenceFlow id="wrc_flow8" sourceRef="wrc_task_reject" targetRef="wrc_end_reject" />
+    
+    <!-- Within Warranty Path -->
+    <bpmn:parallelGateway id="wrc_gateway_split" />
+    <bpmn:sequenceFlow id="wrc_flow9" sourceRef="wrc_gateway_warranty" targetRef="wrc_gateway_split">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">withinWarranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- Parallel Tasks -->
+    <bpmn:task id="wrc_task_create_shipment" name="Create shipment order" />
+    <bpmn:task id="wrc_task_schedule_pickup" name="Schedule courier pickup" />
+    
+    <bpmn:sequenceFlow id="wrc_flow10" sourceRef="wrc_gateway_split" targetRef="wrc_task_create_shipment" />
+    <bpmn:sequenceFlow id="wrc_flow11" sourceRef="wrc_gateway_split" targetRef="wrc_task_schedule_pickup" />
+    
+    <!-- Parallel Join Gateway -->
+    <bpmn:parallelGateway id="wrc_gateway_join" />
+    <bpmn:sequenceFlow id="wrc_flow12" sourceRef="wrc_task_create_shipment" targetRef="wrc_gateway_join" />
+    <bpmn:sequenceFlow id="wrc_flow13" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gateway_join" />
+    
+    <!-- Update Inventory Records -->
+    <bpmn:task id="wrc_task_update_inventory" name="update inventory records" />
+    <bpmn:sequenceFlow id="wrc_flow14" sourceRef="wrc_gateway_join" targetRef="wrc_task_update_inventory" />
+    
+    <!-- Close Claim -->
+    <bpmn:task id="wrc_task_close_claim" name="close the claim" />
+    <bpmn:sequenceFlow id="wrc_flow15" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim" />
+    
+    <!-- End Event for Success -->
+    <bpmn:endEvent id="wrc_end_success" />
+    <bpmn:sequenceFlow id="wrc_flow16" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success" />
+  </bpmn:process>
+  
+  <!-- Diagram interchange (minimal, required for valid BPMN 2.0) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_warranty_replacement">
+      <!-- Shapes and edges would go here in a full diagram, but not required per instructions -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

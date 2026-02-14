@@ -1,0 +1,19 @@
+4.0
+
+### Evaluation Summary (Strict Rubric Application)
+**Score: 4.0/10.0** (Significant deductions for key differences from ground truth, treated as violations of "minimal-yet-complete" expectation and prompt rules on no invention/extra elements. Utmost strictness applied: extra task = -3.0, process ID prefix violation = -1.5, XML bloat/unnecessary elements = -1.0, minor name/condition diffs = -0.5).
+
+**Major Differences/Deductions:**
+- **Extra/hallucinated task & flows (-3.0)**: LLM adds `wrc_task_check_eligibility` ("checks warranty eligibility") + 2 flows (wrc_flow5, wrc_flow6), inserting it between completeness GW and warranty GW. GT omits entirely (direct `wrc_sf5` from `wrc_complete_gw` to `wrc_warranty_gw`). Per rubric, deduct heavily for *extra tasks* (prompt: "Model **only** explicitly mentioned"; GT defines minimal structure with GW representing step 3 decision, no separate task).
+- **Process ID prefix violation (-1.5)**: `<bpmn:process id="Process_warranty_replacement">` lacks "wrc_" prefix. Prompt: "Prefix **every element’s id** with 'wrc_'". GT uses "wrc_process".
+- **XML bloat/unnecessary elements (-1.0)**: ~100 lines vs GT's 34-line minimal. Extra namespaces (bpmndi/dc/di/xsi), empty DI section, interspersed flow defs/comments, verbose targetNamespace. GT is lean (bpmn only, grouped elements).
+- **Branch labeling diffs (-0.5)**: Invented `<conditionExpression>` ("incomplete"/"complete"/"outOfWarranty"/"withinWarranty") with xsi:type. GT uses simple `name="No"/"Yes"`. Arbitrary/not in prompt/GT.
+
+**Minor/Partial Matches (No Credit Added):**
+- Task names ~verbatim to prompt text (e.g., "validates the claim", "requests missing information"), but casing/phrasing differs from GT (e.g., LLM lowercase vs GT capitals like "Validate the claim"). No uplift as diffs exist.
+- Correct core structure: start → validate → completeness XOR GW → loop (request → validate) or → warranty XOR GW → reject/end_reject OR parallel split → 2 tasks → join → update → close → end_success.
+- All other IDs prefixed "wrc_" (tasks/gws/flows/events).
+- Exactly 2 end events, parallel GW pair, XOR GWs as specified.
+- Semantically *close* (extra task doesn't break logic), but not equivalent due to addition (rubric denies full credit).
+
+**Overall**: LLM over-models by inferring "checks warranty eligibility" as task (despite prompt's GW-for-decision spec & GT minimalism), violates prefix rule, adds bloat. Not "semantically equivalent" per rubric (extra elements alter flow). Strict penalty reflects ~20-30% element mismatch + direct rule breaks.

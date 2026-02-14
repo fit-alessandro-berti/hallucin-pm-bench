@@ -1,0 +1,26 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment vs. Ground Truth)
+The LLM answer captures the **core process logic correctly** (password reset bypass, diagnosis → resolve/forward → resolve → confirm → close/loop to diagnosis; no invented elements like timers/escalations/parallel paths). However, with *utmost strictness*, it incurs **major deductions** for ~25+ differences from the ground truth (GT), including small errors like attribute mismatches. Each contributes significantly to the score drop:
+
+#### Critical Errors (-4.0 total impact):
+- **No `<conditionExpression>` on decision flows** (all 6 outgoing from gw1/gw2/gw3): GT uses `xsi:type="tFormalExpression">yes/no</conditionExpression>`. LLM relies solely on flow `name` attributes (e.g., "Password Reset"), which are labels, *not executable decision logic*. Exclusive gateways require conditions for proper BPMN semantics → invalid decisions.
+- **Wrong element types** (5 instances): GT uses plain `<task>` for all 7 activities. LLM invents `<serviceTask>` (classify) and `<userTask>` (reset/diagnose/forward/resolve/confirm), subtly adding semantics not "exactly as stated."
+
+#### Major Structural/Attribute Errors (-1.5 total):
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration.
+- Extra `xmlns:xsi` (unused, as LLM omits `xsi:type`).
+- `targetNamespace="http://acmetech.com/support"` vs. GT's `"http://acmetech/support"`.
+- Process: `id="supportTicketProcess" isExecutable="true"` vs. GT `id="support_ticket" name="Support-Ticket" isExecutable="false"`.
+
+#### Naming & ID Errors (-0.3 each, total -1.5):
+- **IDs not concise/per GT** (prompt: "e.g., `t1`, `gw1`"): LLM uses descriptive `classify`, `reset`, `diagnose`, etc., vs. GT `t1`-`t6`.
+- Missing GT names: start ("Ticket Submitted"), gw1 ("Password Reset?"), gw2 ("Resolved Internally?"), gw3 ("Customer Confirms?"), end ("Ticket Closed").
+- classify: "Classify Ticket" vs. "Auto-Classification".
+- Flow names misuse GT condition logic (e.g., "Otherwise"/"Issue Persists" vs. raw "no").
+
+#### Minor Errors (-0.5 total):
+- No `name` on gateways/start/end (GT has descriptive ones).
+- Line count fine (~28 vs. GT ~35), but irrelevant given mismatches.
+
+**Why not lower?** No hallucinations (exact 7 tasks, 3 gateways, correct loop/back-edges, ≤40 lines, single `<definitions>`). **Why not higher?** Strict diff-counting + invalid decisions = substantial gaps. Perfect match = 10.0; this is ~40% fidelity.

@@ -1,0 +1,15 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Format mismatch (major penalty, -3.0)**: LLM uses full verbose BPMN 2.0 JSON ("definitions", "$type": "bpmn:*", detailed eventDefinitions, exporters, etc.). Ground truth uses simplified custom schema ("process_id", flat "elements"/"flows" arrays with short IDs, "condition"/"event"). Completely different structure/keys/organization = significant differences.
+- **Additional/hallucinated elements absent from ground truth/key (major penalty, -2.0)**: 
+  - Extra `Gateway_Join` (unnamed exclusive merge gw for classification) – not in ground truth (direct flows to `provideResolution`).
+  - Extra `EndEvent_LogDone` ("Log Complete") – hallucinated separate end; ground truth has single `end`.
+  - Invented `SubProcess_Cancel` ("Cancel Ticket Handler") with internal elements/flows (`StartEvent_Cancel`, `EndEvent_Terminate`) – ground truth has simple `cancelEvent` → `terminate`. Violates "model *only* what is described"; penalised as hallucination per focus.
+- **Modeling differences (moderate penalty, -1.0)**: 
+  - Parallel: LLM uses fork → log → separate end (no join gw); ground truth uses `forkLogging` → parallel gw `joinAfterLogging`. Different handling (multiple ends vs explicit join).
+  - Classification xor flows lack explicit `condition` (only `name` "Simple"/"Complex"); ground truth has `"condition": "simple"/"complex"`.
+  - Cancel: Event subproc (global interrupt) vs ground truth's loose `intermediateCatchEvent` → `terminateEndEvent` (unconnected incoming).
+  - Minor name diffs (e.g., "Support Email Received" vs "Email Received"; "Classification Outcome" vs "Simple or Complex?").
+- **Strengths (baseline +4.0)**: Core sequence faithful (start → create → classify → xor → resolution → parallel log/send → event gw wait reply/timer → close/end). No escalations/supervisor inventions. Proper event gw + timer/message catch. UserTask/Task distinction apt. JSON well-formed/valid BPMN.
+- **Total**: Utmost strictness applied; small diffs (names, missing conditions) compound with majors. Semantically strong (~8/10) but literal/structural diffs dominate per instructions.

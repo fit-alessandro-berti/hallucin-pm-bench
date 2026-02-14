@@ -1,0 +1,45 @@
+**Answer: Yes – T5 can fire before T3.**
+
+---
+
+### Why it is possible  
+
+- After the initial token in `p0` fires **T1**, we obtain one token in `pa` **and** one token in `pb` (parallel split).  
+- From `pa` we have a *choice*:  
+  * fire **T2** → `pc` (the “normal” path) **or**  
+  * fire **T2b** → `pd` (the shortcut that bypasses `pc`).  
+- From `pb` we can fire **T4** → `pe`.  
+
+By choosing the shortcut **T2b** we can generate a token in `pd` **without** ever creating a token in `pc`. Consequently `T3` (which consumes `pc` and produces `pd`) never needs to fire.
+
+When a token exists in both `pd` **and** `pe`, the synchronising join **T5** becomes enabled and can fire, regardless of whether `pc` (and thus `T3`) has ever been visited.
+
+---
+
+### Shortest firing sequence (4 transitions)
+
+```
+T1, T2b, T4, T5
+```
+
+**Marking evolution**
+
+| step | `p0` | `pa` | `pb` | `pc` | `pd` | `pe` | `pf` |
+|------|------|------|------|------|------|------|------|
+| initial | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| after **T1** | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+| after **T2b** | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
+| after **T4** | 0 | 0 | 0 | 0 | 1 | 1 | 0 |
+| after **T5** | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+
+At the moment **T5** fires there is **no token in `pc`**, so transition **T3** has not (and need not) fire. Hence T5 can indeed fire before T3 in a reachable marking.
+
+---
+
+### Formal explanation  
+
+- **T5** requires one token in `pd` *and* one token in `pe`.  
+- `pd` can be produced directly from `pa` by **T2b** without ever creating a token in `pc`.  
+- `pe` is produced from `pb` by **T4**.  
+
+Since the net allows the alternative route **T2b**, the token needed for `pd` can be obtained without invoking the sequence `T2` → `pc` → `T3`. Therefore a reachable marking exists (the one after firing `T1, T2b, T4`) where both pre‑conditions of **T5** are satisfied while **T3** has never been enabled. Consequently **T5** can fire before **T3**.
