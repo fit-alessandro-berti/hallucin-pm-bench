@@ -1,0 +1,30 @@
+**4.0**
+
+### Evaluation Summary (Strict Rubric Application)
+The LLM answer captures the core process flow semantically close to the ground truth (validation loop, warranty branch, parallel activities for shipment/pickup, sequential closeout) and includes all explicitly required gateways (completeness exclusive, warranty exclusive, parallel split/join) and exactly two end events. All IDs are correctly prefixed "wrc_". However, under utmost strictness with significant deductions for differences vs. ground truth:
+
+- **Extra/hallucinated elements (major deduction: -3.0)**: 
+  - Added explicit task "checks warranty eligibility" (+task +sequenceFlow wrc_task_check_warranty/wrc_seq_3), omitted in ground truth (direct complete_gw → warranty_gw). This alters sequence/structure, not semantically identical.
+  - Entire `<bpmndi:BPMNDiagram>` section (~100 lines: shapes, edges, waypoints, bounds) is hallucinated/extra; ground truth is minimal process-only XML (no layout/DI).
+
+- **Task/start/end names not verbatim matching ground truth (moderate deduction: -1.5)**:
+  | Element | LLM | Ground Truth | Diff |
+  |---------|-----|--------------|------|
+  | Start | "online warranty claim" | "Online warranty claim submitted" | Wording/case |
+  | Validate | "validates the claim" | "Validate the claim" | Tense ("validates" vs imperative), case |
+  | Request | "requests missing information" | "Request missing information" | Tense, case |
+  | Reject | "send rejection notice" | "Send rejection notice" | Case |
+  | Inventory | "update inventory records" | "Update inventory records" | Case |
+  | Close | "close the claim" | "Close the claim" | Case |
+  | Ends | "Rejection End"/"Success End" | "Rejected"/"Successful end" | Completely different |
+
+  Matches prompt verbatim better in tense/lowercase but penalized vs. ground truth casing/imperative style.
+
+- **Other mismatches (minor but cumulative deduction: -1.5)**:
+  - Gateway names: e.g., "Claim Complete?" vs "Claim complete?"; parallel "Parallel Split/Join" vs unnamed.
+  - Flow names: Descriptive ("incomplete"/"within warranty") vs "No"/"Yes".
+  - IDs inconsistent: e.g., "wrc_task_validate" vs "wrc_validate"; "wrc_seq_1" vs "wrc_sf1".
+  - Extra attributes: `<process name="...">`; extra xmlns (bpmndi/dc/di); different definitions id/targetNamespace.
+  - Non-minimal: ~250+ lines vs ground's 34-line minimal.
+
+Semantically ~80% equivalent (core paths match), but extras/omissions in equivalence + small errors (multiple name/ID diffs) justify sharp drop per "utmost strictness" and "significant loss" rule. No omissions of required prompt elements, preventing <1.0.
