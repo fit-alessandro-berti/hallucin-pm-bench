@@ -1,0 +1,19 @@
+**8.2**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer correctly models the process **exactly as described** without inventing elements (no timers, extra events, parallel paths, etc.), uses concise IDs, exclusive gateways for decisions, and the re-work loop to "Initial Diagnosis" as per line 9. The XML is valid BPMN 2.0, ≤40 lines (~35 for <definitions>), and the graph is semantically identical to ground truth (password bypass to confirm, diagnosis → resolve/forward → converge on "Resolve Issue" → confirm → close/loop). 
+
+**Strengths (no deduction)**:
+- All 7 tasks, start/end, loop, convergence match lines 1-10 precisely.
+- 3 exclusive gateways (prompt says "two decision points" but description implies 3; ground truth also uses 3).
+- No hallucinations (perfect adherence to "do not invent or add").
+
+**Deductions (utmost strictness, significant loss for small errors/diffs from ground truth)**:
+- **Extra content (-1.0)**: Added "### Key modelling decisions" table with rationale. Prompt demands "single <definitions> block"; any extra is violation.
+- **Name differences (-0.3 total)**: t1 "Classify Ticket" vs "Auto-Classification" (-0.1); gw2 "Resolve or Forward?" vs "Resolved Internally?" (-0.1); gw3 "Customer Confirmed?" vs "Customer Confirms?" (-0.1). Minor but text diffs.
+- **ID/attribute diffs (-0.2 total)**: start/end "e1"/"e2" vs "start"/"end" (-0.1); process `id`/`name`/ `isExecutable` diffs; targetNamespace diff (-0.1).
+- **Task ID assignment swap (-0.2)**: t4/t5 labels swapped (Forward/Resolve vs Resolve/Forward), causing flow ref diffs (e.g., f7 `targetRef="t5"` vs "t4"). Arbitrary but results in non-matching XML strings/refs.
+- **Decision modeling (-0.1)**: Flow `name=` (text-based, closer to description) vs ground truth `<conditionExpression>` "yes"/"no". Both valid, but diff.
+- **Minor XML (-0.0)**: Extra unused `xmlns:xsi`; ground truth ironically invalid (uses `xsi:type` without `xmlns:xsi` declaration).
+
+Base 10.0 for perfect semantics → -1.8 total deductions = **8.2**. High score reflects functional equivalence despite strict textual diffs; lower would ignore correct modeling.

@@ -1,0 +1,22 @@
+9.2
+
+### Evaluation Rationale (strict assessment)
+The LLM answer faithfully models the textual description without hallucinating escalation, supervisor approvals, or unrelated steps—core requirement met (+ high base). The process flow matches the ground truth graph almost exactly:
+- Start → Parse/Create Ticket → Initial Classification → Exclusive Gateway (Simple/Complex) → [Root Cause Analysis →] Provide Resolution → Parallel Fork (Send Response + Log KB) → Parallel Join → Event Gateway → [Customer Reply → Close | Timer → Send Reminder → Close] → End(s).
+- Cancellation modeled as interrupting event (event subprocess in LLM vs. catch event in ground truth; both valid for "at any point").
+
+**Strengths (no/minor penalty):**
+- Correct parallel for send/log after resolution, race condition for reply/timer (event gateway + ICEs).
+- Conditions on classification flows.
+- Timer duration explicit (PT24H vs. ground's implicit).
+- Distinguishes agent (userTask) vs. system (serviceTask) actions, more faithful to "agent" vs. "system automatically" than ground's unified "task"/"Close Ticket".
+- Proper BPMN 2.0 JSON as "BPMN-2.0 architect" (messages, eventDefinitions, gatewayDirections, conditions XPath, executable process).
+- Cancellation interrupts entire process (superior to ground truth's dangling cancelEvent with no incoming flow).
+
+**Penalties (strict, significant loss for differences/small errors):**
+- **Format/structure mismatch (-1.5)**: Full hierarchical BPMN 2.0 (definitions/process/startEvents/tasks/etc.) vs. ground's flat "process_id"/"elements"/"flows". Different top-level keys, element grouping, ID scheme (sf_xx vs. short ids), no exact prop matches (e.g. no "condition": "simple" string).
+- **Minor name differences (-0.2)**: e.g. "Parse E-mail and Create Ticket" (accurate to desc., ground omits parse) vs. "Create Ticket"; "Parallel: Respond and Log" vs. "Fork Log/Wait"; "Await Customer Reply" vs. "Wait 24h for Reply"; two "Ticket Closed" ends vs. single "End".
+- **Extra detail/splitting (-0.1)**: Two close tasks/ends (justified by desc., but absent from ground/single close).
+- Both share potential modeling nit: parallel join before wait blocks reply if log slow (desc. implies independent via parenthetical), but no penalty as identical to ground.
+
+Overall: Semantically 98% match (same diagram, no hallucination), but syntactic/structural diffs cost points under "utmost strictness" and "differences lower grade". 10.0 would require near-identical JSON.

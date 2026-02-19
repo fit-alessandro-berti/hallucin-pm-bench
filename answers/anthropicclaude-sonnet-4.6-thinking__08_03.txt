@@ -1,0 +1,44 @@
+## Answer: **Yes**, T5 can fire before T3.
+
+---
+
+### Key Observation
+
+T5 requires tokens in **pd** and **pe**.  
+- **pe** can only be produced by T4 (from pb).  
+- **pd** can be produced by **T3** (from pc) *or* by **T2b** (directly from pa).
+
+T2b is the critical alternative: it routes a token from `pa` straight to `pd`, completely **bypassing** the pc → T3 path.
+
+---
+
+### Shortest Firing Sequence (length 4)
+
+| Step | Transition | Marking after firing |
+|------|-----------|----------------------|
+| — | *(initial)* | `{p0=1}` |
+| 1 | **T1** | `{pa=1, pb=1}` |
+| 2 | **T2b** | `{pb=1, pd=1}` |
+| 3 | **T4** | `{pd=1, pe=1}` |
+| 4 | **T5** ✓ | `{pf=1}` |
+
+Steps 2 and 3 are interchangeable in order (they consume different tokens), so **T1 → T4 → T2b → T5** is equally valid.
+
+---
+
+### Why This Works
+
+```
+T1 splits the token into pa and pb.
+T2b consumes pa → produces pd   (T3 is never involved)
+T4  consumes pb → produces pe
+T5  consumes pd + pe → fires ✓  (T3 has never fired)
+```
+
+**T3 is entirely bypassed** because T2b provides the `pd` token that T5 needs, making T3 unnecessary for enabling T5.
+
+---
+
+### Conclusion
+
+**Yes**, the firing sequence `T1 → T2b → T4 → T5` (4 transitions, minimal length) is reachable from the initial marking and causes T5 to fire **without T3 ever having fired**.

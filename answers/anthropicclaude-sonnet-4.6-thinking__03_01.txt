@@ -1,0 +1,51 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             targetNamespace="http://acmetech.com/support-ticket">
+
+  <process id="supportTicket" name="AcmeTech Support Ticket Process" isExecutable="true">
+
+    <startEvent id="e1" name="Customer Submits Ticket"/>
+
+    <task id="t1" name="Classify Ticket"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <task id="t2" name="Provide Reset Instructions"/>
+    <task id="t3" name="Initial Diagnosis"/>
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <task id="t4" name="Forward to Specialist"/>
+    <task id="t5" name="Resolve Issue"/>
+    <task id="t6" name="Confirm with Customer"/>
+    <exclusiveGateway id="gw3" name="Customer Confirmed?"/>
+
+    <endEvent id="e2" name="Ticket Closed"/>
+
+    <sequenceFlow id="f1"  sourceRef="e1"  targetRef="t1"/>
+    <sequenceFlow id="f2"  sourceRef="t1"  targetRef="gw1"/>
+    <sequenceFlow id="f3"  sourceRef="gw1" targetRef="t2"  name="Password Reset"/>
+    <sequenceFlow id="f4"  sourceRef="gw1" targetRef="t3"  name="Otherwise"/>
+    <sequenceFlow id="f5"  sourceRef="t2"  targetRef="t6"/>
+    <sequenceFlow id="f6"  sourceRef="t3"  targetRef="gw2"/>
+    <sequenceFlow id="f7"  sourceRef="gw2" targetRef="t5"  name="Resolve Issue"/>
+    <sequenceFlow id="f8"  sourceRef="gw2" targetRef="t4"  name="Forward to Specialist"/>
+    <sequenceFlow id="f9"  sourceRef="t4"  targetRef="t5"/>
+    <sequenceFlow id="f10" sourceRef="t5"  targetRef="t6"/>
+    <sequenceFlow id="f11" sourceRef="t6"  targetRef="gw3"/>
+    <sequenceFlow id="f12" sourceRef="gw3" targetRef="e2"  name="Confirmed"/>
+    <sequenceFlow id="f13" sourceRef="gw3" targetRef="t3"  name="Issue Persists"/>
+
+  </process>
+
+</definitions>
+```
+
+### Key modelling decisions
+
+| Line(s) | BPMN element | Rationale |
+|---------|-------------|-----------|
+| 2 | `t1 – Classify Ticket` (plain Task) | "automatically classified by the system" – no explicit service-task dialect required |
+| 3 | `gw1` exclusive gateway → `t2` / `t3` | First decision point: Password Reset vs. otherwise |
+| 5 | `gw2` exclusive gateway → `t5 (Resolve Issue)` / `t4 (Forward to Specialist)` | Second decision point after diagnosis |
+| 6 | `t4 → t5` | Specialist path converges back into the single **Resolve Issue** task |
+| 7 | `t2 → t6` | Password-reset path also reaches **Confirm with Customer** (only exit the process has) |
+| 8–9 | `gw3` exclusive gateway → `e2` / loop back to `t3` | Third gateway (customer confirmed vs. issue persists re-work loop) |

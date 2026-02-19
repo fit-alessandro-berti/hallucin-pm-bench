@@ -1,0 +1,233 @@
+```json
+{
+  "definitions": {
+    "id": "Definitions_CustomerSupportTicket",
+    "targetNamespace": "http://example.com/support-ticket",
+    "messages": [
+      { "id": "msg_inbound_email",  "name": "Inbound Support E-mail" },
+      { "id": "msg_customer_reply", "name": "Customer Reply" },
+      { "id": "msg_cancel_ticket",  "name": "Ticket Cancellation" }
+    ],
+    "process": {
+      "id": "proc_CustomerSupportTicket",
+      "name": "Customer Support Ticket Process",
+      "isExecutable": true,
+
+      "startEvents": [
+        {
+          "id": "se_EmailReceived",
+          "name": "Support E-mail Received",
+          "eventDefinitions": [
+            { "type": "messageEventDefinition", "messageRef": "msg_inbound_email" }
+          ],
+          "outgoing": ["sf_01"]
+        }
+      ],
+
+      "tasks": [
+        {
+          "id": "task_ParseCreateTicket",
+          "type": "serviceTask",
+          "name": "Parse E-mail and Create Ticket",
+          "incoming": ["sf_01"],
+          "outgoing": ["sf_02"]
+        },
+        {
+          "id": "task_InitialClassification",
+          "type": "userTask",
+          "name": "Initial Classification",
+          "incoming": ["sf_02"],
+          "outgoing": ["sf_03"]
+        },
+        {
+          "id": "task_RootCauseAnalysis",
+          "type": "userTask",
+          "name": "Root Cause Analysis",
+          "incoming": ["sf_complex"],
+          "outgoing": ["sf_04"]
+        },
+        {
+          "id": "task_ProvideResolution",
+          "type": "userTask",
+          "name": "Provide Resolution",
+          "incoming": ["sf_simple", "sf_04"],
+          "outgoing": ["sf_05"]
+        },
+        {
+          "id": "task_SendResponseToCustomer",
+          "type": "userTask",
+          "name": "Send Response to Customer",
+          "incoming": ["sf_send_response"],
+          "outgoing": ["sf_06"]
+        },
+        {
+          "id": "task_LogSolutionInKB",
+          "type": "userTask",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": ["sf_log_solution"],
+          "outgoing": ["sf_07"]
+        },
+        {
+          "id": "task_SendReminder",
+          "type": "serviceTask",
+          "name": "Send Reminder",
+          "incoming": ["sf_09"],
+          "outgoing": ["sf_11"]
+        },
+        {
+          "id": "task_CloseTicket_AfterReply",
+          "type": "userTask",
+          "name": "Close Ticket",
+          "incoming": ["sf_10"],
+          "outgoing": ["sf_12"]
+        },
+        {
+          "id": "task_CloseTicket_AfterReminder",
+          "type": "serviceTask",
+          "name": "Close Ticket",
+          "incoming": ["sf_11"],
+          "outgoing": ["sf_13"]
+        }
+      ],
+
+      "gateways": [
+        {
+          "id": "gw_Classification",
+          "type": "exclusiveGateway",
+          "gatewayDirection": "Diverging",
+          "name": "Simple or Complex?",
+          "incoming": ["sf_03"],
+          "outgoing": ["sf_simple", "sf_complex"]
+        },
+        {
+          "id": "gw_ParallelSplit",
+          "type": "parallelGateway",
+          "gatewayDirection": "Diverging",
+          "name": "Parallel: Respond and Log",
+          "incoming": ["sf_05"],
+          "outgoing": ["sf_send_response", "sf_log_solution"]
+        },
+        {
+          "id": "gw_ParallelJoin",
+          "type": "parallelGateway",
+          "gatewayDirection": "Converging",
+          "name": "Both Branches Complete",
+          "incoming": ["sf_06", "sf_07"],
+          "outgoing": ["sf_08"]
+        },
+        {
+          "id": "gw_AwaitCustomerReply",
+          "type": "eventBasedGateway",
+          "name": "Await Customer Reply",
+          "incoming": ["sf_08"],
+          "outgoing": ["sf_timer", "sf_reply"]
+        }
+      ],
+
+      "intermediateCatchEvents": [
+        {
+          "id": "ice_24hTimer",
+          "name": "24 Hours Elapsed",
+          "eventDefinitions": [
+            { "type": "timerEventDefinition", "timeDuration": "PT24H" }
+          ],
+          "incoming": ["sf_timer"],
+          "outgoing": ["sf_09"]
+        },
+        {
+          "id": "ice_CustomerReply",
+          "name": "Customer Reply Received",
+          "eventDefinitions": [
+            { "type": "messageEventDefinition", "messageRef": "msg_customer_reply" }
+          ],
+          "incoming": ["sf_reply"],
+          "outgoing": ["sf_10"]
+        }
+      ],
+
+      "endEvents": [
+        {
+          "id": "ee_ClosedAfterReply",
+          "name": "Ticket Closed",
+          "incoming": ["sf_12"]
+        },
+        {
+          "id": "ee_ClosedAfterReminder",
+          "name": "Ticket Closed",
+          "incoming": ["sf_13"]
+        }
+      ],
+
+      "sequenceFlows": [
+        { "id": "sf_01",           "sourceRef": "se_EmailReceived",            "targetRef": "task_ParseCreateTicket" },
+        { "id": "sf_02",           "sourceRef": "task_ParseCreateTicket",       "targetRef": "task_InitialClassification" },
+        { "id": "sf_03",           "sourceRef": "task_InitialClassification",   "targetRef": "gw_Classification" },
+        {
+          "id": "sf_simple",
+          "name": "Simple",
+          "sourceRef": "gw_Classification",
+          "targetRef": "task_ProvideResolution",
+          "conditionExpression": { "language": "xpath", "body": "$ticketType = 'Simple'" }
+        },
+        {
+          "id": "sf_complex",
+          "name": "Complex",
+          "sourceRef": "gw_Classification",
+          "targetRef": "task_RootCauseAnalysis",
+          "conditionExpression": { "language": "xpath", "body": "$ticketType = 'Complex'" }
+        },
+        { "id": "sf_04",           "sourceRef": "task_RootCauseAnalysis",       "targetRef": "task_ProvideResolution" },
+        { "id": "sf_05",           "sourceRef": "task_ProvideResolution",        "targetRef": "gw_ParallelSplit" },
+        { "id": "sf_send_response","sourceRef": "gw_ParallelSplit",              "targetRef": "task_SendResponseToCustomer" },
+        { "id": "sf_log_solution", "sourceRef": "gw_ParallelSplit",              "targetRef": "task_LogSolutionInKB" },
+        { "id": "sf_06",           "sourceRef": "task_SendResponseToCustomer",   "targetRef": "gw_ParallelJoin" },
+        { "id": "sf_07",           "sourceRef": "task_LogSolutionInKB",          "targetRef": "gw_ParallelJoin" },
+        { "id": "sf_08",           "sourceRef": "gw_ParallelJoin",               "targetRef": "gw_AwaitCustomerReply" },
+        { "id": "sf_timer",        "sourceRef": "gw_AwaitCustomerReply",         "targetRef": "ice_24hTimer" },
+        { "id": "sf_reply",        "sourceRef": "gw_AwaitCustomerReply",         "targetRef": "ice_CustomerReply" },
+        { "id": "sf_09",           "sourceRef": "ice_24hTimer",                  "targetRef": "task_SendReminder" },
+        { "id": "sf_10",           "sourceRef": "ice_CustomerReply",             "targetRef": "task_CloseTicket_AfterReply" },
+        { "id": "sf_11",           "sourceRef": "task_SendReminder",             "targetRef": "task_CloseTicket_AfterReminder" },
+        { "id": "sf_12",           "sourceRef": "task_CloseTicket_AfterReply",   "targetRef": "ee_ClosedAfterReply" },
+        { "id": "sf_13",           "sourceRef": "task_CloseTicket_AfterReminder","targetRef": "ee_ClosedAfterReminder" }
+      ],
+
+      "eventSubProcesses": [
+        {
+          "id": "esp_CustomerCancellation",
+          "name": "Customer Cancellation Handler",
+          "triggeredByEvent": true,
+          "startEvents": [
+            {
+              "id": "se_CancelTicket",
+              "name": "Customer Cancels Ticket",
+              "isInterrupting": true,
+              "eventDefinitions": [
+                { "type": "messageEventDefinition", "messageRef": "msg_cancel_ticket" }
+              ],
+              "outgoing": ["sf_cancel_01"]
+            }
+          ],
+          "endEvents": [
+            {
+              "id": "ee_ProcessTerminated",
+              "name": "Process Terminated",
+              "eventDefinitions": [
+                { "type": "terminateEventDefinition" }
+              ],
+              "incoming": ["sf_cancel_01"]
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "id": "sf_cancel_01",
+              "sourceRef": "se_CancelTicket",
+              "targetRef": "ee_ProcessTerminated"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```

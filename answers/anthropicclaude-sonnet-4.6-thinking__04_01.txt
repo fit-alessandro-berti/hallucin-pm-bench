@@ -1,0 +1,54 @@
+## Non-compliant
+
+---
+
+### Rule-by-rule analysis
+
+**Rule 1 — Dual approval before Issue_PO (PO_Amount = €12 300 > €10 000)**
+- Event 2: `Approve_PO` by *Procurement_Officer*
+- Event 3: `Approve_PO_CFO` by *CFO*
+- Event 5: `Issue_PO`
+
+Both approvals are present, in the correct order, and both precede `Issue_PO`. ✅
+
+---
+
+**Rule 2 — Expedite_Flag consequences** ❌ **VIOLATED**
+`Expedite_Flag` appears at event 4, so `Risk_Assessment` **must occur before the first `Ship_Goods`**.
+
+| Event | Activity | Position |
+|---|---|---|
+| 8 | `Ship_Goods` | first occurrence |
+| 9 | `Risk_Assessment` | **after** `Ship_Goods` |
+
+`Risk_Assessment` (event 9) occurs **one step after** `Ship_Goods` (event 8), directly inverting the required ordering. This is a clear violation.
+
+---
+
+**Rule 3 — Three_way_match within distance ≤ 2 after Goods_Received** ❌ **VIOLATED**
+- Event 6: `Goods_Received`
+- Event 7: `Move_to_Quality` (distance 1)
+- Event 8: `Ship_Goods` (distance 2) ← window closes here
+- Event 9: `Risk_Assessment` (distance 3)
+- Event 10: `Three_way_match` (distance **4**)
+
+`Three_way_match` falls at distance 4 from `Goods_Received`, exceeding the maximum permitted distance of 2.
+
+---
+
+**Rule 4 — Intern may not directly follow CFO**
+- Event 3 (CFO) → Event 4 (System): no Intern. ✅
+- Event 6 (Warehouse_Clerk) → Event 7 (Intern): predecessor is not CFO. ✅
+
+No violation.
+
+---
+
+**Rule 5 — Trace ends with Archive_Record, nothing after**
+Event 11 (`Archive_Record`) is the final event. ✅
+
+---
+
+### Verdict
+
+**Non-compliant** — the trace violates **Rule 2** (Risk_Assessment occurs *after* Ship_Goods, not before) and **Rule 3** (Three_way_match is 4 events after Goods_Received, exceeding the distance-≤-2 constraint).

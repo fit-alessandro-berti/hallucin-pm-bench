@@ -1,0 +1,36 @@
+## Answer: **Yes, T5 can fire before T3.**
+
+---
+
+### Concrete Firing Sequence
+
+| Step | Transition fired | Resulting marking (p0…p6) | Justification |
+|------|-----------------|--------------------------|---------------|
+| — | *(initial)* | **(1, 0, 0, 0, 0, 0, 0)** | Only p0 holds a token |
+| 1 | **T1** | **(0, 1, 1, 0, 0, 0, 0)** | p0 consumed; p1 and p2 each receive a token |
+| 2 | **T2** | **(0, 0, 1, 1, 0, 0, 0)** | p1 consumed; p3 receives a token. **T3 has not fired; p4 = 0** |
+| 3 | **T5** | **(0, 0, 1, 0, 0, 0, 1)** | p3 = 1 ✓ (normal arc satisfied); p4 = 0 ✓ (inhibitor arc satisfied) → fires, producing token in p6 |
+
+T3 has still not fired (p2 still holds its token at step 3), yet T5 has already fired. ∎
+
+---
+
+### Why This Works
+
+After the parallel split (T1), the tokens in p1 and p2 advance **independently**:
+
+```
+p2 ──T3──► p4
+              ↘
+               T4 ──► p5
+              ↗
+p1 ──T2──► p3 ──T5──► p6   (T5 also checks p4 via inhibitor)
+```
+
+Because there is **no ordering constraint** between T2 and T3, the interleaving **T1 → T2 → T5** is reachable:
+
+- T2 fires first, placing a token in **p3** while **p4 remains empty**.
+- Both conditions for T5 are met simultaneously (p3 ≥ 1 **and** p4 = 0), so T5 fires.
+- T3 has not yet fired at this point.
+
+The inhibitor arc on p4 is precisely what *would* block T5 once T3 fires (since T3 produces a token in p4), but if T5 races ahead of T3, p4 is still zero and the inhibitor does not block.

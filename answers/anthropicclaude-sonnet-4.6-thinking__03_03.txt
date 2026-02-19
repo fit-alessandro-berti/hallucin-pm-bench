@@ -1,0 +1,440 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+  xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="wrc_definitions"
+  targetNamespace="http://example.com/warranty-replacement-v1.3">
+
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         START
+    ═══════════════════════════════════════════════════════════ -->
+    <startEvent id="wrc_start" name="online warranty claim submitted">
+      <outgoing>wrc_sf_start_to_validate</outgoing>
+    </startEvent>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STEP 2 – CLAIM VALIDATION LOOP
+    ═══════════════════════════════════════════════════════════ -->
+    <task id="wrc_task_validate" name="validates the claim">
+      <incoming>wrc_sf_start_to_validate</incoming>
+      <incoming>wrc_sf_request_to_validate</incoming>
+      <outgoing>wrc_sf_validate_to_gw_complete</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway: is the claim complete? -->
+    <exclusiveGateway id="wrc_gw_complete" name="Claim complete?">
+      <incoming>wrc_sf_validate_to_gw_complete</incoming>
+      <outgoing>wrc_sf_complete_yes</outgoing>
+      <outgoing>wrc_sf_complete_no</outgoing>
+    </exclusiveGateway>
+
+    <task id="wrc_task_request" name="requests missing information">
+      <incoming>wrc_sf_complete_no</incoming>
+      <outgoing>wrc_sf_request_to_validate</outgoing>
+    </task>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STEP 3 – WARRANTY ELIGIBILITY
+    ═══════════════════════════════════════════════════════════ -->
+    <task id="wrc_task_check" name="checks warranty eligibility">
+      <incoming>wrc_sf_complete_yes</incoming>
+      <outgoing>wrc_sf_check_to_gw_warranty</outgoing>
+    </task>
+
+    <!-- Exclusive Gateway: within warranty? -->
+    <exclusiveGateway id="wrc_gw_warranty" name="Within warranty?">
+      <incoming>wrc_sf_check_to_gw_warranty</incoming>
+      <outgoing>wrc_sf_warranty_in</outgoing>
+      <outgoing>wrc_sf_warranty_out</outgoing>
+    </exclusiveGateway>
+
+    <!-- Out-of-warranty path -->
+    <task id="wrc_task_reject" name="send rejection notice">
+      <incoming>wrc_sf_warranty_out</incoming>
+      <outgoing>wrc_sf_reject_to_end</outgoing>
+    </task>
+
+    <endEvent id="wrc_end_rejection" name="Claim rejected – out of warranty">
+      <incoming>wrc_sf_reject_to_end</incoming>
+    </endEvent>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STEP 4 – PARALLEL ACTIVITIES
+    ═══════════════════════════════════════════════════════════ -->
+    <parallelGateway id="wrc_gw_split" name="Parallel split">
+      <incoming>wrc_sf_warranty_in</incoming>
+      <outgoing>wrc_sf_split_to_shipment</outgoing>
+      <outgoing>wrc_sf_split_to_courier</outgoing>
+    </parallelGateway>
+
+    <task id="wrc_task_shipment" name="Create shipment order">
+      <incoming>wrc_sf_split_to_shipment</incoming>
+      <outgoing>wrc_sf_shipment_to_join</outgoing>
+    </task>
+
+    <task id="wrc_task_courier" name="Schedule courier pickup">
+      <incoming>wrc_sf_split_to_courier</incoming>
+      <outgoing>wrc_sf_courier_to_join</outgoing>
+    </task>
+
+    <parallelGateway id="wrc_gw_join" name="Parallel join">
+      <incoming>wrc_sf_shipment_to_join</incoming>
+      <incoming>wrc_sf_courier_to_join</incoming>
+      <outgoing>wrc_sf_join_to_inventory</outgoing>
+    </parallelGateway>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STEP 5 – FINALISE
+    ═══════════════════════════════════════════════════════════ -->
+    <task id="wrc_task_inventory" name="update inventory records">
+      <incoming>wrc_sf_join_to_inventory</incoming>
+      <outgoing>wrc_sf_inventory_to_close</outgoing>
+    </task>
+
+    <task id="wrc_task_close" name="close the claim">
+      <incoming>wrc_sf_inventory_to_close</incoming>
+      <outgoing>wrc_sf_close_to_end</outgoing>
+    </task>
+
+    <endEvent id="wrc_end_success" name="Claim closed successfully">
+      <incoming>wrc_sf_close_to_end</incoming>
+    </endEvent>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SEQUENCE FLOWS
+    ═══════════════════════════════════════════════════════════ -->
+    <sequenceFlow id="wrc_sf_start_to_validate"
+                  sourceRef="wrc_start"
+                  targetRef="wrc_task_validate"/>
+
+    <sequenceFlow id="wrc_sf_validate_to_gw_complete"
+                  sourceRef="wrc_task_validate"
+                  targetRef="wrc_gw_complete"/>
+
+    <sequenceFlow id="wrc_sf_complete_yes"
+                  name="Complete"
+                  sourceRef="wrc_gw_complete"
+                  targetRef="wrc_task_check"/>
+
+    <sequenceFlow id="wrc_sf_complete_no"
+                  name="Incomplete – missing info"
+                  sourceRef="wrc_gw_complete"
+                  targetRef="wrc_task_request"/>
+
+    <!-- Loop back: re-validate after information is received -->
+    <sequenceFlow id="wrc_sf_request_to_validate"
+                  sourceRef="wrc_task_request"
+                  targetRef="wrc_task_validate"/>
+
+    <sequenceFlow id="wrc_sf_check_to_gw_warranty"
+                  sourceRef="wrc_task_check"
+                  targetRef="wrc_gw_warranty"/>
+
+    <sequenceFlow id="wrc_sf_warranty_in"
+                  name="Within warranty"
+                  sourceRef="wrc_gw_warranty"
+                  targetRef="wrc_gw_split"/>
+
+    <sequenceFlow id="wrc_sf_warranty_out"
+                  name="Out of warranty"
+                  sourceRef="wrc_gw_warranty"
+                  targetRef="wrc_task_reject"/>
+
+    <sequenceFlow id="wrc_sf_reject_to_end"
+                  sourceRef="wrc_task_reject"
+                  targetRef="wrc_end_rejection"/>
+
+    <sequenceFlow id="wrc_sf_split_to_shipment"
+                  sourceRef="wrc_gw_split"
+                  targetRef="wrc_task_shipment"/>
+
+    <sequenceFlow id="wrc_sf_split_to_courier"
+                  sourceRef="wrc_gw_split"
+                  targetRef="wrc_task_courier"/>
+
+    <sequenceFlow id="wrc_sf_shipment_to_join"
+                  sourceRef="wrc_task_shipment"
+                  targetRef="wrc_gw_join"/>
+
+    <sequenceFlow id="wrc_sf_courier_to_join"
+                  sourceRef="wrc_task_courier"
+                  targetRef="wrc_gw_join"/>
+
+    <sequenceFlow id="wrc_sf_join_to_inventory"
+                  sourceRef="wrc_gw_join"
+                  targetRef="wrc_task_inventory"/>
+
+    <sequenceFlow id="wrc_sf_inventory_to_close"
+                  sourceRef="wrc_task_inventory"
+                  targetRef="wrc_task_close"/>
+
+    <sequenceFlow id="wrc_sf_close_to_end"
+                  sourceRef="wrc_task_close"
+                  targetRef="wrc_end_success"/>
+
+  </process>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BPMN DIAGRAM INTERCHANGE (DI)
+       Layout (all coordinates in pixels):
+         Main lane      y ≈ 200  (left → right)
+         Upper parallel y ≈ 120  (Create shipment order)
+         Lower parallel y ≈ 320  (Schedule courier pickup)
+         Reject sub-row y ≈ 360  (below main lane)
+         Loop-back row  y ≈ 360  (requests missing information)
+  ═══════════════════════════════════════════════════════════ -->
+  <bpmndi:BPMNDiagram id="wrc_diagram" name="Warranty-Replacement v1.3">
+    <bpmndi:BPMNPlane id="wrc_plane" bpmnElement="wrc_process">
+
+      <!-- ─── Shapes ─── -->
+
+      <bpmndi:BPMNShape id="wrc_di_start" bpmnElement="wrc_start">
+        <dc:Bounds x="60" y="182" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="36" y="225" width="84" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_task_validate" bpmnElement="wrc_task_validate">
+        <dc:Bounds x="150" y="160" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_gw_complete" bpmnElement="wrc_gw_complete"
+                        isMarkerVisible="true">
+        <dc:Bounds x="330" y="175" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="314" y="232" width="82" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- below main lane -->
+      <bpmndi:BPMNShape id="wrc_di_task_request" bpmnElement="wrc_task_request">
+        <dc:Bounds x="305" y="320" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_task_check" bpmnElement="wrc_task_check">
+        <dc:Bounds x="440" y="160" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_gw_warranty" bpmnElement="wrc_gw_warranty"
+                        isMarkerVisible="true">
+        <dc:Bounds x="620" y="175" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="604" y="232" width="82" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- below main lane -->
+      <bpmndi:BPMNShape id="wrc_di_task_reject" bpmnElement="wrc_task_reject">
+        <dc:Bounds x="595" y="320" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_end_rejection" bpmnElement="wrc_end_rejection">
+        <dc:Bounds x="777" y="342" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="750" y="385" width="90" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_gw_split" bpmnElement="wrc_gw_split">
+        <dc:Bounds x="745" y="175" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="730" y="232" width="80" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- upper parallel branch -->
+      <bpmndi:BPMNShape id="wrc_di_task_shipment" bpmnElement="wrc_task_shipment">
+        <dc:Bounds x="865" y="80" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- lower parallel branch -->
+      <bpmndi:BPMNShape id="wrc_di_task_courier" bpmnElement="wrc_task_courier">
+        <dc:Bounds x="865" y="280" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_gw_join" bpmnElement="wrc_gw_join">
+        <dc:Bounds x="1055" y="175" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1042" y="232" width="76" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_task_inventory" bpmnElement="wrc_task_inventory">
+        <dc:Bounds x="1165" y="160" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_task_close" bpmnElement="wrc_task_close">
+        <dc:Bounds x="1345" y="160" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="wrc_di_end_success" bpmnElement="wrc_end_success">
+        <dc:Bounds x="1527" y="182" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1503" y="225" width="84" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- ─── Edges ─── -->
+
+      <!-- Start → validates the claim -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_start_to_validate"
+                       bpmnElement="wrc_sf_start_to_validate">
+        <di:waypoint x="96"  y="200"/>
+        <di:waypoint x="150" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- validates the claim → GW Complete -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_validate_to_gw_complete"
+                       bpmnElement="wrc_sf_validate_to_gw_complete">
+        <di:waypoint x="270" y="200"/>
+        <di:waypoint x="330" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- GW Complete → Complete → checks warranty eligibility -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_complete_yes"
+                       bpmnElement="wrc_sf_complete_yes">
+        <di:waypoint x="380" y="200"/>
+        <di:waypoint x="440" y="200"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="388" y="183" width="44" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- GW Complete → Incomplete → requests missing information -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_complete_no"
+                       bpmnElement="wrc_sf_complete_no">
+        <di:waypoint x="355" y="225"/>
+        <di:waypoint x="355" y="320"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="360" y="260" width="70" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- requests missing information → validates the claim (loop back) -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_request_to_validate"
+                       bpmnElement="wrc_sf_request_to_validate">
+        <di:waypoint x="305" y="360"/>
+        <di:waypoint x="140" y="360"/>
+        <di:waypoint x="140" y="200"/>
+        <di:waypoint x="150" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- checks warranty eligibility → GW Warranty -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_check_to_gw_warranty"
+                       bpmnElement="wrc_sf_check_to_gw_warranty">
+        <di:waypoint x="560" y="200"/>
+        <di:waypoint x="620" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- GW Warranty → Within warranty → Parallel split -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_warranty_in"
+                       bpmnElement="wrc_sf_warranty_in">
+        <di:waypoint x="670" y="200"/>
+        <di:waypoint x="745" y="200"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="676" y="183" width="63" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- GW Warranty → Out of warranty → send rejection notice -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_warranty_out"
+                       bpmnElement="wrc_sf_warranty_out">
+        <di:waypoint x="645" y="225"/>
+        <di:waypoint x="645" y="320"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="650" y="260" width="70" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <!-- send rejection notice → End rejection -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_reject_to_end"
+                       bpmnElement="wrc_sf_reject_to_end">
+        <di:waypoint x="715" y="360"/>
+        <di:waypoint x="777" y="360"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Parallel split → Create shipment order (upper branch) -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_split_to_shipment"
+                       bpmnElement="wrc_sf_split_to_shipment">
+        <di:waypoint x="770" y="175"/>
+        <di:waypoint x="770" y="120"/>
+        <di:waypoint x="865" y="120"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Parallel split → Schedule courier pickup (lower branch) -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_split_to_courier"
+                       bpmnElement="wrc_sf_split_to_courier">
+        <di:waypoint x="770" y="225"/>
+        <di:waypoint x="770" y="320"/>
+        <di:waypoint x="865" y="320"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Create shipment order → Parallel join -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_shipment_to_join"
+                       bpmnElement="wrc_sf_shipment_to_join">
+        <di:waypoint x="985"  y="120"/>
+        <di:waypoint x="1080" y="120"/>
+        <di:waypoint x="1080" y="175"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Schedule courier pickup → Parallel join -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_courier_to_join"
+                       bpmnElement="wrc_sf_courier_to_join">
+        <di:waypoint x="985"  y="320"/>
+        <di:waypoint x="1080" y="320"/>
+        <di:waypoint x="1080" y="225"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Parallel join → update inventory records -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_join_to_inventory"
+                       bpmnElement="wrc_sf_join_to_inventory">
+        <di:waypoint x="1105" y="200"/>
+        <di:waypoint x="1165" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- update inventory records → close the claim -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_inventory_to_close"
+                       bpmnElement="wrc_sf_inventory_to_close">
+        <di:waypoint x="1285" y="200"/>
+        <di:waypoint x="1345" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- close the claim → End success -->
+      <bpmndi:BPMNEdge id="wrc_di_sf_close_to_end"
+                       bpmnElement="wrc_sf_close_to_end">
+        <di:waypoint x="1465" y="200"/>
+        <di:waypoint x="1527" y="200"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
+```
+
+### Model summary
+
+| # | Element | Type | Notes |
+|---|---------|------|-------|
+| 1 | `wrc_start` | Start Event | Customer submits online warranty claim |
+| 2 | `wrc_task_validate` | Task | **validates the claim** – has two incoming flows (start + loop-back) |
+| 3 | `wrc_gw_complete` | Exclusive GW | *Complete* → step 3; *Incomplete – missing info* → loop |
+| 4 | `wrc_task_request` | Task | **requests missing information** → loops back to validate |
+| 5 | `wrc_task_check` | Task | **checks warranty eligibility** |
+| 6 | `wrc_gw_warranty` | Exclusive GW | *Within warranty* → parallel split; *Out of warranty* → rejection path |
+| 7 | `wrc_task_reject` | Task | **send rejection notice** |
+| 8 | `wrc_end_rejection` | End Event | ① Rejection end (out of warranty) |
+| 9 | `wrc_gw_split` | Parallel GW (+) | Splits into two concurrent branches |
+| 10 | `wrc_task_shipment` | Task | **Create shipment order** |
+| 11 | `wrc_task_courier` | Task | **Schedule courier pickup** |
+| 12 | `wrc_gw_join` | Parallel GW (+) | Synchronises both branches |
+| 13 | `wrc_task_inventory` | Task | **update inventory records** |
+| 14 | `wrc_task_close` | Task | **close the claim** |
+| 15 | `wrc_end_success` | End Event | ② Successful-completion end |

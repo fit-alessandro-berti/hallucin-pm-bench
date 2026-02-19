@@ -1,0 +1,22 @@
+## Added / Changed XML Elements
+
+```xml
+<!-- Attach an interrupting 48-hour boundary timer to the CreateAccount service task -->
+<bpmn:boundaryEvent id="Timer_CreateAccountSLA"
+                    name="48 h SLA exceeded"
+                    attachedToRef="Activity_CreateAccount"
+                    cancelActivity="true">
+  <bpmn:timerEventDefinition id="TimerDef_SLA">
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<!-- Escalation sequence flow – wires the timer to the previously orphaned Activity_AMReview -->
+<bpmn:sequenceFlow id="Flow_09"
+                   sourceRef="Timer_CreateAccountSLA"
+                   targetRef="Activity_AMReview"/>
+```
+
+---
+
+**Justification:** Attaching an interrupting 48-hour boundary timer (`cancelActivity="true"`) to `Activity_CreateAccount` enforces the SLA deadline by automatically cancelling the stalled service call and routing control to the already-existing — but previously unreachable — `Activity_AMReview`, which already flows onward to `Activity_ActivateAccount`, closing the loop without introducing any new activities.
