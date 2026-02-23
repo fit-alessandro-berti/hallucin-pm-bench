@@ -1,0 +1,15 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment):
+- **Structural mismatch (major deduction: -4.0 points)**: Fundamentally different JSON schema. Ground truth (GT) uses flat `{"process_id": "...", "elements": [...], "flows": [...]}` with simple objects. LLM uses verbose nested `{"bpmn": {"process": {... "elements": [...], "sequenceFlows": [...]}}}` with BPMN-specific fields (e.g., `eventDefinition`, `conditionExpression`, `isExecutable`). IDs, keys, and organization do not match; cannot directly parse/equate.
+- **Extra/hallucinated elements absent from GT (-1.5 points)**: 
+  - `Gateway_ClassificationJoin` (unnecessary exclusive join; GT converges directly to `provideResolution` without it).
+  - `Gateway_MergeReply` (unnecessary; GT uses event-based gateway with direct flows from catch events, no merge).
+  - `EventSubProcess_Cancellation` (GT uses simple `cancelEvent` → `terminate`; LLM's subproc is more complex but incompletely attached—no main flows reference it).
+  - Extra fields like `name` on some gateways, `eventDefinition` details, internal subproc flows.
+- **Logical/positional differences (-1.0 point)**: Parallel handling close but offset. LLM joins *after* `closeTicket` (flows 18-20); GT joins *before* `awaitReply` (`joinAfterLogging` → `awaitReply`). LLM better matches text ("log may finish later than customer reply") but penalized for divergence from GT. Event-based gateway wiring similar but LLM adds superfluous merge.
+- **Naming/attribute mismatches (-0.5 point)**: Minor but strict (e.g., GT "Email Received" vs. "Support e-mail received"; "Simple or Complex?" vs. "Ticket Type"; conditions "simple"/"complex" lowercase vs. "Simple"/"Complex"; GT timer "Timer 24h" vs. "24 hours past").
+- **Cancellation modeling (-0.5 point)**: Both incomplete (no explicit attachment/boundary flows for "at any point"), but GT simpler direct flow; LLM's subproc adds unneeded complexity without integration into main `sequenceFlows`.
+- **Positives (partial credit)**: No escalation/supervisor inventions (+1.0 baseline). Core sequence (start → create → classify → res → send/log parallel → wait/timer/reply → close) mostly faithful. All required tasks present with matching names. Proper event-based wait/timer for 24h logic.
+
+Total: Starts at 10.0, deducts to 4.0. Faithless to GT format/logic details despite decent text fidelity.

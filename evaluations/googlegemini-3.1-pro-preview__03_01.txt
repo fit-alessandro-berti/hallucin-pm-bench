@@ -1,0 +1,25 @@
+**4.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the high-level process flow (password reset path, diagnosis branch, specialist resolve, confirmation loop back to diagnosis) and uses concise IDs/tasks matching the description without *adding* unmentioned elements (no hallucinations like timers or extra tasks). However, under utmost strictness against the ground truth, there are **multiple significant structural, syntactic, and naming differences** warranting major deductions:
+
+#### Major Errors (-4.0 points total):
+- **Missing exclusive gateway after "Initial Diagnosis" (gw2 equivalent)**: Description line 5 explicitly states a decision ("either 'Resolve Issue' or 'Forward to Specialist'"). Ground truth models this properly with `gw2` ("Resolved Internally?") and conditionExpressions (yes/no). LLM incorrectly uses *direct multiple outgoing sequenceFlows from task `t3`* (`f6`, `f7`), which is invalid BPMN modeling for a decision point (tasks do not perform XOR splits; exclusive gateways are required per prompt and BPMN best practice). This breaks proper token flow semantics, especially with `isExecutable="true"`. Prompt requires exclusive gateways for decision points—LLM marks only 2 instead of 3.
+- **No `conditionExpression` on decision flows**: Ground truth uses standard BPMN `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on all exclusive gateway outflows (f3/f4, f7/f8, f12/f13). LLM substitutes informal `name` attributes (e.g., "Password Reset", "Resolve directly")—not equivalent and non-executable.
+
+#### Significant Minor Errors (-1.5 points total):
+- **Task/gateway naming mismatches**:
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | Classify task | "Classify ticket" | "Auto-Classification" | Misses "automatically" from line 2. |
+  | gw1 | No `name` | "Password Reset?" | Unnamed. |
+  | gw2 (confirm) | No `name` | gw3 "Customer Confirms?" | Unnamed. |
+- **Process attributes mismatch**: `id="p1" isExecutable="true"` vs. `id="support_ticket" name="Support-Ticket" isExecutable="false"`.
+- **Target namespace**: "http://acmetech.support" (dot) vs. "http://acmetech/support" (slash).
+
+#### Minor Errors (-0.5 points total):
+- No `<?xml version="1.0" encoding="UTF-8"?>` declaration.
+- Unnecessary HTML comments (e.g., `<!-- Decision Point 1 -->`), bloating XML (though still <40 lines).
+- Flow names invent unmentioned labels (e.g., "Require specialist", "Issue persists"—close but not exact to desc; ground uses conditions instead).
+
+**Overall**: Semantically ~80% aligned (correct loop to `t3`, no extras), but syntactically/ structurally divergent (invalid decision modeling, no conditions, mismatches). Strict deduction for "exact" translation fidelity yields 4.0—not a total failure, but far from ground truth equivalence.

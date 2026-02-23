@@ -112,6 +112,7 @@ class Shared:
                        "z-ai/glm-5",
                        "qwen/qwen3-max-thinking",
                        "qwen/qwen3.5-397b-a17b",
+                       "google/gemini-3.1-pro-preview",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),
