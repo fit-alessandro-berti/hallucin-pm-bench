@@ -1,0 +1,15 @@
+**2.0**
+
+The LLM answer deviates substantially from the ground truth in structure, format, naming, element types, IDs, and modeling choices, warranting a low score under strict evaluation criteria emphasizing fidelity to the provided key JSON.
+
+### Key Differences (non-exhaustive, each contributing to point loss):
+- **Structure/Format (major deduction ~4 points)**: LLM uses deeply nested `{"process": {... "elements": [subprocess with internal elements/flows, eventSubProcess, etc.], top-level sequenceFlows}}`. Ground truth is flat `{"process_id": "...", "elements": [...], "flows": [...]}`. No matching schema; LLM invents subprocesses, eventSubProcess, boundary events not in key.
+- **Element Types (major, ~2 points)**: LLM uses BPMN-specific like `subProcess`, `serviceTask`, `userTask`, `intermediateThrowEvent`, `intermediateCatchEvent`, `eventBasedGateway` with full `eventDefinition`. Ground truth uses shorthand/simple (`"task"`, `"exclusiveGateway"`, `"event": "message/timer"`). No `subProcess`, `signal`, `boundaryEvent`.
+- **IDs & Names (significant, ~1 point)**: No matching IDs (e.g., LLM `"Task_ProvideResolution"` vs `"provideResolution"`). Names differ (e.g., `"Support e-mail received"` vs `"Email Received"`; `"Parse E-mail and Create Ticket"` vs `"Create Ticket"`—LLM adds "Parse" explicitly; `"Wait for Customer Reply"` vs `"Wait 24h for Reply"`; extra `"Resolution Drafted"`, `"SubStart"`).
+- **Flows/Connections (~0.5 points)**: LLM `sequenceFlows` IDs/nesting differ; conditions `"Simple"`/`"Complex"` vs `"simple"`/`"complex"`; extra flows for sub/signal. Ground truth has explicit `forkLogging`/`joinAfterLogging` parallelGateways post-resolution (fork to `sendResponse` + `logSolution`).
+- **Parallel Logging (~0.5 points)**: LLM uses signal throw + non-interrupting eventSubProcess (async, starts post-resolution). Ground truth sync parallelGateway fork/join after `provideResolution` before `awaitReply`.
+- **Cancel Handling (~0 points match)**: LLM boundaryEvent `cancelActivity: true` on subprocess to terminate endEvent. Ground truth loose `intermediateCatchEvent` with only outgoing flow to `terminateEndEvent`—no attachment/incoming specified.
+- **Other Errors**: LLM adds `"SubEnd"`, multiple ends (`EndEvent_Normal`/`EndEvent_Terminate`), `PT24H` duration (ground truth just name); combines parse/create (desc faithful but mismatches key); eventGateway flows correct semantically but structurally off.
+- **No Hallucinations**: No escalation/supervisor steps, but extra constructs (subprocess, signals) absent from key treated as additions.
+
+Semantically captures process but JSON fidelity is ~20% match at best (core sequence visible but obfuscated). Strictness demands near-identical output for high score.

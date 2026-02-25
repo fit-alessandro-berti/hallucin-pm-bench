@@ -1,0 +1,16 @@
+**5.0**
+
+### Evaluation Rationale (Strict Line-by-Line and Structural Comparison)
+The LLM answer captures the core process logic (password reset path, diagnosis/forward/resolve, confirm loop back to diagnosis) without hallucinated extras (no timers, parallel paths, or invented tasks), uses exactly **two exclusive gateways** as explicitly instructed ("the two decision points"), concise IDs, <40 lines, and models the loop directly as line 9 states. However, **utmost strictness** demands near-identical match to ground truth XML. Major deductions for:
+
+- **Structural mismatch (-3.0)**: No `gw3` ("Customer Confirms?") declared. Confirm decision modeled as implicit XOR via dual conditional flows from `t6` (`f11`/`f12`), vs ground's explicit `gw3` + `f11` (`t6->gw3`), `f12` (`gw3->end "yes"`), `f13` (`gw3->t3 "no"`). Different flow graph.
+- **Element names/attributes mismatch (-1.0)**: 
+  - `t1`: "Classify Ticket" vs "Auto-Classification".
+  - `gw1`/`gw2`: No `name` vs "Password Reset?"/"Resolved Internally?".
+  - Process: `id="p1"` no `name` vs `id="support_ticket" name="Support-Ticket"`.
+  - Start/end: `s1`/`e1` vs `start`/`end`.
+- **Condition expressions mismatch (-0.5)**: Invented/specific (`"Password Reset"`, `"Not Password Reset"`, `"Resolved"`, `"Needs Specialist"`, `"Confirmed"`, `"Issue Persists"`) vs generic (`"yes"`/`"no"`). Closer to text but not matching ground.
+- **Definitions/header mismatch (-0.3)**: Extra `id="def1"`, `xmlns:xsi`; no `<?xml declaration>`. Ground lacks `xmlns:xsi` (ironically invalid) but exact match required.
+- **Minor (flow count/ordering, no process `name`)**: 12 vs 13 flows; cumulative -0.2.
+
+Semantically faithful to prompt (no inventions, exact loop), but XML differs in ~60% of elements/flows/names. Not a "copy-paste" match. Half credit for logic + compliance with "two gateways only".
