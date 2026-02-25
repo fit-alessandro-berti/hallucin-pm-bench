@@ -1,0 +1,13 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment)
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a low score under utmost strictness (small errors = significant loss; structural/logic differences = major deductions):
+
+- **JSON structure/format (fatal, -4.0 points)**: LLM uses full BPMN 2.0 schema ("definitions", "messages", "process" with "flowNodes", "sequenceFlows", "eventSubProcesses"). Ground truth uses custom simplified schema ("process_id", "elements" array, "flows" array). Completely incompatible; cannot be considered the same representation.
+- **Extra elements/inventions (-1.5 points)**: Added "Task_ParseEmail" (not in ground truth elements/flows; description mentions parsing but ground truth omits, combining into "createTicket"). Extra "Gateway_MergeClosePaths" (unnecessary exclusive merge; ground truth converges directly to "closeTicket"). Detailed performers, messageRefs, "isExecutable", "gatewayDirection", "timeDuration":"PT24H" absent from ground truth.
+- **Flow topology differences (-1.5 points)**: Parallel modeling mismatches. Ground truth forks after "provideResolution" → "sendResponse" & "logSolution" → join → "awaitReply". LLM forks similarly but joins *after* "Task_CloseTicket" (with "closeTicket" → parallel join → end), delaying end on log completion. Event gateway feeds merge before close in LLM vs. direct to close in ground truth.
+- **Cancellation handling (-0.5 points)**: LLM uses detailed interrupting "eventSubProcess" (extra nested flowNodes/flows). Ground truth has simple loose "cancelEvent" (intermediateCatchEvent) → "terminate" (no attachment specified in flows).
+- **ID/name/condition mismatches (minor but cumulative, -0.5 points)**: All IDs different (e.g., "StartEvent_SupportEmailReceived" vs. "start"; "Gateway_ParallelSplit_AfterResolution" vs. "forkLogging"). Names vary (e.g., "24 Hours Elapsed" vs. "Timer 24h"; "Process Completed" vs. "End"). Conditions "ticketType == 'Simple'" vs. "simple".
+- **Strengths (no deduction avoided)**: No hallucinations like escalation/supervisor steps. Captures core sequence, event-based wait, timer/reminder, parallel log faithfully. BPMN syntax valid. But differences dominate.
+
+Total: Matches ~30% of ground truth structure/logic superficially; superior full BPMN fidelity irrelevant vs. explicit ground truth comparison. Equivalent to 2.0/10.

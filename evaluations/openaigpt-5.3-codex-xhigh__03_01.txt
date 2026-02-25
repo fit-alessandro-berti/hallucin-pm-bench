@@ -1,0 +1,21 @@
+**3.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the overall process flow and loop correctly (pw reset → confirm; diagnosis → resolve/forward → resolve → confirm → close or loop to diagnosis), uses concise IDs, stays under 40 lines, includes exactly the required 7 tasks/activities, and has no invented escalations/timers/extra elements. However, under utmost strictness with significant point loss for **all differences** vs. ground truth (GT), including small ones:
+
+#### Major Errors (-4.0 total impact):
+- **Missing exclusiveGateway for classification decision** (GT: `gw1` "Password Reset?" after `t1`): LLM uses direct conditional `sequenceFlow` (`f2`/`f3`) from `t1`—violates prompt's "Mark the two decision points with **exclusive gateways**" and standard BPMN (decisions require XOR gw). Structural mismatch. (-2.0)
+- **Wrong number of gateways** (LLM: 2; GT: 3)—GT explicitly models 3 decisions (classify, diagnosis, confirm). (-1.0)
+- **Invalid BPMN XML**: `<serviceTask id="t1" default="f3"/>`—"default" attribute invalid on tasks/serviceTasks (only gateways); causes schema error. (-1.0)
+
+#### Significant Errors (-2.0 total):
+- **Invented conditionExpressions**: LLM uses specific/unmentioned `isPasswordReset`, `needsSpecialist`, `customerConfirmed` vs. GT's generic `yes`/`no`. Violates "exactly as stated / Do not invent". (-1.0)
+- **Gateway placement/names mismatch**: LLM's `gw1` = diagnosis (GT `gw2`); no classify gw; `gw2` names differ. (-0.5)
+- **Task type**: `serviceTask` for classify vs. GT `task`. (-0.5)
+
+#### Minor Errors (-1.0 total, but strict loss):
+- **Names differ**: e.g., classify "Automatically Classify Ticket" vs. "Auto-Classification"; start "Customer submits..." vs. "Ticket Submitted"; gw "Diagnosis Outcome" vs. "Resolved Internally?"; flow labels added. (-0.5)
+- **Extra/unneeded**: `id="d1"`, `xmlns:xsi` on defs, `name=` on flows, process `id="p1"`/name; no `<?xml>` decl (GT has). (-0.3)
+- **Flow structure/IDs/count**: Different ordering, refs, no `f13`. (-0.2)
+
+Perfect match = 10.0; functional but structurally flawed/invalid XML with prompt violations = 3.0. No hallucinations (no extras), but too many diffs for higher.

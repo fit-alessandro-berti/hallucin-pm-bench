@@ -1,0 +1,31 @@
+**5.0**
+
+### Evaluation Rationale (Strict Grading Breakdown)
+Using utmost strictness per instructions, grading prioritizes **semantic equivalence to ground truth** while penalizing **any extras/hallucinations/omissions per prompt rubric**, with small errors causing significant deductions (e.g., 1-2 points per category). Ground truth (GT) is minimal (34 lines, no inventions). LLM answer has correct overall structure and all required gateways/end events/IDs prefix, but multiple violations/differences:
+
+#### Major Deductions (-3.5 points total):
+- **Hallucinated/extra flow elements (core violation of "model **only** explicitly mentioned" and "do **not** invent")**:
+  - Added `intermediateCatchEvent` ("missing information received") – not explicitly mentioned; prompt only states "waits until it is received" (GT models direct loop without event).
+  - Added `messageEventDefinition` – completely invented.
+  - Deduct 2.0 (significant; adds non-minimal complexity, violates "no error-handling beyond stated").
+- **Extra sequence flows**: Flows 05/06 for catch event loop (GT uses direct flow from `request_info` to `validate`). Deduct 1.0.
+- **Extra task "checks warranty eligibility"**: Explicitly mentioned in prompt, but absent in GT (GT merges into warranty gw); counts as structural difference/extra vs GT. Deduct 0.5.
+
+#### Minor/Structural Differences (-1.0 point total):
+- **Names mismatch GT/prompt verbatim**:
+  - Start event: "online warranty claim" vs GT "Online warranty claim submitted" (prompt implies submission event).
+  - Task casing: LLM closer to prompt verbatim (e.g., "validates the claim", "send rejection notice" lowercase), but differs from GT title-case.
+  - No gateway names (GT has "Claim complete?", "Within warranty?").
+  - End event names absent (GT has "Successful end"/"Rejected").
+  - Added process name, flow names (e.g., "complete"/"within warranty").
+  - Deduct 0.5 (small but "significant loss" per instructions).
+- **Metadata/layout**: Different `definitions` ID/targetNamespace, added process name, no comments, ~60 lines vs GT 34, extra flows. Different ID scheme (allowed but contributes to diff). Deduct 0.5.
+
+#### Positives (Base ~8.5 before deductions):
+- All prompt-required tasks present verbatim (better than GT, which omits "checks warranty eligibility").
+- Correct gateways (completeness ex-gw, warranty ex-gw, parallel split/join).
+- Correct 2 end events, parallel flows, rejection path, inventory/close sequence.
+- Valid self-contained BPMN 2.0 XML; semantically models process accurately (loop/wait better than GT arguably).
+- All IDs prefixed "wrc_".
+
+**Net: 10.0 base - 4.5 deductions = 5.0**. Semantically close (~80% equivalent) but extras/hallucinations and diffs prevent higher; strict rubric demands near-GT minimalism without inventions.
