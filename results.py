@@ -44,7 +44,7 @@ def is_open_source(model_name):
 
 
 def is_lrm(model_name):
-    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1"}
+    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm"}
 
     for p in patterns:
         if p.lower() in model_name.lower():
