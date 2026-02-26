@@ -1,0 +1,111 @@
+Let's analyze the Petri net step by step.
+
+### **Places and Transitions Recap**
+
+- **Initial marking:**  
+  p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)
+
+- **Transitions:**
+  - **T1:** p0 → p1 + p2 (parallel split)
+  - **T2:** p1 → p3
+  - **T3:** p2 → p4
+  - **T4:** p3 + p4 → p5 (synchronous)
+  - **T5:** p3 –|p4 → p6 (p3 fires, p4 must be empty)
+
+---
+
+## **Can T5 fire before T3?**
+
+Let's see what's required for T5 to fire:
+
+- **T5 requires:** p3 has at least 1 token, and p4 has 0 tokens.
+
+Let's see if we can reach such a marking **before** firing T3.
+
+### **Step-by-step reasoning:**
+
+1. **Start:** p0(1), p1(0), p2(0), p3(0), p4(0), p5(0), p6(0)
+
+2. **Fire T1:**  
+   p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)
+
+3. **Fire T2:**  
+   p0(0), p1(0), p2(1), p3(1), p4(0), p5(0), p6(0)
+
+4. **Fire T3:**  
+   p0(0), p1(0), p2(0), p3(1), p4(1), p5(0), p6(0)
+
+   Now, p3=1, p4=1.
+
+   - T5 is **not** enabled yet because p4 is not empty.
+
+5. **Fire T4:**  
+   p0(0), p1(0), p2(0), p3(0), p4(0), p5(1), p6(0)
+
+   Now, p3=0, p4=0.
+
+   - T5 is enabled (p3=0, p4=0).
+
+   But T5 requires p3 to have at least 1 token, so **T5 cannot fire yet**.
+
+6. **Fire T2 again:**  
+   p3=1, p4=0.
+
+7. **Fire T5:**  
+   p3=0, p4=0.
+
+   Now, **T5 is enabled** (p3=1, p4=0).
+
+   So, **T5 can fire after T3**, but can it fire before T3?
+
+Let's try a different order:
+
+### **Alternative sequence:**
+
+1. **T1:** p0(0), p1(1), p2(1), p3(0), p4(0), p5(0), p6(0)
+2. **T3:** p2(0), p4(1), p3(0), p1(1), p0(0), p5(0), p6(0)
+3. **T2:** p1(0), p3(1), p2(0), p4(1), p5(0), p6(0)
+4. **T5:** p3=1, p4=1 → not enabled (p4 is not empty).
+5. **T4:** p3=0, p4=0 → p5=1
+6. **T2:** p3=1, p4=0
+7. **T5:** p3=0, p4=0 → enabled.
+
+Still, T5 fires **after** T3.
+
+### **Can T5 fire before T3?**
+
+Let's see if we can fire T5 **before** T3.
+
+- To fire T5, we need p3=1 and p4=0.
+- To get p3=1, we must fire T2, which requires p1=1.
+- To get p1=1, we must fire T1.
+
+So, the only way to get p3=1 is to fire T2, which requires p1=1, which comes from T1.
+
+But to fire T3, we need p2=1, which comes from T1.
+
+So, **both T2 and T3 require p1 and p2 respectively**.
+
+But **T5 requires p3=1**, which requires firing T2, which requires firing T1.
+
+So, **T2 must fire before T3**, and **T2 must fire before T5**.
+
+Thus, **T5 cannot fire before T3**.
+
+---
+
+## **Conclusion**
+
+**No, it is not possible for transition T5 to fire before transition T3.**
+
+**Reason:**  
+To fire T5, you must have fired T2 (to get p3=1), and T2 can only fire after firing T1 (to get p1=1).  
+T3 requires firing T1 (to get p2=1), but T3 and T2 can only fire in parallel after T1.  
+However, T5 requires p3=1 (from T2) and p4=0 (never fired yet), but T3 also requires p2=1 (from T1), which is not enough to enable T5 before T3.  
+Thus, **T3 must fire before T5**.
+
+---
+
+**Final Answer:**  
+> **No, it is not possible for T5 to fire before T3.**  
+> **Reason:** T3 requires firing T1 to get p2=1, and T5 requires firing T2 to get p3=1. Both T2 and T3 can only fire after T1, but T3 fires before T5 in any valid firing sequence.

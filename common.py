@@ -89,6 +89,7 @@ class Shared:
                        "qwen/qwen3.5-35b-a3b",
                        "qwen/qwen3.5-27b",
                        "qwen/qwen3.5-122b-a10b",
+                       "liquid/lfm-2-24b-a2b",
                        "arcee-ai/trinity-mini",
                        "anthropic/claude-sonnet-4.5",
                        "z-ai/glm-4.6",

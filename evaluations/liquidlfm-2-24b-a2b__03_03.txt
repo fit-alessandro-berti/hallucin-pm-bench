@@ -1,0 +1,20 @@
+**1.0**
+
+The LLM answer is fundamentally invalid and non-compliant on multiple critical levels, warranting the minimum score under strict evaluation criteria:
+
+- **Invalid BPMN 2.0 XML structure**: Lacks `<bpmn:definitions>` wrapper, `xmlns`, and `<?xml>` declaration (GT has full self-contained document). `<bpmn:process>` alone is not a standalone BPMN document.
+- **ID prefix violation**: Not *every* element ID prefixed with "wrc_" (e.g., `start_1`, `gateway_2_1`, `sf_1_1_1`, `parallel_group_1`, `end_reject` fail; only ~30% comply).
+- **Missing required elements/omissions**:
+  - No task for "send rejection notice" (prompt step 3; GT has `wrc_reject`).
+  - No loop back from "Request missing information" to "Validate the claim" (prompt step 2 requires re-validation after info received).
+  - No sequence flow from start event to first task (process cannot start).
+- **Hallucinated/extra-invalid elements** (major deductions per rubric):
+  - `<bpmn:parallelGroup>` (non-existent BPMN element; prompt/GT require `parallelGateway`).
+  - Extra gateways (`gateway_4_1`, `gateway_5_1`, `gateway_5_2`, `gateway_3_2`) not specified.
+  - Dangling/broken/misconnected flows (e.g., `sf_3_2_2` from shipment task to end_reject; flows from update/close to rejection path).
+  - Wrong post-parallel: exclusive GW "Both activities complete?" instead of parallel join.
+- **Task name inaccuracies**: "Validate claim" ≠ verbatim "validates the claim" (GT: "Validate the claim"); end names invented ("Rejection notice sent; end").
+- **Wrong element types**: `<serviceTask>` vs. GT/prompt-implied `<task>`.
+- **Semantically incorrect flow**: No proper validation loop; parallel mishandled; rejection path broken/missing task; cannot execute as BPMN.
+
+Semantically non-equivalent (does not model prompt); ~20 extras/omissions/bugs vs. GT's precise 34-line minimal model.

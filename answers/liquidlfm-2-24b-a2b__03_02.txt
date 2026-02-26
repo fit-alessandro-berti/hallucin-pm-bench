@@ -1,0 +1,189 @@
+```json
+{
+  "process": {
+    "name": "Customer Support Ticket Workflow",
+    "startEvent": {
+      "id": "start",
+      "type": "startEvent",
+      "label": "Support Email Received"
+    },
+    "sequenceFlow": [
+      {
+        "source": "start",
+        "target": "parseEmail",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "parseEmail",
+        "target": "createTicket",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "createTicket",
+        "target": "initialClassification",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "initialClassification",
+        "target": "simpleClassification",
+        "type": "sequenceFlow",
+        "label": "Simple"
+      },
+      {
+        "source": "initialClassification",
+        "target": "complexClassification",
+        "type": "sequenceFlow",
+        "label": "Complex"
+      },
+      {
+        "source": "simpleClassification",
+        "target": "provideResolution",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "complexClassification",
+        "target": "rootCauseAnalysis",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "rootCauseAnalysis",
+        "target": "provideResolution",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "provideResolution",
+        "target": "sendResponse",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "sendResponse",
+        "target": "logSolution",
+        "type": "parallel",
+        "parallel": 1
+      },
+      {
+        "source": "logSolution",
+        "target": "waitForCustomerReply",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "waitForCustomerReply",
+        "target": "customerReplyOrTimeout",
+        "type": "wait",
+        "duration": "24h"
+      },
+      {
+        "source": "customerReplyOrTimeout",
+        "target": "customerReply",
+        "type": "exclusiveGateway",
+        "exclusiveGateway": {
+          "startEvent": "customerReply",
+          "endEvent": "closeTicket"
+        }
+      },
+      {
+        "source": "customerReply",
+        "target": "closeTicket",
+        "type": "endEvent"
+      },
+      {
+        "source": "customerReplyOrTimeout",
+        "target": "sendReminder",
+        "type": "sequenceFlow"
+      },
+      {
+        "source": "sendReminder",
+        "target": "closeTicket",
+        "type": "endEvent"
+      },
+      {
+        "source": "closeTicket",
+        "target": "end",
+        "type": "endEvent"
+      }
+    ],
+    "endEvent": {
+      "id": "end",
+      "type": "endEvent",
+      "label": "Ticket Closed"
+    },
+    "serviceTasks": [
+      {
+        "id": "parseEmail",
+        "type": "serviceTask",
+        "name": "Parse Email"
+      },
+      {
+        "id": "createTicket",
+        "type": "serviceTask",
+        "name": "Create Ticket"
+      },
+      {
+        "id": "initialClassification",
+        "type": "serviceTask",
+        "name": "Initial Classification"
+      },
+      {
+        "id": "simpleClassification",
+        "type": "serviceTask",
+        "name": "Classify as Simple"
+      },
+      {
+        "id": "complexClassification",
+        "type": "serviceTask",
+        "name": "Classify as Complex"
+      },
+      {
+        "id": "rootCauseAnalysis",
+        "type": "serviceTask",
+        "name": "Root Cause Analysis"
+      },
+      {
+        "id": "provideResolution",
+        "type": "serviceTask",
+        "name": "Provide Resolution"
+      },
+      {
+        "id": "sendResponse",
+        "type": "serviceTask",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "logSolution",
+        "type": "serviceTask",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "waitForCustomerReply",
+        "type": "serviceTask",
+        "name": "Wait for Customer Reply (24h)"
+      },
+      {
+        "id": "customerReply",
+        "type": "serviceTask",
+        "name": "Customer Reply Received"
+      },
+      {
+        "id": "sendReminder",
+        "type": "serviceTask",
+        "name": "Send Reminder"
+      }
+    ],
+    "exclusiveGateway": {
+      "id": "customerReplyOrTimeout",
+      "type": "exclusiveGateway",
+      "name": "Customer Reply or Timeout",
+      "choices": [
+        {
+          "condition": "customerReply",
+          "target": "closeTicket"
+        },
+        {
+          "condition": "timeout",
+          "target": "sendReminder"
+        }
+      ]
+    }
+  }
+}
+```

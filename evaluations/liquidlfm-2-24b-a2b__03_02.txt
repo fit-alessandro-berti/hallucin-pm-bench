@@ -1,0 +1,13 @@
+**2.0**
+
+### Key Differences and Errors (Strict Evaluation Summary):
+- **Structure mismatch**: LLM uses custom non-standard format (`process`, `sequenceFlow`, `serviceTasks`, etc.); GT uses standard BPMN JSON (`process_id`, `elements`, `flows`). Major deviation (-2.0).
+- **Missing core feature**: No cancel event, boundary event, or terminate end event (description point 10, GT `cancelEvent`/`terminate`). Critical omission (-2.0).
+- **Parallelism botched**: Sequential `sendResponse` → `logSolution` → wait; no fork/join gateways (GT `forkLogging`/`joinAfterLogging`). Ignores "in parallel" and "may finish earlier/later" (-1.5).
+- **Classification wrong**: Extra invented tasks `simpleClassification`/`complexClassification` after `initialClassification`; no exclusiveGateway with conditions (GT `initialClassify` → `classifyDecision` with "simple"/"complex" flows). Hallucinated steps (-1.5).
+- **Wait/timer/reply incorrect**: Sequential task `waitForCustomerReply` → malformed XOR `customerReplyOrTimeout`; no eventBasedGateway, intermediateCatchEvents (message/timer) (GT `awaitReply` → `customerReply`/`timer24h`). Not faithful to 24h wait logic (-1.5).
+- **Extra inventions**: Separate `parseEmail` task (GT combines into `createTicket` after start) (-0.5).
+- **Malformed JSON/BPMN**: Invalid flow types (e.g., `"type": "endEvent"`, nested `"exclusiveGateway"` objects, `"parallel":1` misuse); `closeTicket` inconsistent (task vs. end); no proper gateways/elements (-1.0).
+- **Minor**: Wrong labels/names (e.g., start "Support Email Received" vs. GT "Email Received"); `customerReply` as task, not event (-0.5).
+
+Partial credit for basic sequential flow (start → classify → resolution → send → close paths), but strictness demands near-exact match to GT/description. Total deductions exceed 10.0; capped at minimum viable attempt.
