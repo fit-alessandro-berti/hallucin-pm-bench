@@ -1,0 +1,16 @@
+**3.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the **core process topology correctly** (start → classify → gw1 [password reset path direct to confirm | diagnosis → gw2 [resolve | forward→resolve] → confirm → gw3 [end | loop to diagnosis]), with exact elements from the description (7 tasks, 3 exclusive gateways despite prompt saying "two", loop to "Initial Diagnosis", no inventions like timers/escalations/parallel). Flow connections match line-by-line description perfectly, using concise IDs as prompted, under 40 lines.
+
+However, **utmost strictness demands near-identical XML to ground truth**, with small errors causing significant deductions (-1.0 to -2.0 per category). Total deductions sum to -7.0 from 10.0:
+
+- **Header/definitions (-1.0)**: Missing `<?xml version="1.0" encoding="UTF-8"?>`; extra invalid `id="d1"`; missing `targetNamespace="http://acmetech/support"`.
+- **Process attributes (-1.0)**: `id="p1"` vs `"support_ticket"`; missing `name="Support-Ticket"`; `isExecutable="true"` vs `"false"`.
+- **Element IDs (-0.5)**: Concise per prompt (good), but `s1`/`e1`/`p1`/`gw*`/`t*` vs ground's `start`/`end`/`support_ticket`/`gw1-3`.
+- **Missing names on 7 elements (-1.5)**: No `name` on startEvent, endEvent, 3 gateways (vs descriptive "Password Reset?", "Resolved Internally?", "Customer Confirms!", "Ticket Submitted", "Ticket Closed").
+- **Task name mismatch (-0.5)**: `"Auto Classify"` vs `"Auto-Classification"` (small wording/hyphen error, but strict deduction).
+- **No conditionExpressions (-2.0)**: Critical omission on **all 6 decision flows** (gw1→t2/t3, gw2→t4/t5, gw3→end/t3); ground has explicit `yes`/`no` `<conditionExpression xsi:type="tFormalExpression">` (requires missing `xmlns:xsi`); renders decisions underspecified/incomplete vs ground truth BPMN standard.
+- **Minor XML structure/style (-0.5)**: Flows/tasks listed in valid but different order; no `xmlns:xsi`.
+
+Semantically faithful to prompt (no hallucinations), but **~70% textual/line-by-line divergence** from ground truth XML justifies low score. Identical topology prevents 1.0 floor.

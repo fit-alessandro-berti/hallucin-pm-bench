@@ -1,0 +1,227 @@
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "rootElements": [
+      {
+        "id": "Process_1",
+        "type": "bpmn:Process",
+        "name": "Customer Support Ticket Process",
+        "isExecutable": false,
+        "flowElements": [
+          {
+            "id": "StartEvent_Email",
+            "type": "bpmn:StartEvent",
+            "name": "Support Email Received",
+            "eventDefinitions": [
+              {
+                "id": "MessageDef_Email",
+                "type": "bpmn:MessageEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "Task_Parse_Create",
+            "type": "bpmn:Task",
+            "name": "Parse Email & Create Ticket"
+          },
+          {
+            "id": "Task_Classify",
+            "type": "bpmn:Task",
+            "name": "Initial Classification"
+          },
+          {
+            "id": "Gateway_Route",
+            "type": "bpmn:ExclusiveGateway",
+            "name": "Route Simple/Complex"
+          },
+          {
+            "id": "Task_RootCause",
+            "type": "bpmn:Task",
+            "name": "Root Cause Analysis"
+          },
+          {
+            "id": "Task_Resolution",
+            "type": "bpmn:Task",
+            "name": "Provide Resolution"
+          },
+          {
+            "id": "Gateway_Parallel_Split",
+            "type": "bpmn:ParallelGateway",
+            "name": "Parallel Split"
+          },
+          {
+            "id": "Task_SendResponse",
+            "type": "bpmn:Task",
+            "name": "Send Response to Customer"
+          },
+          {
+            "id": "Task_LogSolution",
+            "type": "bpmn:Task",
+            "name": "Log Solution in Knowledge Base"
+          },
+          {
+            "id": "Gateway_EventBased",
+            "type": "bpmn:EventBasedGateway",
+            "name": "Wait for Reply or Timeout"
+          },
+          {
+            "id": "MessageDef_Reply",
+            "type": "bpmn:MessageEventDefinition"
+          },
+          {
+            "id": "TimerDef_24h",
+            "type": "bpmn:TimerEventDefinition",
+            "timeDuration": "PT24H"
+          },
+          {
+            "id": "Task_SendReminder",
+            "type": "bpmn:Task",
+            "name": "Send Reminder"
+          },
+          {
+            "id": "Task_CloseTicket",
+            "type": "bpmn:Task",
+            "name": "Close Ticket"
+          },
+          {
+            "id": "EndEvent_Normal",
+            "type": "bpmn:EndEvent",
+            "name": "Process Completed"
+          },
+          {
+            "id": "SubProcess_Cancel",
+            "type": "bpmn:SubProcess",
+            "name": "Cancel Handler",
+            "triggeredByEvent": true,
+            "isInterrupting": true,
+            "flowElements": [
+              {
+                "id": "StartEvent_Cancel",
+                "type": "bpmn:StartEvent",
+                "name": "Customer Cancel",
+                "eventDefinitions": [
+                  {
+                    "id": "MessageDef_Cancel",
+                    "type": "bpmn:MessageEventDefinition"
+                  }
+                ]
+              },
+              {
+                "id": "EndEvent_Terminate",
+                "type": "bpmn:EndEvent",
+                "name": "Terminate",
+                "eventDefinitions": [
+                  {
+                    "id": "TerminateDef",
+                    "type": "bpmn:TerminateEventDefinition"
+                  }
+                ]
+              },
+              {
+                "id": "Flow_Cancel_StartEnd",
+                "type": "bpmn:SequenceFlow",
+                "sourceRef": "StartEvent_Cancel",
+                "targetRef": "EndEvent_Terminate"
+              }
+            ]
+          },
+          {
+            "id": "Flow_Start_Parse",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "StartEvent_Email",
+            "targetRef": "Task_Parse_Create"
+          },
+          {
+            "id": "Flow_Parse_Classify",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Parse_Create",
+            "targetRef": "Task_Classify"
+          },
+          {
+            "id": "Flow_Classify_Route",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Classify",
+            "targetRef": "Gateway_Route"
+          },
+          {
+            "id": "Flow_Route_Simple",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_Route",
+            "targetRef": "Task_Resolution",
+            "name": "Simple"
+          },
+          {
+            "id": "Flow_Route_Complex",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_Route",
+            "targetRef": "Task_RootCause",
+            "name": "Complex"
+          },
+          {
+            "id": "Flow_Complex_Resolution",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_RootCause",
+            "targetRef": "Task_Resolution"
+          },
+          {
+            "id": "Flow_Resolution_Split",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Resolution",
+            "targetRef": "Gateway_Parallel_Split"
+          },
+          {
+            "id": "Flow_Split_Response",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_Parallel_Split",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "id": "Flow_Split_Log",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_Parallel_Split",
+            "targetRef": "Task_LogSolution"
+          },
+          {
+            "id": "Flow_Response_EventBased",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "Gateway_EventBased"
+          },
+          {
+            "id": "Flow_Log_End",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_LogSolution",
+            "targetRef": "EndEvent_Normal"
+          },
+          {
+            "id": "Flow_EventBased_Reply",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_EventBased",
+            "targetRef": "Task_CloseTicket",
+            "name": "Reply Received"
+          },
+          {
+            "id": "Flow_EventBased_Timer",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_EventBased",
+            "targetRef": "Task_SendReminder",
+            "name": "Timeout 24h"
+          },
+          {
+            "id": "Flow_Reminder_Close",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "id": "Flow_Close_End",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_CloseTicket",
+            "targetRef": "EndEvent_Normal"
+          }
+        ]
+      }
+    ]
+  }
+}

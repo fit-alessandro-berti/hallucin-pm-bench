@@ -1,0 +1,19 @@
+**2.0**
+
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a low score under strict evaluation criteria:
+
+- **JSON schema/format mismatch (fatal, -4.0+ points)**: LLM uses full BPMN 2.0 schema ("definitions", "targetNamespace", "rootElements", detailed BPMN types like "bpmn:Process"). Ground truth uses custom simplified structure ("process_id", flat "elements" array with custom "type"/"event"/"name", "flows" array with "condition"). Completely incompatible; cannot be considered equivalent.
+
+- **Missing parallel join (-1.0)**: Ground truth has explicit "forkLogging" → "joinAfterLogging" before "awaitReply". LLM has parallel split but no join; "logSolution" → direct "EndEvent_Normal", desynchronizing branches incorrectly relative to ground truth.
+
+- **Invalid/malformed event-based gateway (-1.5)**: Ground truth correctly models "awaitReply" (eventGateway) → "customerReply" (intermediateCatchEvent message) → "closeTicket"; → "timer24h" (intermediateCatchEvent timer) → "sendReminder". LLM connects "Gateway_EventBased" directly to tasks ("Task_CloseTicket", "Task_SendReminder") without intermediate catch events—invalid BPMN. Detached "MessageDef_Reply"/"TimerDef_24h" unused.
+
+- **Cancel handling mismatch (-0.5)**: Ground truth has standalone "cancelEvent" (intermediateCatchEvent message) → "terminate" (terminateEndEvent). LLM invents unconnected "SubProcess_Cancel" (triggered interrupting subprocess with internal terminate)—hallucinated structure, not attached via flows.
+
+- **Name and ID mismatches (multiple small errors, -0.5 cumulative)**: E.g., start "Email Received" vs "Support Email Received"; "Create Ticket" vs "Parse Email & Create Ticket" (LLM adds unseparated "Parse", diverging from ground truth's single task); gateway "Simple or Complex?" vs "Route Simple/Complex"; fork "Fork Log/Wait" vs "Parallel Split"; no "Join After Log"; "Wait 24h for Reply" vs "Wait for Reply or Timeout".
+
+- **Missing flow conditions (-0.3)**: Ground truth has explicit "condition": "simple"/"complex" on classify flows. LLM uses only flow "name".
+
+- **Extra/unnecessary elements (-0.2)**: LLM adds unused defs, combined parse task (ground truth omits parse), extra end event targeting, "isExecutable": false.
+
+Partial credit for core sequence (start/classify/route/rootCause/resolution/parallel/send/log/wait/close), no invented escalations, and timer duration "PT24H". Logic arguably better on parallel async (no premature sync), but strict comparison to ground truth prioritizes exact matches. Total differences too numerous for higher score.

@@ -1,0 +1,11 @@
+**4.2**
+
+### Evaluation Rationale (strict assessment vs. ground truth):
+- **Structural mismatch (-2.0)**: LLM uses nested `"process"` object with `"id"`, `"name"`, extra attributes like `"assigned"`, `"trigger"`, `"duration"`, `"attached_to"`, `"terminate"`; GT is flat `"process_id"`, `"elements"`, `"flows"` with minimal fields (e.g., `"event"`, `"condition"` only where needed). Flows have non-standard `"trigger"` attrs.
+- **Missing core tasks (-2.5)**: No `"Close Ticket"` task (GT has it converging from reply and reminder paths; desc steps 8-9 explicitly require it as agent/system action). LLM uses end event `"Ticket Closed"` instead—hallucinated simplification, unfaithful to desc/GT.
+- **Cancel handling divergence (-1.5)**: LLM invents extra start event (`se_cancel`) + boundary only on `t_parse` (wrong; process starts solely on email, cancel must interrupt "at any point"). GT has single `cancelEvent` int. catch (dangling but singular). LLM's multi-start/partial boundary not faithful.
+- **Element/flow ID/name diffs (-0.8)**: No matching IDs; names vary (e.g., GT `"Simple or Complex?"` vs LLM `"Ticket Classification"`; GT `"Fork Log/Wait"` vs LLM `"Resolution Path Split"`). ~100% mismatch despite similar count (18 elements, 19 flows).
+- **Logic variances (-0.5)**: Parallel join/merge placement differs (GT joins send/log before event GW; LLM after reply logic—semantically close but not identical; extra `gw_merge_close` absent in GT). Event GW similar but not exact.
+- **Minor embellishments (+ partial credit)**: Faithful on classification/RCA/resolution/parallel log/timer/reply/reminder; no invented escalation. Combines parse/create accurately (GT misses parse). Detailed timer duration.
+
+Total deductions yield 4.2/10. Semantically ~70% aligned but syntactically/logically divergent with critical omissions—invented elements/steps violate "faithfully" & "model *only* what is described." Small diffs (names, extras) compound per strictness rule.

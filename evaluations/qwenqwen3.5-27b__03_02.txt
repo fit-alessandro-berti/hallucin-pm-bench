@@ -1,0 +1,16 @@
+**1.0**
+
+The LLM answer deviates substantially from the ground truth in structure, format, content, and logic, warranting the minimum score under strict evaluation criteria:
+
+- **Format mismatch (major deduction)**: LLM uses a verbose BPMN schema ("definitions", "targetNamespace", "process", "elements", "flows" with "sourceRef"/"id", "messages", "bpmn:*-prefixed types). GT uses a compact custom schema ("process_id", flat "elements"/"flows" arrays with short "type"/"id"/"name"/"condition").
+- **Element differences (major)**: Different IDs/names (e.g., LLM "StartEvent_1"/"Support Email Received" vs. GT "start"/"Email Received"; LLM "Task_1"/"Parse Email & Create Ticket" vs. GT "createTicket"/"Create Ticket"). Extra/unmatched elements in LLM: unnecessary "Gateway_2" (merge), multiple "BoundaryEvent_*" (6x vs. GT's single "cancelEvent"), "Event_1" (invalid multi-event catch), "EndEvent_2", messages. Missing GT specifics: "eventBasedGateway" ("awaitReply"), separate "customerReply"/"timer24h".
+- **Flow/logic errors (critical)**: 
+  - LLM parallel split after "Send Response" (to log/wait) vs. GT after "provideResolution" (to send/log).
+  - LLM flawed wait: single invalid IntermediateCatchEvent with dual timer/message defs (non-standard BPMN); conditional flows to parallel join cause **deadlock** (msg path reaches join without timer/reminder token).
+  - LLM unnecessary converging "Gateway_2" after shared "Task_3" (hallucinated; absent in GT).
+  - LLM cancel via 6 interrupting boundaries (overkill, attached oddly e.g., to intermediate event/Task_7) vs. GT single unintegrated "cancelEvent".
+  - Conditions/flow paths mismatch (e.g., LLM "type == 'Simple'" vs. GT "condition": "simple"; no GT event-based gw flows).
+- **Hallucinations penalized**: Extra gateways/flows/boundaries absent from GT (e.g., "Gateway_2", multiple boundaries, parallel join mishandling).
+- **Fidelity lapses**: LLM adds parse explicitly (minor faithfulness but mismatches GT); flawed parallelism blocks reply path.
+
+Even minor name/condition diffs would deduct; cumulative mismatches = total failure to match GT.

@@ -1,0 +1,31 @@
+**2.0**
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer deviates substantially from the ground truth in structure, logic, format, and details, warranting a low score under utmost strictness:
+
+- **Output Format (Major Violation, -3.0)**: Prompt requires a *single* `<definitions> … </definitions>` block ≤40 lines. LLM prepends ~50+ lines of extraneous reasoning/analysis ("Process Analysis", "Constraint Conflict", drafts, etc.), violating "output a single block". XML alone ~35 lines, but full response invalid.
+
+- **Process Flow Logic (Critical Error, -3.0)**: Fundamentally incorrect modeling of confirmation/loop (lines 7-9):
+  | Aspect | Ground Truth | LLM Answer | Issue |
+  |--------|--------------|------------|-------|
+  | Post-Reset | t2 → t6 (Confirm) | t2 → gw3 → t6 | Wrong: Inserted gw3 *before* Confirm. |
+  | Post-Resolve | t4 → t6 | t4 → gw3 → t6 | Wrong: gw3 *before* Confirm. |
+  | Confirm → Decision | t6 → gw3 → (end OR t3) | t6 → ee1 *always*; gw3 → t6 OR t3 | Broken: No branch *after* Confirm; loop bypasses/skips Confirm; "Persist" possible *without* customer feedback. Violates "Once resolved → Confirm" (line 7) and "loop back to Initial Diagnosis" *after* "customer reports persists" (line 9). |
+  | Loop Accuracy | gw3 (post-Confirm) → t3 ("no") | gw3 (pre-Confirm) → t3 ("Persist") | Wrong position/semantics. |
+
+- **Gateways/Decisions (-1.0)**: 3 exclusive gateways match ground truth count/structure, but prompt specifies "**two** decision points". LLM ignores (as does ground truth), but adds unnamed gateways + incorrect labels/conditions. Flows lack `<conditionExpression>` (e.g., "yes"/"no").
+
+- **Element Details (-0.5 each, total -1.5)**:
+  | Element | Ground Truth | LLM | Diff |
+  |---------|--------------|-----|------|
+  | Start | id="start", name="Ticket Submitted" | id="se1" (no name) | Missing name/ID style. |
+  | Classify Task | id="t1", name="Auto-Classification" | id="t1", name="Classify Ticket" | Name mismatch. |
+  | Gateways | Named (e.g., "Password Reset?") | Unnamed (names on flows only) | Missing gateway names. |
+  | End | id="end", name="Ticket Closed" | id="ee1" (no name) | Missing. |
+  | Process | id="support_ticket", name="Support-Ticket", isExecutable="false" | id="p1", name="SupportTicketProcess" (no isExecutable) | ID/name/attr mismatch. |
+  | Flows | 13 flows w/ precise conditions (xsi:type) | 13 flows, partial names, **no conditions** | Incomplete (e.g., sf11 gw3→t6 unlabeled; sf12 t6→ee1 mislabeled "Confirm"). |
+  | Namespace | targetNamespace="http://acmetech/support" | "http://acmetech" | Minor diff. |
+
+- **No Additions**: No hallucinations (good), but core logic/flow breaks "exactly as stated" (primary directive).
+
+Total deductions exceed perfect score; partial recognition of elements (tasks, basic branches, loop target) prevents 1.0. Equivalent to ~20% match.

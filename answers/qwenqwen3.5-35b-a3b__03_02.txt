@@ -1,0 +1,196 @@
+{
+  "process": {
+    "id": "cust-support-process",
+    "name": "Customer Support Ticket Process",
+    "elements": [
+      {
+        "id": "se_email",
+        "type": "start_event",
+        "name": "Support Email Received",
+        "trigger": "message"
+      },
+      {
+        "id": "se_cancel",
+        "type": "start_event",
+        "name": "Customer Cancel Request",
+        "trigger": "message"
+      },
+      {
+        "id": "t_parse",
+        "type": "task",
+        "name": "Parse Email & Create Ticket",
+        "assigned": "agent"
+      },
+      {
+        "id": "t_classify",
+        "type": "task",
+        "name": "Initial Classification",
+        "assigned": "agent"
+      },
+      {
+        "id": "gw_simple_complex",
+        "type": "exclusive_gateway",
+        "name": "Ticket Classification"
+      },
+      {
+        "id": "t_rca",
+        "type": "task",
+        "name": "Root Cause Analysis",
+        "assigned": "agent"
+      },
+      {
+        "id": "t_resolve",
+        "type": "task",
+        "name": "Provide Resolution",
+        "assigned": "agent"
+      },
+      {
+        "id": "gw_parallel_split",
+        "type": "parallel_gateway",
+        "name": "Resolution Path Split"
+      },
+      {
+        "id": "t_log_kb",
+        "type": "task",
+        "name": "Log Solution in Knowledge Base",
+        "assigned": "agent"
+      },
+      {
+        "id": "t_send_resp",
+        "type": "task",
+        "name": "Send Response to Customer",
+        "assigned": "agent"
+      },
+      {
+        "id": "ie_timer",
+        "type": "intermediate_catch_event",
+        "name": "Wait 24 Hours",
+        "trigger": "timer",
+        "duration": "PT24H"
+      },
+      {
+        "id": "ie_message",
+        "type": "intermediate_catch_event",
+        "name": "Customer Reply Received",
+        "trigger": "message"
+      },
+      {
+        "id": "gw_reply_timeout",
+        "type": "event_based_gateway",
+        "name": "Reply or Timeout"
+      },
+      {
+        "id": "t_reminder",
+        "type": "task",
+        "name": "Send Reminder",
+        "assigned": "agent"
+      },
+      {
+        "id": "gw_merge_close",
+        "type": "parallel_gateway",
+        "name": "Merge Before Close"
+      },
+      {
+        "id": "be_cancel",
+        "type": "boundary_event",
+        "name": "Ticket Cancelled",
+        "trigger": "message",
+        "attached_to": "t_parse"
+      },
+      {
+        "id": "ee_close",
+        "type": "end_event",
+        "name": "Ticket Closed",
+        "terminate": false
+      },
+      {
+        "id": "ee_cancelled",
+        "type": "end_event",
+        "name": "Process Terminated",
+        "terminate": true
+      }
+    ],
+    "flows": [
+      {
+        "source": "se_email",
+        "target": "t_parse"
+      },
+      {
+        "source": "t_parse",
+        "target": "t_classify"
+      },
+      {
+        "source": "t_classify",
+        "target": "gw_simple_complex"
+      },
+      {
+        "source": "gw_simple_complex",
+        "target": "t_resolve",
+        "condition": "Simple"
+      },
+      {
+        "source": "gw_simple_complex",
+        "target": "t_rca",
+        "condition": "Complex"
+      },
+      {
+        "source": "t_rca",
+        "target": "t_resolve"
+      },
+      {
+        "source": "t_resolve",
+        "target": "gw_parallel_split"
+      },
+      {
+        "source": "gw_parallel_split",
+        "target": "t_log_kb"
+      },
+      {
+        "source": "gw_parallel_split",
+        "target": "t_send_resp"
+      },
+      {
+        "source": "t_send_resp",
+        "target": "gw_reply_timeout"
+      },
+      {
+        "source": "gw_reply_timeout",
+        "target": "ie_timer",
+        "trigger": "timer"
+      },
+      {
+        "source": "gw_reply_timeout",
+        "target": "ie_message",
+        "trigger": "message"
+      },
+      {
+        "source": "ie_timer",
+        "target": "t_reminder"
+      },
+      {
+        "source": "t_reminder",
+        "target": "gw_merge_close"
+      },
+      {
+        "source": "ie_message",
+        "target": "gw_merge_close"
+      },
+      {
+        "source": "t_log_kb",
+        "target": "gw_merge_close"
+      },
+      {
+        "source": "gw_merge_close",
+        "target": "ee_close"
+      },
+      {
+        "source": "be_cancel",
+        "target": "ee_cancelled"
+      },
+      {
+        "source": "se_cancel",
+        "target": "ee_cancelled"
+      }
+    ]
+  }
+}
