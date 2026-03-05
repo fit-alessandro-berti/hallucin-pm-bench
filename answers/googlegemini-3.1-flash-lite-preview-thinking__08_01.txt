@@ -1,0 +1,40 @@
+To determine if **T5** can fire before **T3**, we must analyze the enabling conditions of the transitions and the state space of the net.
+
+### Analysis
+1.  **Initial State:** The net starts with a token in **p0**.
+2.  **Required Firing:** To reach a state where T5 is enabled, we must first fire **T1** (consuming p0 and producing tokens in p1 and p2). From there, **T2** must fire to place a token in **p3**. 
+3.  **Inhibitor Constraint:** For **T5** to fire, there must be a token in **p3** AND **zero** tokens in **p4**.
+4.  **T3 Constraint:** **T3** is the only transition that can place a token into **p4**.
+
+### Determination
+**No, it is not possible for T5 to fire before T3.**
+
+### Proof
+1.  **Dependency on T2:** T5 requires a token in **p3**. T3 does not provide tokens to p3; only T2 can do that. Therefore, **T2 must fire before T5**.
+2.  **Token Flow:** To reach p3, the token path is $p0 \xrightarrow{T1} p1 \xrightarrow{T2} p3$.
+3.  **The Role of T3:** For T5 to be enabled, place **p4** must be empty. However, consider the state after T1 fires:
+    *   Marking: $\{p1: 1, p2: 1\}$
+    *   To get a token into **p3**, we must fire **T2**.
+    *   To get a token into **p4**, we must fire **T3**.
+4.  **Sequential Impossibility:** 
+    *   If T3 fires, p4 will contain a token. Once p4 contains a token, the inhibitor arc constraint ($p4 = 0$) for T5 is violated.
+    *   If T3 has *not yet* fired, p4 is empty. However, look at the potential for firing: after T1, we have tokens in p1 and p2. T2 and T3 are both enabled (they are concurrent). 
+    *   If we fire T2 first, p3 has a token and p4 is empty. **T5 is now enabled.**
+    *   **Crucial check:** Does T5 fire before T3? Yes, if T2 fires before T3.
+    *   **Verification:**
+        *   Initial: $\{p0: 1\}$
+        *   Fire T1: $\{p1: 1, p2: 1\}$
+        *   Fire T2: $\{p3: 1, p2: 1\}$ 
+        *   At this current marking, **p4 is empty (0 tokens)**.
+        *   Therefore, **T5 is enabled** while p4 is still 0. Since T3 has not yet fired, T5 fires before T3.
+
+### Correction and Revised Conclusion
+Upon closer examination of the concurrent nature of T2 and T3: **Yes, it is possible for T5 to fire before T3.**
+
+**Concrete Firing Sequence:**
+1.  **T1** (Initial: {p0:1} → {p1:1, p2:1})
+2.  **T2** ({p1:1, p2:1} → {p3:1, p2:1})
+3.  **T5** ({p3:1, p2:1} → {p6:1, p2:1}) 
+
+**Justification:** 
+After firing T1, the net reaches a state with tokens in p1 and p2. T2 and T3 are both enabled and independent. If the system executes T2 immediately, p3 receives a token. Because T3 has not yet executed, p4 remains empty. According to the definition of the inhibitor arc ($p4=0$), T5 is now enabled and can fire. T3 remains enabled but has not yet fired, satisfying the condition that T5 fires before T3.

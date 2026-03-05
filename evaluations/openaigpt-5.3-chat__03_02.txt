@@ -1,0 +1,21 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment vs. ground truth):
+- **Major deviations (heavy penalties: duplicated/invented elements absent from key)**:
+  - Invented *two* "Provide Resolution" tasks (simple/complex) + unnecessary exclusive merge gateway ("Resolution Drafted Merge"). Ground truth uses *single* "provideResolution" task post-classification/root cause. Violates "faithfully" + "do not invent"; hallucination.
+  - Invented *two* "Close Ticket" tasks (reply vs. after-reminder) flowing to parallel join. Ground truth uses *single* "closeTicket" merging both paths. Unnecessary duplication.
+  - Extra gateways: parallel "Split" (unneeded; ground uses "forkLogging" directly post-resolution). Total elements bloated (~25 vs. ~18); extras penalised per eval focus.
+- **Structural differences (significant penalty)**:
+  - JSON schema mismatch: LLM uses nested "process" w/ "isExecutable", detailed "sourceRef"/"targetRef"/"eventDefinition"; ground truth flat "process_id", simple "source"/"target"/"event". Not "well-formed" equivalent.
+  - Event subprocess for cancel (complex, embedded elements/flows). Ground truth simple intermediateCatchEvent "cancelEvent" → "terminate". LLM over-engineers; potential invalid BPMN embedding (no parent attachment specified).
+- **Flow/logic mismatches (medium penalties)**:
+  - Parse+create combined into one task; ground separates "Email Received" start → "createTicket" (text implies sequential but minor).
+  - Parallel join *after* close handling (blocks end on log post-reply). Ground truth joins *pre-awaitReply* (flawed but matches key). LLM arguably semantically better ("log later than reply") but differs.
+  - No flows properly attaching cancel "at any point" in either, but LLM's subprocess deviates further.
+- **Minor mismatches (cumulative loss)**:
+  - Names differ: e.g., start "Support Email Received" vs. "Email Received"; gateway "Ticket Type?" vs. "Simple or Complex?"; event gw "Wait for Customer Reply" vs. "Wait 24h for Reply"; timer "24 Hours" vs. "Timer 24h".
+  - Conditions "Simple"/"Complex" (title case) vs. "simple"/"complex" (lower).
+  - No parse explicit in ground; LLM adds but combines.
+  - No inventions like escalation (credit retained).
+
+Semantically captures process ~80% but structural/element bloat + duplications = poor fidelity to key. No prose output (good). Strict scale: 10=identical, drops sharply for diffs/extras.
