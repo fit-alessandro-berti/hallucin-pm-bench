@@ -1,0 +1,99 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/warranty-replacement"
+             exporter="BPMN-Modeler"
+             exporterVersion="1.0">
+  <process id="wrc_WarrantyReplacement_v1_3" name="Warranty-Replacement v1.3" isExecutable="false">
+    
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Online Warranty Claim Submitted" />
+
+    <!-- Step 2: Validate Claim + Completeness Check -->
+    <task id="wrc_validate_claim" name="validates the claim" />
+    <exclusiveGateway id="wrc_completeness_gw" name="Is claim complete?" />
+    <task id="wrc_request_missing" name="requests missing information" />
+
+    <!-- Step 3: Check Warranty Eligibility + Decision -->
+    <task id="wrc_check_warranty" name="checks warranty eligibility" />
+    <exclusiveGateway id="wrc_warranty_gw" name="Within warranty?" />
+
+    <!-- Rejection Path -->
+    <task id="wrc_send_rejection" name="send rejection notice" />
+    <endEvent id="wrc_reject_end" name="Claim Rejected" />
+
+    <!-- Parallel Path -->
+    <parallelGateway id="wrc_split" />
+    <task id="wrc_create_shipment" name="Create shipment order" />
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup" />
+    <parallelGateway id="wrc_join" />
+
+    <!-- Final Steps -->
+    <task id="wrc_update_inventory" name="update inventory records" />
+    <task id="wrc_close_claim" name="close the claim" />
+    <endEvent id="wrc_success_end" name="Claim Closed" />
+
+    <!-- Sequence Flows -->
+    <!-- Start to Validate -->
+    <sequenceFlow id="wrc_sf_1" sourceRef="wrc_start" targetRef="wrc_validate_claim" />
+
+    <!-- Validate to Completeness Gateway -->
+    <sequenceFlow id="wrc_sf_2" sourceRef="wrc_validate_claim" targetRef="wrc_completeness_gw" />
+
+    <!-- Completeness: Incomplete -> Request Missing Info -->
+    <sequenceFlow id="wrc_sf_incomplete" sourceRef="wrc_completeness_gw" targetRef="wrc_request_missing">
+      <conditionExpression xsi:type="tFormalExpression">Claim is incomplete</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Request Missing Info loops back to Validate -->
+    <sequenceFlow id="wrc_sf_3" sourceRef="wrc_request_missing" targetRef="wrc_validate_claim" />
+
+    <!-- Completeness: Complete -> Check Warranty -->
+    <sequenceFlow id="wrc_sf_complete" sourceRef="wrc_completeness_gw" targetRef="wrc_check_warranty">
+      <conditionExpression xsi:type="tFormalExpression">Claim is complete</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Check Warranty to Warranty Decision Gateway -->
+    <sequenceFlow id="wrc_sf_4" sourceRef="wrc_check_warranty" targetRef="wrc_warranty_gw" />
+
+    <!-- Warranty: Out of warranty -> Send Rejection -->
+    <sequenceFlow id="wrc_sf_out_of_warranty" sourceRef="wrc_warranty_gw" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression">Out of warranty</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Send Rejection to Reject End -->
+    <sequenceFlow id="wrc_sf_5" sourceRef="wrc_send_rejection" targetRef="wrc_reject_end" />
+
+    <!-- Warranty: Within warranty -> Parallel Split -->
+    <sequenceFlow id="wrc_sf_in_warranty" sourceRef="wrc_warranty_gw" targetRef="wrc_split">
+      <conditionExpression xsi:type="tFormalExpression">Within warranty</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Parallel Split to Create Shipment Order -->
+    <sequenceFlow id="wrc_sf_split1" sourceRef="wrc_split" targetRef="wrc_create_shipment" />
+
+    <!-- Parallel Split to Schedule Courier Pickup -->
+    <sequenceFlow id="wrc_sf_split2" sourceRef="wrc_split" targetRef="wrc_schedule_pickup" />
+
+    <!-- Create Shipment Order to Join -->
+    <sequenceFlow id="wrc_sf_join1" sourceRef="wrc_create_shipment" targetRef="wrc_join" />
+
+    <!-- Schedule Courier Pickup to Join -->
+    <sequenceFlow id="wrc_sf_join2" sourceRef="wrc_schedule_pickup" targetRef="wrc_join" />
+
+    <!-- Join to Update Inventory -->
+    <sequenceFlow id="wrc_sf_6" sourceRef="wrc_join" targetRef="wrc_update_inventory" />
+
+    <!-- Update Inventory to Close Claim -->
+    <sequenceFlow id="wrc_sf_7" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim" />
+
+    <!-- Close Claim to Success End -->
+    <sequenceFlow id="wrc_sf_8" sourceRef="wrc_close_claim" targetRef="wrc_success_end" />
+
+  </process>
+</definitions>
+```

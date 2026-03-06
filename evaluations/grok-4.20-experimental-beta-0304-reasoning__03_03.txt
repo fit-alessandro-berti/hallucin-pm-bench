@@ -1,0 +1,12 @@
+**8.2**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer is **semantically equivalent** to the ground truth and superior in fidelity to the prompt (includes all explicitly mentioned activities verbatim, e.g., "checks warranty eligibility" task omitted in ground truth; exact task name casing from prompt text). Flow logic matches perfectly: start → validate (with loop on incomplete via request → re-validate) → check eligibility → warranty XOR gw → reject/end or parallel split (shipment + pickup) → join → update → close → success end. Exactly 2 end events, correct gateways (2 XOR, parallel split/join), all IDs prefixed "wrc_", no invented elements.
+
+**Deductions (utmost strictness, significant loss for small errors):**
+- **XML validity errors (-1.0)**: Missing `xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"`; invalid `xsi:type="tFormalExpression"` (should be `"FormalExpression"` or `"bpmn:FormalExpression"`). Condition expressions render branches non-compliant BPMN 2.0 schema.
+- **Extra details vs minimal ground truth (-0.3)**: Unnecessary namespaces (`bpmndi`, `dc`, `di`), exporter attrs, process name/id, verbose gw/flow names, comments (bloats to ~100+ lines vs 34-line minimal).
+- **Name differences (-0.3)**: Minor casing/verbosity (e.g., start "Online Warranty Claim Submitted" vs "Online warranty claim submitted"; ends "Claim Rejected"/"Claim Closed" vs "Rejected"/"Successful end"; gw "Is claim complete?" vs "Claim complete?"). LLM closer to prompt verbatim, but differs from ground.
+- **Structural/style diffs (-0.2)**: No `bpmn:` prefix (uses default ns, valid but inconsistent with ground); conditionExpressions vs `name="Yes"/"No"` (equivalent but different mechanism); non-sequential flow IDs (minor).
+
+No deductions for "extra" check_warranty task/flows (explicitly required by prompt step 3, not hallucinated; omission in ground truth would deduct if grading reverse). No omissions, inventions, or semantic mismatches → high base score. Overall excellent, minor tech/style flaws prevent perfect 10.

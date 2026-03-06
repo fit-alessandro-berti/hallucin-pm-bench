@@ -1,0 +1,38 @@
+**9.2**
+
+### Evaluation Rationale (Strict Grading Breakdown)
+Using utmost strictness per instructions, grading prioritizes **semantic equivalence** to the ground truth (GT) BPMN structure/flow/logic while penalizing differences. Full credit (10.0) for semantic equivalence (e.g., IDs, whitespace, cosmetic names). Significant deductions for:
+- **Extra/hallucinated elements** (major penalty: check task + 2 flows not in GT).
+- **Omissions** (none here).
+- **Structural diffs** (flow order).
+- **Name mismatches** (verbatim task/gw/start names vs GT; small but penalized heavily).
+- **XML diffs** (verbosity, ns, placement; minor but penalized).
+
+#### Key Matches (Supporting High Base Score ~10):
+- Exact required elements: start event, 2 exclusive GWs (completeness + warranty), parallel split/join pair.
+- Exactly 2 end events.
+- All IDs prefixed "wrc_" (including defs/process/flows).
+- Core loop (validate → complete GW → request → loopback) identical.
+- Parallel branch (split → create/ship + pickup → join → update → close → end) identical.
+- Rejection path (warranty GW → send rejection → end) identical.
+- Self-contained BPMN 2.0 XML, valid syntax/references.
+- Semantically equivalent/correct per prompt (models **all** explicit tasks verbatim, including "checks warranty eligibility" which GT omits—LLM superior to prompt but diff vs GT).
+
+#### Deductions (Total -0.8; Significant for Strictness):
+- **Extra task + flows (-0.4)**: "wrc_CheckWarrantyEligibility" ("checks warranty eligibility"), seq3, seq6. Explicit in prompt but absent in GT (GT flows complete GW directly to warranty GW via sf5). Rubric deducts "extra/hallucinated tasks, gateways, or flows"—penalized despite prompt accuracy.
+- **Task/gateway/start/end name mismatches vs GT (-0.2)**: 
+  | Element | LLM | GT | Diff |
+  |---------|-----|----|------|
+  | Validate | "validates the claim" | "Validate the claim" | Verb form, casing |
+  | Request | "requests missing information" | "Request missing information" | Verb "requests ", casing |
+  | Reject | "send rejection notice" | "Send rejection notice" | Casing |
+  | Update | "update inventory records" | "Update inventory records" | Casing |
+  | Complete GW | "Claim Complete?" | "Claim complete?" | Casing |
+  | Warranty GW | "Within Warranty?" | "Within warranty?" | Casing |
+  | Start | "Online Warranty Claim Submitted" | "Online warranty claim submitted" | Casing, "Submitted" added |
+  | Ends | "Claim Rejected"/"Claim Closed" | "Rejected"/"Successful end" | Descriptive mismatch |
+  - Matches prompt verbatim but ≠ GT; small errors → significant loss.
+- **XML/Style diffs (-0.1)**: Unnecessary namespaces (bpmndi/dc/di), verbose outgoing/incoming attrs (vs GT's flow-only), seq5 placement mid-process (valid but non-minimal), more lines (~100 vs GT 34), process name added, flow labels ("Complete"/"Incomplete" vs GT "Yes"/"No"), named parallels (GT unnamed).
+- **No other errors**: No inventions (e.g., no escalations/errors), all prompt flows modeled only.
+
+9.2 reflects near-perfect semantic match/compliance but strict penalties for extras/names/XML vs GT. Lower (e.g., 7-8) if extra task deemed hallucinated; higher if ignoring GT omission.

@@ -6,12 +6,12 @@
 | C02 Event-log fact-extraction           |        0.62361  |
 | C03 Text to Model reconstruction        |        1.47196  |
 | C04 Compliance / Conformance reasoning  |        1.21929  |
-| C05 Counterfactual edits                |        1.59776  |
+| C05 Counterfactual edits                |        1.64992  |
 | C06 Multi-process memory interference   |        0.62361  |
 | C07 Change-log diffing                  |        0.849837 |
 | C08 Temporal / concurrency reasoning    |        1.67479  |
-| C09 Unknown-should-remain-unknown       |        0.358529 |
+| C09 Unknown-should-remain-unknown       |        0.339935 |
 | C10 Domain-synonym enforcement          |        0.62361  |
-| C11 Performance analytics commentary    |        1.25782  |
-| C12 Misinformation injection            |        0.67759  |
+| C11 Performance analytics commentary    |        1.26842  |
+| C12 Misinformation injection            |        0.635842 |
 | C13 Edge-case / low-support prompts     |        1.17851  |

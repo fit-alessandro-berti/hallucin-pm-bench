@@ -1,0 +1,131 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                  id="wrc_Definitions" 
+                  targetNamespace="http://www.example.org/warranty-replacement">
+  <bpmn:process id="wrc_WarrantyReplacement" name="Warranty-Replacement v1.3" isExecutable="false">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_Start" name="Online Warranty Claim Submitted">
+      <bpmn:outgoing>wrc_Seq_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Validate Claim -->
+    <bpmn:task id="wrc_ValidateClaim" name="validates the claim">
+      <bpmn:incoming>wrc_Seq_1</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_2</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Claim Complete? -->
+    <bpmn:exclusiveGateway id="wrc_GW_Complete" name="Claim Complete?">
+      <bpmn:incoming>wrc_Seq_2</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_3</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Seq_4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Request Missing Information -->
+    <bpmn:task id="wrc_RequestMissingInfo" name="requests missing information">
+      <bpmn:incoming>wrc_Seq_4</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_5</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Loop back to validation -->
+    <bpmn:sequenceFlow id="wrc_Seq_5" sourceRef="wrc_RequestMissingInfo" targetRef="wrc_ValidateClaim"/>
+
+    <!-- Check Warranty Eligibility -->
+    <bpmn:task id="wrc_CheckWarrantyEligibility" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_Seq_3</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_6</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway: Within Warranty? -->
+    <bpmn:exclusiveGateway id="wrc_GW_Warranty" name="Within Warranty?">
+      <bpmn:incoming>wrc_Seq_6</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_7</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Seq_8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Send Rejection Notice -->
+    <bpmn:task id="wrc_SendRejectionNotice" name="send rejection notice">
+      <bpmn:incoming>wrc_Seq_8</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_9</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event - Rejected -->
+    <bpmn:endEvent id="wrc_End_Rejected" name="Claim Rejected">
+      <bpmn:incoming>wrc_Seq_9</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Parallel Split Gateway -->
+    <bpmn:parallelGateway id="wrc_GW_Split" name="Parallel Split">
+      <bpmn:incoming>wrc_Seq_7</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_10</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Seq_11</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Create Shipment Order -->
+    <bpmn:task id="wrc_CreateShipmentOrder" name="Create shipment order">
+      <bpmn:incoming>wrc_Seq_10</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_12</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Schedule Courier Pickup -->
+    <bpmn:task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_Seq_11</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_13</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Parallel Join Gateway -->
+    <bpmn:parallelGateway id="wrc_GW_Join" name="Parallel Join">
+      <bpmn:incoming>wrc_Seq_12</bpmn:incoming>
+      <bpmn:incoming>wrc_Seq_13</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_14</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Update Inventory Records -->
+    <bpmn:task id="wrc_UpdateInventoryRecords" name="update inventory records">
+      <bpmn:incoming>wrc_Seq_14</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_15</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Close the Claim -->
+    <bpmn:task id="wrc_CloseClaim" name="close the claim">
+      <bpmn:incoming>wrc_Seq_15</bpmn:incoming>
+      <bpmn:outgoing>wrc_Seq_16</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event - Successful -->
+    <bpmn:endEvent id="wrc_End_Success" name="Claim Closed">
+      <bpmn:incoming>wrc_Seq_16</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_Seq_1" sourceRef="wrc_Start" targetRef="wrc_ValidateClaim"/>
+    <bpmn:sequenceFlow id="wrc_Seq_2" sourceRef="wrc_ValidateClaim" targetRef="wrc_GW_Complete"/>
+    <bpmn:sequenceFlow id="wrc_Seq_3" sourceRef="wrc_GW_Complete" targetRef="wrc_CheckWarrantyEligibility" name="Complete"/>
+    <bpmn:sequenceFlow id="wrc_Seq_4" sourceRef="wrc_GW_Complete" targetRef="wrc_RequestMissingInfo" name="Incomplete"/>
+    <bpmn:sequenceFlow id="wrc_Seq_6" sourceRef="wrc_CheckWarrantyEligibility" targetRef="wrc_GW_Warranty"/>
+    <bpmn:sequenceFlow id="wrc_Seq_7" sourceRef="wrc_GW_Warranty" targetRef="wrc_GW_Split" name="Within Warranty"/>
+    <bpmn:sequenceFlow id="wrc_Seq_8" sourceRef="wrc_GW_Warranty" targetRef="wrc_SendRejectionNotice" name="Out of Warranty"/>
+    <bpmn:sequenceFlow id="wrc_Seq_9" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_End_Rejected"/>
+    <bpmn:sequenceFlow id="wrc_Seq_10" sourceRef="wrc_GW_Split" targetRef="wrc_CreateShipmentOrder"/>
+    <bpmn:sequenceFlow id="wrc_Seq_11" sourceRef="wrc_GW_Split" targetRef="wrc_ScheduleCourierPickup"/>
+    <bpmn:sequenceFlow id="wrc_Seq_12" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_GW_Join"/>
+    <bpmn:sequenceFlow id="wrc_Seq_13" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_GW_Join"/>
+    <bpmn:sequenceFlow id="wrc_Seq_14" sourceRef="wrc_GW_Join" targetRef="wrc_UpdateInventoryRecords"/>
+    <bpmn:sequenceFlow id="wrc_Seq_15" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim"/>
+    <bpmn:sequenceFlow id="wrc_Seq_16" sourceRef="wrc_CloseClaim" targetRef="wrc_End_Success"/>
+
+  </bpmn:process>
+</bpmn:definitions>
+```
+
+**Note**: This BPMN 2.0 XML is self-contained and follows all constraints exactly:
+- Only explicitly mentioned flow elements are modeled.
+- Two exclusive gateways and one parallel gateway pair used as specified.
+- Exactly two end events.
+- All element `id`s prefixed with `wrc_`.
+- Task names match the process description verbatim.

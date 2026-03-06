@@ -1,0 +1,21 @@
+**6.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer captures the correct **topology** (same elements, same 13 sequence flows with identical source/target refs, correct loop to `t3`, no invented elements like timers/escalations/parallel paths—avoiding the hallucination trap). However, under utmost strictness, numerous differences from the ground truth (GT) result in significant deductions for small/medium errors:
+
+- **Major errors (-2.0 total)**:
+  - `gw2` outgoings (`f7`, `f8`) lack `<conditionExpression>` (none vs GT's "yes"/"no"). This fails to model the decision in line 5 ("either Resolve or Forward"), rendering it invalid BPMN logic. GT properly conditions both branches.
+  
+- **Medium errors (-1.5 total)**:
+  - Task names/omissions: `t1` "Classify Ticket" vs GT "Auto-Classification" (line 2 emphasizes "automatically").
+  - Condition texts mismatch (6 flows): gw1 `f3` "Password Reset" vs "yes"; `f4` none vs "no"; gw3 `f12` "Confirmed" vs "yes"; `f13` "Persists" vs "no". (GT uses consistent yes/no; LLM process-specific but inconsistent with GT.)
+  
+- **Minor errors (-0.5 total)**:
+  - Missing `<?xml version="1.0" encoding="UTF-8"?>`.
+  - Extra/mismatched attributes: `<definitions id="defs">` (GT none); `targetNamespace="http://acme.com/support"` vs GT `"http://acmetech/support"` (prompt: AcmeTech).
+  - Process: `id="supportTicketProcess"` (no `name`) vs GT `id="support_ticket" name="Support-Ticket"`.
+  - Missing GT-specific labels (not strictly required by prompt but GT has): `start` name, all `gw` names, `end` name (5 omissions).
+
+**Strengths (baseline ~9.0 before deductions)**: ≤40 lines (35), concise IDs, exactly 3 exclusive gateways (despite prompt saying "two"), 7 exact task names from prompt quotes, correct re-work loop (gw3→`t3`), no inventions.
+
+Total differences ~25/38 lines/elements affected → 6.0 (functional but imprecise/incomplete vs GT).
