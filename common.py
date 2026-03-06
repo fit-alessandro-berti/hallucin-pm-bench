@@ -123,6 +123,7 @@ class Shared:
                        "qwen/qwen3-max-thinking",
                        "qwen/qwen3.5-397b-a17b",
                        "google/gemini-3.1-pro-preview",
+                       "inception/mercury-2",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),

@@ -1,0 +1,29 @@
+**2.0**
+
+### Evaluation Rationale (Strict Line-by-Line & Structural Comparison)
+The LLM answer deviates significantly from the ground truth in structure, validity, completeness, and details. With utmost strictness, even minor naming/attribute diffs deduct heavily; major structural flaws (invalid BPMN, missing required gateway) warrant near-minimal score. Key diffs:
+
+#### **Critical Structural Errors (Heavy Deduction: -5.0 base)**
+- **Invalid BPMN 2.0**: `t_diag` ("Initial Diagnosis") has **two outgoing sequence flows** (`sf6` to `t_resolve`, `sf7` to `t_forward`) *without an intervening exclusiveGateway*. BPMN requires an XOR gateway for post-task decisions (per line 5: "either **“Resolve Issue”** or **“Forward to Specialist”**"). This creates an unstructured control flow (implicit AND-split without join), semantically invalid for sequential processes. Ground truth correctly uses `gw2` after `t3`.
+- **Missing required exclusiveGateway**: No modeling of diagnosis decision (line 5). LLM bypasses with direct flows; ground truth has `gw2` ("Resolved Internally?") with `f7`/`f8` (`yes`→`t4`, `no`→`t5`). Prompt mandates "exclusive gateways" for decisions; this omits one of the decisions explicitly described.
+- **Wrong # of gateways**: Prompt specifies "two decision points"; LLM has 2 (`gw1`, `gw2`), but ground truth (correct model) has 3 (`gw1`, `gw2`, `gw3`) to capture *all* decisions (classif., diagnosis, confirm.). LLM's `gw2` is confirmation-only; misaligns flow.
+
+#### **Flow & Logic Errors (Heavy Deduction: -2.0)**
+- No `t3`→`gw2` (`f6` in ground).
+- Conditions absent for diagnosis paths (impossible without `gw2`).
+- Password reset path (`t2`→`t6`/`t_confirm`) correct, specialist (`t5`→`t4`/`t_resolve`) correct, loop (`gw3 no`→`t3`) correct—but diagnosis mishandled breaks overall fidelity to lines 4-6.
+- Re-work loop (line 9) technically modeled (`sf12`→`t_diag`), but inherits upstream invalidity.
+
+#### **Naming & Detail Errors (Medium Deduction: -0.5 each, total -1.0)**
+- Classification task: "Classify Ticket" ≠ "Auto-Classification" (line 2: "automatically classified"; ground precise).
+- Gateways: "Classification Decision" ≠ "Password Reset?"; "Customer Confirmation" ≠ "Customer Confirms?".
+- Conditions: "Password Reset"/"Confirmed"/"Not Confirmed" ≠ generic "yes"/"no"; odd `language="urn:iec:62304:2015"` (absent in ground).
+- IDs non-concise: `t_classify`/`t_reset`/etc. vs. ground's `t1`-`t6`/`gw1`-`gw3`.
+- Process: `id="p1"` (no `name`) ≠ `id="support_ticket" name="Support-Ticket"`.
+
+#### **Minor XML/Format Diffs (Light Deduction: -0.5 total)**
+- Extra attrs: `xmlns:xsi`, `targetNamespace`, `exporter` (ground minimal).
+- Flow IDs: `sf1`-`sf12` ≠ `f1`-`f13`.
+- Matches: Task names for `t2`/`t3`/`t4`/`t5`/`t6` exact; start/end names exact; ≤40 lines; no inventions (no timers/escalations); single `<definitions>`.
+
+**Overall**: ~60% element match, but invalid/ incomplete core flow (diagnosis decision) fails "exactly as stated" (lines 4-5). Not executable BPMN; poor translation fidelity. Ground truth is precise/valid; LLM is broken approximation.
