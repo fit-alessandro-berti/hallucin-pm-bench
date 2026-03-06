@@ -1,0 +1,10 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment):
+- **Structural mismatch (-3.0)**: LLM uses verbose BPMN 2.0 schema (`bpmnVersion`, `process.flowElements`, `sequenceFlows`, detailed `eventDefinition`, `conditionExpression`, `isExecutable`, etc.). Ground truth uses compact custom schema (`process_id`, `elements`, `flows`, minimal props like `type`, `name`, `condition`, `event`). Fundamentally incompatible formats; cannot parse equivalently.
+- **Extra elements/inventions (-1.5)**: Added `ServiceTask_ParseEmail` + flow (absent in description as separate step; ground truth combines into `createTicket`). Two `Close Ticket` tasks + unnecessary `ExclusiveGateway_MergeClosurePaths` (hallucinated merge absent from key; penalised per focus). EventSubProcess for cancel (complex/overkill vs ground truth's simple `intermediateCatchEvent`).
+- **Flow/logic differences (-1.0)**: Parallel join after closure (`ParallelGateway_JoinClosureAndKB`) vs ground truth before wait (`joinAfterLogging` → `awaitReply`). SendResponse → eventGateway directly (correct per description) but diverges from ground truth's sendResponse → join → awaitReply. No equivalent attachment for cancel/terminate (both flawed, but different).
+- **Naming/Detail mismatches (-0.5)**: Minor but strict: e.g., conditions "Simple"/"Complex" vs "simple"/"complex"; start "Support E-mail Received" vs "Email Received"; extra verbose names/descriptions; `userTask`/`serviceTask` vs generic `task`; timer `"PT24H"` extra (good but unasked).
+- **Strengths (+0)**: No escalations/approvals. Core sequence (classify → resolution → parallel send/log → wait/branch → close) mostly aligned. Event-based gateway + timer/message correct. No prose output.
+
+Total: Major diffs in format/elements/flows outweigh similarities; strict penalty yields 4.0.

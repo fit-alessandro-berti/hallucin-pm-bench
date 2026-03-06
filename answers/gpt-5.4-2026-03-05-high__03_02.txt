@@ -1,0 +1,256 @@
+{
+  "bpmnVersion": "2.0",
+  "process": {
+    "id": "Process_CustomerSupportTicket",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "flowElements": [
+      {
+        "id": "StartEvent_SupportEmailReceived",
+        "type": "startEvent",
+        "name": "Support E-mail Received",
+        "eventDefinition": {
+          "type": "message"
+        }
+      },
+      {
+        "id": "ServiceTask_ParseEmail",
+        "type": "serviceTask",
+        "name": "Parse E-mail"
+      },
+      {
+        "id": "ServiceTask_CreateTicket",
+        "type": "serviceTask",
+        "name": "Create Ticket"
+      },
+      {
+        "id": "UserTask_InitialClassification",
+        "type": "userTask",
+        "name": "Initial Classification"
+      },
+      {
+        "id": "ExclusiveGateway_RouteByComplexity",
+        "type": "exclusiveGateway",
+        "name": "Simple or Complex?"
+      },
+      {
+        "id": "UserTask_RootCauseAnalysis",
+        "type": "userTask",
+        "name": "Root Cause Analysis"
+      },
+      {
+        "id": "UserTask_ProvideResolution",
+        "type": "userTask",
+        "name": "Provide Resolution"
+      },
+      {
+        "id": "ParallelGateway_AfterResolution_Fork",
+        "type": "parallelGateway",
+        "name": "Parallelize Reply and KB Logging"
+      },
+      {
+        "id": "UserTask_SendResponseToCustomer",
+        "type": "userTask",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "UserTask_LogSolutionInKnowledgeBase",
+        "type": "userTask",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "EventBasedGateway_WaitForReplyOrTimeout",
+        "type": "eventBasedGateway",
+        "name": "Wait for Customer Reply or 24 Hours"
+      },
+      {
+        "id": "IntermediateCatchEvent_CustomerReply",
+        "type": "intermediateCatchEvent",
+        "name": "Customer Reply",
+        "eventDefinition": {
+          "type": "message"
+        }
+      },
+      {
+        "id": "IntermediateCatchEvent_24HourTimeout",
+        "type": "intermediateCatchEvent",
+        "name": "24 Hours Elapsed",
+        "eventDefinition": {
+          "type": "timer",
+          "timeDuration": "PT24H"
+        }
+      },
+      {
+        "id": "UserTask_CloseTicketAfterReply",
+        "type": "userTask",
+        "name": "Close Ticket"
+      },
+      {
+        "id": "ServiceTask_SendReminder",
+        "type": "serviceTask",
+        "name": "Send Reminder"
+      },
+      {
+        "id": "ServiceTask_CloseTicketAfterTimeout",
+        "type": "serviceTask",
+        "name": "Close Ticket"
+      },
+      {
+        "id": "ExclusiveGateway_MergeClosurePaths",
+        "type": "exclusiveGateway",
+        "name": "Merge Closure Paths"
+      },
+      {
+        "id": "ParallelGateway_JoinClosureAndKB",
+        "type": "parallelGateway",
+        "name": "Wait for Closure and KB Logging"
+      },
+      {
+        "id": "EndEvent_ProcessCompleted",
+        "type": "endEvent",
+        "name": "Process Completed"
+      },
+      {
+        "id": "EventSubProcess_CustomerCancellation",
+        "type": "eventSubProcess",
+        "name": "Customer Cancellation",
+        "triggeredByEvent": true,
+        "interrupting": true,
+        "flowElements": [
+          {
+            "id": "StartEvent_CustomerCancelsTicket",
+            "type": "startEvent",
+            "name": "Customer Cancels Ticket",
+            "eventDefinition": {
+              "type": "message"
+            }
+          },
+          {
+            "id": "EndEvent_TerminateOnCancellation",
+            "type": "endEvent",
+            "name": "Terminate",
+            "eventDefinition": {
+              "type": "terminate"
+            }
+          }
+        ],
+        "sequenceFlows": [
+          {
+            "id": "Flow_Cancel_1",
+            "sourceRef": "StartEvent_CustomerCancelsTicket",
+            "targetRef": "EndEvent_TerminateOnCancellation"
+          }
+        ]
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "Flow_1",
+        "sourceRef": "StartEvent_SupportEmailReceived",
+        "targetRef": "ServiceTask_ParseEmail"
+      },
+      {
+        "id": "Flow_2",
+        "sourceRef": "ServiceTask_ParseEmail",
+        "targetRef": "ServiceTask_CreateTicket"
+      },
+      {
+        "id": "Flow_3",
+        "sourceRef": "ServiceTask_CreateTicket",
+        "targetRef": "UserTask_InitialClassification"
+      },
+      {
+        "id": "Flow_4",
+        "sourceRef": "UserTask_InitialClassification",
+        "targetRef": "ExclusiveGateway_RouteByComplexity"
+      },
+      {
+        "id": "Flow_5_Simple",
+        "sourceRef": "ExclusiveGateway_RouteByComplexity",
+        "targetRef": "UserTask_ProvideResolution",
+        "conditionExpression": "Simple"
+      },
+      {
+        "id": "Flow_6_Complex",
+        "sourceRef": "ExclusiveGateway_RouteByComplexity",
+        "targetRef": "UserTask_RootCauseAnalysis",
+        "conditionExpression": "Complex"
+      },
+      {
+        "id": "Flow_7",
+        "sourceRef": "UserTask_RootCauseAnalysis",
+        "targetRef": "UserTask_ProvideResolution"
+      },
+      {
+        "id": "Flow_8",
+        "sourceRef": "UserTask_ProvideResolution",
+        "targetRef": "ParallelGateway_AfterResolution_Fork"
+      },
+      {
+        "id": "Flow_9",
+        "sourceRef": "ParallelGateway_AfterResolution_Fork",
+        "targetRef": "UserTask_SendResponseToCustomer"
+      },
+      {
+        "id": "Flow_10",
+        "sourceRef": "ParallelGateway_AfterResolution_Fork",
+        "targetRef": "UserTask_LogSolutionInKnowledgeBase"
+      },
+      {
+        "id": "Flow_11",
+        "sourceRef": "UserTask_SendResponseToCustomer",
+        "targetRef": "EventBasedGateway_WaitForReplyOrTimeout"
+      },
+      {
+        "id": "Flow_12",
+        "sourceRef": "EventBasedGateway_WaitForReplyOrTimeout",
+        "targetRef": "IntermediateCatchEvent_CustomerReply"
+      },
+      {
+        "id": "Flow_13",
+        "sourceRef": "EventBasedGateway_WaitForReplyOrTimeout",
+        "targetRef": "IntermediateCatchEvent_24HourTimeout"
+      },
+      {
+        "id": "Flow_14",
+        "sourceRef": "IntermediateCatchEvent_CustomerReply",
+        "targetRef": "UserTask_CloseTicketAfterReply"
+      },
+      {
+        "id": "Flow_15",
+        "sourceRef": "IntermediateCatchEvent_24HourTimeout",
+        "targetRef": "ServiceTask_SendReminder"
+      },
+      {
+        "id": "Flow_16",
+        "sourceRef": "ServiceTask_SendReminder",
+        "targetRef": "ServiceTask_CloseTicketAfterTimeout"
+      },
+      {
+        "id": "Flow_17",
+        "sourceRef": "UserTask_CloseTicketAfterReply",
+        "targetRef": "ExclusiveGateway_MergeClosurePaths"
+      },
+      {
+        "id": "Flow_18",
+        "sourceRef": "ServiceTask_CloseTicketAfterTimeout",
+        "targetRef": "ExclusiveGateway_MergeClosurePaths"
+      },
+      {
+        "id": "Flow_19",
+        "sourceRef": "ExclusiveGateway_MergeClosurePaths",
+        "targetRef": "ParallelGateway_JoinClosureAndKB"
+      },
+      {
+        "id": "Flow_20",
+        "sourceRef": "UserTask_LogSolutionInKnowledgeBase",
+        "targetRef": "ParallelGateway_JoinClosureAndKB"
+      },
+      {
+        "id": "Flow_21",
+        "sourceRef": "ParallelGateway_JoinClosureAndKB",
+        "targetRef": "EndEvent_ProcessCompleted"
+      }
+    ]
+  }
+}

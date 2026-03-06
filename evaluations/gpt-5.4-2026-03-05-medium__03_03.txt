@@ -1,0 +1,17 @@
+**7.2**
+
+### Evaluation Rationale (Strict Assessment)
+**Semantic Equivalence (base 10.0, deduct for mismatches):** 8.5/10
+- Core flow correctly modeled: start → validate → completeness XOR gw → (loop via request or proceed to check → warranty XOR gw → reject/end or parallel split → create & schedule → join → update → close → end/success).
+- All **explicitly required** elements present: start event, 2 exclusive gateways (completeness, warranty), parallel split/join pair, exactly 2 end events.
+- All tasks included with **verbatim name matching** (superior to ground truth; e.g., "validates the claim", "send rejection notice" [lowercase], "Create shipment order", "update inventory records" exactly match bolded text casing/phrasing; ground truth alters casing to title case).
+- Includes explicit "**checks warranty eligibility**" task (correct per prompt step 3; **ground truth omits this required task**, direct complete_gw → warranty_gw).
+- Loop models "requests missing information and waits until it is received before re-validating" semantically (ground truth uses simplistic direct flow request → validate, omitting explicit wait).
+
+**Penalties for Differences/Errors (strict, significant loss per rubric):**
+- **Extra/hallucinated flow elements (-1.5):** IntermediateCatchEvent ("missing information is received") + message definition invented; not explicitly mentioned (violates "Model **only** the flow elements explicitly mentioned. Do **not** invent... beyond what is stated"). Ground truth uses direct sequence flow (minimal, no invention).
+- **Extra non-flow content (-0.6):** Full BPMNDiagram (shapes, edges, waypoints, ~200+ lines) bloats XML; ground truth is minimal process-only (34 lines, no DI). Prompt requests "BPMN 2.0 XML document", not graphical layout.
+- **Minor structural/name diffs (-0.4):** Extra sequence flows/conditionExpressions (detailed but unnecessary); gw names slightly different ("warranty decision" vs ground truth "Within warranty?"); verbose start name ok but differs; different IDs (allowed but contributes to diff count).
+- **No omissions:** LLM has everything required + more faithful tasks (e.g., check eligibility).
+
+**Overall:** Semantically equivalent/superior in fidelity to prompt text (e.g., all verbatim tasks, explicit check/wait), but penalized heavily for extras/inventions per strict "utmost strictness" + "differences from ground truth" rule. Ground truth itself has flaws (omitted task, non-verbatim casing), but used as reference. Equivalent minimal XML without catch/DI would score 10.0.

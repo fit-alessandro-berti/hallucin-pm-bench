@@ -1,0 +1,18 @@
+4.0
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer captures the core process logic (password reset path, diagnosis branch, specialist to resolve, confirm loop to diagnosis) without hallucinating extra elements (e.g., no timers, extra tasks, or gateways beyond two), correctly uses exactly **two exclusive gateways** as prompted (diagnosis and confirm), and keeps XML concise (<40 lines). However, under utmost strictness against the ground truth (GT):
+
+**Major errors (-4.0 total deduction from 10.0):**
+- **Missing exclusive gateway for first decision point** (after classification): LLM models it as conditional flows + `default` from `serviceTask` (no gateway); GT uses `gw1` post-classification with `yes`/`no` conditions. Prompt requires marking "the two decision points" with gateways; LLM misses one (diagnosis + confirm only).
+- **Invalid BPMN gateways** (`gw1`, `gw2`): No `<conditionExpression>` or `default` on outgoing flows (e.g., `f5`/`f6`, `f11`/`f12`). Exclusive gateways require decision logic; this renders them non-standard/in executable. GT has proper `yes`/`no` conditions on all.
+- **Wrong number of gateways vs GT**: 2 vs GT's 3 (`gw1` classify, `gw2` diagnosis, `gw3` confirm).
+
+**Minor but significant errors (-1.5 total; each deducts ~0.3-0.5 per strictness rule):**
+- Task types/names: `serviceTask` "Classify Ticket" + `default="f3"` vs GT `task` "Auto-Classification" (invents `serviceTask`/`default` not in description/GT).
+- Names mismatch: Start ("Support Ticket Submitted" vs "Ticket Submitted"); no gateway/process names vs GT's descriptive (`"Password Reset?"`, `"Resolved Internally?"`, `"Customer Confirms?"`, process `"Support-Ticket"`).
+- Conditions: Specific `<![CDATA[Password Reset]]>` (good match to text but CDATA/non-standard `bpmn:tFormalExpression`) vs GT generic `tFormalExpression` "yes"/"no"; extra flow `name`s (e.g., "Password Reset").
+- XML structure: No `<?xml declaration>`; extra `xmlns:bpmn`/`xmlns:xsi`/ `id="d1"`; different `targetNamespace`/`process id`; different flow/element IDs (e.g., `s1`/`e1`/`p1` vs `start`/`end`/`support_ticket`); 12 vs 13 flows.
+- ~80% line-level mismatch; not "exact" translation.
+
+Logically sound (no criminal/additional inventions), but structural/BPMN validity failures + GT mismatches warrant low score. Perfect match = 10.0; this is ~40% fidelity.

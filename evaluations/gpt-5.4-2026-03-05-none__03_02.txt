@@ -1,0 +1,12 @@
+**4.2**
+
+### Evaluation Rationale (strict assessment vs. ground truth):
+- **Structural mismatch (-2.5)**: LLM uses verbose BPMN-like schema ("process", "flowElements", "sequenceFlows" with full refs/conditions/eventDefs); GT uses flat, minimal schema ("process_id", "elements", "flows" with simple source/target/condition). Fundamentally different representations.
+- **Extra "Parse E-mail" task (-0.8)**: Invented separate task (text combines "parsed and created"); GT has no parse, direct start → "Create Ticket".
+- **Excessive boundary events for cancellation (-1.5)**: LLM adds ~16 interrupting boundaries on every task/event (including non-activities like catch events, and post-closure like close tasks); GT uses single non-attached "cancelEvent". Verbose hallucination; violates "model *only* what is described" by over-engineering.
+- **Multiple close tasks/ends (-0.6)**: Separate "close_ticket_after_reply"/"close_ticket_after_reminder" + 2 ends; GT shares single "closeTicket" → single "end".
+- **Invalid attachments/small BPMN errors (-0.2)**: Boundaries on intermediateCatchEvents (not activities); "cancelActivity" on non-subprocs; process-level "terminationCondition" non-standard.
+- **Naming/props drift (-0.1)**: Minor diffs (e.g., start "Support E-mail Received" vs. "Email Received"; conditions "Simple"/"Complex" vs. "simple"/"complex"; odd gateway names like "Resolution Drafted").
+- **Partial credits (+1.0 base)**: Captures core sequence (start/classify/branch/root-cause/resolution/fork-send-log-join/wait-reply-or-timer/reminder/close), parallel fork/join, eventGateway + message/timer. No escalations hallucinated.
+
+Total reflects ~58% fidelity; strictness penalizes extras/diffs heavily per instructions.
