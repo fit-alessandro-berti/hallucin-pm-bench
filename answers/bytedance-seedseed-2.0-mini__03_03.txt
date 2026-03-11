@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/bpmn/warrantyreplacement">
+    <process id="wrc_WarrantyReplacementProcess" name="Warranty-Replacement v1.3" isExecutable="false">
+        <!-- Start Event -->
+        <startEvent id="wrc_startEvent" />
+
+        <!-- Validate Claim Task -->
+        <task id="wrc_task_validateClaim" name="validates the claim" />
+        <sequenceFlow id="wrc_sf_startToValidate" sourceRef="wrc_startEvent" targetRef="wrc_task_validateClaim" />
+
+        <!-- Claim Completeness Exclusive Gateway -->
+        <exclusiveGateway id="wrc_gateway_claimCompleteness" gatewayDirection="Diverging" />
+        <sequenceFlow id="wrc_sf_validateToCompletenessGateway" sourceRef="wrc_task_validateClaim" targetRef="wrc_gateway_claimCompleteness" />
+
+        <!-- Incomplete Claim Flow -->
+        <task id="wrc_task_requestMissingInfo" name="requests missing information" />
+        <sequenceFlow id="wrc_sf_incompleteToRequestInfo" sourceRef="wrc_gateway_claimCompleteness" targetRef="wrc_task_requestMissingInfo" />
+        <sequenceFlow id="wrc_sf_requestInfoToValidate" sourceRef="wrc_task_requestMissingInfo" targetRef="wrc_task_validateClaim" />
+
+        <!-- Complete Claim Flow -->
+        <task id="wrc_task_checkWarrantyEligibility" name="checks warranty eligibility" />
+        <sequenceFlow id="wrc_sf_completeToCheckEligibility" sourceRef="wrc_gateway_claimCompleteness" targetRef="wrc_task_checkWarrantyEligibility" />
+        <sequenceFlow id="wrc_sf_checkEligibilityToGateway" sourceRef="wrc_task_checkWarrantyEligibility" targetRef="wrc_gateway_warrantyEligibility" />
+
+        <!-- Warranty Eligibility Exclusive Gateway -->
+        <exclusiveGateway id="wrc_gateway_warrantyEligibility" gatewayDirection="Diverging" />
+
+        <!-- Out of Warranty Flow -->
+        <task id="wrc_task_sendRejectionNotice" name="send rejection notice" />
+        <sequenceFlow id="wrc_sf_outOfWarrantyToRejection" sourceRef="wrc_gateway_warrantyEligibility" targetRef="wrc_task_sendRejectionNotice" />
+        <endEvent id="wrc_endEvent_rejection" />
+        <sequenceFlow id="wrc_sf_rejectionToEnd" sourceRef="wrc_task_sendRejectionNotice" targetRef="wrc_endEvent_rejection" />
+
+        <!-- Within Warranty Flow -->
+        <parallelGateway id="wrc_gateway_parallelSplit" gatewayDirection="Diverging" />
+        <sequenceFlow id="wrc_sf_withinWarrantyToParallelSplit" sourceRef="wrc_gateway_warrantyEligibility" targetRef="wrc_gateway_parallelSplit" />
+
+        <!-- Parallel Activities -->
+        <task id="wrc_task_createShipmentOrder" name="Create shipment order for the replacement unit" />
+        <task id="wrc_task_scheduleCourierPickup" name="Schedule courier pickup of the faulty product" />
+        <sequenceFlow id="wrc_sf_parallelSplitToCreateShipment" sourceRef="wrc_gateway_parallelSplit" targetRef="wrc_task_createShipmentOrder" />
+        <sequenceFlow id="wrc_sf_parallelSplitToSchedulePickup" sourceRef="wrc_gateway_parallelSplit" targetRef="wrc_task_scheduleCourierPickup" />
+
+        <!-- Parallel Join Gateway -->
+        <parallelGateway id="wrc_gateway_parallelJoin" gatewayDirection="Converging" />
+        <sequenceFlow id="wrc_sf_createShipmentToJoin" sourceRef="wrc_task_createShipmentOrder" targetRef="wrc_gateway_parallelJoin" />
+        <sequenceFlow id="wrc_sf_schedulePickupToJoin" sourceRef="wrc_task_scheduleCourierPickup" targetRef="wrc_gateway_parallelJoin" />
+
+        <!-- Post-Parallel Tasks -->
+        <task id="wrc_task_updateInventoryRecords" name="update inventory records" />
+        <task id="wrc_task_closeClaim" name="close the claim" />
+        <sequenceFlow id="wrc_sf_joinToUpdateInventory" sourceRef="wrc_gateway_parallelJoin" targetRef="wrc_task_updateInventoryRecords" />
+        <sequenceFlow id="wrc_sf_updateToCloseClaim" sourceRef="wrc_task_updateInventoryRecords" targetRef="wrc_task_closeClaim" />
+
+        <!-- Successful Completion End Event -->
+        <endEvent id="wrc_endEvent_success" />
+        <sequenceFlow id="wrc_sf_closeClaimToSuccessEnd" sourceRef="wrc_task_closeClaim" targetRef="wrc_endEvent_success" />
+    </process>
+</definitions>

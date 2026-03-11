@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:process id="wrc_process_flow_v1.3" isExecutable="true" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI">
+  <bpmn:startEvent id="wrc_start_event_claim">
+    <bpmn:outgoing>wrc_flow_001</bpmn:outgoing>
+  </bpmn:startEvent>
+
+  <bpmn:task id="wrc_task_validate" name="validates the claim">
+    <bpmn:extensionElements/>
+    <bpmn:incoming>wrc_flow_001</bpmn:incoming>
+    <bpmn:outgoing>wrc_gw_step2_check</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:exclusiveGateway id="wrc_gateway_step2_check">
+    <bpmn:incoming>wrc_flow_validate_outgoing</bpmn:incoming> <!-- To be fixed below -->
+    <bpmn:outgoing>wrc_flow_request_info_incomplete</bpmn:outgoing>
+    <bpmn:outgoing>wrc_flow_step3_complete</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+
+  <bpmn:sequenceFlow id="wrc_flow_validate_outgoing" name="Incomplete/Waiting" sourceRef="wrc_task_validate" targetRef="wrc_gw_step2_check">
+    <di:labelExpression>Is Complete?</di:labelExpression>
+  </bpmn:sequenceFlow>
+
+  <bpmn:task id="wrc_task_request_info" name="requests missing information">
+    <bpmn:incoming>wrc_gw_step2_incomplete</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_back_validate</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:sequenceFlow id="wrc_gw_step2_incomplete" name="Incomplete" sourceRef="wrc_gateway_step2_check">
+    <di:labelExpression>Incomplete</di:labelExpression>
+  </bpmn:sequenceFlow>
+
+  <bpmn:sequenceFlow id="wrc_flow_step3_complete" name="Complete" sourceRef="wrc_gateway_step2_check">
+    <di:labelExpression>Complete</di:labelExpression>
+  </bpmn:sequenceFlow>
+
+  <bpmn:sequenceFlow id="wrc_flow_back_validate" name="Wait for info" sourceRef="wrc_task_request_info" targetRef="wrc_task_validate">
+    <di:labelExpression>Re-validate</di:labelExpression>
+  </bpmn:sequenceFlow>
+
+  <bpmn:exclusiveGateway id="wrc_gateway_step3_warranty">
+    <bpmn:incoming>wrc_flow_step3_complete</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_reject_path</bpmn:outgoing>
+    <bpmn:outgoing>wrc_flow_parallel_path</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+
+  <bpmn:task id="wrc_task_reject" name="send rejection notice">
+    <bpmn:incoming>wrc_flow_reject_path</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_end_rejection</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:endEvent id="wrc_end_rejection">
+    <bpmn:outgoing/>
+    <bpmn:incoming>wrc_flow_end_rejection</bpmn:incoming>
+  </bpmn:endEvent>
+
+  <bpmn:exclusiveGateway id="wrc_gw_step3_out" name="Out of Warranty">
+    <bpmn:incoming>wrc_gateway_step3_outgoing2</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_reject_path2</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
+  
+  <bpmn:parallelGateway id="wrc_gateway_parallel_split">
+    <bpmn:incoming>wrc_flow_parallel_incoming</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_ship_out</bpmn:outgoing>
+    <bpmn:outgoing>wrc_flow_pickup_out</bpmn:outgoing>
+  </bpmn:parallelGateway>
+
+  <bpmn:task id="wrc_task_ship" name="Create shipment order">
+    <bpmn:incoming>wrc_flow_ship_out</bpmn:incoming>
+    <bpmn:outgoing>wrc_gw_parallel_join_join</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:task id="wrc_task_pickup" name="Schedule courier pickup">
+    <bpmn:incoming>wrc_flow_pickup_out</bpmn:incoming>
+    <bpmn:outgoing>wrc_gw_parallel_join_join</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:endEvent id="wrc_end_rejection_path2">
+    <bpmn:incoming>wrc_flow_reject_path2</bpmn:incoming>
+  </bpmn:endEvent>
+
+  <bpmn:parallelGateway id="wrc_gw_parallel_join">
+    <bpmn:incoming>wrc_gw_parallel_join_join</bpmn:incoming>
+    <bpmn:incoming>wrc_pickup_result</bpmn:incoming>
+    <bpmn:outgoing>wrc_update_path</bpmn:outgoing>
+  </bpmn:parallelGateway>
+
+  <bpmn:sequenceFlow id="wrc_gw_parallel_join_join" targetRef="wrc_gateway_parallel_join">
+    <bpmn:incoming>wrc_task_ship_outgoing</bpmn:incoming>
+    <bpmn:incoming>wrc_task_pickup_outgoing</bpmn:incoming>
+    <bpmn:outgoing>wrc_update_path</bpmn:outgoing>
+  </bpmn:sequenceFlow>
+
+  <bpmn:task id="wrc_task_update" name="update inventory records">
+    <bpmn:incoming>wrc_update_path</bpmn:incoming>
+    <bpmn:outgoing>wrc_close_path</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:task id="wrc_task_close" name="close the claim">
+    <bpmn:incoming>wrc_close_path</bpmn:incoming>
+    <bpmn:outgoing>wrc_flow_end_success</bpmn:outgoing>
+  </bpmn:task>
+
+  <bpmn:endEvent id="wrc_end_success">
+    <bpmn:incoming>wrc_flow_end_success</bpmn:incoming>
+  </bpmn:endEvent>
+
+  <!-- Start Sequence Flow Fix -->
+  <bpmn:sequenceFlow id="wrc_flow_001" sourceRef="wrc_start_event_claim" targetRef="wrc_task_validate">
+    <di:labelExpression>online warranty claim</di:labelExpression>
+  </bpmn:sequenceFlow>
+
+  <!-- Correct Flow Connections for Step 2 Gateway -->
+  <bpmn:sequenceFlow id="wrc_flow_001_corrected" sourceRef="wrc_gateway_step2_check">
+    <bpmn:isDefinitionRemark>false</bpmn:isDefinitionRemark>
+    <bpmn:expression>Is Complete?</bpmn:expression>
+  </bpmn:sequenceFlow>
+
+  <!-- Additional Flow Fixes -->
+  <bpmn:sequenceFlow id="wrc_flow_002" sourceRef="wrc_gateway_step2_check">
+    <bpmn:isDefinitionRemark>false</bpmn:isDefinitionRemark>
+    <bpmn:label>Out of Warranty</bpmn:label>
+  </bpmn:sequenceFlow>
+
+  <bpmn:sequenceFlow id="wrc_flow_003" sourceRef="wrc_gateway_step2_check">
+    <bpmn:isDefinitionRemark>false</bpmn:isDefinitionRemark>
+  </bpmn:sequenceFlow>
+</bpmn:process>
+
+<bpmnBPMN200811030404000000 xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <bpmnBPMN200811030404000000>
+    <bpmnDIBPMNPlane id="BPMNPlane_1" bpmnElement="wrc_process_flow_v1.3">
+      <bpmnDIBPMNShape id="BPMNShape__Start" bpmnElement="wrc_start_event_claim">
+        <dc:Bounds height="30" width="30" x="0" y="0"/>
+      </bpmnDIBPMNShape>
+    </bpmnDIBPMNPlane>
+  </bpmnBPMN200811030404000000>
+</bpmnBPMN200811030404000000>

@@ -1,0 +1,364 @@
+{
+  "BPMN": {
+    "version": "2.0",
+    "processId": "SupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "targetNamespace": "http://example.com/support",
+    "elements": [
+      {
+        "id": "StartEmail",
+        "type": "bpmn:StartEvent",
+        "bpmnType": "Message",
+        "inMessageRef": "SupportEmail",
+        "name": "E-mail Received"
+      },
+      {
+        "id": "CreateTicket",
+        "type": "bpmn:Task",
+        "bpmnType": "BusinessRuleTask",
+        "name": "Create Ticket in Help-desk, Parse E-mail",
+        "property": [ { "name": "ProcessTimer", "value": "1200" } ]
+      },
+      {
+        "id": "ClassifyGateway",
+        "type": "bpmn:Gateway",
+        "bpmnType": "Exclusive",
+        "name": "Initial Classification",
+        "condition": "ticketType == 'SIMPLE'"
+      },
+      {
+        "id": "Task_Simple",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Provide Resolution",
+        "category": "resolution"
+      },
+      {
+        "id": "Task_Complex",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Root Cause Analysis",
+        "category": "complex_handling"
+      },
+      {
+        "id": "Task_Right_Check",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Provide Resolution",
+        "category": "resolution",
+        "isCommonToPath": true
+      },
+      {
+        "id": "Task_SendResponse",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Send Response to Customer"
+      },
+      {
+        "id": "Task_LogSolution",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Log Solution in Knowledge Base"
+      },
+      {
+        "id": "WaitEvent_24h",
+        "type": "bpmn:IntermediateCatchEvent",
+        "bpmnType": "Timer",
+        "name": "24h No Reply",
+        "timer": {
+          "cycle": true
+        }
+      },
+      {
+        "id": "WaitEvent_Reply",
+        "type": "bpmn:IntermediateCatchEvent",
+        "bpmnType": "Message",
+        "name": "Customer Reply",
+        "inMessageRef": "Reply"
+      },
+      {
+        "id": "Task_SendReminder",
+        "type": "bpmn:Task",
+        "bpmnType": "UserTask",
+        "name": "Send Reminder",
+        "category": "reminder"
+      },
+      {
+        "id": "EndClose",
+        "type": "bpmn:EndEvent",
+        "bpmnType": "None",
+        "name": "Close Ticket"
+      },
+      {
+        "id": "EndTerminate",
+        "type": "bpmn:EndEvent",
+        "bpmnType": "None",
+        "name": "Terminate",
+        "cancelBoundary": true
+      }
+    ],
+    "flows": [
+      {
+        "id": "s1",
+        "sourceRef": "StartEmail",
+        "targetRef": "CreateTicket",
+        "name": "Mail to System"
+      },
+      {
+        "id": "s2",
+        "sourceRef": "CreateTicket",
+        "targetRef": "ClassifyGateway",
+        "name": "Prepare for Classification"
+      },
+      {
+        "id": "s3",
+        "sourceRef": "ClassifyGateway",
+        "targetRef": "Task_Provide_Resolution_A",
+        "name": "Simple Path",
+        "conditionExpression": "classification == \"Simple\""
+      },
+      {
+        "id": "s4",
+        "sourceRef": "ClassifyGateway",
+        "targetRef": "Task_RootCauseAnalysis",
+        "name": "Complex Path",
+        "conditionExpression": "classification == \"Complex\""
+      },
+      {
+        "id": "s5",
+        "sourceRef": "Task_RootCauseAnalysis",
+        "targetRef": "Task_Provide_Resolution_B",
+        "name": "Analysis Before Resolution"
+      },
+      {
+        "id": "s6",
+        "sourceRef": "Task_Provide_Resolution_A",
+        "targetRef": "Gateway_Send_Log",
+        "name": "Join Resolution Flows"
+      },
+      {
+        "id": "s7",
+        "sourceRef": "Task_Provide_Resolution_B",
+        "targetRef": "Gateway_Send_Log",
+        "name": "Join Resolution Flows"
+      },
+      {
+        "id": "s8",
+        "sourceRef": "Gateway_Send_Log",
+        "targetRef": "Task_SendResponse",
+        "name": "Start Parallel Actions",
+        "targetCondition": "Response"
+      },
+      {
+        "id": "s9a",
+        "sourceRef": "Gateway_Send_Log",
+        "targetRef": "End_Transmission",
+        "name": "Start Parallel Log",
+        "targetCondition": "Log"
+      },
+      {
+        "id": "s9b",
+        "sourceRef": "End_Transmission",
+        "targetRef": "Retry_Resolution_Status",
+        "name": "Check Status"
+      },
+      {
+        "id": "s10",
+        "sourceRef": "Retry_Resolution_Status",
+        "targetRef": "End_Transmission"
+      },
+      {
+        "id": "s11",
+        "sourceRef": "End_Transmission",
+        "targetRef": "Gateway_Get_Reply",
+        "name": "Start Wait"
+      },
+      {
+        "id": "s12",
+        "sourceRef": "Gateway_Get_Reply",
+        "targetRef": "End_WaitforTimer",
+        "condition": "Timer"
+      },
+      {
+        "id": "s13",
+        "sourceRef": "End_WaitforTimer",
+        "targetRef": "Task_SendReminder",
+        "name": "Timeout Action"
+      },
+      {
+        "id": "s14",
+        "sourceRef": "Task_SendReminder",
+        "targetRef": "EndClose",
+        "name": "Close on Reminder"
+      },
+      {
+        "id": "s15",
+        "sourceRef": "Gateway_Get_Reply",
+        "targetRef": "End_WaitforReply",
+        "condition": "Message"
+      },
+      {
+        "id": "s16",
+        "sourceRef": "End_WaitforReply",
+        "targetRef": "EndClose",
+        "name": "Close on Reply"
+      }
+    ],
+    "boundaryEvents": [
+      {
+        "id": "Be_Cancel",
+        "type": "bpmn:BoundaryEvent",
+        "bpmnType": "Cancel",
+        "attachedTo": "Task_Provide_Resolution_A",
+        "cancelsAll": true,
+        "name": "Cancel Ticket by User"
+      },
+      {
+        "id": "Be_Cancel_Culture",
+        "type": "bpmn:BoundaryEvent",
+        "bpmnType": "Cancel",
+        "attachedTo": "Task_RootCauseAnalysis",
+        "cancelsAll": true,
+        "name": "Cancel Ticket by User"
+      },
+      {
+        "id": "Be_Cancel_Retry",
+        "type": "bpmn:BoundaryEvent",
+        "bpmnType": "Cancel",
+        "attachedTo": "Task_SendResponse",
+        "cancelsAll": true,
+        "name": "Cancel Ticket by User"
+      },
+      {
+        "id": "Be_Cancel_Log",
+        "type": "bpmn:BoundaryEvent",
+        "bpmnType": "Cancel",
+        "attachedTo": "Task_SendResponse",
+        "cancelsAll": true,
+        "name": "Cancel Ticket by User"
+      },
+      {
+        "id": "Be_Cancel_Wait",
+        "type": "bpmn:BoundaryEvent",
+        "bpmnType": "Cancel",
+        "attachedTo": "WaitEvent_24h",
+        "cancelsAll": true,
+        "name": "Cancel Ticket by User"
+      }
+    ],
+    "terminateFlows": [
+      {
+        "id": "t1",
+        "sourceRef": "Be_Cancel",
+        "targetRef": "EndTerminate"
+      },
+      {
+        "id": "t2",
+        "sourceRef": "Be_Cancel_Culture",
+        "targetRef": "EndTerminate"
+      },
+      {
+        "id": "t3",
+        "sourceRef": "Be_Cancel_Retry",
+        "targetRef": "EndTerminate"
+      },
+      {
+        "id": "t4",
+        "sourceRef": "Be_Cancel_Log",
+        "targetRef": "EndTerminate"
+      },
+      {
+        "id": "t5",
+        "sourceRef": "Be_Cancel_Wait",
+        "targetRef": "EndTerminate"
+      }
+    ],
+    "sequenceFlowImplementation": [
+      {
+        "id": "f1",
+        "id_field": "s1",
+        "source_ref": "StartEmail",
+        "target_ref": "CreateTicket"
+      },
+      {
+        "id": "f2",
+        "id_field": "s2",
+        "source_ref": "CreateTicket",
+        "target_ref": "ClassifyGateway"
+      },
+      {
+        "id": "f3",
+        "id_field": "s3",
+        "source_ref": "ClassifyGateway",
+        "target_ref": "Task_Provide_Resolution_A",
+        "condition": "type=Simple"
+      },
+      {
+        "id": "f4",
+        "id_field": "s4",
+        "source_ref": "ClassifyGateway",
+        "target_ref": "Task_RootCauseAnalysis",
+        "condition": "type=Complex"
+      },
+      {
+        "id": "f5",
+        "id_field": "s5",
+        "source_ref": "Task_RootCauseAnalysis",
+        "target_ref": "Task_Provide_Resolution_B"
+      },
+      {
+        "id": "f6",
+        "id_field": "s6",
+        "source_ref": "Task_Provide_Resolution_A",
+        "target_ref": "Gateway_Send_Log",
+        "join": "true"
+      },
+      {
+        "id": "f7",
+        "id_field": "s7",
+        "source_ref": "Task_Provide_Resolution_B",
+        "target_ref": "Gateway_Send_Log",
+        "join": "true"
+      },
+      {
+        "id": "f8",
+        "id_field": "s8",
+        "source_ref": "Gateway_Send_Log_Output",
+        "target_ref": "Task_SendResponse",
+        "branch": "true"
+      },
+      {
+        "id": "f9",
+        "id_field": "s9a",
+        "source_ref": "Gateway_Send_Log_Output",
+        "target_ref": "Task_End_Log",
+        "branch": "true"
+      },
+      {
+        "id": "f10",
+        "id_field": "s11",
+        "source_ref": "Gateway_End_Waiting",
+        "target_ref": "WaitEvent_24h.Wait",
+        "actor": "System"
+      },
+      {
+        "id": "f11",
+        "id_field": "s12",
+        "source_ref": "WaitEvent_24h.Timeout",
+        "target_ref": "Task_SendReminder"
+      },
+      {
+        "id": "f12",
+        "id_field": "s13",
+        "source_ref": "Task_SendReminder",
+        "target_ref": "EndClose"
+      },
+      {
+        "id": "f13",
+        "id_field": "s15",
+        "source_ref": "WaitEvent_Reply.Real",
+        "target_ref": "EndClose"
+      }
+    ]
+  }
+}

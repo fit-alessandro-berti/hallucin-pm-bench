@@ -1,0 +1,21 @@
+**3.0**
+
+### Evaluation Summary (Strict Rubric Application)
+The LLM answer captures the core process flow semantically (validation loop, warranty decision, parallel activities, two end events, wrc_ prefixes), aligning reasonably with the prompt's requirements and process description. However, under utmost strictness against the ground truth (minimal 34-line XML without DI, specific structure/names/flows), it incurs **major deductions** for:
+
+- **Invalid XML syntax (critical failure, -4.0 points)**: 
+  - All `<di:waypoint>` tags misuse attributes (e.g., `x="136" y="318" x="180" y="315"` – duplicate `x` attributes; must be separate `<di:waypoint>` child elements).
+  - Malformed `<bpmndi:BPMNEdge>` tags (e.g., `<BPMNEdge>` without `bpmndi:` prefix; inconsistent casing like `</BPMNEdge>`).
+  - Result: Not parsable as valid BPMN 2.0 diagram.
+
+- **Extra/hallucinated elements (-2.0 points)**:
+  - Added `wrc_task_check_warranty_eligibility` task + 2 sequence flows (`wrc_flow_complete_claim`, `wrc_flow_check_to_warranty_gw`); ground truth omits this (direct from `wrc_complete_gw` "Yes" to `wrc_warranty_gw`).
+  - Invented `<bpmn:conditionExpression>` on flows (e.g., `${claim.isIncomplete()}`); violates "Do **not** invent ... beyond what is stated"; ground truth uses only `name="Yes"/"No"`.
+  - Unnecessary gateway names (e.g., "Claim Completeness Check"); ground truth has specific/minimal names.
+
+- **Structural/attribute mismatches (-1.0 points)**:
+  - Full `<bpmndi:BPMNDiagram>` section (~50+ lines); ground truth is process-only (minimal, no layout).
+  - `isExecutable="true"` vs. ground truth `"false"`.
+  - Minor namespace diffs (20100501 vs. 20100524/MODEL; extra `targetNamespace` absent).
+
+No omissions of required elements (all prompt gateways/tasks modeled), and task names match **prompt verbatim** better than ground truth (e.g., "validates the claim" vs. ground's "Validate the claim"). But cumulative differences (extra elements, invalidity) prevent higher score; semantically ~80% equivalent but syntactically far off.

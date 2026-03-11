@@ -1,0 +1,191 @@
+{
+  "id": "process_customer_support_ticket",
+  "type": "Process",
+  "name": "Customer Support Ticket Process",
+  "elements": [
+    {
+      "id": "start_receive_support_email",
+      "type": "StartEvent",
+      "name": "Support E-mail Received"
+    },
+    {
+      "id": "subprocess_main_processing",
+      "type": "SubProcess",
+      "name": "Main Ticket Processing Flow",
+      "elements": [
+        {
+          "id": "task_parse_create_ticket",
+          "type": "Task",
+          "name": "Parse E-mail & Create Ticket in Help-desk System"
+        },
+        {
+          "id": "task_initial_classification",
+          "type": "Task",
+          "name": "Initial Classification"
+        },
+        {
+          "id": "gw_route_complexity",
+          "type": "ExclusiveGateway",
+          "name": "Route Ticket by Complexity"
+        },
+        {
+          "id": "task_root_cause_analysis",
+          "type": "Task",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "task_provide_resolution",
+          "type": "Task",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "gw_split_parallel_post_resolution",
+          "type": "ParallelGateway",
+          "name": "Split Parallel Post-Resolution Tasks"
+        },
+        {
+          "id": "task_send_customer_response",
+          "type": "Task",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "task_log_kb_solution",
+          "type": "Task",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "gw_wait_customer_reply",
+          "type": "EventBasedGateway",
+          "name": "Wait for Customer Reply or Timeout"
+        },
+        {
+          "id": "ev_customer_reply_received",
+          "type": "MessageEvent",
+          "name": "Customer Reply Received"
+        },
+        {
+          "id": "ev_24h_timeout",
+          "type": "TimerEvent",
+          "name": "24 Hours Elapsed Without Reply"
+        },
+        {
+          "id": "task_send_reminder",
+          "type": "Task",
+          "name": "Send Reminder"
+        },
+        {
+          "id": "task_close_ticket",
+          "type": "Task",
+          "name": "Close Ticket"
+        }
+      ]
+    },
+    {
+      "id": "ev_ticket_cancelled",
+      "type": "BoundaryEvent",
+      "eventType": "message",
+      "isInterrupting": true,
+      "attachedToRef": "subprocess_main_processing",
+      "name": "Ticket Cancelled by Customer"
+    },
+    {
+      "id": "end_terminate_cancellation",
+      "type": "TerminateEvent",
+      "name": "Process Terminated"
+    },
+    {
+      "id": "end_process_completed",
+      "type": "EndEvent",
+      "name": "Process Completed"
+    }
+  ],
+  "sequenceFlows": [
+    {
+      "id": "sf_start_to_parse",
+      "sourceRef": "start_receive_support_email",
+      "targetRef": "task_parse_create_ticket"
+    },
+    {
+      "id": "sf_parse_to_classify",
+      "sourceRef": "task_parse_create_ticket",
+      "targetRef": "task_initial_classification"
+    },
+    {
+      "id": "sf_classify_to_route",
+      "sourceRef": "task_initial_classification",
+      "targetRef": "gw_route_complexity"
+    },
+    {
+      "id": "sf_route_simple_to_resolution",
+      "sourceRef": "gw_route_complexity",
+      "targetRef": "task_provide_resolution",
+      "conditionExpression": "ticketComplexity = 'Simple'"
+    },
+    {
+      "id": "sf_route_complex_to_rootcause",
+      "sourceRef": "gw_route_complexity",
+      "targetRef": "task_root_cause_analysis",
+      "conditionExpression": "ticketComplexity = 'Complex'"
+    },
+    {
+      "id": "sf_rootcause_to_resolution",
+      "sourceRef": "task_root_cause_analysis",
+      "targetRef": "task_provide_resolution"
+    },
+    {
+      "id": "sf_resolution_to_parallel_split",
+      "sourceRef": "task_provide_resolution",
+      "targetRef": "gw_split_parallel_post_resolution"
+    },
+    {
+      "id": "sf_parallel_to_sendresponse",
+      "sourceRef": "gw_split_parallel_post_resolution",
+      "targetRef": "task_send_customer_response"
+    },
+    {
+      "id": "sf_parallel_to_logkb",
+      "sourceRef": "gw_split_parallel_post_resolution",
+      "targetRef": "task_log_kb_solution"
+    },
+    {
+      "id": "sf_sendresponse_to_waitgateway",
+      "sourceRef": "task_send_customer_response",
+      "targetRef": "gw_wait_customer_reply"
+    },
+    {
+      "id": "sf_waitgateway_to_customerreply",
+      "sourceRef": "gw_wait_customer_reply",
+      "targetRef": "ev_customer_reply_received"
+    },
+    {
+      "id": "sf_waitgateway_to_timeout",
+      "sourceRef": "gw_wait_customer_reply",
+      "targetRef": "ev_24h_timeout"
+    },
+    {
+      "id": "sf_customerreply_to_closeticket",
+      "sourceRef": "ev_customer_reply_received",
+      "targetRef": "task_close_ticket"
+    },
+    {
+      "id": "sf_timeout_to_sendreminder",
+      "sourceRef": "ev_24h_timeout",
+      "targetRef": "task_send_reminder"
+    },
+    {
+      "id": "sf_reminder_to_closeticket",
+      "sourceRef": "task_send_reminder",
+      "targetRef": "task_close_ticket"
+    },
+    {
+      "id": "sf_closeticket_to_end",
+      "sourceRef": "task_close_ticket",
+      "targetRef": "end_process_completed"
+    },
+    {
+      "id": "sf_cancellation_to_terminate",
+      "sourceRef": "ev_ticket_cancelled",
+      "targetRef": "end_terminate_cancellation"
+    }
+  ]
+}

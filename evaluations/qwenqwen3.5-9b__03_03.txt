@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Summary (Strict Rubric Application)
+- **Structural Validity (Major Failure, -4.0)**: LLM XML is not a valid BPMN 2.0 document. Root is `<bpmn:process>` instead of required `<bpmn:definitions>`. Includes malformed trailing `<bpmnBPMN200811030404000000>` block and incomplete/erroneous DI elements. Does not parse or render as self-contained BPMN.
+- **ID Prefixing & Naming (Partial, -1.5)**: Mostly uses "wrc_" prefix, but task names deviate from verbatim (e.g., "validates the claim" vs. prompt's exact "**validates the claim**"; inconsistent casing). Ground truth uses clean, capitalized equivalents.
+- **Required Elements (Incomplete/Extra, -1.5)**: Misses explicit "**checks warranty eligibility**" task (post-validation, pre-warranty GW; implied but omitted in both, but strict against prompt). Has **extra** gateways (e.g., `wrc_gw_step3_out`), **extra end event** (`wrc_end_rejection_path2`; violates "exactly **two** end events"). Hallucinated flows/elements (e.g., `wrc_gw_parallel_join_join` as invalid flow).
+- **Connections & Flows (Broken, -1.0)**: Dozens of mismatched refs (e.g., task `<outgoing>` points to gateway ID `wrc_gw_step2_check` instead of flow ID; undefined incomings like `wrc_flow_parallel_incoming`; duplicate/broken flows like `wrc_flow_001_corrected`). No executable flow; semantic diagram fails. Ground truth has 15 clean `sequenceFlow`s.
+- **Specified Gateways (Partial, +0.5)**: Uses exclusive GWs for steps 2/3, parallel split/join for 4, but extras and miswiring negate credit.
+- **Minimalism (Violated, -0.5)**: Far exceeds ground truth's 34-line minimalism with junk flows, comments, invalid attrs (e.g., `<di:labelExpression>`, `<bpmn:expression>` misuse).
+
+Total reflects ~80%+ differences/major flaws vs. clean, equivalent ground truth. Semantically attempts core flow (validation loop, warranty split, parallel) but non-functional XML = minimal score.

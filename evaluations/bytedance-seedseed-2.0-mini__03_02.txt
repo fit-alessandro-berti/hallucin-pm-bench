@@ -1,0 +1,15 @@
+**1.2**
+
+The LLM answer deviates critically from the ground truth in nearly every aspect, warranting a near-minimum score under utmost strictness:
+
+- **Schema/Format (fatal, -4.0)**: Completely incompatible JSON structures. Ground truth uses a simple, custom `{ "process_id": "...", "elements": [...], "flows": [...] }` with abstract types like `"type": "task"`, `"event": "message"`. LLM attempts invalid BPMN 2.0 JSON with `xmlns`, `$type: "bpmn:*"`, `rootElements`, global defs (Messages, TimerEventDef), and a malformed SubProcess—lacking a `bpmn:Process` container, making it unparsable as BPMN.
+  
+- **Structural Validity (-2.0)**: LLM model broken—e.g., no incoming flow to `Task_ParseCreateTicket` in SubProcess (disconnected start); invalid SequenceFlows crossing SubProcess boundaries (`Task_CloseTicket` → outside `EndEvent_NormalClose`; `BoundaryEvent_CancelTicket` → outside `EndEvent_Terminate`). Ground truth is abstract but consistent.
+
+- **Element Mapping/Names/IDs (-1.5)**: Almost no exact matches. E.g., ground `start` "Email Received" → LLM `StartEvent_ReceiveEmail` "Receive Support Email"; ground `createTicket` "Create Ticket" → LLM `Task_ParseCreateTicket` "Parse Email and Create Support Ticket" (extra detail); decisions unnamed/mismatched; extra globals (Messages, TimerDef); missing names on gateways; ground uses `eventBasedGateway` + `intermediateCatchEvent`s vs. LLM `ReceiveTask` + `BoundaryEvent`.
+
+- **Flows/Logic Differences (-1.0)**: Paths diverge post-resolution. Ground: `provideResolution` → fork (`sendResponse` || `logSolution`) → join → `awaitReply`. LLM: `Task_ProvideResolution` → `Task_SendCustomerResponse` → fork (`Task_LogKnowledgeBase` || `ReceiveTask_WaitReply`). No join in LLM (intentional async, but differs); conditions similar but scripted (`${...}` vs. `"simple"`). Cancel: ground dangling `cancelEvent` (incomplete "at any point"); LLM boundary on SubProcess (better but extra).
+
+- **Extra/Hallucinated (-0.3)**: SubProcess wrapper, `isEmbedded: true`, `triggeredByEvent: false`, outer Start/Ends, combined parse task phrasing—all absent from ground truth key. No penalized escalations, but extras count as deviations.
+
+No matches beyond superficial task names like "Provide Resolution". Total irreconcilable differences.

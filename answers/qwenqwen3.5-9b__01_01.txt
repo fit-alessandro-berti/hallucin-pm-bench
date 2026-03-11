@@ -1,0 +1,41 @@
+Based on the provided Contoso Airlines flight-refund process definition, here is the summary of decision points and required documents.
+
+### 1. Decision Points
+
+The process contains the following logical gates and branching decisions. Note that the legacy activity **CustomerService_Agent_Decide** is excluded.
+
+*   **Eligibility Validation Decision**
+    *   **Stage:** `Triage_Agent_Validate_Eligibility`
+    *   **Logic:** The agent validates the claim by cross-referencing the customer data against the **FlightManifest** and **WeatherReport**.
+    *   **Condition:** The process continues to the Finance Controller only after eligibility is validated; otherwise, the claim does not proceed to pre-approval.
+
+*   **Financial Approval Decision**
+    *   **Stage:** `Finance_Controller_PreApprove`
+    *   **Logic:** The finance controller signs off on the **EligibilityChecklist**.
+    *   **Condition:** Payment processing cannot begin without a successful sign-off on this checklist.
+
+*   **High-Value Amount Decision**
+    *   **Stage:** Precedes `Process_Refund_Payment` (High-value branch)
+    *   **Logic:** The specific threshold check: **if the refund amount is greater than €1 000**.
+    *   **Branching Path:**
+        *   **> €1 000:** Case proceeds to `Senior_Auditor_Review` (requires **AuditTrail**).
+        *   **≤ €1 000:** Case proceeds directly to `Process_Refund_Payment`.
+
+*   **Payment Authorization Decision**
+    *   **Stage:** `Process_Refund_Payment`
+    *   **Logic:** Execution is conditional on the presence of signed authorization.
+    *   **Condition:** Process begins only after `Finance_Controller_PreApprove` has succeeded **and** `BankTransferAuthorization` is present (for high-value claims, `Senior_Auditor_Review` must also be completed).
+
+---
+
+### 2. Required Documents
+
+The following artefacts are defined as required within the process steps or decision criteria. No other documents exist in this process.
+
+*   **RefundRequestForm** (Artifect: Customer_Submit_Claim)
+*   **FlightManifest** (Artifect: Triage_Agent_Validate_Eligibility)
+*   **WeatherReport** (Artifect: Triage_Agent_Validate_Eligibility)
+*   **EligibilityChecklist** (Artifect: Finance_Controller_PreApprove)
+*   **AuditTrail** (Artifect: Senior_Auditor_Review — *Required only if refund amount > €1 000*)
+*   **BankTransferAuthorization** (Artifect: Process_Refund_Payment)
+*   **RefundConfirmationPDF** (Artifect: Issue_Confirmation_Letter)

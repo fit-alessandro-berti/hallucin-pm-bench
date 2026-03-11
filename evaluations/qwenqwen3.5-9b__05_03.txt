@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Rationale (strict scoring breakdown):
+- **Partial credit (+2.0 base)**: Identifies boundary timer on `Activity_CreateAccount` as the enforcement mechanism (directionally aligns with ground truth).
+- **Major deductions (-8.0 total)**:
+  - **Invalid BPMN XML syntax/structure** (-3.0): Uses wrong attribute `sourceRef` (should be `attachedToRef`); `cancelActivity="true"` omitted (uses nonstandard `isInterrupting`); malformed/nested `<bpmn:timerEventDefinition>` with invalid `eventDefinitionType="cycle"` and no actual duration (missing `<bpmn:timeDuration>PT48H</bpmn:timeDuration>`); no `xsi:type`.
+  - **No outgoing sequence flow** (-2.0): Boundary event is orphaned (no `sourceRef="Boundary_LateCreate" targetRef="Activity_AMReview"`), so timeout has no path/effect, failing SLA enforcement.
+  - **Ignores key context** (-2.0): Fails to reuse existing unused `Activity_AMReview` (explicitly commented as escalation path), violating "without adding any new activities" by implying incomplete enforcement; timer start timing (post-"Verify Identity") unaddressed.
+  - **Inaccurate justification** (-1.0): Vague ("system-level timeout without manual monitoring"); omits precise 48h spec, existing task reuse, and true enforcement via routing.
+
+Net: Fundamentally broken/incomplete vs. ground truth; small errors compounded into total failure.
