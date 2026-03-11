@@ -5,6 +5,91 @@ import traceback
 import json
 
 
+def _uses_responses_api(api_url):
+    return "api.x.ai" in api_url
+
+
+def _build_api_url(api_url, endpoint):
+    return api_url.rstrip("/") + "/" + endpoint.lstrip("/")
+
+
+def _build_payload(prompt, model_name, parameters, use_responses_api):
+    payload = dict(parameters.get("payload", {}))
+
+    if use_responses_api and "reasoning_effort" in payload and "reasoning" not in payload:
+        payload["reasoning"] = {"effort": payload.pop("reasoning_effort")}
+
+    if use_responses_api:
+        payload.update({
+            "model": model_name,
+            "input": prompt,
+        })
+    else:
+        payload.update({
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+        })
+
+    return payload
+
+
+def _extract_responses_reasoning(resp_json):
+    reasoning_parts = []
+
+    for item in resp_json.get("output", []):
+        if item.get("type") != "reasoning":
+            continue
+
+        for summary_item in item.get("summary", []):
+            if isinstance(summary_item, dict) and summary_item.get("text"):
+                reasoning_parts.append(summary_item["text"])
+
+    return "\n".join(reasoning_parts).strip()
+
+
+def _extract_responses_message(resp_json):
+    if resp_json.get("output_text"):
+        return resp_json["output_text"]
+
+    message_parts = []
+
+    for item in resp_json.get("output", []):
+        if item.get("type") != "message":
+            continue
+
+        for content_item in item.get("content", []):
+            if not isinstance(content_item, dict):
+                continue
+
+            if content_item.get("type") in {"output_text", "text"} and content_item.get("text"):
+                message_parts.append(content_item["text"])
+
+    return "\n".join(message_parts).strip()
+
+
+def _parse_response_json(resp_json, use_responses_api):
+    if use_responses_api:
+        response_message = _extract_responses_message(resp_json)
+        reasoning_content = _extract_responses_reasoning(resp_json)
+
+        if reasoning_content:
+            response_message = "<think>\n" + reasoning_content + "\n</think>\n\n" + response_message.strip()
+
+        return response_message
+
+    if "choices" not in resp_json:
+        print(resp_json)
+
+    message = resp_json["choices"][-1]["message"]
+
+    response_message = message["content"]
+    if "reasoning_content" in message:
+        response_message = "<think>\n" + message[
+            "reasoning_content"] + "\n</think>\n\n" + response_message.strip()
+
+    return response_message
+
+
 class Shared:
     MODEL_CATALOGUE = ["openai/gpt-4.1",
                   "openai/gpt-4.1-mini",
@@ -171,6 +256,15 @@ class Shared:
                         {"base_model": "grok-4.20-experimental-beta-0304-reasoning",
                          "api_url": "https://api.x.ai/v1/",
                          "api_key": os.environ["GROK_API_KEY"]}),
+                       ("grok-4.20-multi-agent-experimental-beta-0304",
+                        {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
+                         "api_url": "https://api.x.ai/v1/",
+                         "api_key": os.environ["GROK_API_KEY"]}),
+                       ("grok-4.20-heavy",
+                        {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
+                         "api_url": "https://api.x.ai/v1/",
+                         "api_key": os.environ["GROK_API_KEY"],
+                         "payload": {"reasoning": {"effort": "high"}}}),
                        "Grok-4.1-20251118",
                        "google/gemini-2.5-flash",
                   "google/gemini-2.5-flash-lite-preview-06-17",
@@ -251,22 +345,16 @@ def get_response(prompt, model_name, parameters=None):
 
     api_url = parameters["api_url"] if "api_url" in parameters else "https://openrouter.ai/api/v1/"
     api_key = parameters["api_key"] if "api_key" in parameters else os.environ["OPENROUTER_API_KEY"]
+    use_responses_api = _uses_responses_api(api_url)
 
-    complete_url = api_url + "chat/completions"
+    complete_url = _build_api_url(api_url, "responses" if use_responses_api else "chat/completions")
 
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
 
-    messages = [{"role": "user", "content": prompt}]
-    payload = {
-        "model": model_name,
-        "messages": messages,
-    }
-
-    if "payload" in parameters:
-        payload.update(parameters["payload"])
+    payload = _build_payload(prompt, model_name, parameters, use_responses_api)
 
     enable_streaming = False
 
@@ -294,7 +382,18 @@ def get_response(prompt, model_name, parameters=None):
                         break
                     try:
                         data_json = json.loads(data_str)
-                        if "choices" in data_json:
+                        if use_responses_api:
+                            if data_json.get("type") == "response.output_text.delta":
+                                chunk_content = data_json.get("delta", "")
+                                if chunk_content:
+                                    response_message += chunk_content
+                                    chunk_count += 1
+                            elif data_json.get("type") == "response.reasoning_summary_text.delta":
+                                chunk_reasoning_content = data_json.get("delta", "")
+                                if chunk_reasoning_content:
+                                    thinking_content += chunk_reasoning_content
+                                    chunk_count += 1
+                        elif "choices" in data_json:
                             # Each chunk has a delta with partial content
                             chunk_content = data_json["choices"][0]["delta"].get("content", "")
                             chunk_reasoning_content = data_json["choices"][0]["delta"].get("reasoning_content", "")
@@ -327,16 +426,7 @@ def get_response(prompt, model_name, parameters=None):
                 print(resp.text)
 
             resp_json = resp.json()
-
-            if "choices" not in resp_json:
-                print(resp_json)
-
-            message = resp_json["choices"][-1]["message"]
-
-            response_message = message["content"]
-            if "reasoning_content" in message:
-                response_message = "<think>\n" + message[
-                    "reasoning_content"] + "\n</think>\n\n" + response_message.strip()
+            response_message = _parse_response_json(resp_json, use_responses_api)
 
     return response_message
 

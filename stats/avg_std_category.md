@@ -2,16 +2,16 @@
 
 | Category                                |      Avg |      Std |
 |:----------------------------------------|---------:|---------:|
-| C01 Domain-override / Precedence checks | 1.76629  | 0.401179 |
-| C02 Event-log fact-extraction           | 2.65657  | 0.45759  |
-| C03 Text to Model reconstruction        | 1.15416  | 0.487509 |
-| C04 Compliance / Conformance reasoning  | 1.87893  | 0.635187 |
-| C05 Counterfactual edits                | 1.18354  | 0.550474 |
-| C06 Multi-process memory interference   | 2.57876  | 0.428185 |
-| C07 Change-log diffing                  | 2.15287  | 0.495205 |
-| C08 Temporal / concurrency reasoning    | 1.83157  | 0.744607 |
-| C09 Unknown-should-remain-unknown       | 2.72826  | 0.299617 |
-| C10 Domain-synonym enforcement          | 0.777978 | 0.219469 |
-| C11 Performance analytics commentary    | 2.01534  | 0.478047 |
-| C12 Misinformation injection            | 2.52438  | 0.509385 |
-| C13 Edge-case / low-support prompts     | 2.53836  | 0.335375 |
+| C01 Domain-override / Precedence checks | 1.774    | 0.405566 |
+| C02 Event-log fact-extraction           | 2.65967  | 0.455979 |
+| C03 Text to Model reconstruction        | 1.15856  | 0.492946 |
+| C04 Compliance / Conformance reasoning  | 1.88639  | 0.635575 |
+| C05 Counterfactual edits                | 1.18578  | 0.548162 |
+| C06 Multi-process memory interference   | 2.58233  | 0.427129 |
+| C07 Change-log diffing                  | 2.15778  | 0.494724 |
+| C08 Temporal / concurrency reasoning    | 1.83922  | 0.744135 |
+| C09 Unknown-should-remain-unknown       | 2.72983  | 0.298318 |
+| C10 Domain-synonym enforcement          | 0.777278 | 0.218352 |
+| C11 Performance analytics commentary    | 2.01689  | 0.475612 |
+| C12 Misinformation injection            | 2.52867  | 0.508175 |
+| C13 Edge-case / low-support prompts     | 2.53993  | 0.333897 |

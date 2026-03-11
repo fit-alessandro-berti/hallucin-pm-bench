@@ -1,0 +1,57 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  id="wrc_definitions" 
+                  targetNamespace="http://www.example.org/wrc">
+  <bpmn:process id="wrc_WarrantyReplacement_v1_3" name="Warranty-Replacement v1.3" isExecutable="false">
+    
+    <!-- Flow Elements (only those explicitly mentioned) -->
+    <bpmn:startEvent id="wrc_startEvent" name="online warranty claim" />
+    
+    <bpmn:task id="wrc_validateClaimTask" name="validates the claim" />
+    <bpmn:task id="wrc_requestMissingInformationTask" name="requests missing information" />
+    <bpmn:task id="wrc_checkWarrantyEligibilityTask" name="checks warranty eligibility" />
+    <bpmn:task id="wrc_sendRejectionNoticeTask" name="send rejection notice" />
+    <bpmn:task id="wrc_createShipmentOrderTask" name="Create shipment order for the replacement unit." />
+    <bpmn:task id="wrc_scheduleCourierPickupTask" name="Schedule courier pickup of the faulty product." />
+    <bpmn:task id="wrc_updateInventoryRecordsTask" name="update inventory records" />
+    <bpmn:task id="wrc_closeClaimTask" name="close the claim" />
+    
+    <bpmn:exclusiveGateway id="wrc_completenessGateway" name="Claim complete?" />
+    <bpmn:exclusiveGateway id="wrc_warrantyDecisionGateway" name="Within warranty?" />
+    <bpmn:parallelGateway id="wrc_parallelSplitGateway" />
+    <bpmn:parallelGateway id="wrc_parallelJoinGateway" />
+    
+    <bpmn:endEvent id="wrc_rejectionEndEvent" name="Claim rejected" />
+    <bpmn:endEvent id="wrc_successEndEvent" name="Claim closed" />
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_seq1" sourceRef="wrc_startEvent" targetRef="wrc_validateClaimTask" />
+    <bpmn:sequenceFlow id="wrc_seq2" sourceRef="wrc_validateClaimTask" targetRef="wrc_completenessGateway" />
+    
+    <!-- Completeness gateway (step 2) -->
+    <bpmn:sequenceFlow id="wrc_seq3" name="incomplete" sourceRef="wrc_completenessGateway" targetRef="wrc_requestMissingInformationTask" />
+    <bpmn:sequenceFlow id="wrc_seq4" sourceRef="wrc_requestMissingInformationTask" targetRef="wrc_validateClaimTask" />
+    <bpmn:sequenceFlow id="wrc_seq5" name="complete" sourceRef="wrc_completenessGateway" targetRef="wrc_checkWarrantyEligibilityTask" />
+    
+    <bpmn:sequenceFlow id="wrc_seq6" sourceRef="wrc_checkWarrantyEligibilityTask" targetRef="wrc_warrantyDecisionGateway" />
+    
+    <!-- Warranty decision gateway (step 3) -->
+    <bpmn:sequenceFlow id="wrc_seq7" name="out of warranty" sourceRef="wrc_warrantyDecisionGateway" targetRef="wrc_sendRejectionNoticeTask" />
+    <bpmn:sequenceFlow id="wrc_seq8" sourceRef="wrc_sendRejectionNoticeTask" targetRef="wrc_rejectionEndEvent" />
+    <bpmn:sequenceFlow id="wrc_seq9" name="within warranty" sourceRef="wrc_warrantyDecisionGateway" targetRef="wrc_parallelSplitGateway" />
+    
+    <!-- Parallel split/join for step 4 -->
+    <bpmn:sequenceFlow id="wrc_seq10" sourceRef="wrc_parallelSplitGateway" targetRef="wrc_createShipmentOrderTask" />
+    <bpmn:sequenceFlow id="wrc_seq11" sourceRef="wrc_parallelSplitGateway" targetRef="wrc_scheduleCourierPickupTask" />
+    <bpmn:sequenceFlow id="wrc_seq12" sourceRef="wrc_createShipmentOrderTask" targetRef="wrc_parallelJoinGateway" />
+    <bpmn:sequenceFlow id="wrc_seq13" sourceRef="wrc_scheduleCourierPickupTask" targetRef="wrc_parallelJoinGateway" />
+    
+    <bpmn:sequenceFlow id="wrc_seq14" sourceRef="wrc_parallelJoinGateway" targetRef="wrc_updateInventoryRecordsTask" />
+    <bpmn:sequenceFlow id="wrc_seq15" sourceRef="wrc_updateInventoryRecordsTask" targetRef="wrc_closeClaimTask" />
+    <bpmn:sequenceFlow id="wrc_seq16" sourceRef="wrc_closeClaimTask" targetRef="wrc_successEndEvent" />
+
+  </bpmn:process>
+</bpmn:definitions>
+```
