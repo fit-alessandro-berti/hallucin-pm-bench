@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 
 
-EVALUATING_MODEL_NAME = "grok-4-1-fast-reasoning"
+EVALUATING_MODEL_NAME = "grok-4.20-beta-0309-reasoning"
 EVALUATING_API_URL = "https://api.x.ai/v1/"
 EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
 MAX_THREADS = 50

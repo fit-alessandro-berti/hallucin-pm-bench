@@ -267,6 +267,8 @@ class Shared:
                          "payload": {"reasoning": {"effort": "high"}}}),
                        "Grok-4.1-20251118",
                        "google/gemini-2.5-flash",
+                       "openrouter/healer-alpha",
+                       "openrouter/hunter-alpha",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
                   "google/gemini-2.0-flash-001",

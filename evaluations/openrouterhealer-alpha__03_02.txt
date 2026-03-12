@@ -1,0 +1,19 @@
+2.0
+
+The LLM answer deviates substantially from the ground truth in multiple critical dimensions, warranting a severely penalized score under strict evaluation criteria:
+
+- **Completely mismatched JSON schema**: Ground truth uses a flat "process_id" + "elements" array + "flows" array with normalized IDs and minimal properties. LLM uses an unrelated, BPMN-XML-serialization-style structure with nested "definitions", per-type arrays, and BPMN-specific keys (e.g., "exclusiveGateway", "sequenceFlow", "eventDefinition"). This alone constitutes a major structural failure.
+
+- **Missing or merged elements**: No distinct "createTicket" and "initialClassify" tasks (ground truth explicitly lists both). LLM merges parsing/ticket creation into one task and treats "Initial Classification" only as a gateway name, omitting the required task.
+
+- **Incorrect control-flow modeling**: 
+  - Uses ordinary parallel gateway + two independent intermediateCatchEvents for the "wait up to 24h" logic. Ground truth correctly specifies an "eventBasedGateway" (awaitReply) feeding the message and timer events. This is a fundamental semantic error in BPMN.
+  - Parallel join flows directly to both catch events, which would activate both waits in parallel rather than racing them.
+
+- **Cancellation handling**: LLM introduces an invalid boundaryEvent attached to a non-existent "Process_1" reference. Ground truth uses a top-level "cancelEvent" (intermediateCatchEvent) to "terminate". This counts as both an attachment error and partial invention.
+
+- **Extraneous or mismatched details**: Extra gateways named "Fork"/"Join", non-matching element IDs/names, "isExecutable", "targetNamespace", terminate vs. terminateEndEvent distinction, and end-event naming all diverge from the key. No hallucinated escalations, but the modeling choices still add unspecified flows/gateways relative to the provided key.
+
+- **Faithfulness violations**: The prompt required modeling *only* what is described, with no extra steps. The LLM's BPMN is malformed for the timer/reply race and cancellation "at any point".
+
+These accumulated errors (schema, missing tasks, wrong gateway type, invalid flows, attachment mistakes) produce a representation that is not interchangeable with the ground truth. Even minor naming or flow discrepancies would trigger heavy deductions; the scale of divergence here drives the score to 2.0.
