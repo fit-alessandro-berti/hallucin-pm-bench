@@ -1,11 +1,17 @@
+import math
 import os
 import re
-import numpy as np
-import pandas as pd
+import time
+from statistics import median, pstdev
 
 
 pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+)/(?P<denominator>\d+))(?!\.)'
 reg_expr = re.compile(pattern)
+
+CATEGORY_IDS = tuple(f"{idx:02d}" for idx in range(1, 14))
+NAME_PREFIXES = ("anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft", "deepseek", "meta-llama")
+OPEN_SOURCE_PATTERNS = ("qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss")
+LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm")
 
 MAPPING = {}
 MAPPING["C01"] = "C01 Domain-override / Precedence checks"
@@ -23,9 +29,7 @@ MAPPING["C12"] = "C12 Misinformation injection"
 MAPPING["C13"] = "C13 Edge-case / low-support prompts"
 
 def format_name(llm):
-    patterns = ["anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft", "deepseek", "meta-llama"]
-
-    for p in patterns:
+    for p in NAME_PREFIXES:
         if llm.startswith(p):
             return llm[len(p):]
 
@@ -33,22 +37,22 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    patterns = {"qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss"}
+    model_name_lower = model_name.lower()
 
-    for p in patterns:
-        if p.lower() in model_name.lower():
-            if not "mistral-medium" in model_name.lower() and not "ministral" in model_name.lower():
+    for p in OPEN_SOURCE_PATTERNS:
+        if p in model_name_lower:
+            if "mistral-medium" not in model_name_lower and "ministral" not in model_name_lower:
                 return ":white_check_mark:"
 
     return ":x:"
 
 
 def is_lrm(model_name):
-    patterns = {"-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm"}
+    model_name_lower = model_name.lower()
 
-    for p in patterns:
-        if p.lower() in model_name.lower():
-            if not ("chat" in model_name.lower() or model_name.lower() == "gpt-5.1-2025-11-13" or "4.1" in model_name.lower()):
+    for p in LRM_PATTERNS:
+        if p in model_name_lower:
+            if not ("chat" in model_name_lower or model_name_lower == "gpt-5.1-2025-11-13" or "4.1" in model_name_lower):
                 return ":white_check_mark:"
 
     return ":x:"
@@ -67,167 +71,257 @@ def format_numb_in_table(score, max_score, good_diff=0.0):
 def get_prompts_size():
     size_dict = {}
 
-    for prompt in os.listdir("prompts"):
-        size_dict[prompt.split(".")[0]] = os.path.getsize(os.path.join("prompts", prompt))
+    with os.scandir("prompts") as entries:
+        for entry in entries:
+            if not entry.is_file():
+                continue
+
+            prompt_name, _ = os.path.splitext(entry.name)
+            size_dict[prompt_name] = entry.stat().st_size
 
     return size_dict
 
 
 def match_regex(text):
-    matches = list(reg_expr.finditer(text))
-    matches_numbers_floats = []
-    matches_numbers_ints = []
-    for match in matches:
-        match_stri = str(match.group(0))
+    first_float = None
+    first_int = None
+    previous_float = None
+
+    for match in reg_expr.finditer(text):
+        match_stri = match.group(0)
         number = float(match_stri)
         if number >= 1 and number <= 10:
             if "." in match_stri:
-                matches_numbers_floats.append(number)
-            else:
-                matches_numbers_ints.append(number)
+                if first_float is None:
+                    first_float = number
+                if number == 10.0 and previous_float is not None:
+                    return previous_float
+                previous_float = number
+            elif first_int is None:
+                first_int = number
 
-    if matches_numbers_floats:
-        if 10.0 in matches_numbers_floats:
-            idx = matches_numbers_floats.index(10.0)
-            if idx > 0:
-                return matches_numbers_floats[idx-1]
-        return matches_numbers_floats[0]
-    elif matches_numbers_ints:
-        return matches_numbers_ints[0]
+    if first_float is not None:
+        return first_float
+
+    return first_int
+
+
+def _parse_eval_name(file_name):
+    stem, _ = os.path.splitext(file_name)
+    llm, question = stem.split("__", 1)
+    return llm, question
+
+
+def _load_evaluation_data(evaluation_folder):
+    dictio = {}
+    per_llm_category_scores = {}
+    categories = set()
+
+    with os.scandir(evaluation_folder) as entries:
+        for entry in entries:
+            if not entry.is_file():
+                continue
+
+            llm, question = _parse_eval_name(entry.name)
+            category = question[:2]
+            categories.add(category)
+
+            with open(entry.path, encoding="utf-8") as evaluation_file:
+                number = match_regex(evaluation_file.read())
+
+            if number is None:
+                number = 1.0
+
+            dictio.setdefault(llm, {})[question] = number
+            llm_category_scores = per_llm_category_scores.setdefault(llm, {})
+            llm_category_scores[category] = llm_category_scores.get(category, 0.0) + number
+
+    return dictio, per_llm_category_scores, sorted(categories)
+
+
+def _format_markdown_value(value):
+    if isinstance(value, float):
+        if math.isnan(value):
+            return "nan"
+        text = f"{value:.6f}"
+        return text.rstrip("0").rstrip(".")
+
+    return str(value)
+
+
+def _render_markdown_table(rows, columns=None):
+    if not rows:
+        return ""
+
+    if columns is None:
+        columns = list(rows[0].keys())
+
+    rendered_rows = [[_format_markdown_value(row.get(column, "")) for column in columns] for row in rows]
+    widths = []
+    for idx, column in enumerate(columns):
+        column_width = len(column)
+        for row in rendered_rows:
+            column_width = max(column_width, len(row[idx]))
+        widths.append(column_width)
+
+    header = "| " + " | ".join(column.ljust(widths[idx]) for idx, column in enumerate(columns)) + " |"
+    separator = "| " + " | ".join("-" * width for width in widths) + " |"
+
+    body = []
+    for row in rendered_rows:
+        body.append("| " + " | ".join(row[idx].ljust(widths[idx]) for idx in range(len(columns))) + " |")
+
+    return "\n".join([header, separator] + body)
+
+
+def _write_markdown_report(path, title, rows, columns=None):
+    with open(path, "w", encoding="utf-8") as report_file:
+        report_file.write(title)
+        report_file.write(_render_markdown_table(rows, columns))
+
+
+def _safe_mean(values):
+    if not values:
+        return float("nan")
+    return sum(values) / len(values)
+
+
+def _pearson_correlation(values_x, values_y):
+    if not values_x or not values_y or len(values_x) != len(values_y):
+        return float("nan")
+
+    mean_x = _safe_mean(values_x)
+    mean_y = _safe_mean(values_y)
+
+    numerator = 0.0
+    sum_sq_x = 0.0
+    sum_sq_y = 0.0
+    for value_x, value_y in zip(values_x, values_y):
+        centered_x = value_x - mean_x
+        centered_y = value_y - mean_y
+        numerator += centered_x * centered_y
+        sum_sq_x += centered_x * centered_x
+        sum_sq_y += centered_y * centered_y
+
+    if sum_sq_x == 0.0 or sum_sq_y == 0.0:
+        return float("nan")
+
+    return numerator / math.sqrt(sum_sq_x * sum_sq_y)
+
+
+def _best_linear_fit(x_values, y_values):
+    if not x_values or len(x_values) != len(y_values):
+        return float("nan"), float("nan")
+
+    mean_x = _safe_mean(x_values)
+    mean_y = _safe_mean(y_values)
+    numerator = 0.0
+    denominator = 0.0
+
+    for x_value, y_value in zip(x_values, y_values):
+        centered_x = x_value - mean_x
+        numerator += centered_x * (y_value - mean_y)
+        denominator += centered_x * centered_x
+
+    if denominator == 0.0:
+        return float("nan"), float("nan")
+
+    slope = numerator / denominator
+    intercept = mean_y - slope * mean_x
+    return slope, intercept
 
 
 def get_dictio_results(evaluation_folder):
-    evaluations = os.listdir(evaluation_folder)
-
-    dictio = {}
-
-    for ev in evaluations:
-        ev_content = open(os.path.join(evaluation_folder, ev), encoding="utf-8").read()
-
-        llm = ev.split("__")[0]
-        question = ev.split("__")[1].split(".")[0]
-
-        if not llm in dictio:
-            dictio[llm] = {}
-
-        number = match_regex(ev_content)
-        if number is None:
-            number = 1.0
-
-        dictio[llm][question] = number
-
+    dictio, _, _ = _load_evaluation_data(evaluation_folder)
     return dictio
 
 
 def get_agg_results(evaluation_folder):
-    categories = os.listdir(evaluation_folder)
-    categories = set(x.split("__")[1].split("_")[0] for x in categories)
-    categories = sorted(list(categories))
-
-    dictio = get_dictio_results(evaluation_folder)
+    dictio, per_llm_category_scores, categories = _load_evaluation_data(evaluation_folder)
     score_key = "SCORE"
     avg_key = "AVG"
+    max_per_cat = {cat: 0.0 for cat in categories}
 
-    max_per_cat = {}
+    for category_scores in per_llm_category_scores.values():
+        for category in categories:
+            max_per_cat[category] = max(max_per_cat[category], category_scores.get(category, 0.0))
 
-    results = []
-    for llm in dictio:
-        summ = sum(dictio[llm].values())
-        row = {"LLM": llm, "LRM": is_lrm(llm), "OS": is_open_source(llm), avg_key: 0.0, score_key: summ}
+    numeric_results = []
+    for llm, scores in dictio.items():
+        if any(category not in per_llm_category_scores.get(llm, {}) for category in categories):
+            continue
 
-        for cat in categories:
-            if cat not in max_per_cat:
-                max_per_cat[cat] = 0.0
+        total_score = sum(scores.values())
+        row = {
+            "LLM": llm,
+            "LRM": is_lrm(llm),
+            "OS": is_open_source(llm),
+            avg_key: round(total_score / 39.0, 2),
+            score_key: total_score,
+        }
 
-            this_summ = sum(dictio[llm][x] for x in dictio[llm] if x.startswith(cat))
-            max_per_cat[cat] = max(max_per_cat[cat], this_summ)
+        category_scores = per_llm_category_scores[llm]
+        for category in categories:
+            row["C" + category] = category_scores[category]
 
-            if this_summ > 0:
-                row["C"+cat] = this_summ
+        numeric_results.append(row)
 
-        results.append(row)
+    numeric_results.sort(key=lambda row: (row[score_key], row["LLM"]), reverse=True)
 
-    results.sort(key=lambda x: (x[score_key], x["LLM"]), reverse=True)
+    display_results = []
+    for row in numeric_results:
+        display_row = {"LLM": format_name(row["LLM"]), "LRM": row["LRM"], "OS": row["OS"], avg_key: row[avg_key]}
+        for category in categories:
+            display_row["C" + category] = format_numb_in_table(row["C" + category], max_per_cat[category])
+        display_results.append(display_row)
 
-    for i in range(1, 14):
-        cat_name = "C" + str(i).zfill(2)
-        j = 0
-        while j < len(results):
-            if cat_name not in results[j]:
-                del results[j]
-                continue
-
-            results[j][cat_name] = format_numb_in_table(results[j][cat_name], max_per_cat[cat_name[1:]])
-            j = j + 1
-
-    for j in range(len(results)):
-        results[j][avg_key] = round(results[j][score_key] / 39.0, 2)
-        results[j][score_key] = round(results[j][score_key]/10.0, 1)
-        results[j]["LLM"] = format_name(results[j]["LLM"])
-        del results[j][score_key]
-
-    return results, dictio
+    return display_results, dictio, numeric_results
 
 
 def measure_inter_category_correlation(results):
-    from scipy.stats import pearsonr
-
     vectors = []
-    for cat0 in range(1, 14):
-        cat = "C"+str(cat0).zfill(2)
-        vectors.append([])
-
-        for row in results:
-            vectors[-1].append(float(row[cat].replace("**", "")))
+    for category in CATEGORY_IDS:
+        key = "C" + category
+        vectors.append([row[key] for row in results])
 
     table = []
+    for idx0, category0 in enumerate(CATEGORY_IDS):
+        table_row = {"Category": MAPPING["C" + category0]}
+        for idx1, category1 in enumerate(CATEGORY_IDS):
+            table_row["C" + category1] = _pearson_correlation(vectors[idx0], vectors[idx1])
+        table.append(table_row)
 
-    for cat0 in range(1, 14):
-        table.append({"Category": MAPPING["C"+str(cat0).zfill(2)]})
-        for cat1 in range(1, 14):
-            table[-1]["C"+str(cat1).zfill(2)] = pearsonr(vectors[cat0-1], vectors[cat1-1]).statistic
-
-    table = pd.DataFrame(table)
-    table_md = table.to_markdown(index=False)
-
-    F = open("stats/inter_correlation.md", "w")
-    F.write("# Inter-Features Correlation\n\n")
-    F.write(table_md)
-    F.close()
+    columns = ["Category"] + ["C" + category for category in CATEGORY_IDS]
+    _write_markdown_report("stats/inter_correlation.md", "# Inter-Features Correlation\n\n", table, columns)
 
 
 def get_vectors(dictio, get_std=True):
-    vectors = [[] for i in range(1, 14)]
-    for llm, scores in dictio.items():
-        for i in range(1, 14):
-            pref = str(i).zfill(2)
-            catscor = [y for x, y in scores.items() if x.startswith(pref)]
-            if len(catscor) == 3:
+    vectors = [[] for _ in CATEGORY_IDS]
+    for scores in dictio.values():
+        grouped_scores = {}
+        for question, score in scores.items():
+            grouped_scores.setdefault(question[:2], []).append(score)
+
+        for idx, category in enumerate(CATEGORY_IDS):
+            category_scores = grouped_scores.get(category)
+            if category_scores and len(category_scores) == 3:
                 if get_std:
-                    vectors[i-1].append(np.std(catscor))
+                    vectors[idx].append(pstdev(category_scores))
                 else:
-                    vectors[i - 1].append(np.mean(catscor))
+                    vectors[idx].append(_safe_mean(category_scores))
     return vectors
 
 
 def measure_intra_variation(dictio):
     vectors = get_vectors(dictio)
 
-    intra_variation = [np.median(vectors[i]) for i in range(len(vectors))]
+    intra_variation = [median(values) if values else float("nan") for values in vectors]
     table = []
 
-    for i in range(1, 14):
-        cat = "C"+str(i).zfill(2)
+    for idx, category in enumerate(CATEGORY_IDS):
+        table.append({"Category": MAPPING["C" + category], "Median of Std": intra_variation[idx]})
 
-        table.append({"Category": MAPPING[cat], "Median of Std": intra_variation[i-1]})
-
-    table = pd.DataFrame(table)
-    table_md = table.to_markdown(index=False)
-
-    F = open("stats/intra_variation.md", "w")
-    F.write("# Intra-Category Variation\n\n")
-    F.write(table_md)
-    F.close()
+    _write_markdown_report("stats/intra_variation.md", "# Intra-Category Variation\n\n", table)
 
 
 def get_best_linear_fit(prompts_size, dictio):
@@ -239,53 +333,43 @@ def get_best_linear_fit(prompts_size, dictio):
             Y.append(value)
             X.append(prompts_size[key])
 
-    m, b = np.polyfit(X, Y, 1)
+    m, b = _best_linear_fit(X, Y)
 
-    F = open("stats/best_linear_fit.md", "w", encoding="utf-8")
-    F.write("m=%.5f\nb=%.5f\n" % (m ,b))
-    F.close()
+    with open("stats/best_linear_fit.md", "w", encoding="utf-8") as fit_file:
+        fit_file.write("m=%.5f\nb=%.5f\n" % (m, b))
 
 
 def compute_avg_std_per_category(dictio):
     vectors = get_vectors(dictio, get_std=False)
 
     table = []
-    for i in range(1, 14):
-        cat = "C"+str(i).zfill(2)
-        table.append({"Category": MAPPING[cat], "Avg": np.average([y*0.3 for y in vectors[i-1]]), "Std": np.std([y*0.3 for y in vectors[i-1]])})
+    for idx, category in enumerate(CATEGORY_IDS):
+        scaled_values = [value * 0.3 for value in vectors[idx]]
+        table.append({"Category": MAPPING["C" + category], "Avg": _safe_mean(scaled_values), "Std": pstdev(scaled_values) if scaled_values else float("nan")})
 
-    table = pd.DataFrame(table)
-    table_md = table.to_markdown(index=False)
-
-    F = open("stats/avg_std_category.md", "w")
-    F.write("# Average/Std per Category\n\n")
-    F.write(table_md)
-    F.close()
+    _write_markdown_report("stats/avg_std_category.md", "# Average/Std per Category\n\n", table)
 
 
 def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
-    results, dictio = get_agg_results(evaluation_folder)
+    results, dictio, numeric_results = get_agg_results(evaluation_folder)
     if write_extra_stats:
-        measure_inter_category_correlation(results)
+        measure_inter_category_correlation(numeric_results)
         measure_intra_variation(dictio)
         compute_avg_std_per_category(dictio)
         prompts_size = get_prompts_size()
         get_best_linear_fit(prompts_size, dictio)
 
-    results = pd.DataFrame(results)
-
-    res = results.to_markdown(index=False)
-
-    F = open(target_leaderboard, "w")
-
-    F.write("## Overall Leaderboard (grok-4.2 used as the Judge)\n\n")
-    F.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
-    F.write(res)
-
-    F.close()
+    columns = list(results[0].keys()) if results else ["LLM", "LRM", "OS", "AVG"] + ["C" + category for category in CATEGORY_IDS]
+    with open(target_leaderboard, "w", encoding="utf-8") as leaderboard_file:
+        leaderboard_file.write("## Overall Leaderboard (grok-4.2 used as the Judge)\n\n")
+        leaderboard_file.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
+        leaderboard_file.write(_render_markdown_table(results, columns))
 
 
 
 if __name__ == "__main__":
+    t0 = time.time_ns()
     main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False)
     main("evaluations", "leaderboard.md", write_extra_stats=True)
+    t1 = time.time_ns()
+    print((t1 - t0) / 10**9)
