@@ -1,0 +1,275 @@
+{
+  "process": {
+    "id": "SupportTicketProcess",
+    "isExecutable": true,
+    "flowElements": [
+      {
+        "id": "StartEvent_1",
+        "type": "bpmn:StartEvent",
+        "name": "Support e-mail received",
+        "outgoing": ["Flow_To_SubProcess"]
+      },
+      {
+        "id": "Flow_To_SubProcess",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "StartEvent_1",
+        "targetRef": "SubProcess_Main"
+      },
+      {
+        "id": "SubProcess_Main",
+        "type": "bpmn:SubProcess",
+        "name": "Ticket Handling",
+        "incoming": ["Flow_To_SubProcess"],
+        "outgoing": ["Flow_To_End"],
+        "flowElements": [
+          {
+            "id": "StartEvent_Sub",
+            "type": "bpmn:StartEvent",
+            "outgoing": ["Flow_Sub_1"]
+          },
+          {
+            "id": "Flow_Sub_1",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "StartEvent_Sub",
+            "targetRef": "Task_Parse"
+          },
+          {
+            "id": "Task_Parse",
+            "type": "bpmn:Task",
+            "name": "Parse E-mail & Create Ticket",
+            "incoming": ["Flow_Sub_1"],
+            "outgoing": ["Flow_Sub_2"]
+          },
+          {
+            "id": "Flow_Sub_2",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Parse",
+            "targetRef": "GW_Classification"
+          },
+          {
+            "id": "GW_Classification",
+            "type": "bpmn:ExclusiveGateway",
+            "name": "Initial Classification",
+            "incoming": ["Flow_Sub_2"],
+            "outgoing": ["Flow_Sub_3", "Flow_Sub_4"]
+          },
+          {
+            "id": "Flow_Sub_3",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_Classification",
+            "targetRef": "Task_Resolution",
+            "conditionExpression": "${classification == 'Simple'}"
+          },
+          {
+            "id": "Flow_Sub_4",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_Classification",
+            "targetRef": "Task_RCA",
+            "conditionExpression": "${classification == 'Complex'}"
+          },
+          {
+            "id": "Task_RCA",
+            "type": "bpmn:Task",
+            "name": "Root Cause Analysis",
+            "incoming": ["Flow_Sub_4"],
+            "outgoing": ["Flow_Sub_5"]
+          },
+          {
+            "id": "Flow_Sub_5",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_RCA",
+            "targetRef": "Task_Resolution"
+          },
+          {
+            "id": "Task_Resolution",
+            "type": "bpmn:Task",
+            "name": "Provide Resolution",
+            "incoming": ["Flow_Sub_3", "Flow_Sub_5"],
+            "outgoing": ["Flow_Sub_6"]
+          },
+          {
+            "id": "Flow_Sub_6",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Resolution",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "id": "Task_SendResponse",
+            "type": "bpmn:Task",
+            "name": "Send Response to Customer",
+            "incoming": ["Flow_Sub_6"],
+            "outgoing": ["Flow_Sub_7"]
+          },
+          {
+            "id": "Flow_Sub_7",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "GW_Parallel_Fork"
+          },
+          {
+            "id": "GW_Parallel_Fork",
+            "type": "bpmn:ParallelGateway",
+            "incoming": ["Flow_Sub_7"],
+            "outgoing": ["Flow_Sub_8", "Flow_Sub_10"]
+          },
+          {
+            "id": "Flow_Sub_8",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_Parallel_Fork",
+            "targetRef": "Task_LogKB"
+          },
+          {
+            "id": "Task_LogKB",
+            "type": "bpmn:Task",
+            "name": "Log Solution in Knowledge Base",
+            "incoming": ["Flow_Sub_8"],
+            "outgoing": ["Flow_Sub_9"]
+          },
+          {
+            "id": "Flow_Sub_9",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_LogKB",
+            "targetRef": "GW_Parallel_Join"
+          },
+          {
+            "id": "Flow_Sub_10",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_Parallel_Fork",
+            "targetRef": "GW_EventBased"
+          },
+          {
+            "id": "GW_EventBased",
+            "type": "bpmn:EventBasedGateway",
+            "incoming": ["Flow_Sub_10"],
+            "outgoing": ["Flow_Sub_11", "Flow_Sub_13"]
+          },
+          {
+            "id": "Flow_Sub_11",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_EventBased",
+            "targetRef": "Event_Msg_Reply"
+          },
+          {
+            "id": "Event_Msg_Reply",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Customer Reply",
+            "eventDefinition": {
+              "type": "bpmn:MessageEventDefinition"
+            },
+            "incoming": ["Flow_Sub_11"],
+            "outgoing": ["Flow_Sub_12"]
+          },
+          {
+            "id": "Flow_Sub_12",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Event_Msg_Reply",
+            "targetRef": "GW_Parallel_Join"
+          },
+          {
+            "id": "Flow_Sub_13",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_EventBased",
+            "targetRef": "Event_Timer_24h"
+          },
+          {
+            "id": "Event_Timer_24h",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "24 Hours Pass",
+            "eventDefinition": {
+              "type": "bpmn:TimerEventDefinition",
+              "timeDuration": "PT24H"
+            },
+            "incoming": ["Flow_Sub_13"],
+            "outgoing": ["Flow_Sub_14"]
+          },
+          {
+            "id": "Flow_Sub_14",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Event_Timer_24h",
+            "targetRef": "Task_Reminder"
+          },
+          {
+            "id": "Task_Reminder",
+            "type": "bpmn:Task",
+            "name": "Send Reminder",
+            "incoming": ["Flow_Sub_14"],
+            "outgoing": ["Flow_Sub_15"]
+          },
+          {
+            "id": "Flow_Sub_15",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Reminder",
+            "targetRef": "GW_Parallel_Join"
+          },
+          {
+            "id": "GW_Parallel_Join",
+            "type": "bpmn:ParallelGateway",
+            "incoming": ["Flow_Sub_9", "Flow_Sub_12", "Flow_Sub_15"],
+            "outgoing": ["Flow_Sub_16"]
+          },
+          {
+            "id": "Flow_Sub_16",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "GW_Parallel_Join",
+            "targetRef": "Task_Close"
+          },
+          {
+            "id": "Task_Close",
+            "type": "bpmn:Task",
+            "name": "Close Ticket",
+            "incoming": ["Flow_Sub_16"],
+            "outgoing": ["Flow_Sub_17"]
+          },
+          {
+            "id": "Flow_Sub_17",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_Close",
+            "targetRef": "EndEvent_Sub"
+          },
+          {
+            "id": "EndEvent_Sub",
+            "type": "bpmn:EndEvent",
+            "incoming": ["Flow_Sub_17"]
+          }
+        ]
+      },
+      {
+        "id": "BoundaryEvent_Cancel",
+        "type": "bpmn:BoundaryEvent",
+        "name": "Cancel Ticket",
+        "attachedToRef": "SubProcess_Main",
+        "cancelActivity": true,
+        "eventDefinition": {
+          "type": "bpmn:MessageEventDefinition"
+        },
+        "outgoing": ["Flow_Cancel_To_Term"]
+      },
+      {
+        "id": "Flow_Cancel_To_Term",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "BoundaryEvent_Cancel",
+        "targetRef": "EndEvent_Terminate"
+      },
+      {
+        "id": "EndEvent_Terminate",
+        "type": "bpmn:EndEvent",
+        "name": "Terminated",
+        "eventDefinition": {
+          "type": "bpmn:TerminateEventDefinition"
+        },
+        "incoming": ["Flow_Cancel_To_Term"]
+      },
+      {
+        "id": "Flow_To_End",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "SubProcess_Main",
+        "targetRef": "EndEvent_Normal"
+      },
+      {
+        "id": "EndEvent_Normal",
+        "type": "bpmn:EndEvent",
+        "incoming": ["Flow_To_End"]
+      }
+    ]
+  }
+}

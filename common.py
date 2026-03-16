@@ -269,6 +269,7 @@ class Shared:
                        "google/gemini-2.5-flash",
                        "openrouter/healer-alpha",
                        "openrouter/hunter-alpha",
+                       "z-ai/glm-5-turbo",
                   "google/gemini-2.5-flash-lite-preview-06-17",
                   "google/gemini-2.0-flash-lite-001",
                   "google/gemini-2.0-flash-001",

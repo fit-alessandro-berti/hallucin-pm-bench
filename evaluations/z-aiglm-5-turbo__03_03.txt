@@ -1,0 +1,12 @@
+**4.0**
+
+The LLM answer deviates substantially from the ground-truth reference, resulting in a low score under strict evaluation.
+
+Key differences and deductions:
+- **Extra/hallucinated task**: includes `wrc_task_check_eligibility` ("checks warranty eligibility") and all associated flows/gateways/shapes/edges. Ground truth has no such task; after the completeness gateway it proceeds directly to the warranty gateway. This violates "model only the flow elements explicitly mentioned" and the rubric's penalty for extra tasks.
+- **Task name mismatches**: LLM uses lowercase verb forms ("validates the claim", "requests missing information", "send rejection notice", "update inventory records", "close the claim") while ground truth normalizes to title-case noun phrases ("Validate the claim", "Request missing information", etc.). Prompt requires verbatim matching, but LLM still does not match the provided ground-truth names.
+- **Start/end event names**: LLM uses "Start", "Rejected", "Completed"; ground truth uses "Online warranty claim submitted", "Rejected", "Successful end".
+- **Massive structural bloat**: LLM outputs a full BPMNDI diagram (hundreds of lines of coordinates, shapes, edges, exporter metadata, extra namespaces). Ground truth is a minimal 34-line process-only XML. This is not "semantically equivalent" and adds unrequested content.
+- **Element IDs and flow counts**: although the prefix "wrc_" is respected, the concrete IDs, number of sequence flows, and gateway naming differ from the reference.
+
+The core gateways, parallel block, loop, and two end events are present, preventing a 1.0–2.0 score. However, the extra task, name deviations, and non-minimal output constitute multiple significant errors. Under the "utmost strictness" directive, even smaller discrepancies would incur heavy penalties; the accumulated differences justify a 4.0.
