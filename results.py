@@ -266,7 +266,7 @@ def get_agg_results(evaluation_folder):
 
         numeric_results.append(row)
 
-    numeric_results.sort(key=lambda row: (row[score_key], row["LLM"]), reverse=True)
+    numeric_results.sort(key=lambda row: (-row[score_key], format_name(row["LLM"]), row["LLM"]))
 
     display_results = []
     for row in numeric_results:
