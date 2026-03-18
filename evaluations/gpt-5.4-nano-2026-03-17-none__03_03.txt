@@ -1,0 +1,15 @@
+3.0
+
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under strict evaluation:
+
+- **Extra/hallucinated task**: Includes `wrc_check_warranty_eligibility` ("checks warranty eligibility"), which is not present in the ground truth (GT has no such task; warranty decision is modeled purely as the exclusive gateway immediately after the completeness gateway per the output spec). This violates "Model **only** the flow elements explicitly mentioned" and the explicit instruction to use "another exclusive gateway for step 3 warranty decision" (not a preceding task).
+
+- **Invalid BPMN XML**: The loop from `wrc_request_missing_information` reuses `<outgoing>flow_wrc_2</outgoing>`, but that same flow ID is already defined with a different sourceRef (`wrc_validate_the_claim` → gateway). This creates conflicting/invalid sequenceFlow definitions. GT correctly loops request → validate task → gateway.
+
+- **Task name mismatches**: While the prompt requires verbatim matching to description text, LLM uses phrasing like "validates the claim" (gerund form) and "update inventory records", but GT (and expected minimal form) uses title-cased, concise versions like "Validate the claim", "Update inventory records". LLM also uses "send rejection notice" (lowercase) vs. GT. These are not equivalent.
+
+- **Element naming and structure**: Start event name ("customer submits an online warranty claim") does not match GT's "Online warranty claim submitted". Gateways and flows lack GT's condition labels ("Yes"/"No"). Parallel section is mostly intact but uses non-matching IDs and task names. Namespace/prefixes differ (no `bpmn:` prefix, mixed xmlns), though this is secondary.
+
+- **Other omissions/deviations**: No conditions on gateway outflows. More verbose than the minimal 34-line GT. While it has the required gateways, exactly two end events, `wrc_` ID prefix, and parallel split/join, the extras, invalidity, and structural mismatches compound.
+
+Only partial credit for covering the high-level flow and required gateway types; errors are neither small nor trivial, so the score reflects major deductions for hallucination, invalidity, and non-equivalence.

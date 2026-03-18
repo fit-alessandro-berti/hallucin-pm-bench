@@ -1,0 +1,233 @@
+{
+  "bpmn2:definitions": {
+    "bpmn2:id": "Definitions_TicketSupportProcess",
+    "bpmn2:targetNamespace": "http://example.com/bpmn/ticket-support",
+    "xmlns:bpmn2": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "xmlns:dc": "http://www.omg.org/spec/DD/20100524/DC",
+    "xmlns:di": "http://www.omg.org/spec/DD/20100524/DI",
+    "bpmn2:process": {
+      "bpmn2:id": "Process_CustomerSupportTicket",
+      "bpmn2:isExecutable": false,
+      "bpmn2:startEvent": [
+        {
+          "bpmn2:id": "StartEvent_SupportEmailReceived",
+          "bpmn2:incoming": [
+            {
+              "bpmn2:extensionElements": []
+            }
+          ]
+        }
+      ],
+      "bpmn2:intermediateCatchEvent": [
+        {
+          "bpmn2:id": "IntermediateCatchEvent_CancelledBeforeClosure",
+          "bpmn2:cancelActivity": false,
+          "bpmn2:messageEventDefinition": {
+            "bpmn2:messageRef": "Message_CustomerCancelsTicket"
+          }
+        },
+        {
+          "bpmn2:id": "IntermediateCatchEvent_CustomerReply",
+          "bpmn2:messageEventDefinition": {
+            "bpmn2:messageRef": "Message_CustomerReply"
+          }
+        }
+      ],
+      "bpmn2:task": [
+        {
+          "bpmn2:id": "Task_ParseEmailAndCreateTicket",
+          "bpmn2:name": "Parse Email and Create Ticket"
+        },
+        {
+          "bpmn2:id": "Task_InitialClassification",
+          "bpmn2:name": "Initial Classification"
+        },
+        {
+          "bpmn2:id": "Task_ProvideResolution",
+          "bpmn2:name": "Provide Resolution"
+        },
+        {
+          "bpmn2:id": "Task_RootCauseAnalysis",
+          "bpmn2:name": "Root Cause Analysis"
+        },
+        {
+          "bpmn2:id": "Task_SendResponseToCustomer",
+          "bpmn2:name": "Send Response to Customer"
+        },
+        {
+          "bpmn2:id": "Task_LogSolutionInKnowledgeBase",
+          "bpmn2:name": "Log Solution in Knowledge Base"
+        },
+        {
+          "bpmn2:id": "Task_CloseTicket",
+          "bpmn2:name": "Close Ticket"
+        },
+        {
+          "bpmn2:id": "Task_SendReminder",
+          "bpmn2:name": "Send Reminder"
+        }
+      ],
+      "bpmn2:intermediateThrowEvent": [],
+      "bpmn2:endEvent": [
+        {
+          "bpmn2:id": "EndEvent_TerminateOnCancel",
+          "bpmn2:terminateEventDefinition": {}
+        }
+      ],
+      "bpmn2:exclusiveGateway": [
+        {
+          "bpmn2:id": "Gateway_RouteSimpleComplex",
+          "bpmn2:name": "Route Simple or Complex"
+        },
+        {
+          "bpmn2:id": "Gateway_ResolutionTypeMerge"
+        },
+        {
+          "bpmn2:id": "Gateway_AfterCustomerReplyOrTimeout"
+        }
+      ],
+      "bpmn2:parallelGateway": [
+        {
+          "bpmn2:id": "ParallelGateway_AfterResolutionDraft"
+        },
+        {
+          "bpmn2:id": "ParallelGateway_LogAndReplyJoin"
+        }
+      ],
+      "bpmn2:boundaryEvent": [
+        {
+          "bpmn2:id": "BoundaryEvent_CancelDuringProcess",
+          "bpmn2:attachedToRef": "Task_ParseEmailAndCreateTicket",
+          "bpmn2:cancelActivity": true,
+          "bpmn2:messageEventDefinition": {
+            "bpmn2:messageRef": "Message_CustomerCancelsTicket"
+          }
+        }
+      ],
+      "bpmn2:intermediateTimerCatchEvent": [
+        {
+          "bpmn2:id": "Timer_CustomerReplyTimeout_24h",
+          "bpmn2:timeDuration": "P1D"
+        }
+      ],
+      "bpmn2:sequenceFlow": [
+        {
+          "bpmn2:id": "Flow_StartToParse",
+          "bpmn2:sourceRef": "StartEvent_SupportEmailReceived",
+          "bpmn2:targetRef": "Task_ParseEmailAndCreateTicket"
+        },
+        {
+          "bpmn2:id": "Flow_ParseToClassification",
+          "bpmn2:sourceRef": "Task_ParseEmailAndCreateTicket",
+          "bpmn2:targetRef": "Task_InitialClassification"
+        },
+        {
+          "bpmn2:id": "Flow_ClassificationToGateway",
+          "bpmn2:sourceRef": "Task_InitialClassification",
+          "bpmn2:targetRef": "Gateway_RouteSimpleComplex"
+        },
+        {
+          "bpmn2:id": "Flow_SimpleToProvideResolution",
+          "bpmn2:sourceRef": "Gateway_RouteSimpleComplex",
+          "bpmn2:targetRef": "Task_ProvideResolution",
+          "bpmn2:conditionExpression": {
+            "bpmn2:language": "http://www.w3.org/1999/XPath",
+            "bpmn2:body": "simple"
+          }
+        },
+        {
+          "bpmn2:id": "Flow_ComplexToRootCauseAnalysis",
+          "bpmn2:sourceRef": "Gateway_RouteSimpleComplex",
+          "bpmn2:targetRef": "Task_RootCauseAnalysis",
+          "bpmn2:conditionExpression": {
+            "bpmn2:language": "http://www.w3.org/1999/XPath",
+            "bpmn2:body": "complex"
+          }
+        },
+        {
+          "bpmn2:id": "Flow_RootCauseToProvideResolution",
+          "bpmn2:sourceRef": "Task_RootCauseAnalysis",
+          "bpmn2:targetRef": "Task_ProvideResolution"
+        },
+        {
+          "bpmn2:id": "Flow_ProvideResolutionToParallelSplit",
+          "bpmn2:sourceRef": "Task_ProvideResolution",
+          "bpmn2:targetRef": "ParallelGateway_AfterResolutionDraft"
+        },
+        {
+          "bpmn2:id": "Flow_ParallelToSendResponse",
+          "bpmn2:sourceRef": "ParallelGateway_AfterResolutionDraft",
+          "bpmn2:targetRef": "Task_SendResponseToCustomer"
+        },
+        {
+          "bpmn2:id": "Flow_ParallelToLogKnowledgeBase",
+          "bpmn2:sourceRef": "ParallelGateway_AfterResolutionDraft",
+          "bpmn2:targetRef": "Task_LogSolutionInKnowledgeBase"
+        },
+        {
+          "bpmn2:id": "Flow_SendResponseToJoin",
+          "bpmn2:sourceRef": "Task_SendResponseToCustomer",
+          "bpmn2:targetRef": "ParallelGateway_LogAndReplyJoin"
+        },
+        {
+          "bpmn2:id": "Flow_LogToJoin",
+          "bpmn2:sourceRef": "Task_LogSolutionInKnowledgeBase",
+          "bpmn2:targetRef": "ParallelGateway_LogAndReplyJoin"
+        },
+        {
+          "bpmn2:id": "Flow_JoinToWaitForCustomerOrTimeout",
+          "bpmn2:sourceRef": "ParallelGateway_LogAndReplyJoin",
+          "bpmn2:targetRef": "Gateway_AfterCustomerReplyOrTimeout"
+        },
+        {
+          "bpmn2:id": "Flow_WaitToCustomerReply",
+          "bpmn2:sourceRef": "Gateway_AfterCustomerReplyOrTimeout",
+          "bpmn2:targetRef": "IntermediateCatchEvent_CustomerReply"
+        },
+        {
+          "bpmn2:id": "Flow_WaitToTimeout",
+          "bpmn2:sourceRef": "Gateway_AfterCustomerReplyOrTimeout",
+          "bpmn2:targetRef": "Timer_CustomerReplyTimeout_24h"
+        },
+        {
+          "bpmn2:id": "Flow_CustomerReplyToClose",
+          "bpmn2:sourceRef": "IntermediateCatchEvent_CustomerReply",
+          "bpmn2:targetRef": "Task_CloseTicket"
+        },
+        {
+          "bpmn2:id": "Flow_TimeoutToSendReminder",
+          "bpmn2:sourceRef": "Timer_CustomerReplyTimeout_24h",
+          "bpmn2:targetRef": "Task_SendReminder"
+        },
+        {
+          "bpmn2:id": "Flow_ReminderToClose",
+          "bpmn2:sourceRef": "Task_SendReminder",
+          "bpmn2:targetRef": "Task_CloseTicket"
+        },
+        {
+          "bpmn2:id": "Flow_CloseToEndImplicit",
+          "bpmn2:sourceRef": "Task_CloseTicket",
+          "bpmn2:targetRef": "EndEvent_TerminateOnCancel"
+        }
+      ],
+      "bpmn2:eventBasedGateway": [
+        {
+          "bpmn2:id": "EventBasedGateway_CancelOrProceed",
+          "bpmn2:name": "Customer cancels before closure?"
+        }
+      ],
+      "bpmn2:message": [
+        {
+          "bpmn2:id": "Message_CustomerReply",
+          "bpmn2:name": "Customer Reply"
+        },
+        {
+          "bpmn2:id": "Message_CustomerCancelsTicket",
+          "bpmn2:name": "Customer Cancels Ticket"
+        }
+      ],
+      "bpmn2:property": []
+    }
+  }
+}

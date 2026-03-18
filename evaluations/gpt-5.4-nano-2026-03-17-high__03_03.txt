@@ -1,0 +1,11 @@
+4.0
+
+The LLM answer deviates substantially from the ground truth on multiple axes, triggering significant deductions under a strict rubric:
+
+- **Extra/hallucinated element**: Includes an explicit "checks warranty eligibility" task (plus associated flows and incoming to the warranty gateway) that is absent in the GT. The GT routes directly from the completeness gateway to the warranty gateway; the prompt's "only explicitly mentioned" rule and the GT's minimal form both penalize this addition.
+- **Task and event naming mismatches**: LLM uses non-matching strings ("validates the claim", "requests missing information", full "Create shipment order for the replacement unit", "update inventory records", start-event name "customer submits an online warranty claim", both end events named "end the process"). GT uses a consistent shortened/capitalized set ("Validate the claim", "Request missing information", "Create shipment order", etc.). Prompt's "verbatim" requirement is not satisfied relative to the expected key.
+- **Structural and XML defects**: Duplicate `<sequenceFlow>` with identical id "wrc_flow_within_warranty_to_parallel_split" (one with condition, one without) renders the document invalid. GT has a clean, single set of 15 flows with no duplicates.
+- **Gateway and flow differences**: Gateway names, condition modeling (conditionExpression vs. GT's name="Yes"/"No" on flows), and overall flow count differ. Parallel gateways carry names in LLM but not in GT.
+- **Non-minimal output**: GT is 34 lines of minimal valid BPMN; LLM is far longer, includes unused XML namespaces, and adds comments and extra ids.
+
+While the LLM correctly uses only required gateway types, prefixes all ids with "wrc_", includes the completeness loop, parallel split/join, and exactly two end events, the accumulated deviations (extra task, invalid XML, naming mismatches, non-equivalence) produce a large distance from the ground truth. Under "utmost strictness" where even small errors cause major point loss, 4.0 is the appropriate score.

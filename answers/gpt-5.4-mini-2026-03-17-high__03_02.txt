@@ -1,0 +1,324 @@
+{
+  "definitions": {
+    "id": "Definitions_CustomerSupportTicket",
+    "targetNamespace": "http://example.com/bpmn/customer-support-ticket",
+    "messages": [
+      {
+        "id": "Message_SupportEmailReceived",
+        "name": "Support E-mail Received"
+      },
+      {
+        "id": "Message_CustomerReply",
+        "name": "Customer Reply"
+      },
+      {
+        "id": "Message_CustomerCancellation",
+        "name": "Customer Cancels Ticket"
+      }
+    ],
+    "process": {
+      "id": "Process_CustomerSupportTicket",
+      "name": "Customer Support Ticket",
+      "isExecutable": false,
+      "flowElements": [
+        {
+          "id": "Start_SupportEmailReceived",
+          "type": "startEvent",
+          "name": "Support E-mail Received",
+          "eventDefinition": {
+            "type": "message",
+            "messageRef": "Message_SupportEmailReceived"
+          }
+        },
+        {
+          "id": "SubProcess_PreResponseHandling",
+          "type": "subProcess",
+          "name": "Prepare and Send Resolution",
+          "isExpanded": true,
+          "flowElements": [
+            {
+              "id": "SubStart_PreResponseHandling",
+              "type": "startEvent",
+              "name": "Start"
+            },
+            {
+              "id": "Task_ParseEmail",
+              "type": "serviceTask",
+              "name": "Parse E-mail"
+            },
+            {
+              "id": "Task_CreateTicket",
+              "type": "serviceTask",
+              "name": "Create Ticket"
+            },
+            {
+              "id": "Task_InitialClassification",
+              "type": "userTask",
+              "name": "Initial Classification"
+            },
+            {
+              "id": "Gateway_SimpleOrComplex",
+              "type": "exclusiveGateway",
+              "name": "Simple or Complex"
+            },
+            {
+              "id": "Task_ProvideResolution",
+              "type": "userTask",
+              "name": "Provide Resolution"
+            },
+            {
+              "id": "Task_RootCauseAnalysis",
+              "type": "userTask",
+              "name": "Root Cause Analysis"
+            },
+            {
+              "id": "Task_SendResponseToCustomer",
+              "type": "sendTask",
+              "name": "Send Response to Customer"
+            },
+            {
+              "id": "SubEnd_PreResponseHandling",
+              "type": "endEvent",
+              "name": "End"
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "id": "Flow_Pre_1",
+              "sourceRef": "SubStart_PreResponseHandling",
+              "targetRef": "Task_ParseEmail"
+            },
+            {
+              "id": "Flow_Pre_2",
+              "sourceRef": "Task_ParseEmail",
+              "targetRef": "Task_CreateTicket"
+            },
+            {
+              "id": "Flow_Pre_3",
+              "sourceRef": "Task_CreateTicket",
+              "targetRef": "Task_InitialClassification"
+            },
+            {
+              "id": "Flow_Pre_4",
+              "sourceRef": "Task_InitialClassification",
+              "targetRef": "Gateway_SimpleOrComplex"
+            },
+            {
+              "id": "Flow_Pre_5",
+              "sourceRef": "Gateway_SimpleOrComplex",
+              "targetRef": "Task_ProvideResolution",
+              "name": "Simple"
+            },
+            {
+              "id": "Flow_Pre_6",
+              "sourceRef": "Gateway_SimpleOrComplex",
+              "targetRef": "Task_RootCauseAnalysis",
+              "name": "Complex"
+            },
+            {
+              "id": "Flow_Pre_7",
+              "sourceRef": "Task_RootCauseAnalysis",
+              "targetRef": "Task_ProvideResolution"
+            },
+            {
+              "id": "Flow_Pre_8",
+              "sourceRef": "Task_ProvideResolution",
+              "targetRef": "Task_SendResponseToCustomer"
+            },
+            {
+              "id": "Flow_Pre_9",
+              "sourceRef": "Task_SendResponseToCustomer",
+              "targetRef": "SubEnd_PreResponseHandling"
+            }
+          ]
+        },
+        {
+          "id": "Gateway_ParallelSplit",
+          "type": "parallelGateway",
+          "name": "Parallel Split"
+        },
+        {
+          "id": "Task_LogSolutionInKnowledgeBase",
+          "type": "userTask",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "SubProcess_AwaitCustomerReplyAndClose",
+          "type": "subProcess",
+          "name": "Await Customer Reply and Close Ticket",
+          "isExpanded": true,
+          "flowElements": [
+            {
+              "id": "SubStart_AwaitCustomerReplyAndClose",
+              "type": "startEvent",
+              "name": "Start"
+            },
+            {
+              "id": "Gateway_WaitForReplyOrTimeout",
+              "type": "eventBasedGateway",
+              "name": "Wait for Customer Reply or 24 Hours"
+            },
+            {
+              "id": "Catch_CustomerReply",
+              "type": "intermediateCatchEvent",
+              "name": "Customer Reply",
+              "eventDefinition": {
+                "type": "message",
+                "messageRef": "Message_CustomerReply"
+              }
+            },
+            {
+              "id": "Catch_24HourTimer",
+              "type": "intermediateCatchEvent",
+              "name": "24 Hours Elapse",
+              "eventDefinition": {
+                "type": "timer",
+                "timeDuration": "PT24H"
+              }
+            },
+            {
+              "id": "Task_SendReminder",
+              "type": "serviceTask",
+              "name": "Send Reminder"
+            },
+            {
+              "id": "Task_CloseTicket",
+              "type": "task",
+              "name": "Close Ticket"
+            },
+            {
+              "id": "SubEnd_AwaitCustomerReplyAndClose",
+              "type": "endEvent",
+              "name": "End"
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "id": "Flow_Post_1",
+              "sourceRef": "SubStart_AwaitCustomerReplyAndClose",
+              "targetRef": "Gateway_WaitForReplyOrTimeout"
+            },
+            {
+              "id": "Flow_Post_2",
+              "sourceRef": "Gateway_WaitForReplyOrTimeout",
+              "targetRef": "Catch_CustomerReply",
+              "name": "Customer Reply"
+            },
+            {
+              "id": "Flow_Post_3",
+              "sourceRef": "Gateway_WaitForReplyOrTimeout",
+              "targetRef": "Catch_24HourTimer",
+              "name": "24 Hours"
+            },
+            {
+              "id": "Flow_Post_4",
+              "sourceRef": "Catch_CustomerReply",
+              "targetRef": "Task_CloseTicket"
+            },
+            {
+              "id": "Flow_Post_5",
+              "sourceRef": "Catch_24HourTimer",
+              "targetRef": "Task_SendReminder"
+            },
+            {
+              "id": "Flow_Post_6",
+              "sourceRef": "Task_SendReminder",
+              "targetRef": "Task_CloseTicket"
+            },
+            {
+              "id": "Flow_Post_7",
+              "sourceRef": "Task_CloseTicket",
+              "targetRef": "SubEnd_AwaitCustomerReplyAndClose"
+            }
+          ]
+        },
+        {
+          "id": "Gateway_ParallelJoin",
+          "type": "parallelGateway",
+          "name": "Parallel Join"
+        },
+        {
+          "id": "End_ProcessComplete",
+          "type": "endEvent",
+          "name": "Process Complete"
+        },
+        {
+          "id": "Boundary_CustomerCancellation_PreResponse",
+          "type": "boundaryEvent",
+          "name": "Customer Cancels Ticket",
+          "attachedToRef": "SubProcess_PreResponseHandling",
+          "cancelActivity": true,
+          "eventDefinition": {
+            "type": "message",
+            "messageRef": "Message_CustomerCancellation"
+          }
+        },
+        {
+          "id": "Boundary_CustomerCancellation_PostResponse",
+          "type": "boundaryEvent",
+          "name": "Customer Cancels Ticket",
+          "attachedToRef": "SubProcess_AwaitCustomerReplyAndClose",
+          "cancelActivity": true,
+          "eventDefinition": {
+            "type": "message",
+            "messageRef": "Message_CustomerCancellation"
+          }
+        },
+        {
+          "id": "End_Terminate",
+          "type": "terminateEndEvent",
+          "name": "Terminate"
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "Flow_1",
+          "sourceRef": "Start_SupportEmailReceived",
+          "targetRef": "SubProcess_PreResponseHandling"
+        },
+        {
+          "id": "Flow_2",
+          "sourceRef": "SubProcess_PreResponseHandling",
+          "targetRef": "Gateway_ParallelSplit"
+        },
+        {
+          "id": "Flow_3",
+          "sourceRef": "Gateway_ParallelSplit",
+          "targetRef": "Task_LogSolutionInKnowledgeBase",
+          "name": "Log KB"
+        },
+        {
+          "id": "Flow_4",
+          "sourceRef": "Task_LogSolutionInKnowledgeBase",
+          "targetRef": "Gateway_ParallelJoin"
+        },
+        {
+          "id": "Flow_5",
+          "sourceRef": "Gateway_ParallelSplit",
+          "targetRef": "SubProcess_AwaitCustomerReplyAndClose",
+          "name": "Wait for Reply"
+        },
+        {
+          "id": "Flow_6",
+          "sourceRef": "SubProcess_AwaitCustomerReplyAndClose",
+          "targetRef": "Gateway_ParallelJoin"
+        },
+        {
+          "id": "Flow_7",
+          "sourceRef": "Gateway_ParallelJoin",
+          "targetRef": "End_ProcessComplete"
+        },
+        {
+          "id": "Flow_8",
+          "sourceRef": "Boundary_CustomerCancellation_PreResponse",
+          "targetRef": "End_Terminate"
+        },
+        {
+          "id": "Flow_9",
+          "sourceRef": "Boundary_CustomerCancellation_PostResponse",
+          "targetRef": "End_Terminate"
+        }
+      ]
+    }
+  }
+}

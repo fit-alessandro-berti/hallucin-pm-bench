@@ -1,0 +1,20 @@
+**2.0**
+
+The LLM answer deviates substantially from the ground truth on almost every dimension that matters under the prompt and evaluation criteria. 
+
+**Major structural mismatches (heavy point loss):**
+- Wrong table format: LLM uses “Responsible / Accountable / Consulted / Informed” as column headers with role names inside cells. Ground truth uses the standard RACI matrix (tasks as rows, roles as columns, single letters R/A/C/I in cells). This is not a minor formatting issue; it changes the entire presentation the prompt asked for.
+- Task/activity names do not follow the mandated short wording: LLM uses long, narrative descriptions (“Receive the transfer instruction and log it in the system”, “Screen the payment against the sanctions list”, “If flagged as high-risk, approve the transaction”). Ground truth uses the exact required activity labels (“Receive Payment Instruction”, “Screen Against Sanctions List”, “KYC Review”, “Approve High-Risk Transactions”, “Release Payment”, “Archive Record”).
+- Missing role: LLM completely omits “Operations Manager”, which is present and assigned **A** in five of the six rows in the ground truth. The prompt’s “using *only* the mandated terms” clause is interpreted differently, but the ground truth explicitly includes this role; the LLM’s version therefore cannot match.
+- Task granularity and coverage: LLM splits step 5 into 5a/5b and folds the notification into task 6, producing seven rows instead of the ground truth’s clean six. This introduces omissions and substitutions.
+
+**Content/assignment mismatches (further heavy deduction):**
+Every single RACI assignment differs. Examples:
+- Screening: ground truth gives Transaction Analyst **R**, Regulatory Liaison **A**; LLM gives Transaction Analyst both **R** and **A**.
+- KYC Review: ground truth gives Regulatory Liaison **R**, Operations Manager **A**, Transaction Analyst **C**; LLM gives Regulatory Liaison **R** and **A**.
+- Accountable party is almost always the same as Responsible in the LLM answer, violating the RACI principle that the ground truth consistently applies via the Operations Manager.
+- Consulted/Informed mappings are inverted or absent in multiple rows.
+
+**Vocabulary adherence:** The LLM does correctly avoid the forbidden terms and uses “KYC Review”, “Regulatory Liaison”, and “Transaction Analyst” where required. This is the only dimension on which it performs adequately, preventing a 1.0 score.
+
+Because the evaluation instructions demand “utmost strictness” and state that “even small errors should reflect in significant loss of points,” the large number of structural, formatting, role, naming, and assignment deviations result in a severely reduced score. The LLM produced a Markdown table that attempts to address the informal description and respects the vocabulary mandate, but it is not the RACI table the ground truth defines.
