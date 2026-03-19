@@ -361,7 +361,7 @@ def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
 
     columns = list(results[0].keys()) if results else ["LLM", "LRM", "OS", "AVG"] + ["C" + category for category in CATEGORY_IDS]
     with open(target_leaderboard, "w", encoding="utf-8") as leaderboard_file:
-        leaderboard_file.write("## Overall Leaderboard (grok-4.2 used as the Judge)\n\n")
+        leaderboard_file.write("## Overall Leaderboard (grok-4-1-fast-reasoning used as the Judge)\n\n")
         leaderboard_file.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
         leaderboard_file.write(_render_markdown_table(results, columns))
 
