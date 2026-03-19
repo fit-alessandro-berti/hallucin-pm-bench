@@ -5,7 +5,7 @@
 Below you will find the current standings of Large Language Models evaluated against the benchmark criteria described below.
 The leaderboard reflects performance results using the **LLM-as-a-Judge methodology**:
 
-* [gpt-4.1 used as the Judge](leaderboard.md)
+* [grok-4-1-fast-reasoning used as the Judge](leaderboard.md)
 
 ## Motivation
 
