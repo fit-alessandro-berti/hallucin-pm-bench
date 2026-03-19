@@ -1,0 +1,197 @@
+{
+  "definitions": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "isExecutable": true,
+      "elements": [
+        {
+          "id": "StartEvent_1",
+          "type": "StartEvent",
+          "name": "Support Email Received",
+          "eventDefinitions": [{ "type": "NoneEventDefinition" }]
+        },
+        {
+          "id": "Task_Parse",
+          "type": "Task",
+          "name": "Parse Email and Create Ticket"
+        },
+        {
+          "id": "Task_Classify",
+          "type": "Task",
+          "name": "Initial Classification"
+        },
+        {
+          "id": "Gateway_Classify",
+          "type": "ExclusiveGateway",
+          "name": "Classification Gateway"
+        },
+        {
+          "id": "Task_RootCause",
+          "type": "Task",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "Task_ProvideResolution",
+          "type": "Task",
+          "name": "Provide Resolution"
+        },
+        {
+          "id": "Task_SendResponse",
+          "type": "Task",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "Gateway_Parallel",
+          "type": "ParallelGateway",
+          "name": "Parallel Split After Response"
+        },
+        {
+          "id": "IntermediateCatchEvent_WaitReply",
+          "type": "IntermediateCatchEvent",
+          "name": "Wait for Customer Reply",
+          "eventDefinitions": [{ "type": "MessageEventDefinition" }]
+        },
+        {
+          "id": "BoundaryEvent_Timer",
+          "type": "BoundaryEvent",
+          "name": "No Reply Timer",
+          "attachedToRef": "IntermediateCatchEvent_WaitReply",
+          "eventDefinitions": [{ "type": "TimerEventDefinition", "duration": "PT24H" }]
+        },
+        {
+          "id": "Task_SendReminder",
+          "type": "Task",
+          "name": "Send Reminder"
+        },
+        {
+          "id": "Task_CloseTicket",
+          "type": "Task",
+          "name": "Close Ticket"
+        },
+        {
+          "id": "EndEvent_Terminate",
+          "type": "EndEvent",
+          "name": "Ticket Closed",
+          "eventDefinitions": [{ "type": "TerminateEventDefinition" }]
+        },
+        {
+          "id": "Task_LogSolution",
+          "type": "Task",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "EndEvent_LogDone",
+          "type": "EndEvent",
+          "name": "Logging Done",
+          "eventDefinitions": [{ "type": "NoneEventDefinition" }]
+        },
+        {
+          "id": "EventSubprocess_Cancel",
+          "type": "EventSubprocess",
+          "name": "Cancel Ticket Handler",
+          "triggeredByEvent": true,
+          "elements": [
+            {
+              "id": "StartEvent_Cancel",
+              "type": "StartEvent",
+              "name": "Cancel Ticket Received",
+              "eventDefinitions": [{ "type": "MessageEventDefinition" }]
+            },
+            {
+              "id": "EndEvent_TerminateCancel",
+              "type": "EndEvent",
+              "name": "Process Terminated",
+              "eventDefinitions": [{ "type": "TerminateEventDefinition" }]
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "id": "Flow_CancelInternal",
+              "sourceRef": "StartEvent_Cancel",
+              "targetRef": "EndEvent_TerminateCancel"
+            }
+          ]
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "id": "Flow_1",
+          "sourceRef": "StartEvent_1",
+          "targetRef": "Task_Parse"
+        },
+        {
+          "id": "Flow_2",
+          "sourceRef": "Task_Parse",
+          "targetRef": "Task_Classify"
+        },
+        {
+          "id": "Flow_3",
+          "sourceRef": "Task_Classify",
+          "targetRef": "Gateway_Classify"
+        },
+        {
+          "id": "Flow_4_Simple",
+          "sourceRef": "Gateway_Classify",
+          "targetRef": "Task_ProvideResolution",
+          "conditionExpression": "type == 'Simple'"
+        },
+        {
+          "id": "Flow_5_Complex",
+          "sourceRef": "Gateway_Classify",
+          "targetRef": "Task_RootCause",
+          "conditionExpression": "type == 'Complex'"
+        },
+        {
+          "id": "Flow_6",
+          "sourceRef": "Task_RootCause",
+          "targetRef": "Task_ProvideResolution"
+        },
+        {
+          "id": "Flow_7",
+          "sourceRef": "Task_ProvideResolution",
+          "targetRef": "Task_SendResponse"
+        },
+        {
+          "id": "Flow_8",
+          "sourceRef": "Task_SendResponse",
+          "targetRef": "Gateway_Parallel"
+        },
+        {
+          "id": "Flow_9_ToWait",
+          "sourceRef": "Gateway_Parallel",
+          "targetRef": "IntermediateCatchEvent_WaitReply"
+        },
+        {
+          "id": "Flow_10_ToLog",
+          "sourceRef": "Gateway_Parallel",
+          "targetRef": "Task_LogSolution"
+        },
+        {
+          "id": "Flow_11_ReplyReceived",
+          "sourceRef": "IntermediateCatchEvent_WaitReply",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Flow_12_TimerTriggered",
+          "sourceRef": "BoundaryEvent_Timer",
+          "targetRef": "Task_SendReminder"
+        },
+        {
+          "id": "Flow_13_ReminderToClose",
+          "sourceRef": "Task_SendReminder",
+          "targetRef": "Task_CloseTicket"
+        },
+        {
+          "id": "Flow_14_CloseToEnd",
+          "sourceRef": "Task_CloseTicket",
+          "targetRef": "EndEvent_Terminate"
+        },
+        {
+          "id": "Flow_15_LogToEnd",
+          "sourceRef": "Task_LogSolution",
+          "targetRef": "EndEvent_LogDone"
+        }
+      ]
+    }
+  }
+}

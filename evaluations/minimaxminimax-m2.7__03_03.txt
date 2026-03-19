@@ -1,0 +1,11 @@
+**4.0**
+
+The LLM answer deviates from the ground truth in several ways that trigger strict deductions per the evaluation criteria:
+
+- **Extra/hallucinated task**: It introduces `<bpmn:task id="wrc_check_eligibility" name="Check warranty eligibility">` plus four additional sequence flows and altered gateway connections. The ground truth contains no such task (only 7 tasks total); the prompt explicitly directs using an exclusive gateway for "step 3 warranty decision" and to model *only* explicitly mentioned elements without inventing extra activities. This is a major structural deviation, not semantically equivalent.
+- **Task and element count mismatch**: LLM produces 8 tasks and more sequence flows than the 15 flows + 7 tasks in the 34-line minimal ground truth.
+- **Non-matching names and modeling details**: Although most task names are close, the presence of the extra task alone violates "model only the flow elements explicitly mentioned." Flow conditions use `<conditionExpression>` with XPath variables instead of the GT's `name="Yes"`/`name="No"` labels on sequence flows.
+- **Namespace and XML bloat**: Unnecessary `bpmndi`, `dc`, `di`, `xsi` declarations (none of the DI elements are present) and process-level `name` attribute differ from GT's minimal `<bpmn:definitions>` and `<bpmn:process isExecutable="false">`.
+- **Minor naming/id variances**: Start-event name, end-event names/ids, gateway ids, and task ids (e.g. `wrc_send_rejection` vs `wrc_reject`, `wrc_close_claim` vs `wrc_close`) accumulate further small errors. Even though the rubric tolerates *different IDs* when otherwise equivalent, the extra task renders the diagrams non-equivalent.
+
+These differences (especially the invented task) produce a substantially different BPMN model. Under the "utmost strictness" rule where even small errors cause significant point loss, the answer cannot receive more than 4.0. It captures the overall skeleton and required gateways/end events but fails on minimality and fidelity to the ground truth.

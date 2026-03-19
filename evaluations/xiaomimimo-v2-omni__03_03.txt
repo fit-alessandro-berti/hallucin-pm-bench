@@ -1,0 +1,12 @@
+**4.0**
+
+The LLM answer deviates from the ground truth in multiple ways that violate the prompt's strict rules ("model **only** the flow elements explicitly mentioned", task names verbatim, use exactly the specified gateways, exactly two end events, etc.) and the provided expected answer key.
+
+Key deductions (applied strictly):
+- **Extra/hallucinated task**: LLM inserts `<bpmn:task id="wrc_check_warranty" name="Check warranty eligibility">` + connecting flows between the completeness gateway and warranty gateway. GT has no such task or intermediate step; it routes directly from completeness "Yes" to the warranty decision gateway. This is a clear hallucinated flow element.
+- **Start event mismatch**: LLM uses `name="Start"`; GT (and prompt) expects `name="Online warranty claim submitted"`.
+- **End event names**: LLM uses "End (Rejection)" / "End (Success)"; GT uses "Rejected" / "Successful end".
+- **Structural/XML differences**: LLM embeds `<bpmn:incoming>`/`<bpmn:outgoing>` inside every element and adds `conditionExpression` elements (plus undeclared `xsi:` namespace, making the XML invalid). GT is minimal with only sequenceFlow elements. Parallel gateways also receive names in LLM but not in GT.
+- **Task ID and naming style**: While most task names are close, the extra task and non-identical modeling (different IDs, extra elements) violate the "semantically equivalent" clause in the rubric. GT is 34 lines and minimal; LLM is much longer and non-minimal.
+
+The answer does correctly include the required gateways, the missing-info loop, the parallel split/join for the two activities, the two end events, and `wrc_` prefixes. These positives prevent a lower score, but the extra task, structural mismatches, and non-equivalence produce a significant penalty under the "utmost strictness" instruction. Small deviations (names, XML style) alone would cause major loss; the extra task compounds it.

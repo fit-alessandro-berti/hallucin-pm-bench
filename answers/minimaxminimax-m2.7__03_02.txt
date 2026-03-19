@@ -1,0 +1,149 @@
+{
+  "bpmn": {
+    "process": {
+      "id": "Process_1",
+      "name": "Customer Support Ticket Process",
+      "elements": [
+        {
+          "id": "StartEvent_1",
+          "type": "startEvent",
+          "name": "Email Received",
+          "outgoing": ["Task_1"]
+        },
+        {
+          "id": "Task_1",
+          "type": "task",
+          "name": "Parse Email and Create Ticket",
+          "incoming": ["StartEvent_1"],
+          "outgoing": ["Task_2"]
+        },
+        {
+          "id": "Task_2",
+          "type": "task",
+          "name": "Initial Classification",
+          "incoming": ["Task_1"],
+          "outgoing": ["ExclusiveGateway_1"]
+        },
+        {
+          "id": "ExclusiveGateway_1",
+          "type": "exclusiveGateway",
+          "name": "Classification?",
+          "incoming": ["Task_2"],
+          "outgoing": ["Task_Simple", "Task_Complex"]
+        },
+        {
+          "id": "Task_Simple",
+          "type": "task",
+          "name": "Provide Resolution (Simple)",
+          "incoming": ["ExclusiveGateway_1"],
+          "outgoing": ["Task_Response"]
+        },
+        {
+          "id": "Task_Complex",
+          "type": "task",
+          "name": "Root Cause Analysis",
+          "incoming": ["ExclusiveGateway_1"],
+          "outgoing": ["Task_Resolution"]
+        },
+        {
+          "id": "Task_Resolution",
+          "type": "task",
+          "name": "Provide Resolution (Complex)",
+          "incoming": ["Task_Complex"],
+          "outgoing": ["Task_Response"]
+        },
+        {
+          "id": "Task_Response",
+          "type": "task",
+          "name": "Send Response to Customer",
+          "incoming": ["Task_Simple", "Task_Resolution"],
+          "outgoing": ["ParallelGateway_1"]
+        },
+        {
+          "id": "ParallelGateway_1",
+          "type": "parallelGateway",
+          "name": "Parallel Split",
+          "incoming": ["Task_Response"],
+          "outgoing": ["Task_Log", "WaitForReply"]
+        },
+        {
+          "id": "Task_Log",
+          "type": "task",
+          "name": "Log Solution in Knowledge Base",
+          "incoming": ["ParallelGateway_1"],
+          "outgoing": ["EndEvent_Log"]
+        },
+        {
+          "id": "EndEvent_Log",
+          "type": "endEvent",
+          "name": "Log End",
+          "incoming": ["Task_Log"]
+        },
+        {
+          "id": "WaitForReply",
+          "type": "receiveTask",
+          "name": "Wait for Customer Reply",
+          "incoming": ["ParallelGateway_1"],
+          "outgoing": []
+        },
+        {
+          "id": "BoundaryEvent_Cancel",
+          "type": "boundaryEvent",
+          "name": "Customer Cancel",
+          "eventDefinition": {
+            "type": "message"
+          },
+          "attachedTo": "WaitForReply",
+          "outgoing": ["TerminateEvent_1"]
+        },
+        {
+          "id": "TerminateEvent_1",
+          "type": "terminateEvent",
+          "name": "Terminate",
+          "incoming": ["BoundaryEvent_Cancel"]
+        },
+        {
+          "id": "BoundaryEvent_Reply",
+          "type": "boundaryEvent",
+          "name": "Customer Reply",
+          "eventDefinition": {
+            "type": "message"
+          },
+          "attachedTo": "WaitForReply",
+          "outgoing": ["Task_Close"]
+        },
+        {
+          "id": "BoundaryEvent_Timer",
+          "type": "boundaryEvent",
+          "name": "24h Timer",
+          "eventDefinition": {
+            "type": "timer",
+            "timeDuration": "PT24H"
+          },
+          "attachedTo": "WaitForReply",
+          "outgoing": ["Task_Reminder"]
+        },
+        {
+          "id": "Task_Reminder",
+          "type": "task",
+          "name": "Send Reminder",
+          "incoming": ["BoundaryEvent_Timer"],
+          "outgoing": ["Task_Close"]
+        },
+        {
+          "id": "Task_Close",
+          "type": "task",
+          "name": "Close Ticket",
+          "incoming": ["BoundaryEvent_Reply", "Task_Reminder"],
+          "outgoing": ["EndEvent_Close"]
+        },
+        {
+          "id": "EndEvent_Close",
+          "type": "endEvent",
+          "name": "Process End",
+          "incoming": ["Task_Close"]
+        }
+      ]
+    }
+  }
+}
