@@ -1,0 +1,17 @@
+**6.0**
+
+### Evaluation Summary (Strict Line-by-Line Comparison)
+The LLM answer produces a valid BPMN XML that correctly models the process logic (password reset path, diagnosis branch, specialist path, confirm loop to diagnosis, no invented timers/escalations/etc.), uses concise IDs, 3 exclusive gateways (2 primary + loop), ≤40 lines (~35 lines), and includes all mentioned activities without true hallucinations. However, under utmost strictness, there are **significant structural, naming, and detail differences** from the ground truth, warranting deductions:
+
+#### Major Differences (-2.0 points each, total -4.0):
+- **Extra task element (t6 "Resolve Issue")**: LLM models separate tasks for agent resolve (t4) and specialist resolve (t6), adding an unmerged node and extra flows (f9 t5→t6, f11 t6→t7). Ground truth merges both into single t4 ("Resolve Issue") with dual incoming flows (gw2→t4, t5→t4), resulting in 7 tasks vs ground's 6. This alters topology despite same execution semantics.
+- **Missing conditionExpressions**: Ground truth specifies semantic decisions via `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on *all* exclusive gateway outgoing flows (f3/f4 gw1, f7/f8 gw2, f12/f13 gw3). LLM has none, relying on flow order/names (ambiguous without conditions).
+
+#### Minor/Name/ID Differences (-0.5 points each, total -2.0):
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` header (-0.5).
+- Missing `targetNamespace` (-0.5).
+- Process: `id="p1"` (no `name`) vs `id="support_ticket" name="Support-Ticket"` (-0.5).
+- 6 mismatched names (cumulative -1.0): startEvent ("Start (Customer submits...)" vs "Ticket Submitted"); t1 ("Automatically classify..." vs "Auto-Classification"); gw1 ("Classified as 'Password Reset'?" vs "Password Reset?"); gw2 ("After diagnosis" vs "Resolved Internally?"); gw3 ("Customer confirms resolution?" vs "Customer Confirms?"); endEvent ("End (Ticket closed)" vs "Ticket Closed").
+- Unnecessary `name` attributes on decision flows (e.g., f7/f8/f13/f14 mimic conditions but not equivalent; ground has none) (-0.5).
+
+**Base: 10.0** → Deductions yield **6.0**. Perfect match would be identical XML; logic alone insufficient under "line-by-line" strictness. LLM avoids trap hallucinations but diverges enough for major loss.

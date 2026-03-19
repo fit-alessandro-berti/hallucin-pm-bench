@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment):
+- **Major functional error (-4.0)**: LLM's intermediateCatchEvent placement between Gateway_VerifyOutcome and Activity_CreateAccount causes the process to *pause for 48h before starting Create Account*, directly breaching the SLA (completion must be *within* 48h of Verify Identity finish); it does not monitor or timeout the task duration. Ground truth correctly uses interrupting boundary timer *on* CreateAccount to enforce duration from ~VerifyID end.
+- **Invalid BPMN structure (-2.0)**: Adds new outgoing flows (Flow_03a, Flow_03b) from exclusiveGateway without modifying/removing original Flow_04 (approved → CreateAccount), creating undefined conditional branching (gateways require exclusive paths); adds invalid "timeout" condition on timer outgoing (catches don't branch that way). Ground truth adds no conflicting flows.
+- **Wrong timer semantics (-1.0)**: Intermediate catch *waits* for duration upon token arrival (delaying flow); boundary timer *interrupts* the attached activity after duration from its start.
+- **XML syntax/namespace issues (-0.5)**: Missing `bpmn:` prefixes on `<sequenceFlow>`/`<conditionExpression>`; non-standard `<xml>` wrapper vs. ground truth's proper `bpmn:` snippets and comments.
+- **Justification mismatch (-0.3)**: Claims "routes overdue cases" but doesn't (delays all cases); ground truth precisely describes interruption/escalation.
+- **Minor positives (+0.8)**: Uses PT48H correctly; targets existing Activity_AMReview; no new activities added.
+
+Total differences make it non-compliant and broken; fails core task.

@@ -1,0 +1,33 @@
+**2.0**
+
+### Evaluation Summary (Strict Assessment)
+The LLM answer receives a low score due to **critical structural, semantic, and completeness errors** compared to the ground truth. Even minor mismatches (e.g., names, IDs, namespaces) incur significant point loss per instructions. Key failures:
+
+#### **Fatal Errors (Logic & BPMN Validity - Major Deductions)**
+- **Missing exclusiveGateway gw3 ("Customer Confirms?")**: Ground truth explicitly models the line 8/9 decision with gw3 + conditionExpressions ("yes" → end, "no" → t3 Initial Diagnosis). LLM omits this, violating "model the re-work loop exactly as line 9 describes" and failing to use an exclusive gateway for the third decision point. Prompt specifies "two decision points," but ground truth (expected) uses three for correctness; LLM's workaround is invalid.
+- **Invalid BPMN semantics at Confirm task (t7)**: t7 has two outgoing sequenceFlows (f11 → end, f12 → t4) **without a gateway**, creating an implicit AND-split. This means after every confirmation, the process **always closes AND loops back in parallel**—completely wrong exclusive (XOR) logic per lines 8-9. Ground truth uses proper XOR gw3.
+- **No conditionExpressions**: Ground truth includes `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>` on *all* six outgoing flows from gw1/gw2/gw3. LLM has zero, leaving gateways ambiguous (defaults to first outgoing, incorrect behavior).
+
+#### **Element & Naming Mismatches (Significant Deductions)**
+- **Names differ**:
+  | Element | LLM | Ground Truth | Issue |
+  |---------|-----|--------------|-------|
+  | StartEvent | "Customer submits ticket" | "Ticket Submitted" | Verbose, not concise/match. |
+  | Classify task | "Classify Ticket" | "Auto-Classification" | Misses "automatically...system" (line 2). |
+  | gw2 | No name | "Resolved Internally?" | Unnamed; ground invents precise label. |
+  | gw3 | Missing | "Customer Confirms?" | Entirely absent. |
+- **IDs inconsistent**: t1-t8/gw1-2 vs start/t1-t6/end/gw1-3. Concise but non-matching.
+- **Process**: id="support_ticket_process" (no name) vs id="support_ticket" name="Support-Ticket".
+- **Definitions**: Has extraneous `id="defs1"`; targetNamespace="http://acmetech.example/bpmn" vs "http://acmetech/support". No `<?xml ?>` declaration.
+
+#### **Flow Errors**
+- 12 flows vs 13; missing gw3 splits (f12/f13).
+- Wrong targets post-Confirm: direct splits vs gw3-mediated.
+- Correct elements like specialist → Resolve (f9/t5←t6) and reset → Confirm (f5) are present but undermined by overall flaws.
+
+#### **Minor but Penalized**
+- Line count OK (~30 <40).
+- No invented extras (good), but omissions/invalids outweigh.
+- Total differences: ~70% structural mismatch (missing gw3/conditions, invalid splits, names/IDs/NS).
+
+**Why not lower?** Core flow (start → classify → gw1 → reset/diagnosis → gw2 → resolve/forward → resolve → confirm) partially aligns pre-loop; no hallucinations (timers/etc.). **Why not higher?** Broken loop logic, invalid BPMN, and deviations from ground truth make it unusable/non-equivalent. Perfect match needed for 10.0.

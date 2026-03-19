@@ -1,0 +1,28 @@
+**5.0**
+
+### Evaluation Rationale (Strict Assessment Against Ground Truth)
+The LLM answer captures the core process logic (start → classify → conditional to password reset or diagnosis → diagnosis conditional to resolve/forward → resolve → confirm → conditional to close/loop), loop to diagnosis, no invented extras (e.g., no timers, parallel paths, extra tasks/gateways beyond legit elements), and exactly **two exclusive gateways** as explicitly instructed ("Mark the two decision points"). It uses ≤40 lines, concise IDs, valid BPMN 2.0 XML (implicit XOR via conditional flows from `t3` is spec-compliant per BPMN 2.0 §10.5/12.5, no syntax errors). Task names closely match description. However, **utmost strictness** demands near-identical match to ground truth; differences cause major deductions:
+
+#### Critical Structural Differences (-3.0 points):
+- **Gateways**: LLM has exactly 2 (`gw1`, `gw2`); GT has 3 (`gw1`-`gw3`). LLM models diagnosis decision implicitly (valid, matches "two gateways" instruction); GT uses explicit `gw2`.
+- **Flows for diagnosis**: LLM uses 2 conditional flows directly from `t3` (`f5`/`f6`); GT routes `t3` → `gw2` → `t4`/`t5` (`f6`-`f8`). Logically equivalent but structurally divergent.
+
+#### Name & ID Mismatches (-1.0 points each, total -2.0):
+- Classify task: "Classify Ticket" vs "Auto-Classification" (prompt emphasizes "automatically").
+- `gw1`: "Classification?" vs "Password Reset?".
+- `gw2`: "Customer Confirmed?" vs "Customer Confirms?" (`gw3` in GT).
+- StartEvent: unnamed/id="StartEvent_1" vs name="Ticket Submitted"/id="start".
+- Resolve/Forward/Confirm IDs shifted (`t5`/`t6`/`t4` vs `t4`/`t5`/`t6`).
+- EndEvent: id="EndEvent_1" vs "end".
+- Process: id="Process_1"/executable="true" vs "support_ticket"/name="Support-Ticket"/executable="false".
+
+#### XML/Header Differences (-1.0 points):
+- Extra namespaces (`bpmndi`, `dc`, `di`, `xsi`); violates "No diagram/interchange elements".
+- Missing `<?xml version="1.0" encoding="UTF-8"?>`.
+- `targetNamespace` mismatch.
+- All flow IDs different (`f1`-`f12` vs `f1`-`f13`).
+
+#### Condition Expression Differences (-0.5 points):
+- Descriptive vars (`classification == 'Password Reset'`, `resolved == true/false`, `confirmed == true/false`) vs generic `yes`/`no`. LLM more descriptive of prompt but not matching GT.
+
+No fabrication (e.g., no added activities/events), correct loop (`gw2` → `t3`), 6 legit tasks, valid XML. Semantically ~95% equivalent, but strict line-by-line/structural divergence from GT drops to 5.0. Perfect match =10.0; minor name tweak =-1.0; missing gw/structural alt =-3.0+.

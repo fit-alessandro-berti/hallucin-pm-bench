@@ -1,0 +1,13 @@
+**4.2**
+
+### Evaluation Rationale (strict assessment):
+- **Structural Differences (major penalty: -3.5)**: LLM uses verbose BPMN 2.0 JSON (`definitions`, `process`, detailed `sequenceFlow`, `incoming`/`outgoing` refs) vs. ground truth's simplified flat schema (`process_id`, `elements` array, `flows` array). This is a complete format mismatch; no semantic equivalence in JSON parseability.
+- **Modeling Errors (major penalty: -2.0)**:
+  - Parallel fork/join broken/malformed: Fork after `sendResponse` (wrong per desc/ground truth), inconsistent `flow_6`/`flow_7_fork` targets/incomings (e.g., `gateway_fork.incoming="flow_6"` but `flow_6` targets `sendResponse`; missing second fork outgoing flow; spurious `flow_8_join_parallel` direct fork→join skips tasks). Ground truth forks *before* `sendResponse`/`logSolution`.
+  - Wait logic invalid: Single `intermediateCatchEvent` with *both* `timerEventDefinition` + `messageEventDefinition` (BPMN violation; catch events handle one type). Outgoings with conditions on catch event incorrect. Ground truth uses `eventBasedGateway` → separate `message`/`timer` catches (correct for "first event wins").
+  - Customer cancel incomplete: Boundary event *only* on `initialClassification` (not "at any point"); interrupting (`cancelActivity=true`). Ground truth uses standalone `intermediateCatchEvent` (message, non-attached).
+- **Name/Detail Mismatches (penalty: -0.5)**: E.g., start "Support Email Received" vs. "Email Received"; `createTicket` "Parse Email and Create Ticket" vs. "Create Ticket" (invents "Parse" detail, though desc mentions it); gateway "Ticket Type?" vs. "Simple or Complex?"; no `eventBasedGateway`; extra `endEvent_terminated`.
+- **Hallucinations/Extras (penalty: -0.1)**: Minor extras like duplicate flow ID attempts, `isExecutable=false`, conditions `"type == 'Simple'"` vs. simple `"simple"`. No escalation invented.
+- **Positives (+1.0 partial credit)**: Core sequence (start→create/classify→gateway→res/root→send/log→wait→close) present; classification gateway/conditions ok; `sendReminder` once then close; two ends.
+
+Total reflects ~40% fidelity: captures high-level flow but fails validity, structure, and key BPMN patterns vs. ground truth. Strictness applied: invalid BPMN = non-functional diagram.
