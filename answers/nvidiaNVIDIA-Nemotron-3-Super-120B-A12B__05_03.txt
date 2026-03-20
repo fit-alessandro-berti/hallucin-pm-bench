@@ -1,0 +1,51 @@
+<think>
+We need to suggest improvement to enforce that Create Account must complete within 48h of finishing Verify Identity. Without adding new tasks. We could add a timer boundary event on Activity_CreateAccount or a timer intermediate event after VerifyIdentity? Actually deadline is from finishing VerifyIdentity to completing CreateAccount. Could use a timer boundary event on Activity_CreateAccount that triggers after 48h from start of that task? But requirement: within 48h of finishing Verify Identity. So we could attach a timer boundary event to Activity_CreateAccount that starts when the task starts? Not exact. Better: add a timer intermediate catching event after VerifyIdentity before CreateAccount? Actually we need to enforce that CreateAccount must finish within 48h after VerifyIdentity completed. Could add a timer boundary event on Activity_CreateAccount that escalates if not completed within 48h, referencing a duration timer "PT48H". The timer starts when the task is entered, not when VerifyIdentity ends. But if we assume CreateAccount starts immediately after VerifyIdentity (since sequence flow), then timer boundary works.
+
+We need to add timer boundary event element attached to Activity_CreateAccount, and an outgoing sequence flow to perhaps an escalation end event or to same End_Rejected? Since no new activities allowed, we can use existing End_Rejected or add a new end event? Adding new end event is adding activity? It's an event, not a task. The instruction: "without adding any new activities (no extra tasks, no subprocesses)". End event is not a task/subprocess, so likely allowed. But safer: we can route timer boundary to End_Rejected (already exists) as escalation path.
+
+Thus we need to add:
+
+<bpmn:boundaryEvent id="Boundary_Timer_CreateAccount" attachedToRef="Activity_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+And a sequenceFlow from that boundaryEvent to End_Rejected (or maybe to an intermediate escalation). Since boundary events have default outgoing flow for normal completion? Actually boundary event when triggered, the normal path continues; we need to add an outgoing flow for the timer event to go to End_Rejected. BPMN requires a sequenceFlow from boundaryEvent with attribute "sourceRef". So add:
+
+<bpmn:sequenceFlow id="Flow_Timer_Escalate" sourceRef="Boundary_Timer_CreateAccount" targetRef="End_Rejected"/>
+
+We must also ensure the boundaryEvent is defined within the process.
+
+Return only changed/added XML elements and a one-sentence justification.
+
+Thus output:
+
+```xml
+<bpmn:boundaryEvent id="Boundary_Timer_CreateAccount" attachedToRef="Activity_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+<bpmn:sequenceFlow id="Flow_Timer_Escalate" sourceRef="Boundary_Timer_CreateAccount" targetRef="End_Rejected"/>
+```
+
+Justification: Adds a 48‑hour timer boundary event to the Create Account task that routes to the existing Reject end event if the task exceeds the SLA, enforcing the deadline without new tasks.
+
+Check that we didn't add new tasks. Good.
+
+Return only these elements and justification. Ensure no extra text.
+
+
+</think>
+
+```xml
+<bpmn:boundaryEvent id="Boundary_Timer_CreateAccount" attachedToRef="Activity_CreateAccount">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+<bpmn:sequenceFlow id="Flow_Timer_Escalate" sourceRef="Boundary_Timer_CreateAccount" targetRef="End_Rejected"/>
+```
+
+*Adds a 48‑hour timer boundary event to the Create Account task that diverts to the existing Reject end event when the SLA is exceeded, enforcing the deadline without introducing new activities.*

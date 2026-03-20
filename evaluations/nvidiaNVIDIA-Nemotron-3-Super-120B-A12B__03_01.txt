@@ -1,0 +1,25 @@
+**3.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison to Ground Truth)
+The LLM answer captures the high-level flow and avoids hallucinations (no extra timers, events, or activities), but has **critical structural, syntactic, and semantic errors** making it invalid BPMN 2.0 XML. With utmost strictness, even minor diffs (e.g., names, IDs) deduct significantly; major issues (invalid model) cap it low. Total diffs >30 across elements/attributes; functional logic ~70% match but unparsable.
+
+#### Major Errors (-4.0 cumulative):
+- **Invalid BPMN structure**: Task `t_initialDiag` has 2 outgoing flows (`f6`, `f7`) without gateway—BPMN tasks cannot split decisions (semantic error, validator fail). GT uses `gw2` post-diagnosis.
+- **Missing gateway**: No `gw2` ("Resolved Internally?") or equivalent for line 5 decision ("either Resolve or Forward"). LLM has only 2 gateways (as prompt says "two"), but GT has 3; prompt's "decision points" under-modeled.
+- **Missing/incorrect flows**: No GT `f6` (`t3`→`gw2`), `f7`/`f8` (gw2 outs), `f9` equivalent structured properly. LLM's `f6`/`f7` invalid; flow count 12 vs GT 13.
+
+#### Minor/Attribute Errors (-2.0 cumulative, significant per strictness):
+- **Element types**: `serviceTask` for classify vs GT `task`.
+- **No conditionExpressions**: All 4 GT gw flows have `<conditionExpression xsi:type="tFormalExpression">yes/no</conditionExpression>`; LLM uses `name` attrs only (invalid for XOR semantics).
+- **Process diffs**: `id="SupportTicketProcess"` vs `"support_ticket"`; `isExecutable="true"` vs `"false"`; no `name="Support-Ticket"`; extra `exporter` attrs; no `targetNamespace`.
+- **IDs inconsistent**: e.g., `start1`/`end1`/`gw_classify`/`t_provideReset`/etc. vs `start`/`end`/`gw1`/`t2`.
+- **Names differ**: classify `"Classify Ticket"` vs `"Auto-Classification"`; start `"Customer submits support ticket"` vs `"Ticket Submitted"`; end `"Ticket closed"` vs `"Ticket Closed"`; gw_confirm `"Customer confirms?"` vs `"Customer Confirms?"`; flow names `"Resolve"`/`"Forward"` vs conditions.
+- **XML attrs**: Extra `xmlns:xsi`, `exporterVersion`; no `xsi:type` usage.
+
+#### Matches (+3.0 partial credit):
+- Core path/logic: PW reset → confirm; diag → resolve/forward → resolve → confirm; loop `gw_confirm` "no" → `t_initialDiag`; close on "yes".
+- No inventions (matches trap: only legit gateways/loop/tasks).
+- Concise (<40 lines), `<definitions>` block, exclusive gw for classify/confirm, concise IDs.
+- XML well-formed (parses as doc, fails BPMN validation).
+
+Overall: Functional intent good (no criminal hallucination), but not "exactly as stated" BPMN 2.0—unrunnable, mismatches GT structure/attrs. 10.0=exact GT; 3.0 reflects partial logic salvage despite fatal flaws.

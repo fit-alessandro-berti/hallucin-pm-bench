@@ -1,0 +1,265 @@
+<think>
+We need to produce BPMN XML with only flow elements explicitly mentioned. Steps:
+
+1. Start event when customer submits online warranty claim. Task? Actually start event maybe named "Submit online warranty claim". But description: "The process starts when a customer submits an online warranty claim." In BPMN, start event is often unnamed, but we could give name? Not required. We'll follow instruction: model only flow elements explicitly mentioned, but start event is needed. We'll give id wrc_start1.
+
+2. Service agent validates the claim. Task "Validate the claim". Then exclusive gateway for completeness: If claim incomplete => request missing information and wait until received before re-validating. So we need gateway after Validate task, with two outgoing flows: Complete (yes) and Incomplete (no). For incomplete path: Task "Request missing information". Then maybe an intermediate catch event? It says waits until it is received before re-validating. Could model as receiving a message? But we are told not to invent error-handling beyond what is stated. Might treat as a user task "Request missing information" then loop back to Validate. BPMN loop? Could use a sequence flow back to Validate after receiving info. Since they said wait until it is received before re-validating. Could model as an exclusive gateway after request missing info? Not needed; just loop.
+
+Simplify: After Validate, exclusive gateway (Complete? Incomplete?). If Incomplete, go to Task "Request missing information", then back to Validate (so after request, flow to Validate). If Complete, go to next step.
+
+3. After validation, agent checks warranty eligibility. Task "Check warranty eligibility". Then exclusive gateway: if within warranty => proceed; else out of warranty => send rejection notice and end. So we need Task "Send rejection notice" then End event (rejection). For within warranty path, go to parallel split.
+
+4. For eligible claims, two activities occur in parallel: a. Create shipment order for the replacement unit. b. Schedule courier pickup of the faulty product. So after warranty check (within warranty), we have parallel gateway (split) then two tasks: "Create shipment order" and "Schedule courier pickup". Then parallel join gateway, then Task "Update inventory records", then Task "Close the claim", then End event (successful).
+
+We need exactly two end events: one for rejection, one for successful completion.
+
+All element ids prefixed with "wrc_". Need to ensure unique IDs.
+
+We need to produce BPMN 2.0 XML document with definitions, process, etc.
+
+We'll include start event id wrc_start1.
+
+Task IDs:
+- wrc_task_validate (Validate the claim)
+- wrc_gateway_completeness (exclusive)
+- wrc_task_request_missing (Request missing information)
+- wrc_task_check_eligibility (Check warranty eligibility)
+- wrc_gateway_warranty (exclusive)
+- wrc_task_send_rejection (Send rejection notice)
+- wrc_end_rejection (End event)
+- wrc_gateway_parallel_split (parallel)
+- wrc_task_create_shipment (Create shipment order)
+- wrc_task_schedule_pickup (Schedule courier pickup)
+- wrc_gateway_parallel_join (parallel)
+- wrc_task_update_inventory (Update inventory records)
+- wrc_task_close_claim (Close the claim)
+- wrc_end_success (End event)
+
+Sequence flows:
+- start -> validate
+- validate -> completeness gateway
+- completeness gateway (yes) -> check eligibility
+- completeness gateway (no) -> request missing info
+- request missing info -> validate (loop)
+- check eligibility -> warranty gateway
+- warranty gateway (within) -> parallel split
+- warranty gateway (out) -> send rejection notice -> end rejection
+- parallel split -> create shipment
+- parallel split -> schedule pickup
+- create shipment -> parallel join
+- schedule pickup -> parallel join
+- parallel join -> update inventory
+- update inventory -> close claim
+- close claim -> end success
+
+We need to set gateway types: exclusive gateway for step2, exclusive for step3, parallel split and join.
+
+In BPMN XML, exclusive gateway <exclusiveGateway>, parallel gateway <parallelGateway>.
+
+We'll need to define sequenceFlow with sourceRef and targetRef.
+
+We'll need to set name attributes for tasks as verbatim.
+
+We'll not add any other elements.
+
+We'll produce XML with proper namespace.
+
+Let's craft.
+
+BPMN 2.0 header:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+id="Definitions_1"
+targetNamespace="http://bpmn.io/schema/bpmn">
+
+<bpmn:process id="wrc_WarrantyReplacement_v1.3" isExecutable="true">
+
+... elements ...
+
+</bpmn:process>
+<bpmndi:BPMNDiagram>
+<bpmndi:BPMNPlane bpmnElement="wrc_WarrantyReplacement_v1.3">
+... we could omit diagram? Might be required for valid BPMN but not asked. Could include minimal shapes? Might be okay to omit diagram? Usually BPMN requires DI but many validators accept without. Safer to include minimal diagram with placeholder bounds.
+
+We'll add simple BPMNShapes for each element with generic bounds.
+
+But to keep answer concise, maybe we can omit DI section; but risk invalid. However instruction only asks for BPMN 2.0 XML diagram; likely they expect full BPMN including DI. But we can include minimal DI with placeholder.
+
+Given time, include DI with simple rectangles.
+
+We'll assign each element a bpmnShape with bpmnElement referencing its id.
+
+We'll set bounds x,y,width,height.
+
+We'll also add BPMNEdge for each sequenceFlow with waypoints.
+
+Simplify: we can omit DI entirely; many BPMN tools still accept. I think it's okay.
+
+But to be safe, include minimal DI with just the plane and no shapes? Might cause error.
+
+I'll include DI with shapes for each element.
+
+We'll need to map each element.
+
+Let's define approximate positions:
+
+Start event at (100,100)
+Validate task at (200,100)
+Completeness gateway at (300,100)
+Request missing info at (400,100)
+Check eligibility at (500,100)
+Warranty gateway at (600,100)
+Send rejection at (700,100)
+End rejection at (800,100)
+Parallel split at (600,200)
+Create shipment at (500,300)
+Schedule pickup at (700,300)
+Parallel join at (600,400)
+Update inventory at (600,500)
+Close claim at (600,600)
+End success at (600,700)
+
+But need to adjust flows accordingly.
+
+We'll produce edges with waypoints simple.
+
+Given the complexity, maybe we can skip DI and rely on BPMN without diagram. Many assignments accept that.
+
+I'll produce BPMN without DI.
+
+Thus final XML:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+id="Definitions_Wrc"
+targetNamespace="http://bpmn.io/schema/bpmn">
+
+<bpmn:process id="wrc_WarrantyReplacement_v1.3" isExecutable="true">
+
+<bpmn:startEvent id="wrc_start1">
+<bpmn:extensionElements/>
+</bpmn:startEvent>
+
+<bpmn:task id="wrc_task_validate" name="Validate the claim"/>
+<bpmn:exclusiveGateway id="wrc_gateway_completeness"/>
+<bpmn:task id="wrc_task_request_missing" name="Request missing information"/>
+<bpmn:task id="wrc_task_check_eligibility" name="Check warranty eligibility"/>
+<bpmn:exclusiveGateway id="wrc_gateway_warranty"/>
+<bpmn:task id="wrc_task_send_rejection" name="Send rejection notice"/>
+<bpmn:endEvent id="wrc_end_rejection"/>
+<bpmn:parallelGateway id="wrc_gateway_parallel_split"/>
+<bpmn:task id="wrc_task_create_shipment" name="Create shipment order"/>
+<bpmn:task id="wrc_task_schedule_pickup" name="Schedule courier pickup"/>
+<bpmn:parallelGateway id="wrc_gateway_parallel_join"/>
+<bpmn:task id="wrc_task_update_inventory" name="Update inventory records"/>
+<bpmn:task id="wrc_task_close_claim" name="Close the claim"/>
+<bpmn:endEvent id="wrc_end_success"/>
+
+<!-- Sequence Flows -->
+<bpmn:sequenceFlow id="wrc_flow_start_to_validate" sourceRef="wrc_start1" targetRef="wrc_task_validate"/>
+<bpmn:sequenceFlow id="wrc_flow_validate_to_completeness" sourceRef="wrc_task_validate" targetRef="wrc_gateway_completeness"/>
+<bpmn:sequenceFlow id="wrc_flow_completeness_complete" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_check_eligibility" name="Complete"/>
+<bpmn:sequenceFlow id="wrc_flow_completeness_incomplete" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_request_missing" name="Incomplete"/>
+<bpmn:sequenceFlow id="wrc_flow_request_to_validate" sourceRef="wrc_task_request_missing" targetRef="wrc_task_validate"/>
+<bpmn:sequenceFlow id="wrc_flow_check_to_warranty" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gateway_warranty"/>
+<bpmn:sequenceFlow id="wrc_flow_warranty_within" sourceRef="wrc_gateway_warranty" targetRef="wrc_gateway_parallel_split" name="Within warranty"/>
+<bpmn:sequenceFlow id="wrc_flow_warranty_out" sourceRef="wrc_gateway_warranty" targetRef="wrc_task_send_rejection" name="Out of warranty"/>
+<bpmn:sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_task_send_rejection" targetRef="wrc_end_rejection"/>
+<bpmn:sequenceFlow id="wrc_flow_split_to_shipment" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_task_create_shipment"/>
+<bpmn:sequenceFlow id="wrc_flow_split_to_pickup" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_task_schedule_pickup"/>
+<bpmn:sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_task_create_shipment" targetRef="wrc_gateway_parallel_join"/>
+<bpmn:sequenceFlow id="wrc_flow_pickup_to_join" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gateway_parallel_join"/>
+<bpmn:sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_gateway_parallel_join" targetRef="wrc_task_update_inventory"/>
+<bpmn:sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim"/>
+<bpmn:sequenceFlow id="wrc_flow_close_to_end_success" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success"/>
+
+</bpmn:process>
+</bpmn:definitions>
+
+We need to ensure exclusive gateway for step2 completeness: we used name attribute on flows "Complete"/"Incomplete". Good.
+
+Exclusive gateway for step3 warranty decision: we used flows named "Within warranty"/"Out of warranty". Good.
+
+Parallel split/join: we used parallelGateway ids.
+
+All element ids prefixed wrc_.
+
+Task names verbatim: yes.
+
+Two end events: wrc_end_rejection and wrc_end_success.
+
+We didn't add any extra elements.
+
+Return as single self-contained BPMN 2.0 XML document.
+
+Make sure XML declaration included.
+
+Now produce final answer.
+
+
+</think>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  id="Definitions_Wrc"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_WarrantyReplacement_v1.3" isExecutable="true">
+    <!-- Start -->
+    <bpmn:startEvent id="wrc_start1"/>
+
+    <!-- Step 1: Validate the claim -->
+    <bpmn:task id="wrc_task_validate" name="Validate the claim"/>
+
+    <!-- Exclusive gateway for completeness (step 2) -->
+    <bpmn:exclusiveGateway id="wrc_gateway_completeness"/>
+
+    <!-- Request missing information (if incomplete) -->
+    <bpmn:task id="wrc_task_request_missing" name="Request missing information"/>
+
+    <!-- Step 3: Check warranty eligibility -->
+    <bpmn:task id="wrc_task_check_eligibility" name="Check warranty eligibility"/>
+
+    <!-- Exclusive gateway for warranty decision (step 3) -->
+    <bpmn:exclusiveGateway id="wrc_gateway_warranty"/>
+
+    <!-- Rejection path -->
+    <bpmn:task id="wrc_task_send_rejection" name="Send rejection notice"/>
+    <bpmn:endEvent id="wrc_end_rejection"/>
+
+    --> Parallel activities (step 4) <--
+    <bpmn:parallelGateway id="wrc_gateway_parallel_split"/>
+    <bpmn:task id="wrc_task_create_shipment" name="Create shipment order"/>
+    <bpmn:task id="wrc_task_schedule_pickup" name="Schedule courier pickup"/>
+    <bpmn:parallelGateway id="wrc_gateway_parallel_join"/>
+
+    <!-- Post‑parallel steps -->
+    <bpmn:task id="wrc_task_update_inventory" name="Update inventory records"/>
+    <bpmn:task id="wrc_task_close_claim" name="Close the claim"/>
+    <bpmn:endEvent id="wrc_end_success"/>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_flow_start_to_validate" sourceRef="wrc_start1" targetRef="wrc_task_validate"/>
+    <bpmn:sequenceFlow id="wrc_flow_validate_to_completeness" sourceRef="wrc_task_validate" targetRef="wrc_gateway_completeness"/>
+    <bpmn:sequenceFlow id="wrc_flow_completeness_complete" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_check_eligibility" name="Complete"/>
+    <bpmn:sequenceFlow id="wrc_flow_completeness_incomplete" sourceRef="wrc_gateway_completeness" targetRef="wrc_task_request_missing" name="Incomplete"/>
+    <bpmn:sequenceFlow id="wrc_flow_request_to_validate" sourceRef="wrc_task_request_missing" targetRef="wrc_task_validate"/>
+    <bpmn:sequenceFlow id="wrc_flow_check_to_warranty" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gateway_warranty"/>
+    <bpmn:sequenceFlow id="wrc_flow_warranty_within" sourceRef="wrc_gateway_warranty" targetRef="wrc_gateway_parallel_split" name="Within warranty"/>
+    <bpmn:sequenceFlow id="wrc_flow_warranty_out" sourceRef="wrc_gateway_warranty" targetRef="wrc_task_send_rejection" name="Out of warranty"/>
+    <bpmn:sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_task_send_rejection" targetRef="wrc_end_rejection"/>
+    <bpmn:sequenceFlow id="wrc_flow_split_to_shipment" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_task_create_shipment"/>
+    <bpmn:sequenceFlow id="wrc_flow_split_to_pickup" sourceRef="wrc_gateway_parallel_split" targetRef="wrc_task_schedule_pickup"/>
+    <bpmn:sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_task_create_shipment" targetRef="wrc_gateway_parallel_join"/>
+    <bpmn:sequenceFlow id="wrc_flow_pickup_to_join" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gateway_parallel_join"/>
+    <bpmn:sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_gateway_parallel_join" targetRef="wrc_task_update_inventory"/>
+    <bpmn:sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim"/>
+    <bpmn:sequenceFlow id="wrc_flow_close_to_end_success" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success"/>
+  </bpmn:process>
+</bpmn:definitions>
