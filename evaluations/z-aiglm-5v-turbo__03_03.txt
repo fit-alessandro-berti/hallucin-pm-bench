@@ -1,0 +1,20 @@
+**5.0**
+
+### Evaluation Rationale (Strict Grading)
+The LLM answer is semantically *mostly* equivalent in core logic (validation loop, warranty decision, parallel branches, sequential close, two end events, correct gateways, all IDs prefixed "wrc_", verbatim task names for shared tasks like "Request missing information", "Send rejection notice", etc.). However, under utmost strictness against the ground truth (minimal 34-line XML) and prompt rules ("model **only** explicitly mentioned flow elements", "do **not** invent", task names verbatim, specified gateways), there are multiple significant differences warranting major deductions:
+
+- **Hallucinated/extra task & flows (major deduction: -3.0)**: 
+  - Added non-mentioned "wrc_task_submit_claim" ("Submit online warranty claim") + 2 flows (start→submit, submit→validate). Prompt: process "**starts when** customer submits" → ground truth uses start event name only, no task. This invents a customer/agent task not explicitly a modeled flow element.
+  - Added "wrc_task_check_warranty" ("Check warranty eligibility") + 2 flows (complete_gw→check, check→warranty_gw). Explicitly mentioned, but ground truth omits (direct complete_gw "Yes"→warranty_gw), treating gw as decision post-validation. Alters main path structure vs. gt/prompt's "exclusive gateway for step 3 warranty decision".
+
+- **Extra BPMN DI section (~20 shapes, ~50+ lines bloat: -1.0)**: Unnecessary for model (gt has none); violates "minimal-yet-complete" expectation despite "self-contained".
+
+- **Name mismatches/non-verbatim (minor but strict deduction: -0.5)**:
+  - Start: "Process Start" vs. gt "Online warranty claim submitted".
+  - Gateways: "Is claim complete?" vs. gt "Claim complete?"; named parallels vs. gt unnamed.
+  - Ends: "Completed Successfully" vs. gt "Successful end".
+  - Task "Check warranty eligibility" ≠ prompt "**checks warranty eligibility**" verbatim (imperative change).
+
+- **Other diffs (cumulative -0.5)**: ~18 flows vs. gt 15; verbose flow IDs/names; `isExecutable="true"` vs. "false"; process ID "wrc_WarrantyReplacementProcess" (verbose); exporter attrs.
+
+Base 10.0 → deductions = 5.0. Correct logic/valid XML prevents lower, but extras + structural path diffs (not bit-for-bit or element-equivalent to gt) = no full credit.

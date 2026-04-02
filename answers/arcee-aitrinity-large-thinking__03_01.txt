@@ -1,0 +1,41 @@
+
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" targetNamespace="http://acmetech.com/support">
+  <process id="supportTicketProcess" isExecutable="false">
+    <startEvent id="start" name="Customer Submits Ticket"/>
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="classify"/>
+    <serviceTask id="classify" name="Classify Ticket"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <sequenceFlow id="flow2" sourceRef="classify" targetRef="gw1"/>
+    <sequenceFlow id="flow3" sourceRef="gw1" targetRef="provideReset">
+      <conditionExpression xsi:type="tFormalExpression">${passwordReset}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow4" sourceRef="gw1" targetRef="initialDiagnosis">
+      <conditionExpression xsi:type="tFormalExpression">${!passwordReset}</conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="provideReset" name="Provide Reset Instructions"/>
+    <sequenceFlow id="flow5" sourceRef="provideReset" targetRef="confirm"/>
+    <serviceTask id="initialDiagnosis" name="Initial Diagnosis"/>
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <sequenceFlow id="flow6" sourceRef="initialDiagnosis" targetRef="gw2"/>
+    <sequenceFlow id="flow7" sourceRef="gw2" targetRef="resolveIssue">
+      <conditionExpression xsi:type="tFormalExpression">${resolve}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow8" sourceRef="gw2" targetRef="forwardToSpecialist">
+      <conditionExpression xsi:type="tFormalExpression">${!resolve}</conditionExpression>
+    </sequenceFlow>
+    <serviceTask id="forwardToSpecialist" name="Forward to Specialist"/>
+    <sequenceFlow id="flow9" sourceRef="forwardToSpecialist" targetRef="resolveIssue"/>
+    <serviceTask id="resolveIssue" name="Resolve Issue"/>
+    <sequenceFlow id="flow10" sourceRef="resolveIssue" targetRef="confirm"/>
+    <serviceTask id="confirm" name="Confirm with Customer"/>
+    <exclusiveGateway id="gw3" name="Customer Confirm?"/>
+    <sequenceFlow id="flow11" sourceRef="confirm" targetRef="gw3"/>
+    <sequenceFlow id="flow12" sourceRef="gw3" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">${confirm}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="gw3" targetRef="initialDiagnosis">
+      <conditionExpression xsi:type="tFormalExpression">${!confirm}</conditionExpression>
+    </sequenceFlow>
+    <endEvent id="end" name="Ticket Closed"/>
+  </process>
+</definitions>

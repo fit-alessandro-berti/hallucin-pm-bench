@@ -1,0 +1,52 @@
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:bpmnDC="http://www.omg.org/spec/BPMN/20100524/DI/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+    <startEvent id="wrc_start" name="Customer submits online warranty claim" />
+    <sequenceFlow id="wrc_flow_start_to_validate" sourceRef="wrc_start" targetRef="wrc_validateClaim" />
+    <userTask id="wrc_validateClaim" name="Validate claim" />
+    <sequenceFlow id="wrc_flow_validate_to_completeCheck" sourceRef="wrc_validateClaim" targetRef="wrc_completeCheck" />
+    <exclusiveGateway id="wrc_completeCheck" name="Claim complete?" />
+    <sequenceFlow id="wrc_flow_completeCheck_to_checkWarranty" sourceRef="wrc_completeCheck" targetRef="wrc_checkWarranty">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${claimComplete}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_completeCheck_to_requestMissing" sourceRef="wrc_completeCheck" targetRef="wrc_requestMissingInfo">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${not claimComplete}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_requestMissingInfo" name="Request missing information" />
+    <sequenceFlow id="wrc_flow_requestMissing_to_validate" sourceRef="wrc_requestMissingInfo" targetRef="wrc_validateClaim" />
+    <userTask id="wrc_checkWarranty" name="Check warranty eligibility" />
+    <sequenceFlow id="wrc_flow_checkWarranty_to_warrantyDecision" sourceRef="wrc_checkWarranty" targetRef="wrc_warrantyDecision" />
+    <exclusiveGateway id="wrc_warrantyDecision" name="Warranty status?" />
+    <sequenceFlow id="wrc_flow_warrantyDecision_to_parallelSplit" sourceRef="wrc_warrantyDecision" targetRef="wrc_parallelSplit">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${inWarranty}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_warrantyDecision_to_sendRejection" sourceRef="wrc_warrantyDecision" targetRef="wrc_sendRejection">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${not inWarranty}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_sendRejection" name="Send rejection notice" />
+    <sequenceFlow id="wrc_flow_sendRejection_to_rejectionEnd" sourceRef="wrc_sendRejection" targetRef="wrc_rejectionEnd" />
+    <endEvent id="wrc_rejectionEnd" name="Process ended with rejection" />
+    <parallelGateway id="wrc_parallelSplit" name="Split" />
+    <sequenceFlow id="wrc_flow_parallelSplit_to_createShipment" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentOrder" />
+    <sequenceFlow id="wrc_flow_parallelSplit_to_schedulePickup" sourceRef="wrc_parallelSplit" targetRef="wrc_scheduleCourierPickup" />
+    <userTask id="wrc_createShipmentOrder" name="Create shipment order" />
+    <userTask id="wrc_scheduleCourierPickup" name="Schedule courier pickup" />
+    <parallelGateway id="wrc_parallelJoin" name="Join" />
+    <sequenceFlow id="wrc_flow_createShipment_to_parallelJoin" sourceRef="wrc_createShipmentOrder" targetRef="wrc_parallelJoin" />
+    <sequenceFlow id="wrc_flow_schedulePickup_to_parallelJoin" sourceRef="wrc_scheduleCourierPickup" targetRef="wrc_parallelJoin" />
+    <sequenceFlow id="wrc_flow_parallelJoin_to_updateInventory" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventory" />
+    <userTask id="wrc_updateInventory" name="Update inventory records" />
+    <sequenceFlow id="wrc_flow_updateInventory_to_closeClaim" sourceRef="wrc_updateInventory" targetRef="wrc_closeClaim" />
+    <userTask id="wrc_closeClaim" name="Close claim" />
+    <sequenceFlow id="wrc_flow_closeClaim_to_successEnd" sourceRef="wrc_closeClaim" targetRef="wrc_successEnd" />
+    <endEvent id="wrc_successEnd" name="Process completed successfully" />
+  </process>
+</definitions>
+```

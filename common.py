@@ -214,6 +214,8 @@ class Shared:
                        "xiaomi/mimo-v2-omni",
                        "xiaomi/mimo-v2-pro",
                        "minimax/minimax-m2.7",
+                       "arcee-ai/trinity-large-thinking",
+                       "z-ai/glm-5v-turbo",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),
