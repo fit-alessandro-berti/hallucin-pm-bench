@@ -216,6 +216,7 @@ class Shared:
                        "minimax/minimax-m2.7",
                        "arcee-ai/trinity-large-thinking",
                        "z-ai/glm-5v-turbo",
+                       "qwen/qwen3.6-plus:free",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),

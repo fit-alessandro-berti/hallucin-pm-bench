@@ -1,0 +1,21 @@
+**7.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer is semantically very close to the ground truth (correct loop for validation, correct parallel branches, correct rejection path, correct sequence post-join, exactly 2 end events, correct gateway types, all IDs prefixed "wrc_", valid BPMN 2.0 XML). It models all prompt-required gateways and no unauthorized inventions like escalations/errors. However, under utmost strictness with significant deductions for **any** differences vs. ground truth (including small ones like naming, attributes, whitespace/structure):
+
+- **Extra elements (major deduction -2.0)**: Added `wrc_check_eligibility` task + 2 sequence flows (`wrc_sf_complete` to it, `wrc_sf_check_gw2` from it). This alters flow between completeness GW and warranty GW (direct in GT). Rubric explicitly deducts for "extra/hallucinated tasks"; even if semantically defensible per prompt text, it's absent in GT.
+- **Task name mismatches (deduction -0.5)**: 
+  | Element | LLM | GT | Diff |
+  |---------|-----|----|------|
+  | Validate | "validates the claim" | "Validate the claim" | Tense/capitalization |
+  | Request | Matches closely | Matches closely | Minor (capitalization) |
+  | Reject | "send rejection notice" | "Send rejection notice" | Capitalization |
+  | Create shipment | Full "Create shipment order for the replacement unit." | "Create shipment order" | Extra text/period |
+  | Schedule pickup | Full "Schedule courier pickup of the faulty product." | "Schedule courier pickup" | Extra text/period |
+  | Update inventory | Matches closely | Matches closely | Capitalization |
+  | Close | "close the claim" | "Close the claim" | Capitalization |
+- **Event name mismatches (deduction -0.3)**: Start ("Customer submits online warranty claim" vs "Online warranty claim submitted"); ends ("Claim Rejected"/"Claim Processed" vs "Rejected"/"Successful end").
+- **Gateway/flow naming/IDs (deduction -0.2)**: GW IDs/names close but differ (e.g., `wrc_gw_incomplete` vs `wrc_complete_gw`); extra flow names (e.g., "Incomplete", "Within warranty").
+- **XML structure/header/process attrs (deduction -0.0)**: Unprefixed namespace valid but differs (GT uses `bpmn:`); extra defs attrs (exporter etc.); process `name`/ `isExecutable="true"` vs none/`false`. Different IDs on most flows/elements (rubric allows ID/whitespace diffs for full credit if semantic, but cumulative with others).
+
+Total: Starts at 10.0 (semantic equivalence), deducts to 7.0. No omissions, but extras/names prevent higher. Perfect match to GT would be 10.0; this is strong but not identical.

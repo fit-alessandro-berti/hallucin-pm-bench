@@ -1,0 +1,48 @@
+{
+  "process": {
+    "id": "CustomerSupportTicketProcess",
+    "name": "Customer Support Ticket Handling",
+    "elements": [
+      { "id": "Start_Email", "type": "StartEvent", "name": "Support Email Received" },
+      { "id": "SubProcess_TicketScope", "type": "SubProcess", "name": "Ticket Handling" },
+      { "id": "Task_ParseCreate", "type": "ServiceTask", "name": "Parse Email and Create Ticket" },
+      { "id": "Task_Classification", "type": "UserTask", "name": "Initial Classification" },
+      { "id": "GW_TypeDecision", "type": "ExclusiveGateway", "name": "Ticket Type Routing" },
+      { "id": "Task_RootCause", "type": "Task", "name": "Root Cause Analysis" },
+      { "id": "Task_Resolution", "type": "Task", "name": "Provide Resolution" },
+      { "id": "Task_SendResponse", "type": "Task", "name": "Send Response to Customer" },
+      { "id": "GW_ParallelSplit", "type": "ParallelGateway" },
+      { "id": "Task_LogKB", "type": "Task", "name": "Log Solution in Knowledge Base" },
+      { "id": "GW_EventWait", "type": "EventBasedGateway" },
+      { "id": "Catch_Reply", "type": "IntermediateCatchEvent", "name": "Customer Reply", "eventDefinitionType": "Message" },
+      { "id": "Catch_24hTimeout", "type": "IntermediateCatchEvent", "name": "24 Hours Elapsed", "eventDefinitionType": "Timer", "duration": "PT24H" },
+      { "id": "Task_SendReminder", "type": "ServiceTask", "name": "Send Reminder" },
+      { "id": "Task_CloseTicket", "type": "Task", "name": "Close Ticket" },
+      { "id": "End_Normal", "type": "EndEvent" },
+      { "id": "End_KB", "type": "EndEvent", "name": "KB Logging Complete" },
+      { "id": "Boundary_Cancel", "type": "BoundaryEvent", "name": "Customer Cancellation", "attachedToRef": "SubProcess_TicketScope", "cancelActivity": true, "eventDefinitionType": "Message" },
+      { "id": "End_Terminate", "type": "EndEvent", "eventDefinitionType": "Terminate" }
+    ],
+    "sequenceFlows": [
+      { "id": "Flow_1", "sourceRef": "Start_Email", "targetRef": "SubProcess_TicketScope" },
+      { "id": "Flow_2", "sourceRef": "SubProcess_TicketScope", "targetRef": "Task_ParseCreate" },
+      { "id": "Flow_3", "sourceRef": "Task_ParseCreate", "targetRef": "Task_Classification" },
+      { "id": "Flow_4", "sourceRef": "Task_Classification", "targetRef": "GW_TypeDecision" },
+      { "id": "Flow_Simple", "sourceRef": "GW_TypeDecision", "targetRef": "Task_Resolution", "conditionExpression": "type == 'Simple'" },
+      { "id": "Flow_Complex", "sourceRef": "GW_TypeDecision", "targetRef": "Task_RootCause", "conditionExpression": "type == 'Complex'" },
+      { "id": "Flow_5", "sourceRef": "Task_RootCause", "targetRef": "Task_Resolution" },
+      { "id": "Flow_6", "sourceRef": "Task_Resolution", "targetRef": "Task_SendResponse" },
+      { "id": "Flow_7", "sourceRef": "Task_SendResponse", "targetRef": "GW_ParallelSplit" },
+      { "id": "Flow_KB", "sourceRef": "GW_ParallelSplit", "targetRef": "Task_LogKB" },
+      { "id": "Flow_KBToEnd", "sourceRef": "Task_LogKB", "targetRef": "End_KB" },
+      { "id": "Flow_Wait", "sourceRef": "GW_ParallelSplit", "targetRef": "GW_EventWait" },
+      { "id": "Flow_ToReply", "sourceRef": "GW_EventWait", "targetRef": "Catch_Reply" },
+      { "id": "Flow_ToTimer", "sourceRef": "GW_EventWait", "targetRef": "Catch_24hTimeout" },
+      { "id": "Flow_ReplyToClose", "sourceRef": "Catch_Reply", "targetRef": "Task_CloseTicket" },
+      { "id": "Flow_TimerToReminder", "sourceRef": "Catch_24hTimeout", "targetRef": "Task_SendReminder" },
+      { "id": "Flow_ReminderToClose", "sourceRef": "Task_SendReminder", "targetRef": "Task_CloseTicket" },
+      { "id": "Flow_CloseToEnd", "sourceRef": "Task_CloseTicket", "targetRef": "End_Normal" },
+      { "id": "Flow_Cancel", "sourceRef": "Boundary_Cancel", "targetRef": "End_Terminate" }
+    ]
+  }
+}
