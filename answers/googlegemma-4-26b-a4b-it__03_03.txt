@@ -1,0 +1,58 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="wrc_definitions" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wrc_process" isExecutable="false">
+    <!-- 1. Start -->
+    <bpmn:startEvent id="wrc_start_event" name="online warranty claim" />
+
+    <!-- 2. Validation Loop -->
+    <bpmn:sequenceFlow id="wrc_sf_1" sourceRef="wrc_start_event" targetRef="wrc_task_validate" />
+    <bpmn:userTask id="wrc_task_validate" name="validate the claim" />
+    
+    <bpmn:sequenceFlow id="wrc_sf_2" sourceRef="wrc_task_validate" targetRef="wrc_gw_complete" />
+    <bpmn:exclusiveGateway id="wrc_gw_complete" name="is claim complete?" />
+
+    <bpmn:sequenceFlow id="wrc_sf_incomplete" name="incomplete" sourceRef="wrc_gw_complete" targetRef="wrc_task_request_info" />
+    <bpmn:userTask id="wrc_task_request_info" name="requests missing information" />
+    
+    <bpmn:sequenceFlow id="wrc_sf_loopback" sourceRef="wrc_task_request_info" targetRef="wrc_task_validate" />
+
+    <!-- 3. Eligibility -->
+    <bpmn:sequenceFlow id="wrc_sf_complete" name="complete" sourceRef="wrc_gw_complete" targetRef="wrc_task_check_eligibility" />
+    <bpmn:userTask id="wrc_task_check_eligibility" name="checks warranty eligibility" />
+
+    <bpmn:sequenceFlow id="wrc_sf_3" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gw_eligibility" />
+    <bpmn:exclusiveGateway id="wrc_gw_eligibility" name="within warranty?" />
+
+    <bpmn:sequenceFlow id="wrc_sf_out" name="out of warranty" sourceRef="wrc_gw_eligibility" targetRef="wrc_task_reject" />
+    <bpmn:userTask id="wrc_task_reject" name="send rejection notice" />
+    <bpmn:endEvent id="wrc_end_rejection" name="End (Rejection)" />
+    <bpmn:sequenceFlow id="wrc_sf_end_rej" sourceRef="wrc_task_reject" targetRef="wrc_end_rejection" />
+
+    <!-- 4. Parallel Activities -->
+    <bpmn:sequenceFlow id="wrc_sf_within" name="within warranty" sourceRef="wrc_gw_eligibility" targetRef="wrc_gw_parallel_split" />
+    <bpmn:parallelGateway id="wrc_gw_parallel_split" />
+
+    <bpmn:sequenceFlow id="wrc_sf_split_a" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_shipment" />
+    <bpmn:userTask id="wrc_task_shipment" name="Create shipment order" />
+
+    <bpmn:sequenceFlow id="wrc_sf_split_b" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_courier" />
+    <bpmn:userTask id="wrc_task_courier" name="Schedule courier pickup" />
+
+    <!-- 5. Completion -->
+    <bpmn:sequenceFlow id="wrc_sf_join_a" sourceRef="wrc_task_shipment" targetRef="wrc_gw_parallel_join" />
+    <bpmn:sequenceFlow id="wrc_sf_join_b" sourceRef="wrc_task_courier" targetRef="wrc_gw_parallel_join" />
+    <bpmn:parallelGateway id="wrc_gw_parallel_join" />
+
+    <bpmn:sequenceFlow id="wrc_sf_after_parallel" sourceRef="wrc_gw_parallel_join" targetRef="wrc_task_update_inventory" />
+    <bpmn:userTask id="wrc_task_update_inventory" name="update inventory records" />
+
+    <bpmn:sequenceFlow id="wrc_sf_final_step" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim" />
+    <bpmn:userTask id="wrc_task_close_claim" name="close the claim" />
+
+    <bpmn:sequenceFlow id="wrc_sf_end_success" sourceRef="wrc_task_close_claim" targetRef="wrc_end_success" />
+    <bpmn:endEvent id="wrc_end_success" name="End (Success)" />
+
+  </bpmn:process>
+</bpmn:definitions>
+```

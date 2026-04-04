@@ -1,0 +1,20 @@
+**3.2**
+
+### Evaluation Rationale (strict assessment):
+- **Structural mismatch (major deduction: -4.0 points)**: Completely different JSON schema. LLM uses nested `"bpmn" > "process" > "flow[]"` mixing elements and flows in one array (malformed for standard BPMN JSON parsing). Ground truth uses flat `"process_id"`, `"elements[]"`, `"flows[]"`. IDs, nesting, and organization do not match at all—no `"process_id": "SupportTicket"`, no separate elements/flows arrays.
+- **Element/name differences (significant deduction: -1.8 points)**: 
+  | Aspect | LLM | Ground Truth | Issue |
+  |--------|-----|--------------|-------|
+  | Start | `"Support e-mail received"` → parse+create task | `"Email Received"` → separate `"Create Ticket"` | Combines parse/create; name mismatch. |
+  | Classify GW | `"Ticket Complexity?"` | `"Simple or Complex?"` | Name mismatch. |
+  | Conditions | `"Simple"`, `"Complex"` | `"simple"`, `"complex"` | Case mismatch. |
+  | Parallel GWs | Unnamed | `"Fork Log/Wait"`, `"Join After Log"` | Missing names. |
+  | Event GW | `"Wait for Reply or Timeout"` | `"Wait 24h for Reply"` | Name mismatch. |
+  | Reply Event | `"Customer Reply Received"` | `"Customer Reply"` (w/ `"event": "message"`) | Name + missing `"event"`. |
+  | Timer | `"24 Hours Passed"` | `"Timer 24h"` (w/ `"event": "timer"`) | Name + missing `"event"`, no duration explicit. |
+  | End | `"Ticket Closed"` | `"End"` | Mismatch. |
+  | Task types | `serviceTask`/`userTask` | `"task"` | Extra granularity not in GT. |
+- **Cancel modeling error (deduction: -0.8 points)**: LLM uses invalid `"boundaryEvent"` `"attachedTo": "Process"` (BPMN boundaries attach to activities/subprocesses, not process level). GT uses loose `"intermediateCatchEvent"` (also incomplete, no integration, but matches schema).
+- **Faithful logic (partial credit +5.0 base, minor deductions)**: Core flow (classification → resolution/RCA → parallel send/log → wait/timer → close/reminder → end) matches text/GT exactly. No invented escalations/supervisors. Parallel join correct for async log. Event-based GW + catches correct for 24h wait/reply/timeout. No extra gateways/flows.
+- **Other minor errors (-0.2 points)**: Extraneous `"version"`, process `"name"`; odd flow from classify *task* to GW (GW should follow task implicitly); no GT-style conditions/flows exact matches.
+- **Total**: Starts at 10.0, deducts to 3.2 for cumulative strict mismatches. Logic fidelity prevents 1.0, but schema/name/attachment errors dominate under "utmost strictness" and "small errors significant loss."
