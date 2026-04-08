@@ -219,6 +219,7 @@ class Shared:
                        "qwen/qwen3.6-plus:free",
                        "google/gemma-4-26b-a4b-it",
                        "google/gemma-4-31b-it",
+                       "z-ai/glm-5.1",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),

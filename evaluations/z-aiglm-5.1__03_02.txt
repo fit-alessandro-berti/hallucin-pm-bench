@@ -1,0 +1,24 @@
+4.2
+
+### Evaluation Rationale (strict assessment)
+**Structural Differences (major deductions: -3.5 points)**: The LLM uses a full BPMN 2.0 schema (`definitions`, `process`, nested `flowElements` with explicit `SequenceFlow` objects, namespaces). Ground truth uses a custom simplified schema (`process_id`, flat `elements`/`flows` arrays, no namespaces, abbreviated types like `"type": "task"`). This is a fundamental mismatch; no semantic equivalence despite similar concepts.
+
+**Element Fidelity (deductions: -1.5 points)**:
+- Extra/invented elements absent from key: `SubProcess_HandleTicket` (-0.5, invention not described), `GW_JoinClassify` exclusive merge after classification (-0.3, hallucinated gateway), `GW_JoinReply` (-0.3, unnecessary exclusive join after event paths), `Boundary_Cancel` (-0.2, different cancel modeling), `Task_ParseCreate` combines parse/create but adds detail absent as separate (-0.2).
+- Name mismatches: e.g., start "Support Email Received" vs "Email Received"; classify GW "Classification?" vs "Simple or Complex?"; fork "Parallel Fork" vs "Fork Log/Wait".
+- Good matches: core tasks (classify, rootCause, provideResolution, sendResponse, logSolution, sendReminder, closeTicket), gateways (exclusive split, parallel fork/join, eventBased), events (start message, catches message/timer).
+- Cancel: LLM boundary interrupting on subprocess (semantically strong, but absent from key and structured differently vs loose `cancelEvent`).
+- Terminate: LLM `EndEvent` + `TerminateEventDefinition` vs `"terminateEndEvent"` (minor variance).
+
+**Flow/Logic Differences (deductions: -0.8 points)**:
+- Classification merge: LLM routes simple/complex via explicit `GW_JoinClassify` → provideResolution; ground truth direct simple → provideResolution, complex → rootCause → provideResolution (no join GW). Extra flow/gateway hallucination.
+- Parallel branch: LLM forks *after* sendResponse (log || event-based wait, join *after* closeTicket). Ground truth forks *after* provideResolution (sendResponse || logSolution → join → event-based wait). Mismatch in sequencing; LLM better matches description's "after send... in parallel log (vs customer reply)", but differs from key (-0.4).
+- Event paths: LLM adds unnecessary `GW_JoinReply` merging reply/reminder → close; ground truth direct customerReply → closeTicket, timer24h → sendReminder → closeTicket (cleaner, eventGW ensures exclusivity).
+- Cancel flow: LLM boundary → terminate (interrupts whole process, good); ground truth isolated `cancelEvent` → `terminate` (no interruption mechanism specified, incomplete).
+
+**Faithfulness to Description (minor credit, but strict vs key)**:
+- No escalations/supervisor inventions: +1.0 (perfect).
+- Faithful extras: parse explicit, timer "PT24H", flow labels "Simple"/"Complex", parallel allows log after reply.
+- But extras penalized per focus.
+
+**Overall**: Semantically ~80% aligned (core process captured), but strict format mismatch, hallucinated gateways/subprocess, flow variances yield low score. Small errors (names, unnecessary joins) deduct significantly per instructions. Equivalent perfect match: 10.0; this is substantially divergent.

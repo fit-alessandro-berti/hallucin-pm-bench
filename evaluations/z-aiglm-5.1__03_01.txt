@@ -1,0 +1,24 @@
+**6.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer captures the **correct process logic** (flows, loop back to `t3` from `gw3` No, password reset path to confirm, specialist to resolve), uses concise IDs, exactly 3 exclusive gateways (required despite prompt mentioning "two"), no invented extras (e.g., no timers/SLAs), and stays ≤40 lines (~35). No hallucinations like parallel paths or approvals. However, **utmost strictness** demands near-identical match to ground truth (GT); multiple small/medium diffs cause major point loss:
+
+#### Major Diffs (-2.0 total):
+- **Task types invented** (`serviceTask` for auto-classify, `userTask` x4 for agent tasks vs GT's generic `task` everywhere): Violates "do not invent/add activities"; adds unmentioned implementation details. (-1.0)
+- **No `conditionExpression` on gateway flows** (f3/f4/f7/f8/f12/f13 use `name="Yes"/"No"` instead): GT explicitly models conditions with `xsi:type="tFormalExpression" yes/no`; valid BPMN but not matching. (-1.0)
+
+#### Medium Diffs (-1.5 total):
+- **Activity/gateway names imprecise**:
+  | Element | LLM | GT | Issue |
+  |---------|-----|----|-------|
+  | t1 | "Classify Ticket" (`serviceTask`) | "Auto-Classification" (`task`) | Name + type mismatch; desc= "automatically classified" (invented but diffs). |
+  | gw2 | "Resolution Path?" | "Resolved Internally?" | Interpretive mismatch for "Resolve or Forward". |
+  | gw3 | "Customer Confirmed?" | "Customer Confirms?" | Minor wording diff. |
+- **Process attrs**: id=`supportTicketProcess` `isExecutable="true"` vs `support_ticket` name=`Support-Ticket` `isExecutable="false"`. Unmentioned invention. 
+
+#### Minor/Cosmetic Diffs (-0.5 total):
+- Missing `<?xml version="1.0" encoding="UTF-8"?>` declaration.
+- `targetNamespace="http://acmetech.com/bpmn"` vs `"http://acmetech/support"`.
+- Flow formatting: Single-line with `name=` vs multi-line with conditions.
+
+**Perfect logic/structure = base 10; cumulative diffs = -4.0 → 6.0**. Semantically improved (e.g., `userTask` fits agents) but strict GT-match fails on fidelity. Identical XML would be 10.0; 1-2 diffs ~8.0.
