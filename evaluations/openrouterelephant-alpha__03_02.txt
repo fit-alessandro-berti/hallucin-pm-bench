@@ -1,0 +1,12 @@
+**3.2**
+
+### Evaluation Rationale (strict assessment):
+- **Schema mismatch (major deduction: -3.0)**: Completely different JSON structure. Ground truth uses flat `"process_id"`, `"elements"` (separate events/tasks/gateways), `"flows"` (source/target/condition). LLM uses verbose BPMN-like `"definitions" > "processes" > "flowElements"` (mixes all incl. sequences), `"relationships"`. Not interoperable or matching; fails "well-formed JSON representation" expectation implied by ground truth.
+- **Timeout/wait modeling incorrect (-1.5)**: LLM uses `intermediateCatchEvent` (no event type) → `exclusiveGateway` ("Reply within 24h?"), imprecise/invalid for timeout (no true race between reply/timer). Ground truth correctly uses `eventBasedGateway` → `customerReply` (message) / `timer24h`, first-to-complete.
+- **Cancel handling hallucinated/invalid (-1.5)**: LLM invents 8+ spurious `SequenceFlow_Cancel_Any_*` from *every* element to `Gateway_Cancel` (impossible in BPMN; sequence flows can't branch arbitrarily/non-sequentially), plus "No" path skipping to `Gateway_Type`. Ground truth has clean `cancelEvent` (message catch) → `terminate` (incomplete but non-hallucinated, implied boundary/parallel).
+- **Parallel fork/join unstructured (-0.5)**: No explicit fork gateway post-`ProvideResolution`; relies on dual `sequenceFlow` out + late `parallelGateway` sync. Ground truth uses proper `forkLogging`/`joinAfterLogging`.
+- **Name/condition mismatches (-0.3)**: E.g., "Support Email Received" vs. "Email Received"; "Create Ticket in Help-Desk System" vs. "Create Ticket"; conditions "Simple"/"Complex" vs. "simple"/"complex". No parse step (correct, but names verbose).
+- **Extras/hallucinations (-0.3)**: Duplicate close tasks; `terminateEvent` (nonstandard); `isExecutable: false`; `Event_End`; unneeded sync name.
+- **Matches/credits (+1.0 partial)**: Core sequence (start→create→classify→XOR→RCA/provide→send/log→wait→close/reminder), parallel intent, no invented escalations.
+
+Total reflects ~30-40% fidelity; strict per instructions (small errors like names/conditions deduct notably, modeling flaws severely).

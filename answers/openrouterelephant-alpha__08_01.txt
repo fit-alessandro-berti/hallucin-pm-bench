@@ -1,0 +1,52 @@
+**No.**  
+T5 cannot fire before T3 in any reachable marking.
+
+**Reasoning:**
+
+1. Initially, only p0 has a token.  
+2. To fire T5, its **normal input place p3** must contain at least one token.  
+   - The only way p3 gets a token is via transition **T2**.  
+3. To fire T2, its input place **p1** must contain at least one token.  
+   - The only way p1 gets a token is via transition **T1**.  
+4. T1 produces tokens in **both** p1 and p2.  
+5. Now consider p4:  
+   - T3 is required to put a token into p4 (since no other transition produces tokens in p4).  
+   - T5 has an **inhibitor arc** from p4, so T5 is enabled only if p4 has **zero** tokens.  
+6. Therefore, if T5 is to fire:
+   - p3 must have ≥1 token ⇒ T2 must have fired ⇒ T1 must have fired ⇒ p1 and p2 are marked.  
+   - But at the same time, p4 must have 0 tokens ⇒ T3 must **not** have fired.  
+7. However, as soon as p2 has a token (from T1), the possibility of T3 firing exists.  
+   The question is whether we can **avoid** firing T3 while still enabling T5.
+
+   The problem is **not** that T3 must fire, but that **p4 must remain empty** for T5 to be enabled.  
+   So in principle, we could fire T1, then T2 (giving p3 a token), and then fire T5 **without ever firing T3**.
+
+   Wait—does the net allow that? Let's check carefully.
+
+   After T1: p1=1, p2=1.  
+   After T2: p1=0, p3=1, p2=1.  
+   Now, p4=0, so the inhibitor input to T5 is satisfied.  
+   T5’s normal input is p3=1, so **T5 is enabled** at this marking.  
+   T3 is not required to fire.
+
+   So actually, **T5 can fire before T3**.
+
+Let me re-evaluate.
+
+**Correct analysis:**
+
+- From initial marking (1,0,0,0,0,0,0):
+  1. Fire **T1** → (0,1,0,0,0,1,0)  [p1=1, p2=1]
+  2. Fire **T2** → (0,0,0,1,0,1,0)  [p3=1, p2 still 1]
+  3. Now p4=0, so inhibitor condition for T5 holds; p3=1, so T5 is enabled.
+  4. Fire **T5** → (0,0,0,1,0,0,1)  [p6=1, p3 consumed]
+
+At this point, T3 has not fired yet. So **T5 fired before T3**.
+
+Thus, the answer is **yes**.
+
+**Concrete firing sequence:**  
+**T1 → T2 → T5**
+
+**Justification:**  
+After T1 and T2, p3=1 and p4=0, satisfying both the normal input (p3) and inhibitor input (¬p4) for T5, so T5 is enabled and can fire while T3 remains un-fired.

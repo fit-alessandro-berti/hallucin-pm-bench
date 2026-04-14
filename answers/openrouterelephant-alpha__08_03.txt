@@ -1,0 +1,89 @@
+**Answer: No**, it is not possible for transition **T5** to fire before **T3** in any reachable marking.
+
+### Formal explanation
+
+The initial marking is:
+
+- \( p0 = 1 \)
+- \( pa = pb = pc = pd = pe = pf = 0 \)
+
+To fire **T5**, its input places must be marked:
+
+- **T5** requires \( pd \geq 1 \) and \( pe \geq 1 \).
+
+To achieve \( pd \geq 1 \) and \( pe \geq 1 \), we must use the transitions that produce these tokens:
+
+1. **Path for `pd`:**  
+   - `p0 →(T1)→ pa →(T2b)→ pd`  
+   - or `p0 →(T1)→ pb →(T4)→ pe` is irrelevant for `pd`; for `pd` directly: `pa →(T2b)→ pd` or `pc →(T3)→ pd`.
+
+2. **Path for `pe`:**  
+   - `p0 →(T1)→ pb →(T4)→ pe`
+
+Note:
+- From `p0`, **T1** fires and produces **both** `pa` and `pb` (parallel split).
+- From `pa`, either **T2** (produces `pc`) or **T2b** (produces `pd`) can fire.
+- To get `pd`, we need either:
+  - `pa →(T2b)→ pd`, or
+  - `pc →(T3)→ pd`.
+- To get `pe`, we need:
+  - `pb →(T4)→ pe`.
+
+Now observe:
+- If we use **T2b** (`pa → pd`) before using **T2** (`pa → pc`), then:
+  - `pd` becomes marked.
+  - But `pc` remains unmarked.
+  - Consequently, **T3** (which requires `pc` as input) cannot fire.
+- However, **T5** requires **both** `pd` and `pe`.  
+  We can get `pe` via `pb → T4`, which is independent of `pc`.
+
+So it might seem we can get `pd` and `pe` without `T3`. But note:
+- To get `pd` **without using T3**, we must use **T2b**.
+- If we use **T2b**, then `pc` is never produced.
+- But then **T3** never fires.
+
+However, the question is **not** about using `T2b`; it is about whether **T5** can fire **before T3**.
+
+Let’s examine whether `T5` can ever fire **at all** without `T3` having fired earlier.
+
+- Suppose we try to produce `pd` via `T2b` (so `T3` hasn’t fired).
+- Then we have:
+  - `pd = 1` (via `pa → T2b`)
+  - `pe = 1` (via `pb → T4`)
+  - So `T5` becomes enabled.
+
+At first glance, this suggests **T5 could fire before T3**.
+
+But wait—let’s simulate:
+
+1. Initial: `p0=1`
+2. Fire **T1**: `pa=1, pb=1, p0=0`
+3. Fire **T2b**: `pd=1, pa=0`
+4. Fire **T4**: `pe=1, pb=0`
+5. Now: `pd=1, pe=1` → **T5 is enabled**.
+
+So **T5 fires**, and **T3 has not fired yet**.
+
+Thus, **T5 can fire before T3**.
+
+But hold on—is this sequence valid? Let's double-check:
+
+- After T1: `pa=1, pb=1`
+- After T2b: consumes `pa`, produces `pd` → `pd=1, pb=1`
+- After T4: consumes `pb`, produces `pe` → `pe=1`
+- Now `pd=1, pe=1` → T5 can fire.
+
+Yes, this is valid.
+
+So **T5 can fire before T3**.
+
+Therefore, the correct answer is:
+
+---
+
+**Answer: Yes**
+
+**Shortest firing sequence:**  
+**T1 → T2b → T4 → T5**
+
+This sequence reaches a marking where both `pd` and `pe` are marked, enabling **T5**, and **T3** has not fired yet.

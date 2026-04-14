@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             id="Definitions_1"
+             targetNamespace="http://example.org/warranty-replacement">
+
+  <process id="wrc_Process_WarrantyReplacement" name="Warranty-Replacement v1.3">
+
+    <!-- 1. Start: Customer submits an online warranty claim -->
+    <startEvent id="wrc_StartEvent_SubmitClaim" name="Submit online warranty claim" />
+
+    <!-- 2. Validate claim (with loop for missing information) -->
+    <sequenceFlow id="wrc_Flow_01to02" sourceRef="wrc_StartEvent_SubmitClaim" targetRef="wrc_Task_ValidateClaim" />
+
+    <task id="wrc_Task_ValidateClaim" name="validate the claim" />
+
+    <exclusiveGateway id="wrc_Gateway_CheckCompleteness" name="Is claim complete?" default="wrc_Flow_02to02a" />
+    <sequenceFlow id="wrc_Flow_02to02a" sourceRef="wrc_Task_ValidateClaim" targetRef="wrc_Gateway_CheckCompleteness" />
+
+    <sequenceFlow id="wrc_Flow_02to02b" sourceRef="wrc_Gateway_CheckCompleteness" targetRef="wrc_Task_RequestMissingInfo">
+      <conditionExpression xsi:type="tFormalExpression">#{!claimComplete}</conditionExpression>
+    </sequenceFlow>
+
+    <task id="wrc_Task_RequestMissingInfo" name="request missing information" />
+    <sequenceFlow id="wrc_Flow_02bto02" sourceRef="wrc_Task_RequestMissingInfo" targetRef="wrc_Task_ValidateClaim" />
+
+    <!-- After validation passes completeness, proceed to eligibility -->
+    <sequenceFlow id="wrc_Flow_02ato03" sourceRef="wrc_Gateway_CheckCompleteness" targetRef="wrc_Task_CheckEligibility">
+      <conditionExpression xsi:type="tFormalExpression">#{claimComplete}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- 3. Check warranty eligibility -->
+    <task id="wrc_Task_CheckEligibility" name="check warranty eligibility" />
+    <exclusiveGateway id="wrc_Gateway_Eligibility" name="Is product within warranty?" default="wrc_Flow_03to04" />
+    <sequenceFlow id="wrc_Flow_03to04" sourceRef="wrc_Task_CheckEligibility" targetRef="wrc_Gateway_Eligibility" />
+
+    <sequenceFlow id="wrc_Flow_03toReject" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_Task_SendRejectionNotice">
+      <conditionExpression xsi:type="tFormalExpression">#{!withinWarranty}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- 4. Parallel activities for eligible claims -->
+    <parallelGateway id="wrc_Gateway_ParallelSplit" name="Split parallel tasks" default="wrc_Flow_04ato05a" />
+    <sequenceFlow id="wrc_Flow_04toSplit" sourceRef="wrc_Gateway_Eligibility" targetRef="wrc_Gateway_ParallelSplit">
+      <conditionExpression xsi:type="tFormalExpression">#{withinWarranty}</conditionExpression>
+    </sequenceFlow>
+
+    <task id="wrc_Task_CreateShipmentOrder" name="create shipment order" />
+    <sequenceFlow id="wrc_Flow_04ato05a" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_Task_CreateShipmentOrder" />
+
+    <task id="wrc_Task_ScheduleCourierPickup" name="schedule courier pickup" />
+    <sequenceFlow id="wrc_Flow_04bto05b" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_Task_ScheduleCourierPickup" />
+
+    <parallelGateway id="wrc_Gateway_ParallelJoin" name="Join parallel tasks" />
+    <sequenceFlow id="wrc_Flow_05ato06" sourceRef="wrc_Task_CreateShipmentOrder" targetRef="wrc_Gateway_ParallelJoin" />
+    <sequenceFlow id="wrc_Flow_05bto06" sourceRef="wrc_Task_ScheduleCourierPickup" targetRef="wrc_Gateway_ParallelJoin" />
+
+    <!-- 5. Finalize and close -->
+    <sequenceFlow id="wrc_Flow_06to07" sourceRef="wrc_Gateway_ParallelJoin" targetRef="wrc_Task_UpdateInventoryRecords" />
+    <task id="wrc_Task_UpdateInventoryRecords" name="update inventory records" />
+    <sequenceFlow id="wrc_Flow_07to08" sourceRef="wrc_Task_UpdateInventoryRecords" targetRef="wrc_Task_CloseClaim" />
+    <task id="wrc_Task_CloseClaim" name="close the claim" />
+    <sequenceFlow id="wrc_Flow_08toEndSuccess" sourceRef="wrc_Task_CloseClaim" targetRef="wrc_EndEvent_Success" />
+
+    <!-- Rejection path -->
+    <task id="wrc_Task_SendRejectionNotice" name="send rejection notice" />
+    <sequenceFlow id="wrc_Flow_03toRejectNotice" sourceRef="wrc_Task_SendRejectionNotice" targetRef="wrc_EndEvent_Reject" />
+
+    <!-- End Events -->
+    <endEvent id="wrc_EndEvent_Reject" name="Claim rejected">
+      <terminateEventDefinition id="TerminateEventDefinition_0" />
+    </endEvent>
+    <endEvent id="wrc_EndEvent_Success" name="Claim closed" />
+
+  </process>
+</definitions>
