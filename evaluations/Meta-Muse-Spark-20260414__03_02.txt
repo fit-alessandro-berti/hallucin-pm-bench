@@ -1,0 +1,11 @@
+**2.0**
+
+### Evaluation Rationale (strict assessment vs. ground truth):
+- **Format/Structure Mismatch (major penalty, -4.0)**: Ground truth uses a simple custom JSON schema (`"process_id"`, `"elements"` array with shorthand props like `"event": "message"`, `"flows"` array with `"source"`/`"target"`/`"condition"` strings). LLM uses verbose full BPMN 2.0 schema (`"definitions"`, `"targetNamespace"`, `"processElements"` flat array of detailed objects, `"sourceRef"`/`"targetRef"`, `${}` conditions, nested `"eventDefinition"`, `"messages"` array). No matching top-level keys; unrenderable as-is in bpmn.io. Fatal difference.
+- **Invalid BPMN Nesting (major penalty, -1.5)**: LLM invents unnecessary `"SubProcess_MainFlow"` containing array of sibling element IDs (not proper nested `flowElements`); boundary event `attachedToRef` references it. Flows reference non-nested IDs. Malformed JSON, won't validate/parse.
+- **Hallucinated Elements (penalty, -1.0)**: Extra `"subProcess"`, boundary event (vs. GT's loose `intermediateCatchEvent`), top-level `"messages"`, `"isExecutable": true`, detailed event defs (e.g., `"PT24H"`), terminateEventDefinition. Violates "model *only* what is described"; penalised per focus on absent gateways/flows.
+- **Name/Detail Differences (minor but strict penalty, -0.5)**: E.g., "Support e-mail received" vs. "Email Received"; "Wait for Customer Reply" vs. "Wait 24h for Reply"; "24 hours" vs. "Timer 24h"; IDs/names wholly different (e.g., "Gateway_ParallelSplit" vs. "forkLogging"). GT fork named "Fork Log/Wait" (imperfect); LLM closer to desc but irrelevant.
+- **Logic Fidelity (partial credit, base +3.0)**: Core flow matches desc/GT (classification XOR, complex->RCA->resolution, parallel send/log with join, event GW + reply/timer catches, reminder path, close merge, terminate). Parallel join before wait imperfect in *both* (desc implies async log overlapping reply wait, no sync), but consistent. Cancel interrupts modeled (boundary semantically better than GT's unattached catch, but invented).
+- **No prohibited inventions**: Zero escalation/supervisor; all desc steps present.
+
+Total raw alignment ~20%; strict deduction yields 2.0. LLM shows process understanding but fails faithful JSON match/validity.

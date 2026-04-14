@@ -1,0 +1,13 @@
+To enforce the 48h SLA without new activities, attach a boundary timer to the existing `Activity_CreateAccount` and route timeouts to the existing unused escalation task.
+
+**Changed/added XML elements:**
+```xml
+<bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System"/>
+<bpmn:boundaryEvent id="Timer_48h_SLA" attachedToRef="Activity_CreateAccount" cancelActivity="false">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+<bpmn:sequenceFlow id="Flow_Escalate_SLA" sourceRef="Timer_48h_SLA" targetRef="Activity_AMReview"/>
+```
+**Justification:** A non-interrupting 48-hour boundary timer on `Activity_CreateAccount` triggers escalation to the existing `Account-Manager Review` when the SLA is breached, ensuring compliance without adding new tasks.

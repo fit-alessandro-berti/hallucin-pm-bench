@@ -221,6 +221,7 @@ class Shared:
                        "google/gemma-4-31b-it",
                        "z-ai/glm-5.1",
                        "openrouter/elephant-alpha",
+                       "Meta-Muse-Spark-20260414",
                        ("anthropic/claude-opus-4.6-thinking",
                         {"base_model": "anthropic/claude-opus-4.6",
                          "payload": {"reasoning": {"enabled": True}}}),
