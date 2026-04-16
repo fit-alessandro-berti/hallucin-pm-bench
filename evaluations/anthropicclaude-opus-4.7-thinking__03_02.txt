@@ -1,0 +1,26 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment):
+The LLM answer is a valid BPMN JSON but deviates significantly from the ground truth in structure, topology, naming, and modeling details, warranting major point deductions under utmost strictness. Key differences:
+
+- **Schema/structure (major deduction, -3.0 points)**: LLM uses nested `{"process": {"flowElements": [...]}}` with all elements/flows mixed; GT uses flat `{"process_id": "...", "elements": [], "flows": []}`. Not matching expected format.
+- **Element IDs (major, -1.0)**: All IDs differ (e.g., "StartEvent_EmailReceived" vs "start"; "Task_ProvideResolution" vs "provideResolution"). No match.
+- **Names (multiple small errors, -0.5 each, total -1.0)**: 
+  - Start: "Support E-mail Received" vs "Email Received".
+  - Parse/create: "Parse E-mail & Create Ticket" (extra "Parse", faithful but differs from GT's "Create Ticket").
+  - Parallel GWs: "Parallel Split"/"Parallel Join" vs "Fork Log/Wait"/"Join After Log".
+  - Event GW: "Wait for Reply or Timeout" vs "Wait 24h for Reply".
+  - Timer: "24 Hours Elapsed" vs "Timer 24h".
+  - End: "Ticket Closed" vs "End".
+  - Cancel: "EventSubProcess_Cancellation" vs "cancelEvent".
+- **Topology/flows (major semantic difference, -1.5)**: Parallel join position wrong vs GT.
+  - LLM: `provideResolution → parSplit → (sendResponse → eventGW → close → parJoin ← logSolution) → end`. Wait starts after send (good), end syncs on log post-close.
+  - GT: `provideResolution → fork → (sendResponse → parJoin ← logSolution) → eventGW → close → end`. Wait *delayed* until log (flawed, but differs).
+  - sendResponse targets eventGW (LLM) vs parJoin (GT).
+  - closeTicket targets parJoin (LLM) vs end (GT).
+- **Cancel modeling (diff, -0.5)**: LLM uses proper interrupting `EventSubProcess` (faithful to "any point"); GT uses dangling `intermediateCatchEvent → terminateEndEvent` (unattached, invalid). Extra subProcess elements/flows not in GT.
+- **Other (minor deductions, -0.5 total)**: Extra props (e.g., `isExecutable`, `PT24H`—accurate but absent); flow conditions "name" vs GT "condition"; GT misses parse (LLM adds faithfully).
+
+**Positives (+1.0 total)**: No hallucinations (no escalation/approval). Core sequence faithful (classification, RCA, parallel log, event wait, reminder once). Same gateway types/count. Full flows defined.
+
+Base 10 → deductions = 4.0. Semantically stronger than GT in places (wait timing, cancel, parse), but strict diff-matching yields low score.
