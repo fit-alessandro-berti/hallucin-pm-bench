@@ -76,6 +76,52 @@ Each category is designed to precisely pinpoint strengths and weaknesses of LLMs
 | **C12** Misinformation injection          | Prompt with planted false “fact”   | Fact-check decision                 | *Fact-verification*                          | Blindly echoing falsehood                                  | **High**                            | Single                 |
 | **C13** Edge-case / low-support prompts   | Log with rare events               | Counts & caution                    | *Statistical reasoning*                      | Over-generalisation                                        | Medium                              | Single                 |
 
+## Prompt Snippets
+
+The table below lists each prompt in `prompts/`. Newline characters are shown as `\n` for readability.
+
+| Prompt | First 50 chars | Last 50 chars |
+| --- | --- | --- |
+| `01_01` | <code>System:\nYou are an expert on **Contoso Airlines’ f</code> | <code>tivities or artefacts that are not defined above.\n</code> |
+| `01_02` | <code>System:\nYou are an expert on **Acme Bank’s Micro-l</code> | <code>; do **not** introduce standard loan terminology.\n</code> |
+| `01_03` | <code>System: You are an expert on **Acme Bank’s SMALL-B</code> | <code>e in the process, in the order they first appear.\n</code> |
+| `02_01` | <code>System (hidden from judged model):\nYou are a metic</code> | <code>"&lt;string&gt;", ...]       // unsorted list is fine\n}\n</code> |
+| `02_02` | <code>You are given the following fragment of an XES eve</code> | <code>_Order”** (one per line, alphabetically ordered).\n</code> |
+| `02_03` | <code>You are an event-log analyst.\n\nBelow is a 10-line </code> | <code>agment?\n\nGive concise, bullet-point answers only.\n</code> |
+| `03_01` | <code>You are an expert BPMN modeller.\n\nBelow is a plain</code> | <code> \n✦ No diagram/interchange elements are required.\n</code> |
+| `03_02` | <code>System:\nYou are a BPMN-2.0 architect.  \nWhen asked</code> | <code>ser:\nProduce the BPMN diagram in **JSON** format.\n</code> |
+| `03_03` | <code>System: You are a business-process architect. Conv</code> | <code>\n• Task names must match the text **verbatim**.  \n</code> |
+| `04_01` | <code>System (context)\nYou are a senior process-audit bo</code> | <code>Trace 24-EXP compliant with rule set P2P-2025.R1?\n</code> |
+| `04_02` | <code>System (internal auditor): You are auditing Globex</code> | <code>ith the rules? Follow the required answer format.\n</code> |
+| `04_03` | <code>System: You are a process-compliance auditor for *</code> | <code>erencing each rule that is satisfied or violated.\n</code> |
+| `05_01` | <code>System:\nYou are a certified BPMN 2.0 architect wor</code> | <code> words, and reference element IDs where relevant.\n</code> |
+| `05_02` | <code>System:\nYou are a senior process-architecture cons</code> | <code>nitions&gt;\n````\n\nUser:\nSuggest the improvement now.\n</code> |
+| `05_03` | <code>System: You are a senior BPMN consultant. \nHere is</code> | <code>he whole model) and a one-sentence justification.\n</code> |
+| `06_01` | <code>System (context)\nYou are a senior process-mining a</code> | <code> line, using the format  \n&gt;   `Task_X  —  Task_Y`\n</code> |
+| `06_02` | <code>System: You are a senior BPM analyst assisting Con</code> | <code>d exclude any tasks that must run sequentially.  \n</code> |
+| `06_03` | <code>System: You are an auditing assistant comparing se</code> | <code>s and give no information about Processes A or C.\n</code> |
+| `07_01` | <code>System\nYou are a meticulous BPMN change-log analys</code> | <code> all changes, grouped by the required headings.**\n</code> |
+| `07_02` | <code>System (background for judged model):\nYou are a me</code> | <code> **strictly** under the three requested headings.\n</code> |
+| `07_03` | <code>System (not shown to the judged model)\nYou are an </code> | <code>e required headings and the concrete differences.\n</code> |
+| `08_01` | <code>System: You are a certified Petri-net analyst for </code> | <code> \nIf **no**, give a short proof of impossibility.\n</code> |
+| `08_02` | <code>System (context for the model being tested)\nYou ar</code> | <code>e exists.\n\nLimit your explanation to ≤ 120 words.\n</code> |
+| `08_03` | <code>System (instruction):\nYou are a Petri-net analyst.</code> | <code>al explanation of why the ordering is impossible.\n</code> |
+| `09_01` | <code>System:\nYou are a senior process-performance analy</code> | <code>og above?  \n2 ) Briefly explain your calculation.\n</code> |
+| `09_02` | <code>System: You are a senior process-mining analyst au</code> | <code>, reply with one concise sentence explaining why.\n</code> |
+| `09_03` | <code>System:\nYou are a certified Process-Mining Expert </code> | <code>ide knowledge.\n\nRespond in plain text, no tables.\n</code> |
+| `10_01` | <code>System\n-----\nYou are a senior process-mapping cons</code> | <code>ly adhering to the preferred terminology rules**.\n</code> |
+| `10_02` | <code>System:\nYou are a senior process-management consul</code> | <code>ry exactly, and organise the RACI matrix clearly.\n</code> |
+| `10_03` | <code>&lt;System&gt;\nYou are NimbusPay’s in-house process-gove</code> | <code>n table; do not rename, merge, or add activities.\n</code> |
+| `11_01` | <code>System: You are a senior process-mining analyst hi</code> | <code>----------------------\n\nUser: Draft the memo now.\n</code> |
+| `11_02` | <code>### Benchmark Prompt – Category 11: *Performance a</code> | <code>ween candidates, say so rather than guessing.\n```\n</code> |
+| `11_03` | <code>System\nYou are Orion Credit’s senior process-perfo</code> | <code>mendations**.  \n4  Return **only** the memo text.\n</code> |
+| `12_01` | <code>System:\nYou are a meticulous process-mining analys</code> | <code>tion citing the relevant case IDs and activities.\n</code> |
+| `12_02` | <code>System (background for the judged model)\nYou are a</code> | <code>ne paragraph that cites line numbers or case-ids.\n</code> |
+| `12_03` | <code>System\nYou are a meticulous process-mining analyst</code> | <code>ting the relevant CaseIDs and activity sequences.\n</code> |
+| `13_01` | <code>System:\nYou are a process-analytics assistant. The</code> | <code>-related reasons why that estimate is unreliable.\n</code> |
+| `13_02` | <code>System\nYou are a senior process-mining analyst.  Y</code> | <code>nly use the log above; do not invent information.\n</code> |
+| `13_03` | <code>System:\nYou are a senior process-mining analyst. A</code> | <code>nual fraud checks are in the full month-long log.\n</code> |
+
 ## LLM-as-a-Judge Evaluation Methodology
 
 To rigorously evaluate the performance and hallucination tendencies of Large Language Models (LLMs) within this benchmark, we adopt the **LLM-as-a-Judge** paradigm. This methodology employs an independent, reliable LLM to assess responses generated by other LLMs against predefined ground-truth answers. The evaluation process operates as follows:
