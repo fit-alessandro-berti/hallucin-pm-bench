@@ -222,6 +222,7 @@ class Shared:
                        "z-ai/glm-5.1",
                        "openrouter/elephant-alpha",
                        "Meta-Muse-Spark-20260414",
+                       "moonshotai/kimi-k2.6",
                        ("anthropic/claude-opus-4.7-thinking",
                         {"base_model": "anthropic/claude-opus-4.7",
                          "payload": {"reasoning": {"enabled": True}}}),

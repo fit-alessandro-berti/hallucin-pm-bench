@@ -1,0 +1,60 @@
+ ```json
+{
+  "process": {
+    "id": "customer-support-ticket",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "elements": [
+      { "id": "start", "type": "startEvent", "name": "Support e-mail received" },
+      { "id": "create_ticket", "type": "serviceTask", "name": "Parse e-mail and create Ticket" },
+      { "id": "initial_classification", "type": "userTask", "name": "Initial Classification" },
+      { "id": "gw_type", "type": "exclusiveGateway", "name": "Simple or Complex?" },
+      { "id": "provide_resolution", "type": "userTask", "name": "Provide Resolution" },
+      { "id": "root_cause_analysis", "type": "userTask", "name": "Root Cause Analysis" },
+      { "id": "gw_parallel", "type": "parallelGateway", "name": "Fork: Response and Logging" },
+      { "id": "send_response", "type": "sendTask", "name": "Send Response to Customer" },
+      { "id": "log_solution", "type": "userTask", "name": "Log Solution in Knowledge Base" },
+      { "id": "gw_wait", "type": "eventBasedGateway", "name": "Wait for Reply or Timeout" },
+      { "id": "catch_reply", "type": "intermediateCatchEvent", "name": "Customer Reply", "eventDefinition": { "type": "message" } },
+      { "id": "catch_timeout", "type": "intermediateCatchEvent", "name": "24 hours pass", "eventDefinition": { "type": "timer", "timerType": "duration", "value": "PT24H" } },
+      { "id": "send_reminder", "type": "serviceTask", "name": "Send Reminder" },
+      { "id": "close_ticket", "type": "userTask", "name": "Close Ticket" },
+      { "id": "gw_join", "type": "parallelGateway", "name": "Join" },
+      { "id": "end", "type": "endEvent", "name": "End" },
+      {
+        "id": "cancel_handler",
+        "type": "subProcess",
+        "triggeredByEvent": true,
+        "name": "Handle Cancellation",
+        "elements": [
+          { "id": "start_cancel", "type": "startEvent", "name": "Customer Cancels Ticket", "eventDefinition": { "type": "message" } },
+          { "id": "end_terminate", "type": "endEvent", "name": "Terminate", "eventDefinition": { "type": "terminate" } }
+        ],
+        "flows": [
+          { "id": "f_cancel", "source": "start_cancel", "target": "end_terminate" }
+        ]
+      }
+    ],
+    "flows": [
+      { "id": "f1", "source": "start", "target": "create_ticket" },
+      { "id": "f2", "source": "create_ticket", "target": "initial_classification" },
+      { "id": "f3", "source": "initial_classification", "target": "gw_type" },
+      { "id": "f4", "source": "gw_type", "target": "provide_resolution", "condition": "Simple" },
+      { "id": "f5", "source": "gw_type", "target": "root_cause_analysis", "condition": "Complex" },
+      { "id": "f6", "source": "root_cause_analysis", "target": "provide_resolution" },
+      { "id": "f7", "source": "provide_resolution", "target": "gw_parallel" },
+      { "id": "f8", "source": "gw_parallel", "target": "send_response" },
+      { "id": "f9", "source": "gw_parallel", "target": "log_solution" },
+      { "id": "f10", "source": "send_response", "target": "gw_wait" },
+      { "id": "f11", "source": "gw_wait", "target": "catch_reply" },
+      { "id": "f12", "source": "gw_wait", "target": "catch_timeout" },
+      { "id": "f13", "source": "catch_reply", "target": "close_ticket" },
+      { "id": "f14", "source": "catch_timeout", "target": "send_reminder" },
+      { "id": "f15", "source": "send_reminder", "target": "close_ticket" },
+      { "id": "f16", "source": "close_ticket", "target": "gw_join" },
+      { "id": "f17", "source": "log_solution", "target": "gw_join" },
+      { "id": "f18", "source": "gw_join", "target": "end" }
+    ]
+  }
+}
+```
