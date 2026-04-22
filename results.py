@@ -52,7 +52,7 @@ def is_lrm(model_name):
 
     for p in LRM_PATTERNS:
         if p in model_name_lower:
-            if not ("chat" in model_name_lower or model_name_lower == "gpt-5.1-2025-11-13" or "4.1" in model_name_lower):
+            if not (model_name_lower == "gpt-5.1-2025-11-13" or "4.1" in model_name_lower):
                 return ":white_check_mark:"
 
     return ":x:"
