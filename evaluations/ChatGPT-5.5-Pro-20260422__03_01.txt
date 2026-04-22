@@ -1,0 +1,24 @@
+**5.5**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+Using utmost strictness, I compared the LLM answer to the ground truth XML line-by-line and semantically. Perfect match would be 10.0; any deviation (even small naming, attribute, type, or expression differences) incurs significant point loss per instructions. Total differences: ~25+ (high volume lowers score sharply). No major structural errors (logic, loop, flows correct; no hallucinations like timers/extra gateways/activities), but cumulative small errors dominate.
+
+#### Major Deductions (-4.5 total):
+- **Task types invented/not matching** (-2.0): LLM uses `serviceTask` (t1), `userTask` (t3,t4,t5,t6); ground uses plain `task`. Violates "do not invent ... activities"; adds unmentioned specificity (service/human).
+- **Condition expressions completely different/invented** (-1.5): LLM uses detailed CDATA with undeclared variables (e.g., `classification = "Password Reset"`, `diagnosis = "Resolve Issue"`, `customer = "confirms resolution"` — invents data model). Ground uses simple `yes`/`no`. LLM's are longer, prefixed (`bpmn:tFormalExpression`), add flow `name`s (unmentioned).
+- **Missing XML declaration** (-0.5): No `<?xml version="1.0" encoding="UTF-8"?>`; ground has it.
+- **Extra/redundant attributes** (-0.5): Extra `xmlns:bpmn` (redundant), flow `name`s (e.g., "Password Reset", "Issue Persists" — unmentioned).
+
+#### Minor Deductions (-3.0 total, but significant per strictness):
+- **IDs inconsistent** (-0.5): Concise per prompt (good: `s`, `p1`, `e`), but differ (e.g., process `p1` vs `support_ticket`; start `s` vs `start`; end `e` vs `end`).
+- **Names differ** (-1.5): Many mismatches (e.g., start "Customer Submits Support Ticket" vs "Ticket Submitted"; t1 "Classify Ticket" vs "Auto-Classification"; gw2 "Diagnosis Outcome?" vs "Resolved Internally?"; process name longer/verbose).
+- **Declaration order/structure** (-0.5): t4/t5 IDs swapped (Forward t4/Resolve t5 vs Resolve t4/Forward t5); minor but line-by-line diff. Extra whitespace/line breaks push toward 40-line limit.
+- **Namespaces/typing** (-0.5): Extra `xmlns:xsi` (used correctly), but unnecessary vs ground's minimal.
+
+#### Credits (+3.0 base from 1.0):
+- **Core logic perfect** (+1.5): Exact process flow (password skip to confirm via f5/t2→t6; diagnosis gw2 resolve/forward→resolve→confirm; loop gw3→t3; no extras).
+- **No hallucinations** (+1.0): Only legitimate elements (2 explicit gw + implied 3rd; exact tasks; loop as line 9).
+- **Valid BPMN XML** (+0.5): Executable=false; correct sequenceFlows; ≤40 lines (~38); concise IDs/gws.
+- **3 gateways** (+0.0): Prompt says "two decision points" but description implies 3; both match reality/ground.
+
+Net: Semantically excellent (no functional errors), but excessive literal/textual divergences from ground truth warrant mid-low score under "utmost strictness" and "significant loss for small errors." Equivalent to ~75% line similarity, adjusted down for inventions.

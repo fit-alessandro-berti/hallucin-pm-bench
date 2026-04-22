@@ -3,8 +3,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 
 
-MANUAL = False
-MAX_THREADS = 75
+MANUAL = True
+MAX_THREADS = 1
 
 
 def _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters):
