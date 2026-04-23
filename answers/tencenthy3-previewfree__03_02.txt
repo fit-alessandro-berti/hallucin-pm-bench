@@ -1,0 +1,276 @@
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "name": "Customer Support Ticket Process",
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "processes": [
+      {
+        "id": "Process_1",
+        "name": "Customer Support Ticket Process",
+        "flowElements": [
+          {
+            "id": "StartEvent_1",
+            "type": "bpmn:StartEvent",
+            "name": "Support e-mail received"
+          },
+          {
+            "id": "SequenceFlow_1",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "StartEvent_1",
+            "targetRef": "ParallelGateway_0"
+          },
+          {
+            "id": "ParallelGateway_0",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Split",
+            "name": "Main process and Cancel listener"
+          },
+          {
+            "id": "SequenceFlow_2",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ParallelGateway_0",
+            "targetRef": "Task_ParseCreate"
+          },
+          {
+            "id": "SequenceFlow_3",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ParallelGateway_0",
+            "targetRef": "MessageCatchEvent_Cancel"
+          },
+          {
+            "id": "Task_ParseCreate",
+            "type": "bpmn:Task",
+            "name": "Parse e-mail and create Ticket in help-desk system"
+          },
+          {
+            "id": "SequenceFlow_5",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_ParseCreate",
+            "targetRef": "Task_InitialClass"
+          },
+          {
+            "id": "Task_InitialClass",
+            "type": "bpmn:Task",
+            "name": "Initial Classification"
+          },
+          {
+            "id": "SequenceFlow_6",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_InitialClass",
+            "targetRef": "ExclusiveGateway_Split"
+          },
+          {
+            "id": "ExclusiveGateway_Split",
+            "type": "bpmn:ExclusiveGateway",
+            "gatewayDirection": "Split",
+            "name": "Route ticket: Simple or Complex?"
+          },
+          {
+            "id": "SequenceFlow_8",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ExclusiveGateway_Split",
+            "targetRef": "Task_ProvideResolution",
+            "conditionExpression": {
+              "type": "bpmn:FormalExpression",
+              "body": "${routing == 'Simple'}"
+            },
+            "name": "Simple"
+          },
+          {
+            "id": "SequenceFlow_9",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ExclusiveGateway_Split",
+            "targetRef": "Task_RCA",
+            "conditionExpression": {
+              "type": "bpmn:FormalExpression",
+              "body": "${routing == 'Complex'}"
+            },
+            "name": "Complex"
+          },
+          {
+            "id": "Task_RCA",
+            "type": "bpmn:Task",
+            "name": "Root Cause Analysis"
+          },
+          {
+            "id": "SequenceFlow_10",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_RCA",
+            "targetRef": "Task_ProvideResolution"
+          },
+          {
+            "id": "Task_ProvideResolution",
+            "type": "bpmn:Task",
+            "name": "Provide Resolution"
+          },
+          {
+            "id": "SequenceFlow_11",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_ProvideResolution",
+            "targetRef": "ParallelGateway_1"
+          },
+          {
+            "id": "ParallelGateway_1",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Split",
+            "name": "Parallel: Send Response and Log KB"
+          },
+          {
+            "id": "SequenceFlow_12",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ParallelGateway_1",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "id": "SequenceFlow_13",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ParallelGateway_1",
+            "targetRef": "Task_LogKB"
+          },
+          {
+            "id": "Task_SendResponse",
+            "type": "bpmn:Task",
+            "name": "Send Response to Customer"
+          },
+          {
+            "id": "SequenceFlow_14",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "EventBasedGateway_1"
+          },
+          {
+            "id": "EventBasedGateway_1",
+            "type": "bpmn:EventBasedGateway",
+            "name": "Wait for Customer Reply or 24h timeout"
+          },
+          {
+            "id": "SequenceFlow_15",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "EventBasedGateway_1",
+            "targetRef": "MessageCatchEvent_Reply"
+          },
+          {
+            "id": "MessageCatchEvent_Reply",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Customer Reply",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "SequenceFlow_16",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "MessageCatchEvent_Reply",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "id": "SequenceFlow_17",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "EventBasedGateway_1",
+            "targetRef": "TimerCatchEvent_24h"
+          },
+          {
+            "id": "TimerCatchEvent_24h",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "24 hours passed",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TimerEventDefinition",
+                "timeDuration": "PT24H"
+              }
+            ]
+          },
+          {
+            "id": "SequenceFlow_18",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "TimerCatchEvent_24h",
+            "targetRef": "Task_SendReminder"
+          },
+          {
+            "id": "Task_SendReminder",
+            "type": "bpmn:Task",
+            "name": "Send Reminder"
+          },
+          {
+            "id": "SequenceFlow_19",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicket"
+          },
+          {
+            "id": "Task_CloseTicket",
+            "type": "bpmn:Task",
+            "name": "Close Ticket"
+          },
+          {
+            "id": "SequenceFlow_20",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_CloseTicket",
+            "targetRef": "ParallelGateway_2"
+          },
+          {
+            "id": "Task_LogKB",
+            "type": "bpmn:Task",
+            "name": "Log Solution in Knowledge Base"
+          },
+          {
+            "id": "SequenceFlow_22",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_LogKB",
+            "targetRef": "ParallelGateway_2"
+          },
+          {
+            "id": "ParallelGateway_2",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Join",
+            "name": "Wait for Close Ticket and Log KB"
+          },
+          {
+            "id": "SequenceFlow_23",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "ParallelGateway_2",
+            "targetRef": "EndEvent_Terminate_Main"
+          },
+          {
+            "id": "EndEvent_Terminate_Main",
+            "type": "bpmn:EndEvent",
+            "name": "Terminate Process",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TerminateEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "MessageCatchEvent_Cancel",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Customer Cancel",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "SequenceFlow_4",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "MessageCatchEvent_Cancel",
+            "targetRef": "EndEvent_Terminate_Cancel"
+          },
+          {
+            "id": "EndEvent_Terminate_Cancel",
+            "type": "bpmn:EndEvent",
+            "name": "Terminate",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TerminateEventDefinition"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

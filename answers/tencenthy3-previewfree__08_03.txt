@@ -1,0 +1,22 @@
+### Answer: Yes, it is possible for T5 to fire before T3.
+The shortest firing sequence (4 steps, with T5 firing at step 4, prior to any firing of T3) is:
+1. `T1`
+2. `T2b`
+3. `T4`
+4. `T5`
+---
+#### Verification of the sequence and reachable markings:
+We track the full marking (token count per place) at each step, confirming T3 is never fired before T5:
+| Step | Fired Transition | p0 | pa | pb | pc | pd | pe | pf | Notes |
+|------|------------------|----|----|----|----|----|----|----|-------|
+| 0    | Initial          | 1  | 0  | 0  | 0  | 0  | 0  | 0  | Only T1 is enabled initially. |
+| 1    | T1               | 0  | 1  | 1  | 0  | 0  | 0  | 0  | T1 consumes p0, produces pa and pb (parallel split). |
+| 2    | T2b              | 0  | 0  | 1  | 0  | 1  | 0  | 0  | T2b (shortcut) consumes pa, produces pd. T3 remains unfireable (no pc token). |
+| 3    | T4               | 0  | 0  | 0  | 0  | 1  | 1  | 0  | T4 consumes pb, produces pe. Now both T5 inputs (pd=1, pe=1) are present. |
+| 4    | T5               | 0  | 0  | 0  | 0  | 0  | 0  | 1  | T5 fires (synchronising join) before T3 has ever been enabled (pc=0 throughout). |
+---
+#### Why this is the shortest possible sequence:
+- Step 1 *must* be T1: no other transition is enabled in the initial marking.
+- T5 requires two separate tokens: `pe` (only produced by T4) and `pd` (produced by either T2b or T3). To avoid firing T3 before T5, we use T2b to produce `pd` instead.
+- T4 and T2b are concurrent (no shared inputs/outputs) and each require 1 firing after T1, so 2 steps are mandatory after T1 to produce both `pe` and `pd`.
+- T5 itself is the 4th total firing. No shorter sequence is possible, as no single transition produces both `pe` and `pd` to enable T5 earlier.

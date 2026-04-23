@@ -1,0 +1,35 @@
+4.0
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer produces a valid BPMN 2.0 JSON (bpmn.io-compatible), faithfully modeling the process without inventing escalation/supervisor steps. However, under utmost strictness against the ground truth (GT) JSON structure, content, names, and flows, there are **numerous significant differences** warranting major point loss (10.0 → 4.0):
+
+#### 1. **JSON Structure/Format Mismatch (Fatal, -3.0 points)**:
+   - GT: Flat custom schema (`"process_id"`, `"elements"` array, `"flows"` array).
+   - LLM: Full nested BPMN 2.0 schema (`"definitions"`, `"processes"`, `"flowElements"` with explicit `SequenceFlow`s).
+   - No matching keys/organization; cannot be parsed as equivalent.
+
+#### 2. **Topology/Flow Differences (Major, -1.5 points)**:
+   - **Parallel log/resolution handling**: GT joins `logSolution` + `sendResponse` **before** `awaitReply` (`joinAfterLogging` → `awaitReply`). LLM joins **after** `closeTicket` (log parallels entire send+wait+close path). Differs from GT; violates "faithful" to key flows.
+   - **Cancel handling**: LLM adds unrequested `ParallelGateway_0` + parallel branch from **start** to `MessageCatchEvent_Cancel` (hallucinated gateway/flow absent from GT key, penalized per focus). GT has `cancelEvent` but **unconnected** (incomplete, but LLM invents connections).
+   - GT `sendResponse` → `joinAfterLogging` (sync before wait); LLM `sendResponse` → `EventBasedGateway_1` directly.
+   - Extra `EndEvent_Terminate_Main` (terminate for **normal** closure, absent/invented; GT uses regular `"end"`).
+
+#### 3. **Name Mismatches (Multiple small errors, -0.8 points each, total -1.0)**:
+   | GT Name/ID                  | LLM Equivalent                  | Diff |
+   |-----------------------------|---------------------------------|------|
+   | `"Email Received"` (start) | `"Support e-mail received"`    | Wording |
+   | `"Create Ticket"`           | `"Parse e-mail and create Ticket..."` | Added "parse" detail (semi-faithful to desc, but ≠ GT) |
+   | `"Fork Log/Wait"`           | `"Parallel: Send Response and Log KB"` | Different |
+   | `"Join After Log"`          | `"Wait for Close Ticket and Log KB"` | Different |
+   | `"Wait 24h for Reply"` (awaitReply) | `"Wait for Customer Reply or 24h timeout"` | Different |
+   | `"Timer 24h"`               | `"24 hours passed"`             | Different |
+   | `"terminateEndEvent"`       | `EndEvent` w/ `TerminateEventDefinition` | Type/detail diff |
+   - 7+ mismatches; strict rule = significant loss per small error.
+
+#### 4. **Other Detail Diffs (Minor but penalized, -0.5 total)**:
+   - Conditions: LLM full `${routing == 'Simple'}` (detailed) vs GT `"condition": "simple"` (simple string).
+   - Timer: LLM `"PT24H"` (precise) vs GT no duration.
+   - Extra elements: All explicit `SequenceFlow`s (40+ flowElements vs GT's 17 elements + flows).
+   - Normal end: LLM uses terminate (wrong per desc/GT); GT regular `"end"`.
+
+Semantically, LLM better matches description (e.g., log truly parallels reply wait, proper event-based wait, cancel interrupt via terminate). No hallucinations like escalation. But strict GT fidelity demands near-exact match—format/topology/name diffs dominate. Equivalent score: **4.0**.

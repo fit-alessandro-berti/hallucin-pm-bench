@@ -1,0 +1,22 @@
+### Answer: Yes, it is possible for T5 to fire before T3.
+---
+#### Concrete Firing Sequence (from initial marking):
+We track markings as `[p0, p1, p2, p3, p4, p5, p6]` (values are token counts, 0/1 due to safeness):
+1.  **Initial Marking (M₀):** `[1, 0, 0, 0, 0, 0, 0]`
+    Only T1 is enabled (only p0 has a token). Fire T1:
+    - Consumes 1 token from p0, adds 1 token to p1 and p2.
+    - M₁: `[0, 1, 1, 0, 0, 0, 0]`
+2.  In M₁, both T2 (enabled by p1=1) and T3 (enabled by p2=1) are enabled. Choose to fire T2 first (avoid firing T3):
+    - Consumes 1 token from p1, adds 1 token to p3.
+    - M₂: `[0, 0, 1, 1, 0, 0, 0]`
+3.  In M₂, T5 is now enabled:
+    - Normal arc from p3: p3=1 ≥ 1 (satisfies the token requirement for the normal arc).
+    - Inhibitor arc from p4: p4=0 (satisfies the "zero tokens" condition for the inhibitor arc).
+    Fire T5 (T3 has not fired yet, so this is before any firing of T3):
+    - Consumes 1 token from p3, adds 1 token to p6. p4 remains 0.
+    - M₃: `[0, 0, 1, 0, 0, 0, 1]`
+---
+#### Justification:
+- The only source of tokens for p4 is T3: if T3 has not fired, p4 remains 0, which satisfies T5's inhibitor arc condition.
+- Tokens for p3 (required for T5's normal arc) come from T2, which only depends on p1 (produced by T1). We can fire T1, then T2, to get p3=1 *before* ever firing T3.
+- In M₂, T5 and T3 are both enabled, so we can freely choose to fire T5 first, meeting the "T5 before T3" requirement.

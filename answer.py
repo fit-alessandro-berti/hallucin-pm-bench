@@ -4,7 +4,7 @@ from common import *
 
 
 MANUAL = False
-MAX_THREADS = 75
+MAX_THREADS = 4
 
 
 def _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters):

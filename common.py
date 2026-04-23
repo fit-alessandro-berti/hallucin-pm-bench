@@ -154,6 +154,8 @@ class Shared:
                        "ChatGPT-5.5-Pro-20260422",
                        "xiaomi/mimo-v2.5-pro",
                        "xiaomi/mimo-v2.5",
+                       "inclusionai/ling-2.6-1t:free",
+                       "tencent/hy3-preview:free",
                        ("anthropic/claude-opus-4.7-thinking",
                         {"base_model": "anthropic/claude-opus-4.7",
                          "payload": {"reasoning": {"enabled": True}}}),

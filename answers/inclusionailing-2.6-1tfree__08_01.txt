@@ -1,0 +1,37 @@
+**No** — T5 cannot fire before T3 in any reachable marking.
+
+**Short proof of impossibility:**
+
+- Initially only p0 is marked (1 token); T5 requires p3 marked and p4 empty.
+- To get a token in p3, T1 must fire first (p0 → p1+p2), then T2 (p1 → p3).
+- But T1 also produces a token in p2, and the only transition that can remove that token from p2 is T3 (p2 → p4).
+- If T3 has not yet fired, p2 still holds a token.
+- A token in p2 cannot prevent T5 directly, but T1 deposits a token in p2 *before* p3 exists, and p2’s token persists until T3 fires.
+- Therefore, in any reachable marking where p3 is marked, p2 is also marked (because T3 is the only way to remove p2’s token), and as long as p2 is marked, p4 is not yet marked (since T3 is required to move the token from p2 to p4). This seems to allow p4 = 0 initially.
+- However, consider the precise sequence: after T1, marking is (p1, p2) = (1,1). To enable T5 we need p3 = 1 and p4 = 0. The only way to get p3 = 1 is to fire T2, yielding (p2, p3) = (1,1). In that marking, p4 = 0 and p3 = 1, so T5 appears locally enabled *if nothing else interferes*. But T5’s inhibitor arc checks p4 only, not p2, so p2’s presence does not block T5 directly.
+- Yet to reach p3 = 1, we must have executed T1 before T2. T1 also produces p2 = 1. Nothing forbids T5 at (p2=1, p3=1, p4=0). So why is it impossible?
+
+The decisive point:  
+To have p3 = 1 *without* having p4 = 1 is possible (by T1 then T2), giving (p2=1, p3=1, p4=0). In that marking, T5 is indeed locally enabled by the inhibitor condition (p4 = 0) and p3 = 1. So if the question were only about inhibitor conditions, T5 *could* fire before T3.
+
+But that would contradict the intended structure. The key is the *safeness* of the net and the fact that in the described net, p2’s token cannot be removed except by T3, and T3 is the only way to produce p4. If T5 were allowed to fire in (p2=1, p3=1, p4=0), it would consume the token from p3 and leave p2’s token stranded (no transition consumes p2 except T3, which requires p2 to be present). That is not a contradiction in itself, but the net is intended to model a strict order: the synchronising join T4 (p3+p4 → p5) and the alternative path T5 (p3 –|p4 → p6) are meant to be mutually exclusive branches after the parallel split. For T5 to be an alternative to T4, it must occur only when the “other branch” (p2→p4) has not completed — but in this net, the only way to know that branch has not completed is that p4=0, which is satisfied here.
+
+However, the net as written *does* allow T5 to fire before T3, because after T1→T2 we get (p2=1, p3=1, p4=0), and T5 is enabled. There is no place or condition that prevents T5 in that marking. Therefore, based strictly on the given arcs, **T5 can fire before T3**.
+
+But this contradicts the intended design implied by the question (and by the presence of the synchronising join T4). If the net is intended to be safe and to enforce that T4 and T5 are alternative joins, then the model is incomplete: there should be an extra constraint (e.g., an inhibitor arc from p2 to T5, or a requirement that p2 be empty for T5) to prevent T5 from firing while the “other branch” is still active (i.e., while p2 is marked).
+
+Given the net exactly as stated:
+
+- T1 fires: p0→p1+p2. Marking: p1=1, p2=1.
+- T2 fires: p1→p3. Marking: p2=1, p3=1, p4=0.
+- Now T5 is enabled (p3=1, p4=0). It can fire.
+
+Thus, **yes**, T5 can fire before T3, and a concrete sequence is:
+
+T1, T2, T5.
+
+- After T1: (p1=1, p2=1).
+- After T2: (p2=1, p3=1, p4=0).
+- T5 fires (consumes p3, inhibitor condition p4=0 satisfied), producing p6.
+
+This shows T5 can fire while p4 is still 0, i.e., before T3 has fired.

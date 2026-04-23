@@ -1,0 +1,20 @@
+**2.0**
+
+### Evaluation Summary (Strict Criteria)
+The LLM answer deviates significantly from the ground truth and prompt requirements, warranting a low score under utmost strictness. Key failures:
+
+- **Invalid XML**: `sequenceFlow id="f4" targetRef="t5"` references undefined `t5` (broken "Provide Reset Instructions" → "Confirm" path). This renders the BPMN malformed/unparsable.
+- **Invented/missing activities (direct violation of "Do not invent or add")**:
+  - No `"Forward to Specialist"` task (line 5 requires it as post-diagnosis alternative).
+  - Invented `"Specialist Work"` task (`t6`) – line 6 states specialist finish → `"Resolve Issue"` directly; no unnamed specialist activity mentioned.
+- **Incorrect flow modeling**:
+  - Specialist path: `gw2` → `"Specialist Work"` → `"Resolve Issue"` (wrong); GT: `gw2` → `"Forward to Specialist"` → `"Resolve Issue"`.
+  - Password Reset path dead-ends (invalid ref); must reach `"Confirm with Customer"` like other paths.
+- **Task naming/typing mismatches**:
+  - `"Classify Ticket"` (serviceTask) vs. GT `"Auto-Classification"` (task).
+  - Missing start `"Ticket Submitted"`, end `"Ticket Closed"`.
+- **Gateway/condition issues**:
+  - 3 gateways (correct per description, despite prompt's "two"), but names/conditions differ: e.g., `gw2` `"Resolve or Forward?"` vs. `"Resolved Internally?"`; conditions use ad-hoc text (`"Password Reset"`, `"Other"`) vs. GT standard `xsi:type="tFormalExpression" yes/no`.
+- **Minor but penalized diffs**: No `<?xml>`, `targetNamespace`; process `id/name` mismatch; mixed `userTask/serviceTask` vs. GT uniform `task`.
+
+~70% structural similarity, but fatal errors (invalidity, invention, omissions) dominate. Equivalent to ~2/10 alignment.
