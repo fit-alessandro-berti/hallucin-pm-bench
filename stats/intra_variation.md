@@ -2,7 +2,7 @@
 
 | Category                                | Median of Std |
 | --------------------------------------- | ------------- |
-| C01 Domain-override / Precedence checks | 1.632993      |
+| C01 Domain-override / Precedence checks | 1.604854      |
 | C02 Event-log fact-extraction           | 0.471405      |
 | C03 Text to Model reconstruction        | 2.054805      |
 | C04 Compliance / Conformance reasoning  | 1.178511      |
