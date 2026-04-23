@@ -1,0 +1,45 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             id="Defs" targetNamespace="http://example.org/support">
+  <process id="p1" name="Support Ticket" isExecutable="true">
+    <startEvent id="s1" name="Customer Submits Ticket"/>
+    <task id="t1" name="Classify Ticket"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <task id="t2" name="Provide Reset Instructions"/>
+    <task id="t3" name="Initial Diagnosis"/>
+    <exclusiveGateway id="gw2" name="Diagnosis Result?"/>
+    <task id="t4" name="Resolve Issue"/>
+    <task id="t5" name="Forward to Specialist"/>
+    <task id="t6" name="Confirm with Customer"/>
+    <exclusiveGateway id="gw3" name="Customer Confirms?"/>
+    <endEvent id="e1" name="Ticket Closed"/>
+    <sequenceFlow id="f1" sourceRef="s1" targetRef="t1"/>
+    <sequenceFlow id="f2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="f3" sourceRef="gw1" targetRef="t2"><conditionExpression xsi:type="tFormalExpression">${ticketType == 'Password Reset'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f4" sourceRef="gw1" targetRef="t3"><conditionExpression xsi:type="tFormalExpression">${ticketType != 'Password Reset'}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f5" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="f6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="f7" sourceRef="gw2" targetRef="t4"><conditionExpression xsi:type="tFormalExpression">${agentCanResolve}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f8" sourceRef="gw2" targetRef="t5"><conditionExpression xsi:type="tFormalExpression">${!agentCanResolve}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f9" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="f10" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="f11" sourceRef="t6" targetRef="gw3"/>
+    <sequenceFlow id="f12" sourceRef="gw3" targetRef="e1"><conditionExpression xsi:type="tFormalExpression">${issueResolved}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="f13" sourceRef="gw3" targetRef="t3"><conditionExpression xsi:type="tFormalExpression">${!issueResolved}</conditionExpression></sequenceFlow>
+  </process>
+</definitions>
+```
+
+**Mapping to the 10 lines of description:**
+
+| Line | BPMN Element(s) |
+|------|-----------------|
+| 1 – 2 | `s1 → t1` — start event triggers "Classify Ticket" |
+| 3 | **gw1** = *Yes* → `t2` ("Provide Reset Instructions") → `t6` |
+| 4 | **gw1** = *No* → `t3` ("Initial Diagnosis") |
+| 5 | **gw2** decides: → `t4` ("Resolve Issue") **or** → `t5` ("Forward to Specialist") |
+| 6 | `t5 → t4` — specialist path converges at the same "Resolve Issue" task |
+| 7 | `t4 → t6` — both resolution paths flow into "Confirm with Customer" |
+| 8 – 9 | **gw3**: confirmed → `e1` (closed); persists → loops back to `t3` (f13) |
+| 10 | `e1` — end event terminates the process |

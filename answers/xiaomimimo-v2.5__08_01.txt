@@ -1,0 +1,29 @@
+# Analysis: Can T5 Fire Before T3?
+
+## Answer: **Yes.**
+
+## Concrete Firing Sequence
+
+| Step | Transition | Required condition | Resulting marking (p0 p1 p2 p3 p4 p5 p6) |
+|------|-----------|-------------------|------------------------------------------|
+| — | — | — | **(1, 0, 0, 0, 0, 0, 0)** |
+| 1 | **T1** | p0 ≥ 1 ✅ | (0, 1, 1, 0, 0, 0, 0) |
+| 2 | **T2** | p1 ≥ 1 ✅ | (0, 0, **1**, **1**, 0, 0, 0) |
+| 3 | **T5** | p3 ≥ 1 ✅ **and** p4 = 0 ✅ | (0, 0, 1, 0, 0, 0, **1**) |
+
+## Justification
+
+After T1 fires, the parallel split places one token each in **p1** and **p2**. The key insight is that **T2 and T3 are independent** — nothing forces them to fire together. When T2 fires first:
+
+- **p3 gains a token** (p3 = 1) ✅ — prerequisite for T5.
+- **p4 is still empty** (p4 = 0) ✅ — inhibitor arc condition satisfied.
+
+So T5 is **enabled**, even though T3 has never fired. T5 fires and deposits a token into p6.
+
+After T5, p3 = 0 and p6 = 1, while p2 = 1 still holds. T3 *can* still fire afterward (it hasn't been disabled), but the question only asks about ordering — and **T5 has already fired before T3**.
+
+---
+
+### Process-Interpretation Note
+
+From a business standpoint, this reveals a potential **race condition**: the "Expedited Returns" subprocess can reach its completion place **p6** without the parallel branch (T3) ever having executed. The inhibitor arc on T5 effectively **short-circuits** the synchronisation join T4, allowing the process to close prematurely. This is typically undesirable and would warrant a redesign if both parallel activities must complete.

@@ -1,0 +1,41 @@
+```xml
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Activity_CollectDocs" targetRef="Activity_VerifyID"/>
+
+    <!-- MODIFICATION: Add a timer boundary on the flow to enforce the 48h SLA -->
+    <bpmn:intermediateCatchEvent id="Event_SLA_Timer">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_02_Timer" sourceRef="Activity_CollectDocs" targetRef="Event_SLA_Timer"/>
+    <bpmn:sequenceFlow id="Flow_02a_Timer" sourceRef="Event_SLA_Timer" targetRef="Activity_VerifyID"/>
+
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Activity_VerifyID" targetRef="Gateway_VerifyOutcome"/>
+
+    <bpmn:exclusiveGateway id="Gateway_VerifyOutcome" name="Identity OK?"/>
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="Gateway_VerifyOutcome" targetRef="Activity_CreateAccount">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Gateway_VerifyOutcome" targetRef="End_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">rejected</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:endEvent id="End_Rejected" name="Reject onboarding"/>
+
+    <bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System"/>
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Activity_CreateAccount" targetRef="Activity_ActivateAccount"/>
+
+    <bpmn:userTask id="Activity_ActivateAccount" name="Activate Account"/>
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="Activity_ActivateAccount" targetRef="End_Success"/>
+
+    <!-- *Unused but existing escalation activity* -->
+    <bpmn:userTask id="Activity_AMReview" name="Account-Manager Review"/>
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="Activity_AMReview" targetRef="Activity_ActivateAccount"/>
+
+    <!-- MODIFICATION: Add a default sequence flow from the gateway to the escalation path -->
+    <bpmn:sequenceFlow id="Flow_Default_Escalate" name="Timeout -> Escalate" sourceRef="Gateway_VerifyOutcome" targetRef="Activity_AMReview">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">default</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+```
+
+**Justification:** By placing a 48-hour timer intermediate event on the sequence flow leading to the gateway and adding a default (timeout) path from the gateway to the existing "Account-Manager Review" activity, the SLA is enforced without introducing any new tasks or sub-processes.

@@ -1,0 +1,15 @@
+**4.0**
+
+### Evaluation Rationale (strict assessment against ground truth):
+- **Strengths (partial credit)**: Core process logic faithfully matches description and GT (start → parse/create/classify → exclusive gw → RCA (complex path) → resolution → parallel fork (send response || log KB) → join → event-based gw (reply/timer) → close paths with reminder). BPMN elements used correctly (e.g., parallel gw fork/join, event-based gw, timer PT24H accurate to "24 hours"). No invented escalation/supervisor steps.
+- **Major deductions (significant point loss per strictness rule)**:
+  - **Schema/structure mismatch (-2.0)**: GT uses flat `{ "process_id": ..., "elements": [...], "flows": [...] }`; LLM wraps in `"process": { "id":..., "name":..., "elements":..., "sequenceFlows":... }` with extra `id`/`name` on process and `id` on every flow. Custom GT schema not followed.
+  - **Hallucination/invention of subProcess (-1.5)**: ESP1 "Cancellation Subprocess" (with nested signal start, terminate end, internal flow) absent from description/GT; inventive complexity. GT uses simple inline `intermediateCatchEvent` → `terminateEndEvent`. Prompt explicitly forbids inventing steps.
+  - **Cancellation modeling incomplete/different (-0.5)**: LLM subProcess unconnected to main flows (no integration/termination trigger); GT has explicit flow `{ "source": "cancelEvent", "target": "terminate" }` (though simplistic).
+- **Minor errors (cumulative -1.0, significant loss each per rule)**:
+  - Name diffs (10+): e.g., "Parse and Create Ticket" vs "Create Ticket"; "Support E-mail Received" vs "Email Received"; gw/ICE/end names vary (e.g., "Fork for Response and Logging" vs "Fork Log/Wait"; "Customer Reply Received" vs "Customer Reply").
+  - Extra details absent in GT: `eventType`, `gatewayType`, `timerDefinition`, `conditionExpression` ("Simple" vs "simple").
+  - ID mismatches throughout; merged/separate parse step (LLM more faithful to text but diverges from GT).
+  - Fork name "Fork Log/Wait" in GT imprecise, but LLM doesn't match.
+
+Overall: Semantically ~80% aligned but literal/structural diffs too numerous for >4.0 under strict criteria.
