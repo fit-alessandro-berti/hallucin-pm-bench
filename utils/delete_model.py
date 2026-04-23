@@ -15,7 +15,7 @@ def do_deletion(base_path, original_name):
 
 
 if __name__ == "__main__":
-    original_name = "mistralaimistral-small-3.1-24b-instruct_"
+    original_name = "Grok-4-fast_"
 
     if not original_name.endswith("_"):
         raise Exception("original_name must terminate with _")
