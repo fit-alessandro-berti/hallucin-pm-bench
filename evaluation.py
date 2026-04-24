@@ -6,7 +6,7 @@ from common import *
 EVALUATING_MODEL_NAME = "grok-4-1-fast-reasoning"
 EVALUATING_API_URL = "https://api.x.ai/v1/"
 EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
-MAX_THREADS = 50
+MAX_THREADS = 100
 
 
 def _evaluate_single_answer(answer, base_model_name, target_directory, include_ground_truth_answer, parameters):

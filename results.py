@@ -11,7 +11,7 @@ reg_expr = re.compile(pattern)
 CATEGORY_IDS = tuple(f"{idx:02d}" for idx in range(1, 14))
 NAME_PREFIXES = ("anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft", "deepseek", "meta-llama")
 OPEN_SOURCE_PATTERNS = ("qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss")
-LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm")
+LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm", "deepseek-v3.2", "deepseek-v4")
 
 MAPPING = {}
 MAPPING["C01"] = "C01 Domain-override / Precedence checks"

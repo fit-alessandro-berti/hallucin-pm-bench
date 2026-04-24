@@ -156,6 +156,8 @@ class Shared:
                        "xiaomi/mimo-v2.5",
                        "inclusionai/ling-2.6-1t:free",
                        "tencent/hy3-preview:free",
+                       "deepseek/deepseek-v4-flash",
+                       "deepseek/deepseek-v4-pro",
                        ("anthropic/claude-opus-4.7-thinking",
                         {"base_model": "anthropic/claude-opus-4.7",
                          "payload": {"reasoning": {"enabled": True}}}),
