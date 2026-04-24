@@ -1,0 +1,53 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             targetNamespace="http://example.com/warranty"
+             id="definitions_wrc">
+  <process id="wrc_process" isExecutable="false">
+    <startEvent id="wrc_start" name="Online warranty claim submitted"/>
+    <sequenceFlow id="wrc_flow_start_to_validate" sourceRef="wrc_start" targetRef="wrc_task_validateClaim"/>
+    <userTask id="wrc_task_validateClaim" name="Validate the claim"/>
+    <sequenceFlow id="wrc_flow_validate_to_gateway" sourceRef="wrc_task_validateClaim" targetRef="wrc_gateway_claimComplete"/>
+    <exclusiveGateway id="wrc_gateway_claimComplete" name="Claim complete?"/>
+    <sequenceFlow id="wrc_flow_complete_to_checkWarranty" sourceRef="wrc_gateway_claimComplete" targetRef="wrc_task_checkWarranty">
+      <conditionExpression xsi:type="tFormalExpression">complete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_incomplete_to_requestInfo" sourceRef="wrc_gateway_claimComplete" targetRef="wrc_task_requestMissingInfo">
+      <conditionExpression xsi:type="tFormalExpression">incomplete</conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_task_requestMissingInfo" name="Request missing information"/>
+    <sequenceFlow id="wrc_flow_request_to_catch" sourceRef="wrc_task_requestMissingInfo" targetRef="wrc_catch_missingInfo"/>
+    <intermediateCatchEvent id="wrc_catch_missingInfo" name="Missing information received"/>
+    <sequenceFlow id="wrc_flow_catch_to_validate" sourceRef="wrc_catch_missingInfo" targetRef="wrc_task_validateClaim"/>
+
+    <userTask id="wrc_task_checkWarranty" name="Check warranty eligibility"/>
+    <sequenceFlow id="wrc_flow_checkWarranty_to_gatewayWarranty" sourceRef="wrc_task_checkWarranty" targetRef="wrc_gateway_warrantyDecision"/>
+    <exclusiveGateway id="wrc_gateway_warrantyDecision" name="Within warranty?"/>
+    <sequenceFlow id="wrc_flow_withinWarranty_to_split" sourceRef="wrc_gateway_warrantyDecision" targetRef="wrc_gateway_parallelSplit">
+      <conditionExpression xsi:type="tFormalExpression">within warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_outOfWarranty_to_rejection" sourceRef="wrc_gateway_warrantyDecision" targetRef="wrc_task_sendRejection">
+      <conditionExpression xsi:type="tFormalExpression">out of warranty</conditionExpression>
+    </sequenceFlow>
+    <userTask id="wrc_task_sendRejection" name="Send rejection notice"/>
+    <sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_task_sendRejection" targetRef="wrc_end_rejection"/>
+    <endEvent id="wrc_end_rejection" name="Claim rejected"/>
+
+    <parallelGateway id="wrc_gateway_parallelSplit" name="Parallel split" gatewayDirection="Diverging"/>
+    <sequenceFlow id="wrc_flow_split_to_shipment" sourceRef="wrc_gateway_parallelSplit" targetRef="wrc_task_createShipment"/>
+    <sequenceFlow id="wrc_flow_split_to_pickup" sourceRef="wrc_gateway_parallelSplit" targetRef="wrc_task_schedulePickup"/>
+    <userTask id="wrc_task_createShipment" name="Create shipment order"/>
+    <userTask id="wrc_task_schedulePickup" name="Schedule courier pickup"/>
+    <sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_task_createShipment" targetRef="wrc_gateway_parallelJoin"/>
+    <sequenceFlow id="wrc_flow_pickup_to_join" sourceRef="wrc_task_schedulePickup" targetRef="wrc_gateway_parallelJoin"/>
+    <parallelGateway id="wrc_gateway_parallelJoin" name="Parallel join" gatewayDirection="Converging"/>
+    <sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_gateway_parallelJoin" targetRef="wrc_task_updateInventory"/>
+    <userTask id="wrc_task_updateInventory" name="Update inventory records"/>
+    <sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_task_updateInventory" targetRef="wrc_task_closeClaim"/>
+    <userTask id="wrc_task_closeClaim" name="Close the claim"/>
+    <sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_task_closeClaim" targetRef="wrc_end_success"/>
+    <endEvent id="wrc_end_success" name="Claim completed"/>
+  </process>
+</definitions>
+```

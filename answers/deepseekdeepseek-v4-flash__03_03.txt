@@ -1,0 +1,163 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  targetNamespace="http://example.com/bpmn/warranty"
+                  id="wrc_definitions">
+
+  <bpmn:process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_startEvent" name="Online warranty claim">
+      <bpmn:outgoing>wrc_flow_startToValidate</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Task: Validate the claim -->
+    <bpmn:task id="wrc_validateTask" name="Validate the claim">
+      <bpmn:incoming>wrc_flow_startToValidate</bpmn:incoming>
+      <bpmn:incoming>wrc_flow_requestToValidate</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_validateToGateway1</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway 1: Claim completeness -->
+    <bpmn:exclusiveGateway id="wrc_gateway1" name="Claim complete?">
+      <bpmn:incoming>wrc_flow_validateToGateway1</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_gateway1ToRequest</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_gateway1ToCheckWarranty</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Sequence flow for incomplete claim -->
+    <bpmn:sequenceFlow id="wrc_flow_gateway1ToRequest" name="incomplete"
+                       sourceRef="wrc_gateway1" targetRef="wrc_requestTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="groovy"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        claimStatus == "incomplete"
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Task: Request missing information -->
+    <bpmn:task id="wrc_requestTask" name="Request missing information">
+      <bpmn:incoming>wrc_flow_gateway1ToRequest</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_requestToValidate</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Sequence flow back to validate -->
+    <bpmn:sequenceFlow id="wrc_flow_requestToValidate" name="re-validate"
+                       sourceRef="wrc_requestTask" targetRef="wrc_validateTask"/>
+
+    <!-- Sequence flow for complete claim -->
+    <bpmn:sequenceFlow id="wrc_flow_gateway1ToCheckWarranty" name="complete"
+                       sourceRef="wrc_gateway1" targetRef="wrc_checkWarrantyTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="groovy"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        claimStatus == "complete"
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Task: Check warranty eligibility -->
+    <bpmn:task id="wrc_checkWarrantyTask" name="Check warranty eligibility">
+      <bpmn:incoming>wrc_flow_gateway1ToCheckWarranty</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_checkToGateway2</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Exclusive Gateway 2: Warranty decision -->
+    <bpmn:exclusiveGateway id="wrc_gateway2" name="Within warranty?">
+      <bpmn:incoming>wrc_flow_checkToGateway2</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_gateway2ToRejection</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_gateway2ToParallelSplit</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Sequence flow for out-of-warranty -->
+    <bpmn:sequenceFlow id="wrc_flow_gateway2ToRejection" name="out of warranty"
+                       sourceRef="wrc_gateway2" targetRef="wrc_rejectionTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="groovy"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        warrantyStatus == "out"
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Task: Send rejection notice -->
+    <bpmn:task id="wrc_rejectionTask" name="Send rejection notice">
+      <bpmn:incoming>wrc_flow_gateway2ToRejection</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_rejectionToEnd</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End Event 1: Rejection -->
+    <bpmn:endEvent id="wrc_endRejection" name="Rejection End">
+      <bpmn:incoming>wrc_flow_rejectionToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="wrc_flow_rejectionToEnd" sourceRef="wrc_rejectionTask" targetRef="wrc_endRejection"/>
+
+    <!-- Sequence flow for within-warranty -->
+    <bpmn:sequenceFlow id="wrc_flow_gateway2ToParallelSplit" name="within warranty"
+                       sourceRef="wrc_gateway2" targetRef="wrc_parallelSplit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="groovy"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        warrantyStatus == "within"
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Parallel Split Gateway -->
+    <bpmn:parallelGateway id="wrc_parallelSplit" name="Parallel Split">
+      <bpmn:incoming>wrc_flow_gateway2ToParallelSplit</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_splitToCreateShipment</bpmn:outgoing>
+      <bpmn:outgoing>wrc_flow_splitToSchedulePickup</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Task: Create shipment order -->
+    <bpmn:task id="wrc_createShipmentTask" name="Create shipment order">
+      <bpmn:incoming>wrc_flow_splitToCreateShipment</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_createShipmentToJoin</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Task: Schedule courier pickup -->
+    <bpmn:task id="wrc_schedulePickupTask" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_flow_splitToSchedulePickup</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_schedulePickupToJoin</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Parallel Join Gateway -->
+    <bpmn:parallelGateway id="wrc_parallelJoin" name="Parallel Join">
+      <bpmn:incoming>wrc_flow_createShipmentToJoin</bpmn:incoming>
+      <bpmn:incoming>wrc_flow_schedulePickupToJoin</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_joinToUpdateInventory</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Sequence flows for parallel branches -->
+    <bpmn:sequenceFlow id="wrc_flow_splitToCreateShipment" sourceRef="wrc_parallelSplit" targetRef="wrc_createShipmentTask"/>
+    <bpmn:sequenceFlow id="wrc_flow_splitToSchedulePickup" sourceRef="wrc_parallelSplit" targetRef="wrc_schedulePickupTask"/>
+    <bpmn:sequenceFlow id="wrc_flow_createShipmentToJoin" sourceRef="wrc_createShipmentTask" targetRef="wrc_parallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_flow_schedulePickupToJoin" sourceRef="wrc_schedulePickupTask" targetRef="wrc_parallelJoin"/>
+
+    <!-- Task: Update inventory records -->
+    <bpmn:task id="wrc_updateInventoryTask" name="Update inventory records">
+      <bpmn:incoming>wrc_flow_joinToUpdateInventory</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_updateToClose</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:sequenceFlow id="wrc_flow_joinToUpdateInventory" sourceRef="wrc_parallelJoin" targetRef="wrc_updateInventoryTask"/>
+
+    <!-- Task: Close the claim -->
+    <bpmn:task id="wrc_closeClaimTask" name="Close the claim">
+      <bpmn:incoming>wrc_flow_updateToClose</bpmn:incoming>
+      <bpmn:outgoing>wrc_flow_closeToSuccessEnd</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:sequenceFlow id="wrc_flow_updateToClose" sourceRef="wrc_updateInventoryTask" targetRef="wrc_closeClaimTask"/>
+
+    <!-- End Event 2: Success -->
+    <bpmn:endEvent id="wrc_endSuccess" name="Success End">
+      <bpmn:incoming>wrc_flow_closeToSuccessEnd</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="wrc_flow_closeToSuccessEnd" sourceRef="wrc_closeClaimTask" targetRef="wrc_endSuccess"/>
+
+    <!-- Remaining sequence flow from check to gateway2 -->
+    <bpmn:sequenceFlow id="wrc_flow_checkToGateway2" sourceRef="wrc_checkWarrantyTask" targetRef="wrc_gateway2"/>
+
+  </bpmn:process>
+</bpmn:definitions>
+```
