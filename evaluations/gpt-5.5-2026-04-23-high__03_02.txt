@@ -1,0 +1,15 @@
+**2.0**
+
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a low score under strict evaluation criteria:
+
+- **Format/schema mismatch (primary failure, -4.0 points)**: Ground truth uses a simple, flat structure (`process_id`, `elements` array with basic `type`/`name`, `flows` array with `source`/`target`/`condition`). LLM uses a verbose, full BPMN 2.0 JSON (`definitions`, `targetNamespace`, nested `process`/`flowElements`/`sequenceFlows`, `eventDefinitions`, etc.). This is not equivalent; it's a different representation.
+
+- **Extra/invented elements absent from ground truth (-2.0 points)**: Subprocesses (`SubProcess_PreResolution`, `SubProcess_CustomerReplyAndClosure`), boundary events (`BoundaryEvent_CancelDuringPreResolution`, `BoundaryEvent_CancelBeforeClosure`), merge gateway (`Gateway_MergeClassificationRoute`), performers (`performer`), messages (`messages` array), multiple distinct close tasks/reminder ends, internal subprocess start/end events, `TerminateEventDefinition`, `isExecutable`, `gatewayDirection`, condition expressions (`${classification == 'Simple'}`), explicit parse task ("Parse e-mail and Create Ticket" vs. ground truth's simplified "Create Ticket"). These are hallucinations/additions penalized per evaluation focus.
+
+- **Structural/logic mismatches (-1.5 points)**: Parallel handling differs—LLM forks resolution to `(send + wait + close)` || log, joining at process end; ground truth forks to `send` || `log`, joining before `awaitReply`. LLM adds process-level sync after closure (unnecessary/invented). Cancellation via multiple boundaries vs. ground truth's single floating `cancelEvent`. Explicit merge for classification paths (required in real BPMN but absent/omitted in key, thus extra).
+
+- **Name/ID mismatches (-0.3 points)**: E.g., start ("Support e-mail received" vs. "Email Received"), gateways ("Gateway_TicketComplexity" vs. "classifyDecision"), fork ("Gateway_AfterResolutionSplit" vs. "forkLogging"), join ("Gateway_AfterClosureAndLoggingJoin" vs. "joinAfterLogging"), no exact ID/name parity.
+
+- **Minor additions**: Detailed `timeDuration: "PT24H"` (good but extra vs. "timer"), service/user tasks distinguished (invented detail).
+
+Faithful to textual description in core flow (classification, parallel log/send, timer/reply logic, cancel terminate) but violates "model *only* what is described" via inventions and ignores ground truth as benchmark. No escalations, but extras penalized heavily.

@@ -1,0 +1,21 @@
+**4.0**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer is semantically close (correct flow, no hallucinations like extra timers/activities/parallel paths, proper loop to "t3"), but has **numerous structural, syntactic, and compliance deviations** from the ground truth (GT) and prompt, warranting major deductions under "utmost strictness" (e.g., small naming/attribute errors = significant loss; missing gateway = critical).
+
+#### Critical Errors (-4.0 total):
+- **Missing exclusive gateway for classification decision** (GT gw1 "Password Reset?" after t1): LLM branches *directly* from t1 with 2 conditional flows (f2/f3). Violates prompt "Mark the two decision points with **exclusive gateways**" (line 3 decision un-gated). BPMN-decisions require gateways; direct task-branching is non-standard here. GT uses proper gw1 → yes(t2)/no(t3).
+- **Invented task types** (serviceTask t1, userTask t3/t4/t5/t6): GT uses generic `<task>` everywhere. Prompt bans "invent or add ... activities"; these specify unmentioned implementation (system/user).
+- **Only 2 gateways vs. GT's 3**: LLM gw1 (diagnosis), gw2 (customer); misses classification gw.
+
+#### Major Errors (-1.5 total):
+- **Invented/differing conditions** (all 6): LLM verbose/specific (e.g., `classified = "Password Reset"`, `Resolve Issue`, `Customer confirms resolution`). GT simple `yes`/`no`. Violates "exactly as stated"; invents variables/logic.
+- **No `<?xml declaration>`**: GT has it.
+
+#### Minor/Accumulated Errors (-0.5 total, but strict penalty):
+- **Names differ** (10+ instances): e.g., t1 "Automatically Classify Ticket" vs. "Auto-Classification"; start "Customer submits support ticket" vs. "Ticket Submitted"; gw1 "Diagnosis Outcome" vs. "Resolved Internally?"; end "Ticket closed" vs. "Ticket Closed".
+- **IDs/structure offset**: LLM gw1 = GT gw2 position; gw2 = GT gw3; flow IDs f1-f12 vs. f1-f13.
+- **Namespaces/attributes**: Extra `xmlns:xsi`, different `targetNamespace`; GT leaner.
+- **Process id/name**: "p1"/"AcmeTech Support Ticket Process" vs. "support_ticket"/"Support-Ticket".
+
+**Line count**: LLM ~38 lines (compliant). No extra elements hallucinated. Functional equivalence ~90%, but XML/BPMN fidelity <50% (e.g., un-gated decision fails validation in strict tools). 4.0 reflects "close but critically flawed."

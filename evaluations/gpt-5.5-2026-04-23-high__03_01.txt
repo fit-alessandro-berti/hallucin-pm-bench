@@ -1,0 +1,24 @@
+**4.0**
+
+### Evaluation Summary (Strict Line-by-Line and Semantic Comparison)
+The LLM answer is **functionally equivalent** to the process description (correct flow, loop to "Initial Diagnosis", shared "Resolve Issue" task, direct path from "Provide Reset Instructions" to "Confirm with Customer", no added timers/escalations/parallel paths). However, under **utmost strictness**, it differs from the ground truth in **numerous ways**, including structure, elements, names, types, and inventions—warranting major point deductions (e.g., ~1.0-2.0 loss per category of error). Total: 4.0 (partial credit for core logic and conciseness; no credit for mismatches).
+
+#### Major Deductions (-4.0 total):
+- **Missing gateway for diagnosis decision** (-2.0): LLM models line 5 ("either Resolve or Forward") as conditioned flows *directly from t3* (f6/f7)—valid BPMN but structurally different. GT explicitly adds `gw2` ("Resolved Internally?") after t3. Prompt requires marking "decision points" with gateways; this alters flow topology (#flows 12 vs 13, no gw2).
+- **Invented condition expressions** (-1.0): LLM adds unmentioned variables/logic (e.g., `ticketType == "Password Reset"`, `diagnosisOutcome == "Resolve Issue"`, `customerConfirms == true/false`) in CDATA. Violates "Do not invent [...]". GT uses neutral `yes`/`no`.
+- **Extra flow attributes** (-0.5): LLM adds `name` to flows (e.g., `name="Password Reset"`); GT omits.
+- **Task types invented** (-0.5): LLM uses `serviceTask` (t1), `userTask` (t3-t6); GT uses plain `task` for all. Not mentioned in prompt.
+
+#### Minor Deductions (-2.0 total, significant per strictness rule):
+- **Names differ** (-0.5): Start ("Customer submits support ticket" vs "Ticket Submitted"); classify ("Classify Ticket" vs "Auto-Classification"); gw confirm ("Customer confirms?" vs "Customer Confirms?").
+- **Process/header diffs** (-0.5): id/name (`p1`/"AcmeTech Support Ticket" vs `support_ticket`/"Support-Ticket"); extra/unneeded `xmlns:bpmn`, verbose targetNS; no `<?xml>` (GT has).
+- **IDs/ordering minor variance** (-0.5): gw2 (confirm) vs gw3; flows renumbered/shifted due to no gw2.
+- **GT gw2 name invented** (neutral): GT's "Resolved Internally?" not in prompt (potential GT flaw), but doesn't boost LLM.
+
+#### Credits (+4.0 base):
+- Concise (<40 lines), single `<definitions>` block, no diagram/interchange/extra elements.
+- Exactly 2 exclusive gateways (gw1/gw2) as prompt specifies "the two decision points" (GT has 3, arguably violating "only the two [...] legitimate" in trap note).
+- Perfect loop (gw no → t3), task names exact where specified, no hallucinations (timers/approvals/parallels).
+- Valid BPMN XML (arguably more standard with `xmlns:xsi`).
+
+Score reflects ~60% match but heavy penalties for diffs/inventions per instructions. Identical XML would be 10.0; this has too many variances.

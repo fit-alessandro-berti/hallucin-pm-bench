@@ -1,0 +1,21 @@
+**4.2**
+
+### Evaluation Rationale (Strict Assessment Against Ground Truth)
+The LLM answer is functionally equivalent to the process description (no hallucinations like extra timers, tasks, or gateways; loop modeled correctly to "Initial Diagnosis"; ≤40 lines; concise IDs; two exclusive gateways used) but deviates significantly from the ground truth XML in structure, elements, names, types, and details. With utmost strictness, even minor mismatches (e.g., names, attributes) incur major point loss; the missing gateway for the first decision point (classification → "Password Reset?") is a critical structural error against both prompt ("mark the two decision points with exclusive gateways"—likely classification and diagnosis) and GT (3 gateways total).
+
+#### Major Errors (-4.0 total):
+- **Missing exclusive gateway after classification (gw1 "Password Reset?" in GT)**: LLM uses conditional sequence flows directly from `t1` (f2/f3), omitting the gw + extra flow (GT f2/f3/f4). This skips standard BPMN decision modeling and one of the "two decision points." (-2.5)
+- **Wrong number/position/names of gateways**: 2 gw vs GT's 3; gw1 is diagnosis outcome (not "Password Reset?"); no "Resolved Internally?" gw2. (-1.5)
+
+#### Significant Errors (-2.5 total):
+- **Invented task types**: `serviceTask` (t1), `userTask` (t3-t6) vs GT's generic `task` for all. Violates "do not invent... activities" spirit. (-1.5)
+- **Condition expressions mismatch**: Verbose/specific (e.g., `classification = 'Password Reset'`) + wrong `xsi:type="bpmn:tFormalExpression"` (GT uses `tFormalExpression`, simple "yes"/"no"). (-0.7)
+- **Extra flow attributes**: Names on flows (e.g., "Password Reset") absent in GT. (-0.3)
+
+#### Minor Errors (-1.8 total, significant loss per instruction):
+- Names differ: process (`p1`/"AcmeTech Support Ticket" vs `support_ticket`/"Support-Ticket"); start (`s`/"Customer Submits..." vs `start`/"Ticket Submitted"); t1 ("Classify Ticket" vs "Auto-Classification"); gw names/ids. (-1.0)
+- Extra XML attributes: `xmlns:bpmn`, `xmlns:xsi`, `name` on some elements. (-0.3)
+- Missing `<?xml declaration?>`. (-0.2)
+- Minor ID/flow count diffs (12 flows vs 13 due to missing gw segment). (-0.3)
+
+Semantically matches description (pw reset → confirm; diagnosis → resolve/forward→resolve→confirm; loop exact), no added elements—increment +2.0 from floor (1.0 base for invalid XML). Final: **4.2** (partial credit for no hallucinations/correct logic, heavy penalties for diffs).

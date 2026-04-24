@@ -2,16 +2,16 @@
 
 | Category                                | Median of Std |
 | --------------------------------------- | ------------- |
-| C01 Domain-override / Precedence checks | 1.641454      |
+| C01 Domain-override / Precedence checks | 1.632993      |
 | C02 Event-log fact-extraction           | 0.471405      |
 | C03 Text to Model reconstruction        | 2.054805      |
-| C04 Compliance / Conformance reasoning  | 1.178511      |
-| C05 Counterfactual edits                | 2.254371      |
+| C04 Compliance / Conformance reasoning  | 1.17804       |
+| C05 Counterfactual edits                | 2.292178      |
 | C06 Multi-process memory interference   | 0.471405      |
 | C07 Change-log diffing                  | 0.942809      |
-| C08 Temporal / concurrency reasoning    | 2.034052      |
+| C08 Temporal / concurrency reasoning    | 1.94973       |
 | C09 Unknown-should-remain-unknown       | 0.339935      |
 | C10 Domain-synonym enforcement          | 0.62361       |
-| C11 Performance analytics commentary    | 1.261816      |
+| C11 Performance analytics commentary    | 1.26842       |
 | C12 Misinformation injection            | 0.377124      |
-| C13 Edge-case / low-support prompts     | 1.080123      |
+| C13 Edge-case / low-support prompts     | 1.070973      |

@@ -1,0 +1,36 @@
+## Decision points in Contoso’s refund process
+
+1. **Eligibility validation**
+   - **Activity:** `Triage_Agent_Validate_Eligibility`
+   - **Decision:** Is the claim eligible based on the `FlightManifest` and `WeatherReport`?
+   - The process description does not define any separate rejection or appeal activity.
+
+2. **Finance pre-approval**
+   - **Activity:** `Finance_Controller_PreApprove`
+   - **Decision:** Has finance pre-approval succeeded using the `EligibilityChecklist`?
+   - `Process_Refund_Payment` may not begin unless this has succeeded.
+
+3. **High-value refund branch**
+   - **Condition:** Is the refund amount **greater than €1,000**?
+   - **If yes:** The case must proceed to `Senior_Auditor_Review`, including the `AuditTrail`.
+   - **If no:** The case does not require `Senior_Auditor_Review`.
+
+4. **Payment readiness**
+   - **Activity affected:** `Process_Refund_Payment`
+   - **Decision/gate:** Can payment begin?
+   - Payment may begin only when:
+     - `Finance_Controller_PreApprove` has succeeded;
+     - for high-value claims, `Senior_Auditor_Review` has been completed;
+     - the signed `BankTransferAuthorization` is present.
+
+## Required documents and artefacts
+
+- `RefundRequestForm`
+- `FlightManifest`
+- `WeatherReport`
+- `EligibilityChecklist`
+- `AuditTrail` — required for high-value claims over €1,000
+- Signed `BankTransferAuthorization`
+- `RefundConfirmationPDF`
+
+No `CustomerService_Agent_Decide` activity or related artefact is part of Contoso’s process.
