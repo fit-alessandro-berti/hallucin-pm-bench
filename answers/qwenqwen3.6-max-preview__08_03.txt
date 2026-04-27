@@ -1,0 +1,28 @@
+**Answer: Yes.**
+
+**Shortest firing sequence:**  
+`T1 → T4 → T2b → T5`  
+*(Note: `T1 → T2b → T4 → T5` is equally valid and of identical length due to concurrency between T4 and T2b.)*
+
+---
+
+### Formal Verification (Marking Evolution)
+Let `M_k` denote the marking after the `k`-th firing. Only places with tokens are listed.
+
+| Step | Fired Transition | Pre-condition Met? | Resulting Marking `M_k` |
+|:----:|:----------------:|:-------------------|:------------------------|
+| 0    | *(initial)*      | –                  | `{p0:1}`                |
+| 1    | **T1**           | `p0≥1`             | `{pa:1, pb:1}`          |
+| 2    | **T4**           | `pb≥1`             | `{pa:1, pe:1}`          |
+| 3    | **T2b**          | `pa≥1`             | `{pd:1, pe:1}`          |
+| 4    | **T5**           | `pd≥1, pe≥1`       | `{pf:1}`                |
+
+At step 4, **T5 fires**. **T3 has never been enabled nor fired**, because T3 requires a token in `pc`, and `pc` is only produced by T2 or T6. By routing the token from `pa` through **T2b** (the explicit shortcut), `pd` is generated directly, completely bypassing `pc` and thus T3.
+
+---
+
+### Why this is the shortest possible sequence
+1. **T1** must fire first: it is the only transition consuming the initial token in `p0` and is the sole producer of `pa` and `pb`.
+2. **T4** is the unique producer of `pe`, a mandatory input for T5.
+3. **T2b** is the unique producer of `pd` that does not require T3 (T3 produces `pd` from `pc`, and T6 produces `pc` from `pf`, which itself requires T5 → circular dependency).
+4. Therefore, exactly three prerequisite firings (`T1`, `T4`, `T2b`) are structurally necessary to enable T5 without involving T3. Adding T5 itself yields a minimal length of **4 transitions**. No shorter sequence exists in the reachability graph.

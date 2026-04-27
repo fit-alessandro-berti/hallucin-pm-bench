@@ -1,0 +1,21 @@
+**3.2**
+
+### Evaluation Rationale (Strict Line-by-Line Comparison)
+The LLM answer captures the core process logic (password reset bypass, diagnosis decision, forward-to-resolve, confirm loop to diagnosis) without hallucinations (no added timers/SLAs/activities), but has **numerous structural, syntactic, and detail mismatches** vs. ground truth. With utmost strictness, each difference deducts significantly (~0.2-1.0 points per category). Total possible: 10.0; deductions total ~6.8.
+
+#### Major Errors (-4.5 total):
+- **Missing exclusiveGateway gw3** after confirm (-2.0): Ground truth explicitly models the customer confirmation decision (lines 8-9) as `gw3` ("Customer Confirms?") with `f11` (t6→gw3), `f12` (gw3→end "yes"), `f13` (gw3→t3 "no"). LLM hacks it with direct conditional flows from `t7` (`s11`/`s12`), omitting the gateway entirely. Violates BPMN best practice for decisions and prompt's "exclusive gateways" intent. Only 12 flows vs. 13; no equivalent to `f11`.
+- **Invalid/mismatched conditionExpressions** (-1.5): No `xsi:type="tFormalExpression"`. LLM uses non-standard descriptive text (`[Password Reset]`, `Otherwise`, `Resolve Issue`, `Forward to Specialist`, `Confirmed`, `Persists`) vs. ground truth's simple/standard `yes`/`no`. Likely invalid per BPMN schema.
+- **Missing/incorrect decision modeling** (-1.0): Only 2 gateways (correctly placed for lines 3/5), but ground truth uses 3 (including line 8-9). Prompt says "two", but reference has 3—LLM fails to match.
+
+#### Medium Errors (-1.6 total):
+- **Event/task mismatches** (-0.8): `startEvent` id=`e1` (no name) vs. `start` ("Ticket Submitted"); `endEvent` `eEnd` (no name) vs. `end` ("Ticket Closed"); `t1` name="Automatically classified by system" vs. "Auto-Classification"; no gateway names ("Password Reset?", etc.).
+- **Process attributes** (-0.4): id=`AcmeSupport` `isExecutable="true"` (no name) vs. `support_ticket` name="Support-Ticket" `isExecutable="false"`.
+- **Element ordering/IDs** (-0.4): Tasks/gateways listed first (non-standard); `s1`-`s12` vs. `f1`-`f13`; `t7` for confirm vs. `t6`.
+
+#### Minor Errors (-0.7 total):
+- **No `<?xml declaration`** or `targetNamespace` (-0.4).
+- **No `xmlns:xsi`** implied by ground truth's `xsi:type` usage (-0.1).
+- **Name verbosity** : LLM closer to prompt text for classify, but doesn't match ground truth exactly (-0.2).
+
+Logic is faithful to 10 lines (e.g., reset→confirm direct, specialist implicit via forward→resolve, loop exact), output <40 lines, concise IDs, no inventions → baseline ~4.0. But ~25+ line-level diffs + invalidity drop it to 3.2. Perfect match required for 10.0; this is a close-but-flawed approximation.

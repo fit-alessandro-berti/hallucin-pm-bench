@@ -1,0 +1,234 @@
+{
+  "bpmn": {
+    "definitions": {
+      "process": {
+        "id": "customer_support_ticket_process",
+        "flowElements": [
+          {
+            "id": "start_support_email",
+            "name": "Support Email Received",
+            "type": "StartEvent",
+            "eventDefinition": {
+              "type": "Message",
+              "id": "msg_start_support_email"
+            },
+            "outgoing": ["seq_parse_email"]
+          },
+          {
+            "id": "seq_parse_email",
+            "type": "SequenceFlow",
+            "sourceRef": "start_support_email",
+            "targetRef": "parse_email_and_create_ticket"
+          },
+          {
+            "id": "parse_email_and_create_ticket",
+            "name": "Parse E-mail & Create Ticket",
+            "type": "ServiceTask",
+            "incoming": ["seq_parse_email"],
+            "outgoing": ["seq_classify"]
+          },
+          {
+            "id": "seq_classify",
+            "type": "SequenceFlow",
+            "sourceRef": "parse_email_and_create_ticket",
+            "targetRef": "initial_classification"
+          },
+          {
+            "id": "initial_classification",
+            "name": "Initial Classification",
+            "type": "UserTask",
+            "incoming": ["seq_classify"],
+            "outgoing": ["gw_simple_complex"]
+          },
+          {
+            "id": "gw_simple_complex",
+            "name": "Simple or Complex?",
+            "type": "ExclusiveGateway",
+            "gatewayDirection": "Exclusive",
+            "incoming": ["seq_classify"],
+            "outgoing": ["seq_simple_res", "seq_complex_res"],
+            "default": "seq_simple_res"
+          },
+          {
+            "id": "seq_simple_res",
+            "type": "SequenceFlow",
+            "sourceRef": "gw_simple_complex",
+            "targetRef": "provide_resolution"
+          },
+          {
+            "id": "seq_complex_res",
+            "type": "SequenceFlow",
+            "sourceRef": "gw_simple_complex",
+            "targetRef": "root_cause_analysis"
+          },
+          {
+            "id": "root_cause_analysis",
+            "name": "Root Cause Analysis",
+            "type": "UserTask",
+            "incoming": ["seq_complex_res"],
+            "outgoing": ["seq_to_resolution"]
+          },
+          {
+            "id": "seq_to_resolution",
+            "type": "SequenceFlow",
+            "sourceRef": "root_cause_analysis",
+            "targetRef": "provide_resolution"
+          },
+          {
+            "id": "provide_resolution",
+            "name": "Provide Resolution",
+            "type": "UserTask",
+            "incoming": ["seq_simple_res", "seq_to_resolution"],
+            "outgoing": ["seq_send_response"]
+          },
+          {
+            "id": "seq_send_response",
+            "type": "SequenceFlow",
+            "sourceRef": "provide_resolution",
+            "targetRef": "send_response_to_customer"
+          },
+          {
+            "id": "send_response_to_customer",
+            "name": "Send Response to Customer",
+            "type": "UserTask",
+            "incoming": ["seq_send_response"],
+            "outgoing": ["gw_parallel_split"]
+          },
+          {
+            "id": "gw_parallel_split",
+            "name": "Parallel Split",
+            "type": "ParallelGateway",
+            "gatewayDirection": "Diverging",
+            "incoming": ["seq_send_response"],
+            "outgoing": ["seq_log_kb", "gw_reply_or_timeout"]
+          },
+          {
+            "id": "seq_log_kb",
+            "type": "SequenceFlow",
+            "sourceRef": "gw_parallel_split",
+            "targetRef": "log_solution_kb"
+          },
+          {
+            "id": "log_solution_kb",
+            "name": "Log Solution in Knowledge Base",
+            "type": "ServiceTask",
+            "incoming": ["seq_log_kb"],
+            "outgoing": ["seq_log_kb_to_merge"]
+          },
+          {
+            "id": "seq_log_kb_to_merge",
+            "type": "SequenceFlow",
+            "sourceRef": "log_solution_kb",
+            "targetRef": "gw_parallel_merge"
+          },
+          {
+            "id": "gw_reply_or_timeout",
+            "name": "Reply or Timeout",
+            "type": "EventBasedGateway",
+            "gatewayDirection": "Diverging",
+            "incoming": ["gw_parallel_split"],
+            "outgoing": ["evt_customer_reply", "evt_24h_timeout"]
+          },
+          {
+            "id": "evt_customer_reply",
+            "name": "Customer Reply",
+            "type": "IntermediateMessageCatchEvent",
+            "eventDefinition": {
+              "type": "Message",
+              "id": "msg_customer_reply"
+            },
+            "outgoing": ["seq_reply_to_close"]
+          },
+          {
+            "id": "evt_24h_timeout",
+            "name": "24 Hours Timeout",
+            "type": "IntermediateTimerCatchEvent",
+            "eventDefinition": {
+              "type": "Timer",
+              "timerEventDefinition": {
+                "timeDuration": "PT24H"
+              }
+            },
+            "outgoing": ["seq_timeout_to_reminder"]
+          },
+          {
+            "id": "seq_reply_to_close",
+            "type": "SequenceFlow",
+            "sourceRef": "evt_customer_reply",
+            "targetRef": "close_ticket"
+          },
+          {
+            "id": "seq_timeout_to_reminder",
+            "type": "SequenceFlow",
+            "sourceRef": "evt_24h_timeout",
+            "targetRef": "send_reminder_once"
+          },
+          {
+            "id": "send_reminder_once",
+            "name": "Send Reminder",
+            "type": "UserTask",
+            "incoming": ["seq_timeout_to_reminder"],
+            "outgoing": ["seq_reminder_to_close"]
+          },
+          {
+            "id": "seq_reminder_to_close",
+            "type": "SequenceFlow",
+            "sourceRef": "send_reminder_once",
+            "targetRef": "close_ticket"
+          },
+          {
+            "id": "close_ticket",
+            "name": "Close Ticket",
+            "type": "Task",
+            "incoming": ["seq_reply_to_close", "seq_reminder_to_close"],
+            "outgoing": ["seq_close_to_merge"]
+          },
+          {
+            "id": "gw_parallel_merge",
+            "name": "Parallel Merge",
+            "type": "ParallelGateway",
+            "gatewayDirection": "Converging",
+            "incoming": ["seq_log_kb_to_merge", "seq_close_to_merge"],
+            "outgoing": ["seq_end"]
+          },
+          {
+            "id": "seq_end",
+            "type": "SequenceFlow",
+            "sourceRef": "gw_parallel_merge",
+            "targetRef": "end_ticket_closed"
+          },
+          {
+            "id": "end_ticket_closed",
+            "name": "Ticket Closed",
+            "type": "EndEvent",
+            "incoming": ["seq_end"]
+          },
+          {
+            "id": "evt_cancel_ticket",
+            "name": "Customer Cancels",
+            "type": "CancelBoundaryEvent",
+            "eventDefinition": {
+              "type": "Cancel",
+              "cancelActivity": true
+            },
+            "attachedToRef": "send_response_to_customer",
+            "isInterrupting": true,
+            "outgoing": ["seq_terminate"]
+          },
+          {
+            "id": "seq_terminate",
+            "type": "SequenceFlow",
+            "sourceRef": "evt_cancel_ticket",
+            "targetRef": "end_terminate"
+          },
+          {
+            "id": "end_terminate",
+            "name": "Terminate",
+            "type": "TerminateEndEvent",
+            "incoming": ["seq_terminate"]
+          }
+        ]
+      }
+    }
+  }
+}

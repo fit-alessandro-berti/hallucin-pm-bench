@@ -1,0 +1,150 @@
+{
+  "definitions": {
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "flowElements": [
+        {
+          "id": "sub_1",
+          "name": "Main Support Flow",
+          "type": "SubProcess",
+          "flowElements": [
+            {
+              "id": "start_1",
+              "type": "StartEvent",
+              "name": "Support Email Received",
+              "eventDefinitions": [
+                {
+                  "type": "messageEventDefinition"
+                }
+              ],
+              "outgoing": ["flow_1"]
+            },
+            {
+              "id": "task_parse",
+              "type": "Task",
+              "name": "Parse Email & Create Ticket",
+              "incoming": ["flow_1", "flow_cancel_1", "flow_cancel_2", "flow_cancel_3", "flow_cancel_4", "flow_cancel_5", "flow_cancel_6", "flow_cancel_7", "flow_cancel_8", "flow_cancel_9", "flow_cancel_10"],
+              "outgoing": ["flow_2"]
+            },
+            {
+              "id": "task_classify",
+              "type": "Task",
+              "name": "Initial Classification",
+              "incoming": ["flow_2"],
+              "outgoing": ["flow_3"]
+            },
+            {
+              "id": "gw_route",
+              "type": "ExclusiveGateway",
+              "incoming": ["flow_3"],
+              "outgoing": ["flow_complex", "flow_simple"]
+            },
+            {
+              "id": "task_rca",
+              "type": "Task",
+              "name": "Root Cause Analysis",
+              "incoming": ["flow_complex"],
+              "outgoing": ["flow_rca_out"]
+            },
+            {
+              "id": "task_resolve",
+              "type": "Task",
+              "name": "Provide Resolution",
+              "incoming": ["flow_simple", "flow_rca_out"],
+              "outgoing": ["flow_4"]
+            },
+            {
+              "id": "gw_parallel_start",
+              "type": "ParallelGateway",
+              "incoming": ["flow_4"],
+              "outgoing": ["flow_5", "flow_6"]
+            },
+            {
+              "id": "task_send_response",
+              "type": "Task",
+              "name": "Send Response to Customer",
+              "incoming": ["flow_5"],
+              "outgoing": ["flow_7"]
+            },
+            {
+              "id": "task_log_kb",
+              "type": "Task",
+              "name": "Log Solution in Knowledge Base",
+              "incoming": ["flow_6"],
+              "outgoing": ["flow_8"]
+            },
+            {
+              "id": "catch_reply",
+              "type": "IntermediateCatchEvent",
+              "name": "Wait for Customer Reply",
+              "eventDefinitions": [
+                {
+                  "type": "messageEventDefinition"
+                }
+              ],
+              "incoming": ["flow_7", "flow_8"],
+              "outgoing": ["flow_9"],
+              "boundaryEvents": [
+                {
+                  "id": "boundary_timer",
+                  "type": "BoundaryEvent",
+                  "cancelActivity": false,
+                  "eventDefinitions": [
+                    {
+                      "type": "timerEventDefinition",
+                      "timeDuration": "PT24H"
+                    }
+                  ],
+                  "outgoing": ["flow_10"],
+                  "attachedToRef": "catch_reply"
+                }
+              ]
+            },
+            {
+              "id": "task_reminder",
+              "type": "Task",
+              "name": "Send Reminder",
+              "incoming": ["flow_10"],
+              "outgoing": ["flow_11"]
+            },
+            {
+              "id": "task_close",
+              "type": "Task",
+              "name": "Close Ticket",
+              "incoming": ["flow_9", "flow_11"],
+              "outgoing": ["flow_12"],
+              "boundaryEvents": [
+                {
+                  "id": "boundary_cancel",
+                  "type": "BoundaryEvent",
+                  "cancelActivity": true,
+                  "eventDefinitions": [
+                    {
+                      "type": "cancelEventDefinition"
+                    }
+                  ],
+                  "outgoing": ["flow_13"],
+                  "attachedToRef": "task_close"
+                }
+              ]
+            },
+            {
+              "id": "end_normal",
+              "type": "EndEvent",
+              "name": "Process Ended",
+              "incoming": ["flow_12"]
+            },
+            {
+              "id": "terminate_end",
+              "type": "EndEvent",
+              "name": "Process Terminated",
+              "incoming": ["flow_13"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

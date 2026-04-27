@@ -158,6 +158,7 @@ class Shared:
                        "tencent/hy3-preview:free",
                        "deepseek/deepseek-v4-flash",
                        "deepseek/deepseek-v4-pro",
+                       "qwen/qwen3.6-max-preview", "qwen/qwen3.6-27b", "qwen/qwen3.6-flash",
                        ("anthropic/claude-opus-4.7-thinking",
                         {"base_model": "anthropic/claude-opus-4.7",
                          "payload": {"reasoning": {"enabled": True}}}),

@@ -1,0 +1,61 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             targetNamespace="http://example.com/warranty-replacement"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             typeLanguage="http://www.w3.org/2001/XMLSchema">
+  <process id="wrc_process_main" name="Warranty-Replacement v1.3" isExecutable="false">
+    <!-- Step 1 & 2 -->
+    <startEvent id="wrc_evt_start" name="online warranty claim"/>
+    <task id="wrc_task_validates_claim" name="validates the claim"/>
+    <exclusiveGateway id="wrc_gw_completeness"/>
+    <task id="wrc_task_request_info" name="requests missing information"/>
+    
+    <!-- Step 3 -->
+    <task id="wrc_task_check_eligibility" name="checks warranty eligibility"/>
+    <exclusiveGateway id="wrc_gw_warranty_decision"/>
+    <task id="wrc_task_send_rejection" name="send rejection notice"/>
+    <endEvent id="wrc_evt_end_rejection"/>
+    
+    <!-- Step 4 -->
+    <parallelGateway id="wrc_gw_parallel_split"/>
+    <task id="wrc_task_create_shipment" name="Create shipment order"/>
+    <task id="wrc_task_schedule_pickup" name="Schedule courier pickup"/>
+    <parallelGateway id="wrc_gw_parallel_join"/>
+    
+    <!-- Step 5 -->
+    <task id="wrc_task_update_inventory" name="update inventory records"/>
+    <task id="wrc_task_close_claim" name="close the claim"/>
+    <endEvent id="wrc_evt_end_success"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="wrc_flow_start_to_validates" sourceRef="wrc_evt_start" targetRef="wrc_task_validates_claim"/>
+    <sequenceFlow id="wrc_flow_validates_to_completeness_gw" sourceRef="wrc_task_validates_claim" targetRef="wrc_gw_completeness"/>
+    <sequenceFlow id="wrc_flow_completeness_complete" sourceRef="wrc_gw_completeness" targetRef="wrc_task_check_eligibility">
+      <conditionExpression xmlns:ns="http://www.w3.org/2001/XMLSchema" language="BPMN">complete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_completeness_incomplete" sourceRef="wrc_gw_completeness" targetRef="wrc_task_request_info">
+      <conditionExpression language="BPMN">incomplete</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_request_info_to_validates" sourceRef="wrc_task_request_info" targetRef="wrc_task_validates_claim"/>
+    
+    <sequenceFlow id="wrc_flow_check_eligibility_to_warranty_gw" sourceRef="wrc_task_check_eligibility" targetRef="wrc_gw_warranty_decision"/>
+    <sequenceFlow id="wrc_flow_warranty_out" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_task_send_rejection">
+      <conditionExpression language="BPMN">out_of_warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_warranty_in" sourceRef="wrc_gw_warranty_decision" targetRef="wrc_gw_parallel_split">
+      <conditionExpression language="BPMN">within_warranty</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_task_send_rejection" targetRef="wrc_evt_end_rejection"/>
+    
+    <sequenceFlow id="wrc_flow_split_to_shipment" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_create_shipment"/>
+    <sequenceFlow id="wrc_flow_split_to_pickup" sourceRef="wrc_gw_parallel_split" targetRef="wrc_task_schedule_pickup"/>
+    <sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_task_create_shipment" targetRef="wrc_gw_parallel_join"/>
+    <sequenceFlow id="wrc_flow_pickup_to_join" sourceRef="wrc_task_schedule_pickup" targetRef="wrc_gw_parallel_join"/>
+    <sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_gw_parallel_join" targetRef="wrc_task_update_inventory"/>
+    <sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_task_update_inventory" targetRef="wrc_task_close_claim"/>
+    <sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_task_close_claim" targetRef="wrc_evt_end_success"/>
+  </process>
+</definitions>
+```

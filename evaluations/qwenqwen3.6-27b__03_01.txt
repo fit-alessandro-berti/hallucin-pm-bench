@@ -1,0 +1,14 @@
+**5.0**
+
+### Evaluation Rationale (Strict Assessment)
+The LLM answer captures the **exact process topology** (tasks, gateways, flows, loop) without hallucinations (no added timers, activities, or gateways), matching the description and ground truth structure perfectly: start → classify → gw1 (password → reset → confirm; else → diagnosis → gw2 (resolve or forward→resolve) → confirm → gw3 (close or loop to diagnosis) → end. Flow connections identical despite id shifts (arbitrary/concise). ≤40 lines, concise IDs used.
+
+However, **utmost strictness** reveals significant differences from ground truth (dozens line-by-line), warranting major deductions:
+- **Missing/invalid header & namespaces** (-1.5): No `<?xml>`, incomplete `xmlns` (lacks `/MODEL`), no `targetNamespace`.
+- **Process attributes missing** (-0.5): No `name="Support-Ticket" isExecutable="false"`.
+- **Element name mismatches** (-1.5): Start ("Submit Ticket" vs "Ticket Submitted"), t1 ("Classify Ticket" vs "Auto-Classification"), end ("Closed" vs "Ticket Closed").
+- **Gateway names missing** (-1.0): gw1/gw2/gw3 lack `name` attrs (e.g., "Password Reset?").
+- **Decision modeling incorrect** (-0.5): Uses `name=` labels on flows (visual only, not semantic); lacks 6 `<conditionExpression>` blocks with `xsi:type="tFormalExpression" yes/no` (critical for BPMN exclusiveGateway branching semantics; renders model incomplete/invalid).
+- **Minor XML diffs** (-0.0 extra; already covered): Flow id ordering shifted but connections match.
+
+No credit for "close enough"—small errors (names) and large (conditions/semantics) compound to halve the score. Perfect topology prevents lower, but not a ground truth match.
