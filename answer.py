@@ -83,6 +83,7 @@ def respond_for_model(model_name, parameters=None):
             try:
                 changed = future.result() or changed
             except Exception as e:
+                changed = True
                 print("thread except", str(e))
 
     return changed

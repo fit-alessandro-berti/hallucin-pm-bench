@@ -1,0 +1,19 @@
+**3.0**
+
+### Evaluation Rationale (Strict Grading)
+Using utmost strictness, grading based on literal and semantic differences from the ground truth XML, per prompt requirements. Significant deductions for extras, omissions/mismatches, structural deviations, invalid XML, and direct violations. Semantically ~80% equivalent (correct loop, parallel paths, gateways, two ends), but multiple critical flaws drop score sharply.
+
+#### Major Deductions (-7 points total):
+1. **Flow ID prefix violation (-2.0)**: Prompt requires **every element’s id** prefixed "wrc_". Ground truth uses `wrc_sf1` etc. LLM uses unprefixed `flow1`-`flow17` (17 elements wrong). Direct, repeated violation.
+2. **Invalid XML (-2.0)**: ConditionExpressions use `xsi:type="bpmn:tFormalExpression"` without `xmlns:xsi` declaration (missing namespace). XML won't parse/validate as BPMN 2.0. Ground truth avoids via flow `name="Yes"/"No"`.
+3. **Extra hallucinated elements (-2.0)**: 
+   - `intermediateCatchEvent` ("waits until it is received"): Not an explicitly mentioned flow element (descriptive phrase only). Ground truth models loop directly (`request_info` → `validate`), no event. Violates "model **only** explicitly mentioned".
+   - `wrc_Task_CheckWarranty` ("checks warranty eligibility"): Ground truth omits entirely (direct `complete_gw` → `warranty_gw`). Extra task alters path structure.
+4. **Structural path differences (-1.0)**: LLM inserts `check_warranty` between `complete_gw` "Yes" and `warranty_gw`; adds wait event in loop. Ground truth: `complete_gw` "Yes" → `warranty_gw` direct; `request_info` → `validate` direct. Not identical flow.
+
+#### Minor Deductions (-0.5 total, but amplified by strictness):
+- Task/gateway/end names differ (e.g., LLM verbatim-ish but longer/capitalized differently; ground truth shortened/non-gerund). E.g., LLM `Create shipment order for the replacement unit` vs ground `Create shipment order`.
+- Extra attributes/namespaces (bpmndi/dc unused; `isExecutable="true"` vs `"false"`; verbose start/gw names).
+- Longer/messier XML (~120 lines vs 34); inline flow defs + end list (minor redundancy).
+
+Base 10 for valid BPMN skeleton → deductions yield 3.0. Semantically close enough for partial credit, but strict rubric (extras + invalid + prefix fail) prevents higher.

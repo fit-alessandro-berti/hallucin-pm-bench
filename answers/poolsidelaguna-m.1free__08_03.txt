@@ -1,0 +1,32 @@
+
+Looking at this Petri net, I need to determine whether T5 can fire before T3 in any reachable marking.
+
+## Analysis
+
+For T5 to fire, it requires tokens in both **pd** and **pe** simultaneously (it's a synchronizing join).
+
+Let me trace the requirements:
+- **pd** can be produced either:
+  - Via T2 then T3 (pa → pc → pd), or  
+  - Via T2b directly (pa → pd) — this is the shortcut that skips pc entirely
+- **pe** is produced by T4 (pb → pe)
+
+## Yes — T5 can fire before T3
+
+**Shortest firing sequence:** `T1, T2b, T4, T5`
+
+Let me verify step by step:
+
+| Step | Transition | Marking changes | Resulting marking |
+|------|------------|-----------------|-------------------|
+| 0 | Initial | | p0=1, others=0 |
+| 1 | T1 | p0→0, pa=1, pb=1 | pa=1, pb=1 |
+| 2 | T2b | pa→0, pd=1 | pb=1, pd=1 |
+| 3 | T4 | pb→0, pe=1 | pd=1, pe=1 |
+| 4 | T5 | pd→0, pe→0, pf=1 | pf=1 |
+
+**Key observation:** By taking the shortcut T2b instead of T2, we produce pd directly without passing through pc. This means:
+- T5 fires at step 4
+- T3 **never fires** in this sequence (it is completely bypassed)
+
+Therefore, T5 fires before T3 — indeed, T5 fires while T3 hasn't even had a chance to fire yet, and in this sequence T3 never fires at all.
