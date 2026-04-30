@@ -1,9 +1,0 @@
-**4.0**
-
-### Evaluation Rationale (strict assessment vs. ground truth):
-- **JSON structure/schema mismatch (major deduction: -3.0 points)**: LLM wraps in `"process"` object with `id`, `name`, `isExecutable`, nested `elements`/`flows`; GT is flat with `"process_id"`, `"elements"`, `"flows"`. Different keys (e.g., `eventDefinition` vs `"event"`; detailed timer `"PT24H"` absent in GT). Not matching format.
-- **Element IDs/names/types (major deduction: -1.5 points)**: All IDs differ (e.g., `"gw_type"` vs `"classifyDecision"`). Names vary (e.g., `"Support e-mail received"` + `"Parse e-mail and create Ticket"` vs `"Email Received"` + `"Create Ticket"`; `"24 hours pass"` vs `"Timer 24h"`; `"Send Response to Customer"` matches but `"gw_parallel"` `"Fork: Response and Logging"` vs `"Fork Log/Wait"`). Types differ (e.g., `"userTask"`/`"serviceTask"`/`"sendTask"` vs mostly `"task"`).
-- **Flow topology (major deduction: -1.0 points)**: Parallel fork/join misplaced—LLM joins *after* reply handling (`gw_join` post-`close_ticket` + `log_solution`); GT joins *before* wait (`joinAfterLogging` post-`sendResponse` + `log_solution`, pre-`awaitReply`). Changes process semantics vs. GT (log completes before wait in GT; after in LLM). Extra internal `flows` in LLM's `cancel_handler`. Conditions case-sensitive (`"Simple"` vs `"simple"`).
-- **Cancel handling (moderate deduction: -0.5 points)**: LLM uses event-triggered `subProcess` (valid but extra nested structure); GT uses unattached `intermediateCatchEvent` → `terminateEndEvent`. Different modeling.
-- **No hallucinations**: No invented escalation/supervisor steps/gateways absent from desc/GT (+0.5 partial credit).
-- **Fidelity to prompt/desc**: LLM faithful (precise names like "Parse e-mail...", correct timer, parallel overlaps reply wait better), well-formed JSON, no prose. But strict GT diff focus yields low score. Total diffs too numerous for >4.0.
