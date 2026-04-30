@@ -8,7 +8,7 @@ EVALUATING_API_URL = "https://openrouter.ai/api/v1/"
 EVALUATING_API_KEY = os.environ["OPENROUTER_API_KEY"]
 EVALUATING_PAYLOAD = {"reasoning": {"effort": "medium"}}
 MAX_THREADS = 100
-LEADERBOARD_PATH = "leaderboard.md"
+LEADERBOARD_PATH = "leaderboard_dsv4pro.md"
 
 # Hardcoded evaluation-order options. Do not expose these as command-line flags.
 PROCESS_ONE_MODEL_AT_A_TIME = False
