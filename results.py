@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import re
@@ -12,6 +13,7 @@ CATEGORY_IDS = tuple(f"{idx:02d}" for idx in range(1, 14))
 NAME_PREFIXES = ("anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral", "google", "microsoft", "deepseek", "meta-llama")
 OPEN_SOURCE_PATTERNS = ("qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss")
 LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm", "deepseek-v3.2", "deepseek-v4")
+_DEFAULT_LEADERBOARD_JSON = object()
 
 MAPPING = {}
 MAPPING["C01"] = "C01 Domain-override / Precedence checks"
@@ -178,6 +180,23 @@ def _write_markdown_report(path, title, rows, columns=None):
     with open(path, "w", encoding="utf-8") as report_file:
         report_file.write(title)
         report_file.write(_render_markdown_table(rows, columns))
+
+
+def _leaderboard_json_rows(numeric_results):
+    return [{"name": row["LLM"], "AVG": row["AVG"]} for row in numeric_results]
+
+
+def _default_leaderboard_json_path(target_leaderboard):
+    root, extension = os.path.splitext(target_leaderboard)
+    if extension:
+        return root + ".json"
+    return target_leaderboard + ".json"
+
+
+def _write_leaderboard_json(path, numeric_results):
+    with open(path, "w", encoding="utf-8") as leaderboard_file:
+        json.dump(_leaderboard_json_rows(numeric_results), leaderboard_file, indent=2)
+        leaderboard_file.write("\n")
 
 
 def _safe_mean(values):
@@ -350,7 +369,7 @@ def compute_avg_std_per_category(dictio):
     _write_markdown_report("stats/avg_std_category.md", "# Average/Std per Category\n\n", table)
 
 
-def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
+def main(evaluation_folder, target_leaderboard, write_extra_stats=True, target_leaderboard_json=_DEFAULT_LEADERBOARD_JSON):
     results, dictio, numeric_results = get_agg_results(evaluation_folder)
     if write_extra_stats:
         measure_inter_category_correlation(numeric_results)
@@ -365,11 +384,17 @@ def main(evaluation_folder, target_leaderboard, write_extra_stats=True):
         leaderboard_file.write("The higher the score, the better the model.\nMaximum attainable score per category: **3 points**.\nThe average **/10.0** is computed over all the scores.\n\n")
         leaderboard_file.write(_render_markdown_table(results, columns))
 
+    if target_leaderboard_json is _DEFAULT_LEADERBOARD_JSON:
+        target_leaderboard_json = _default_leaderboard_json_path(target_leaderboard)
+
+    if target_leaderboard_json is not None:
+        _write_leaderboard_json(target_leaderboard_json, numeric_results)
+
 
 
 if __name__ == "__main__":
     t0 = time.time_ns()
-    main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False)
+    main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False, target_leaderboard_json=None)
     main("evaluations", "leaderboard.md", write_extra_stats=True)
     t1 = time.time_ns()
     print((t1 - t0) / 10**9)
