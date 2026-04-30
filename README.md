@@ -5,7 +5,7 @@
 Below you will find the current standings of Large Language Models evaluated against the benchmark criteria described below.
 The leaderboard reflects performance results using the **LLM-as-a-Judge methodology**:
 
-* [deepseek-v4-pro used as the Judge](leaderboard_dvs4pro.md)
+* [deepseek-v4-pro used as the Judge](leaderboard_dsv4pro.md)
 
 ## Motivation
 
