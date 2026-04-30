@@ -1,0 +1,48 @@
+{
+  "process": {
+    "id": "customer-support-ticket",
+    "name": "Customer Support Ticket Process",
+    "nodes": [
+      {"id": "start_event", "type": "MessageStartEvent", "name": "Support E-mail Received"},
+      {"id": "parse_ticket", "type": "Task", "name": "Parse E-mail & Create Ticket"},
+      {"id": "classify_ticket", "type": "Task", "name": "Initial Classification"},
+      {"id": "route_gateway", "type": "ExclusiveGateway", "name": "Route Ticket"},
+      {"id": "provide_resolution", "type": "Task", "name": "Provide Resolution"},
+      {"id": "root_cause", "type": "Task", "name": "Root Cause Analysis"},
+      {"id": "send_response", "type": "Task", "name": "Send Response to Customer"},
+      {"id": "parallel_split", "type": "ParallelGateway", "name": "Parallel Actions"},
+      {"id": "log_kb", "type": "Task", "name": "Log Solution in Knowledge Base"},
+      {"id": "wait_gateway", "type": "ExclusiveGateway", "name": "Await Reply or Timeout"},
+      {"id": "reply_catch", "type": "IntermediateCatchEvent", "name": "Customer Reply Received", "eventDef": "Message"},
+      {"id": "timeout_catch", "type": "IntermediateCatchEvent", "name": "24 Hour Timeout", "eventDef": "Timer", "duration": "PT24H"},
+      {"id": "send_reminder", "type": "Task", "name": "Send Reminder"},
+      {"id": "close_ticket", "type": "Task", "name": "Close Ticket"},
+      {"id": "parallel_join", "type": "ParallelGateway", "name": "Join Paths"},
+      {"id": "end_event", "type": "EndEvent", "name": "Process End"},
+      {"id": "cancel_catch", "type": "IntermediateCatchEvent", "name": "Customer Cancellation", "eventDef": "Cancel"},
+      {"id": "terminate_end", "type": "TerminateEndEvent", "name": "Terminate"}
+    ],
+    "flows": [
+      {"id": "f1", "source": "start_event", "target": "parse_ticket"},
+      {"id": "f2", "source": "parse_ticket", "target": "classify_ticket"},
+      {"id": "f3", "source": "classify_ticket", "target": "route_gateway"},
+      {"id": "f4", "source": "route_gateway", "target": "provide_resolution", "condition": "Simple"},
+      {"id": "f5", "source": "route_gateway", "target": "root_cause", "condition": "Complex"},
+      {"id": "f6", "source": "root_cause", "target": "provide_resolution"},
+      {"id": "f7", "source": "provide_resolution", "target": "send_response"},
+      {"id": "f8", "source": "send_response", "target": "parallel_split"},
+      {"id": "f9", "source": "parallel_split", "target": "log_kb"},
+      {"id": "f10", "source": "parallel_split", "target": "wait_gateway"},
+      {"id": "f11", "source": "wait_gateway", "target": "reply_catch"},
+      {"id": "f12", "source": "wait_gateway", "target": "timeout_catch"},
+      {"id": "f13", "source": "reply_catch", "target": "close_ticket"},
+      {"id": "f14", "source": "timeout_catch", "target": "send_reminder"},
+      {"id": "f15", "source": "send_reminder", "target": "close_ticket"},
+      {"id": "f16", "source": "close_ticket", "target": "parallel_join"},
+      {"id": "f17", "source": "log_kb", "target": "parallel_join"},
+      {"id": "f18", "source": "parallel_join", "target": "end_event"},
+      {"id": "f_cancel_1", "source": "start_event", "target": "cancel_catch", "isParallel": true, "isInterrupting": true},
+      {"id": "f_cancel_2", "source": "cancel_catch", "target": "terminate_end", "isInterrupting": true}
+    ]
+  }
+}

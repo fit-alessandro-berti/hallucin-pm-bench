@@ -1,0 +1,177 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd" 
+             id="Definitions_Warranty_Replacement_v1.3" 
+             targetNamespace="http://warranty-replacement/bpmn">
+
+  <process id="wrc_process" isExecutable="true">
+    
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Start">
+      <extensionElements/>
+    </startEvent>
+
+    <!-- Step 1: Submit Claim -->
+    <userTask id="wrc_submit_online_warranty_claim" name="submit online warranty claim">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 2: Validate Claim -->
+    <userTask id="wrc_validates_the_claim" name="validates the claim">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 2: Exclusive Gateway for Completeness -->
+    <exclusiveGateway id="wrc_validation_complete_gateway" name="Validation Complete?">
+      <extensionElements/>
+    </exclusiveGateway>
+
+    <!-- Step 2: Request Missing Information -->
+    <userTask id="wrc_requests_missing_information" name="requests missing information">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 2: Wait for Receipt (Implicitly modeled as ReceiveTask based on "waits until it is received") -->
+    <receiveTask id="wrc_waits_until_it_is_received" name="waits until it is received">
+      <extensionElements/>
+    </receiveTask>
+
+    <!-- Step 3: Check Eligibility -->
+    <userTask id="wrc_checks_warranty_eligibility" name="checks warranty eligibility">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 3: Exclusive Gateway for Warranty Decision -->
+    <exclusiveGateway id="wrc_warranty_eligibility_gateway" name="Warranty Eligible?">
+      <extensionElements/>
+    </exclusiveGateway>
+
+    <!-- Step 3: Rejection Path -->
+    <userTask id="wrc_send_rejection_notice" name="send rejection notice">
+      <extensionElements/>
+    </userTask>
+
+    <!-- End Event: Rejection -->
+    <endEvent id="wrc_rejection_end" name="Rejection">
+      <extensionElements/>
+    </endEvent>
+
+    <!-- Step 4: Parallel Split -->
+    <parallelGateway id="wrc_parallel_split_gateway" name="Parallel Activities">
+      <extensionElements/>
+    </parallelGateway>
+
+    <!-- Step 4a: Create Shipment Order -->
+    <userTask id="wrc_create_shipment_order" name="Create shipment order">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 4b: Schedule Courier Pickup -->
+    <userTask id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 4: Parallel Join -->
+    <parallelGateway id="wrc_parallel_join_gateway" name="Join Parallel Activities">
+      <extensionElements/>
+    </parallelGateway>
+
+    <!-- Step 5: Update Inventory -->
+    <userTask id="wrc_update_inventory_records" name="update inventory records">
+      <extensionElements/>
+    </userTask>
+
+    <!-- Step 5: Close Claim -->
+    <userTask id="wrc_close_the_claim" name="close the claim">
+      <extensionElements/>
+    </userTask>
+
+    <!-- End Event: Successful Completion -->
+    <endEvent id="wrc_success_end" name="Completed">
+      <extensionElements/>
+    </endEvent>
+
+    <!-- Flow Definitions -->
+    <sequenceFlow id="wrc_flow_start_to_submit" sourceRef="wrc_start" targetRef="wrc_submit_online_warranty_claim">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_submit_to_validate" sourceRef="wrc_submit_online_warranty_claim" targetRef="wrc_validates_the_claim">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_validate_to_gateway" sourceRef="wrc_validates_the_claim" targetRef="wrc_validation_complete_gateway">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_incomplete_to_request" name="Incomplete" sourceRef="wrc_validation_complete_gateway" targetRef="wrc_requests_missing_information">
+      <conditionExpression xsi:type="tFormalExpression">incomplete</conditionExpression>
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_request_to_wait" sourceRef="wrc_requests_missing_information" targetRef="wrc_waits_until_it_is_received">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_wait_to_validate" name="Re-validate" sourceRef="wrc_waits_until_it_is_received" targetRef="wrc_validates_the_claim">
+      <conditionExpression xsi:type="tFormalExpression">received</conditionExpression>
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_validate_to_check" name="Complete" sourceRef="wrc_validation_complete_gateway" targetRef="wrc_checks_warranty_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">complete</conditionExpression>
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_check_to_gateway" sourceRef="wrc_checks_warranty_eligibility" targetRef="wrc_warranty_eligibility_gateway">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_out_of_warranty_to_reject" name="Out of warranty" sourceRef="wrc_warranty_eligibility_gateway" targetRef="wrc_send_rejection_notice">
+      <conditionExpression xsi:type="tFormalExpression">out of warranty</conditionExpression>
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_within_warranty_to_split" name="Within warranty" sourceRef="wrc_warranty_eligibility_gateway" targetRef="wrc_parallel_split_gateway">
+      <conditionExpression xsi:type="tFormalExpression">within warranty</conditionExpression>
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_reject_to_end" sourceRef="wrc_send_rejection_notice" targetRef="wrc_rejection_end">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_split_to_create" sourceRef="wrc_parallel_split_gateway" targetRef="wrc_create_shipment_order">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_split_to_schedule" sourceRef="wrc_parallel_split_gateway" targetRef="wrc_schedule_courier_pickup">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_create_to_join" sourceRef="wrc_create_shipment_order" targetRef="wrc_parallel_join_gateway">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_schedule_to_join" sourceRef="wrc_schedule_courier_pickup" targetRef="wrc_parallel_join_gateway">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_join_to_update" sourceRef="wrc_parallel_join_gateway" targetRef="wrc_update_inventory_records">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_update_to_close" sourceRef="wrc_update_inventory_records" targetRef="wrc_close_the_claim">
+      <extensionElements/>
+    </sequenceFlow>
+
+    <sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_close_the_claim" targetRef="wrc_success_end">
+      <extensionElements/>
+    </sequenceFlow>
+
+  </process>
+
+</definitions>
+```

@@ -223,6 +223,7 @@ class Shared:
                        "deepseek/deepseek-v4-flash",
                        "deepseek/deepseek-v4-pro",
                        "qwen/qwen3.6-max-preview", "qwen/qwen3.6-27b", "qwen/qwen3.6-flash",
+                       "qwen/qwen3.6-35b-a3b",
                        "poolside/laguna-m.1:free", "poolside/laguna-xs.2:free",
                        ("anthropic/claude-opus-4.7-thinking",
                         {"base_model": "anthropic/claude-opus-4.7",
