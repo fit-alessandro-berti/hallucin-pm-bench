@@ -12,7 +12,7 @@ LEADERBOARD_PATH = "leaderboard_dsv4pro.md"
 
 # Hardcoded evaluation-order options. Do not expose these as command-line flags.
 PROCESS_ONE_MODEL_AT_A_TIME = False
-FILTER_BY_MIN_LEADERBOARD_SCORE = True
+FILTER_BY_MIN_LEADERBOARD_SCORE = False
 MIN_LEADERBOARD_SCORE = 0.0
 
 
