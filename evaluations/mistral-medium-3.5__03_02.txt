@@ -1,0 +1,18 @@
+**1.0**
+
+The LLM answer deviates substantially from the ground truth in structure (full verbose BPMN schema vs. concise custom JSON with `process_id`, `elements`, `flows`), modeling logic, and validity:
+
+- **Schema mismatch**: Entirely different format/keys/IDs/names (e.g., `definitions.processes.flowElements` vs. flat `elements`/`flows`), failing faithful reproduction.
+- **Invalid BPMN elements**:
+  - Gateway_2: Parallel diverging with 2 incomings (`Flow_6`, `Flow_8`)—impossible; semantically synchronizes unrelated paths (simple/complex PRs), hallucinating a join.
+  - No sequence flow to `IntermediateCatchEvent_2` (claims `Flow_13` incoming, undefined)—malformed/unrunnable.
+  - BoundaryEvent_1 attached to `Process_1` (invalid; boundaries require activity ref).
+  - No end event after `Task_8` (Close Ticket); normal path dangles.
+- **Incorrect logic**:
+  - Duplicated `Provide Resolution` tasks (Task_3/Task_5) vs. ground truth's merged single task.
+  - No `eventBasedGateway` for 24h wait (critical for "wait up to 24h for reply or timer"); uses broken parallel catches.
+  - Cancel handling invalid/non-interrupting properly ("at any point").
+- **Minor diffs**: Name variations (e.g., "Parse Email and Create Ticket" vs. "Create Ticket"; conditions "Simple"/"Complex" vs. "simple"/"complex"), extra `userTask`/messages.
+- No hallucinations like escalation, but structural/logic errors make it non-faithful/unexecutable BPMN vs. ground truth's correct simplified model.
+
+Zero tolerance for errors yields minimum score.

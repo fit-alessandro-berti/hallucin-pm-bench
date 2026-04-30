@@ -1,0 +1,90 @@
+Here is the BPMN 2.0 XML document modeling the *Warranty-Replacement v1.3* process as described:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/warranty-replacement">
+
+  <process id="wrc_process" isExecutable="false">
+    <!-- Start Event -->
+    <startEvent id="wrc_start" name="Start" />
+
+    <!-- Step 1: Online warranty claim -->
+    <task id="wrc_submit_claim" name="online warranty claim" />
+    <sequenceFlow id="wrc_flow_start_to_claim" sourceRef="wrc_start" targetRef="wrc_submit_claim" />
+
+    <!-- Step 2: Validate the claim -->
+    <task id="wrc_validate_claim" name="validates the claim" />
+    <sequenceFlow id="wrc_flow_claim_to_validate" sourceRef="wrc_submit_claim" targetRef="wrc_validate_claim" />
+
+    <!-- Exclusive Gateway for completeness check -->
+    <exclusiveGateway id="wrc_gateway_completeness" name="" />
+    <sequenceFlow id="wrc_flow_validate_to_gateway" sourceRef="wrc_validate_claim" targetRef="wrc_gateway_completeness" />
+
+    <!-- Request missing information (if incomplete) -->
+    <task id="wrc_request_info" name="requests missing information" />
+    <sequenceFlow id="wrc_flow_gateway_to_request" sourceRef="wrc_gateway_completeness" targetRef="wrc_request_info">
+      <conditionExpression xsi:type="tFormalExpression">#{claimIncomplete}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Re-validate after receiving info -->
+    <sequenceFlow id="wrc_flow_request_to_validate" sourceRef="wrc_request_info" targetRef="wrc_validate_claim" />
+
+    <!-- Proceed if complete -->
+    <sequenceFlow id="wrc_flow_gateway_to_eligible_check" sourceRef="wrc_gateway_completeness" targetRef="wrc_check_eligibility">
+      <conditionExpression xsi:type="tFormalExpression">#{claimComplete}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Step 3: Check warranty eligibility -->
+    <task id="wrc_check_eligibility" name="checks warranty eligibility" />
+    <exclusiveGateway id="wrc_gateway_eligibility" name="" />
+    <sequenceFlow id="wrc_flow_eligible_check_to_gateway" sourceRef="wrc_check_eligibility" targetRef="wrc_gateway_eligibility" />
+
+    <!-- Out of warranty path -->
+    <task id="wrc_send_rejection" name="send rejection notice" />
+    <sequenceFlow id="wrc_flow_gateway_to_rejection" sourceRef="wrc_gateway_eligibility" targetRef="wrc_send_rejection">
+      <conditionExpression xsi:type="tFormalExpression">#{outOfWarranty}</conditionExpression>
+    </sequenceFlow>
+    <endEvent id="wrc_end_rejection" name="End (Rejection)" />
+    <sequenceFlow id="wrc_flow_rejection_to_end" sourceRef="wrc_send_rejection" targetRef="wrc_end_rejection" />
+
+    <!-- Within warranty path -->
+    <sequenceFlow id="wrc_flow_gateway_to_parallel" sourceRef="wrc_gateway_eligibility" targetRef="wrc_parallel_split">
+      <conditionExpression xsi:type="tFormalExpression">#{withinWarranty}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Step 4: Parallel activities -->
+    <parallelGateway id="wrc_parallel_split" name="" />
+    <task id="wrc_create_shipment" name="Create shipment order" />
+    <task id="wrc_schedule_pickup" name="Schedule courier pickup" />
+    <sequenceFlow id="wrc_flow_split_to_shipment" sourceRef="wrc_parallel_split" targetRef="wrc_create_shipment" />
+    <sequenceFlow id="wrc_flow_split_to_pickup" sourceRef="wrc_parallel_split" targetRef="wrc_schedule_pickup" />
+
+    <!-- Parallel join -->
+    <parallelGateway id="wrc_parallel_join" name="" />
+    <sequenceFlow id="wrc_flow_shipment_to_join" sourceRef="wrc_create_shipment" targetRef="wrc_parallel_join" />
+    <sequenceFlow id="wrc_flow_pickup_to_join" sourceRef="wrc_schedule_pickup" targetRef="wrc_parallel_join" />
+
+    <!-- Step 5: Final tasks -->
+    <task id="wrc_update_inventory" name="update inventory records" />
+    <sequenceFlow id="wrc_flow_join_to_inventory" sourceRef="wrc_parallel_join" targetRef="wrc_update_inventory" />
+    <task id="wrc_close_claim" name="close the claim" />
+    <sequenceFlow id="wrc_flow_inventory_to_close" sourceRef="wrc_update_inventory" targetRef="wrc_close_claim" />
+    <endEvent id="wrc_end_success" name="End (Success)" />
+    <sequenceFlow id="wrc_flow_close_to_end" sourceRef="wrc_close_claim" targetRef="wrc_end_success" />
+  </process>
+</definitions>
+```
+
+### Key Features:
+1. **Flow Elements**: Only includes explicitly mentioned tasks, gateways, and events.
+2. **Gateways**:
+   - Exclusive gateway (`wrc_gateway_completeness`) for claim completeness check.
+   - Exclusive gateway (`wrc_gateway_eligibility`) for warranty decision.
+   - Parallel gateway pair (`wrc_parallel_split` and `wrc_parallel_join`) for concurrent tasks.
+3. **End Events**: Two end events as required (`wrc_end_rejection` and `wrc_end_success`).
+4. **Naming**: All IDs prefixed with `wrc_`, and task names match the description verbatim.
+5. **Conditions**: Placeholder expressions (e.g., `#{claimIncomplete}`) for routing logic.
