@@ -252,7 +252,7 @@ def _evaluate_answer_batch(answers, base_model_name, target_directory, include_g
     return modified_something
 
 
-def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):
+def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory=EVALUATIONS_DIR, include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
         parameters = {}
     else:

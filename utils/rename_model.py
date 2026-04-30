@@ -6,12 +6,13 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
+from common import EVALUATIONS_DIR
 from results import main as write_results
 
 
 ORIGINAL_MODEL_NAME = "mistral-medium-3.5-thinkhigh"
 TARGET_MODEL_NAME = "mistral-medium-3.5"
-TARGET_FOLDERS = ("answers", "evaluations", "stats/self_evaluation")
+TARGET_FOLDERS = ("answers", EVALUATIONS_DIR, "stats/self_evaluation")
 
 
 def normalize_model_name(model_name):
@@ -59,7 +60,7 @@ def rename_model(original_model_name, target_model_name):
         total += rename_model_files(base_path, original_model_name, target_model_name)
 
     print("renamed", total, "files")
-    write_results("evaluations", "leaderboard.md", write_extra_stats=True)
+    write_results(EVALUATIONS_DIR, "leaderboard.md", write_extra_stats=True)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import os
+from common import EVALUATIONS_DIR
 from results import *
 
 
@@ -22,7 +23,7 @@ if __name__ == "__main__":
 
     os.chdir("..")
     do_deletion("answers", original_name)
-    do_deletion("evaluations", original_name)
+    do_deletion(EVALUATIONS_DIR, original_name)
 
-    main("evaluations", "leaderboard.md", write_extra_stats=True)
+    main(EVALUATIONS_DIR, "leaderboard.md", write_extra_stats=True)
 

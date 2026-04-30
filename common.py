@@ -9,6 +9,9 @@ REQUEST_CONTEXT_PARAM = "request_context"
 REQUEST_CONTEXT_ANSWER = "answer"
 REQUEST_CONTEXT_EVALUATION = "evaluation"
 REQUEST_CONTEXT_UNKNOWN = "unknown"
+API_KEY_ENV_PARAM = "api_key_env"
+
+EVALUATIONS_DIR = "evaluations"
 
 
 def _uses_responses_api(api_url):
@@ -232,76 +235,76 @@ class Shared:
                          "payload": {"reasoning": {"enabled": True}}}),
                        ("mistral-medium-3.5",
                         {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
-                         "api_key": os.environ["MISTRAL_API_KEY"]}),
+                         "api_key_env": "MISTRAL_API_KEY"}),
                        ("mistral-medium-3.5-thinkhigh",
                         {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
-                         "api_key": os.environ["MISTRAL_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "MISTRAL_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.2-2025-12-11-none",
-                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
+                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/", "api_key_env": "OPENAI_API_KEY"}),
                        ("gpt-5.2-2025-12-11-high",
                         {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.2-2025-12-11-medium",
                         {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "medium"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
                        ("gpt-5.2-2025-12-11-xhigh",
                         {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "xhigh"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
                        ("gpt-5.4-2026-03-05-none",
                         {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"]}),
+                         "api_key_env": "OPENAI_API_KEY"}),
                        ("gpt-5.4-2026-03-05-high",
                         {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.4-2026-03-05-medium",
                         {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "medium"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
                        ("gpt-5.4-2026-03-05-xhigh",
                         {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "xhigh"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
                        ("gpt-5.5-2026-04-23-none",
                         {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"]}),
+                         "api_key_env": "OPENAI_API_KEY"}),
                        ("gpt-5.5-2026-04-23-high",
                         {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.5-2026-04-23-medium",
                         {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "medium"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
                        ("gpt-5.5-2026-04-23-xhigh",
                         {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "xhigh"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
                        ("gpt-5.4-mini-2026-03-17-high",
                         {"base_model": "gpt-5.4-mini-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.4-mini-2026-03-17-none",
                         {"base_model": "gpt-5.4-mini-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "none"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "none"}}),
                        ("gpt-5.4-nano-2026-03-17-high",
                         {"base_model": "gpt-5.4-nano-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "high"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.4-nano-2026-03-17-none",
                         {"base_model": "gpt-5.4-nano-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key": os.environ["OPENAI_API_KEY"], "payload": {"reasoning_effort": "none"}}),
+                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "none"}}),
                        ("grok-4.20-experimental-beta-0304-non-reasoning",
                         {"base_model": "grok-4.20-experimental-beta-0304-non-reasoning", "api_url": "https://api.x.ai/v1/",
-                         "api_key": os.environ["GROK_API_KEY"]}),
+                         "api_key_env": "GROK_API_KEY"}),
                        ("grok-4.20-experimental-beta-0304-reasoning",
                         {"base_model": "grok-4.20-experimental-beta-0304-reasoning",
                          "api_url": "https://api.x.ai/v1/",
-                         "api_key": os.environ["GROK_API_KEY"]}),
+                         "api_key_env": "GROK_API_KEY"}),
                        ("grok-4.20-multi-agent-experimental-beta-0304",
                         {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
                          "api_url": "https://api.x.ai/v1/",
-                         "api_key": os.environ["GROK_API_KEY"]}),
+                         "api_key_env": "GROK_API_KEY"}),
                        ("grok-4.20-heavy",
                         {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
                          "api_url": "https://api.x.ai/v1/",
-                         "api_key": os.environ["GROK_API_KEY"],
+                         "api_key_env": "GROK_API_KEY",
                          "payload": {"reasoning": {"effort": "high"}}}),
                        ("nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
                         {"base_model": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-                         "api_key": os.environ["DEEPINFRA_API_KEY"],
+                         "api_key_env": "DEEPINFRA_API_KEY",
                          "api_url": "https://api.deepinfra.com/v1/openai/"}),
                        "Grok-4.1-20251118",
                        "google/gemini-2.5-flash",
@@ -352,7 +355,12 @@ def get_response(prompt, model_name, parameters=None):
 
     request_context = parameters.get(REQUEST_CONTEXT_PARAM, REQUEST_CONTEXT_UNKNOWN)
     api_url = parameters["api_url"] if "api_url" in parameters else "https://openrouter.ai/api/v1/"
-    api_key = parameters["api_key"] if "api_key" in parameters else os.environ["OPENROUTER_API_KEY"]
+    if "api_key" in parameters:
+        api_key = parameters["api_key"]
+    elif API_KEY_ENV_PARAM in parameters:
+        api_key = os.environ[parameters[API_KEY_ENV_PARAM]]
+    else:
+        api_key = os.environ["OPENROUTER_API_KEY"]
     use_responses_api = _uses_responses_api(api_url)
 
     complete_url = _build_api_url(api_url, "responses" if use_responses_api else "chat/completions")

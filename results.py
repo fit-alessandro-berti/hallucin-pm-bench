@@ -5,6 +5,8 @@ import re
 import time
 from statistics import median, pstdev
 
+from common import EVALUATIONS_DIR
+
 
 pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+)/(?P<denominator>\d+))(?!\.)'
 reg_expr = re.compile(pattern)
@@ -395,6 +397,6 @@ def main(evaluation_folder, target_leaderboard, write_extra_stats=True, target_l
 if __name__ == "__main__":
     t0 = time.time_ns()
     #main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False, target_leaderboard_json=None)
-    main("evaluations", "leaderboard.md", write_extra_stats=True)
+    main(EVALUATIONS_DIR, "leaderboard.md", write_extra_stats=True)
     t1 = time.time_ns()
     print((t1 - t0) / 10**9)
