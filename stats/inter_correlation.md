@@ -1,17 +1,17 @@
 # Inter-Features Correlation
 
-| Category                                | C01 | C02 | C03 | C04 | C05 | C06 | C07 | C08 | C09 | C10 | C11 | C12 | C13 |
-| --------------------------------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C01 Domain-override / Precedence checks | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C02 Event-log fact-extraction           | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C03 Text to Model reconstruction        | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C04 Compliance / Conformance reasoning  | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C05 Counterfactual edits                | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C06 Multi-process memory interference   | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C07 Change-log diffing                  | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C08 Temporal / concurrency reasoning    | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C09 Unknown-should-remain-unknown       | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C10 Domain-synonym enforcement          | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C11 Performance analytics commentary    | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C12 Misinformation injection            | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
-| C13 Edge-case / low-support prompts     | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| Category                                | C01       | C02 | C03       | C04       | C05       | C06       | C07       | C08       | C09       | C10       | C11       | C12       | C13       |
+| --------------------------------------- | --------- | --- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| C01 Domain-override / Precedence checks | 1         | nan | 0.16899   | -0.086719 | -0.278578 | 0.348243  | 0.267347  | -0.07055  | 0.282889  | 0.260712  | 0.394647  | 0.376279  | 0.043051  |
+| C02 Event-log fact-extraction           | nan       | nan | nan       | nan       | nan       | nan       | nan       | nan       | nan       | nan       | nan       | nan       | nan       |
+| C03 Text to Model reconstruction        | 0.16899   | nan | 1         | -0.335568 | -0.330892 | 0.347574  | -0.148216 | -0.087523 | -0.251037 | -0.0676   | 0.100824  | 0.348305  | -0.094251 |
+| C04 Compliance / Conformance reasoning  | -0.086719 | nan | -0.335568 | 1         | 0.539588  | -0.153233 | 0.346857  | -0.017959 | 0.348334  | 0.375795  | -0.156198 | 0.135514  | -0.117743 |
+| C05 Counterfactual edits                | -0.278578 | nan | -0.330892 | 0.539588  | 1         | -0.249658 | 0.353711  | 0.227388  | 0.119683  | -0.097404 | -0.270408 | -0.230816 | -0.000464 |
+| C06 Multi-process memory interference   | 0.348243  | nan | 0.347574  | -0.153233 | -0.249658 | 1         | 0.450609  | -0.432047 | -0.133865 | 0.045547  | -0.009847 | 0.469142  | -0.065213 |
+| C07 Change-log diffing                  | 0.267347  | nan | -0.148216 | 0.346857  | 0.353711  | 0.450609  | 1         | 0.00171   | 0.19946   | 0.209931  | 0.187778  | 0.026018  | 0.020671  |
+| C08 Temporal / concurrency reasoning    | -0.07055  | nan | -0.087523 | -0.017959 | 0.227388  | -0.432047 | 0.00171   | 1         | 0.097755  | -0.333157 | 0.280438  | -0.511417 | -0.005096 |
+| C09 Unknown-should-remain-unknown       | 0.282889  | nan | -0.251037 | 0.348334  | 0.119683  | -0.133865 | 0.19946   | 0.097755  | 1         | 0.067824  | 0.162941  | 0.188083  | -0.295926 |
+| C10 Domain-synonym enforcement          | 0.260712  | nan | -0.0676   | 0.375795  | -0.097404 | 0.045547  | 0.209931  | -0.333157 | 0.067824  | 1         | -0.00686  | 0.264106  | 0.396986  |
+| C11 Performance analytics commentary    | 0.394647  | nan | 0.100824  | -0.156198 | -0.270408 | -0.009847 | 0.187778  | 0.280438  | 0.162941  | -0.00686  | 1         | 0.243843  | 0.035561  |
+| C12 Misinformation injection            | 0.376279  | nan | 0.348305  | 0.135514  | -0.230816 | 0.469142  | 0.026018  | -0.511417 | 0.188083  | 0.264106  | 0.243843  | 1         | -0.343594 |
+| C13 Edge-case / low-support prompts     | 0.043051  | nan | -0.094251 | -0.117743 | -0.000464 | -0.065213 | 0.020671  | -0.005096 | -0.295926 | 0.396986  | 0.035561  | -0.343594 | 1         |
