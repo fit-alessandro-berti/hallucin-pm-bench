@@ -12,6 +12,7 @@ pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+
 reg_expr = re.compile(pattern)
 
 CATEGORY_IDS = tuple(f"{idx:02d}" for idx in range(1, 14))
+EXPECTED_EVALUATION_FILES = 39
 NAME_PREFIXES = ("anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral/", "google", "microsoft", "deepseek", "meta-llama")
 OPEN_SOURCE_PATTERNS = ("qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss")
 LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm", "deepseek-v3.2", "deepseek-v4")
@@ -269,6 +270,9 @@ def get_agg_results(evaluation_folder):
 
     numeric_results = []
     for llm, scores in dictio.items():
+        if len(scores) != EXPECTED_EVALUATION_FILES:
+            continue
+
         if any(category not in per_llm_category_scores.get(llm, {}) for category in categories):
             continue
 
@@ -277,7 +281,7 @@ def get_agg_results(evaluation_folder):
             "LLM": llm,
             "LRM": is_lrm(llm),
             "OS": is_open_source(llm),
-            avg_key: round(total_score / 39.0, 2),
+            avg_key: round(total_score / EXPECTED_EVALUATION_FILES, 2),
             score_key: total_score,
         }
 
