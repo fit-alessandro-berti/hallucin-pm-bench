@@ -6,6 +6,7 @@ from common import *
 EVALUATING_MODEL_NAME = "grok-4-1-fast-reasoning"
 EVALUATING_API_URL = "https://api.x.ai/v1/"
 EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
+EVALUATING_PAYLOAD = {}
 MAX_THREADS = 100
 LEADERBOARD_PATH = "leaderboard.md"
 
@@ -258,6 +259,9 @@ def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", i
         parameters = dict(parameters)
 
     parameters.setdefault(REQUEST_CONTEXT_PARAM, REQUEST_CONTEXT_EVALUATION)
+    payload = dict(EVALUATING_PAYLOAD)
+    payload.update(parameters.get("payload", {}))
+    parameters["payload"] = payload
 
     if "api_key" not in parameters:
         parameters["api_key"] = EVALUATING_API_KEY
