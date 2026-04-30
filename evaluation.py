@@ -254,6 +254,10 @@ def _evaluate_answer_batch(answers, base_model_name, target_directory, include_g
 def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory="evaluations", include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
         parameters = {}
+    else:
+        parameters = dict(parameters)
+
+    parameters.setdefault(REQUEST_CONTEXT_PARAM, REQUEST_CONTEXT_EVALUATION)
 
     if "api_key" not in parameters:
         parameters["api_key"] = EVALUATING_API_KEY

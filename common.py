@@ -5,6 +5,12 @@ import traceback
 import json
 
 
+REQUEST_CONTEXT_PARAM = "request_context"
+REQUEST_CONTEXT_ANSWER = "answer"
+REQUEST_CONTEXT_EVALUATION = "evaluation"
+REQUEST_CONTEXT_UNKNOWN = "unknown"
+
+
 def _uses_responses_api(api_url):
     return "api.x.ai" in api_url
 
@@ -283,6 +289,7 @@ def get_response(prompt, model_name, parameters=None):
     if parameters is None:
         parameters = {}
 
+    request_context = parameters.get(REQUEST_CONTEXT_PARAM, REQUEST_CONTEXT_UNKNOWN)
     api_url = parameters["api_url"] if "api_url" in parameters else "https://openrouter.ai/api/v1/"
     api_key = parameters["api_key"] if "api_key" in parameters else os.environ["OPENROUTER_API_KEY"]
     use_responses_api = _uses_responses_api(api_url)
@@ -307,7 +314,7 @@ def get_response(prompt, model_name, parameters=None):
 
         with requests.post(complete_url, headers=headers, json=payload, stream=True, timeout=20*60) as resp:
             if not resp.status_code == 200:
-                print(resp.status_code)
+                print(request_context, resp.status_code)
 
             for line in resp.iter_lines():
                 if not line:
@@ -362,7 +369,7 @@ def get_response(prompt, model_name, parameters=None):
     else:
         with requests.post(complete_url, headers=headers, json=payload, timeout=20*60) as resp:
             if not resp.status_code == 200:
-                print(resp.status_code)
+                print(request_context, resp.status_code)
                 print(resp.text)
 
             resp_json = resp.json()

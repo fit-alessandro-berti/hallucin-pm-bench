@@ -54,6 +54,10 @@ def _respond_single_prompt(prompt, model_name, m_name, base_model_name, paramete
 def respond_for_model(model_name, parameters=None):
     if parameters is None:
         parameters = {}
+    else:
+        parameters = dict(parameters)
+
+    parameters.setdefault(REQUEST_CONTEXT_PARAM, REQUEST_CONTEXT_ANSWER)
 
     m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
