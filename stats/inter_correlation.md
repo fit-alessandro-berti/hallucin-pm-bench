@@ -1,17 +1,17 @@
 # Inter-Features Correlation
 
-| Category                                | C01       | C02      | C03      | C04      | C05      | C06       | C07      | C08      | C09       | C10       | C11       | C12       | C13       |
-| --------------------------------------- | --------- | -------- | -------- | -------- | -------- | --------- | -------- | -------- | --------- | --------- | --------- | --------- | --------- |
-| C01 Domain-override / Precedence checks | 1         | 0.298485 | 0.295291 | 0.335088 | 0.322502 | 0.125535  | 0.145858 | 0.291071 | 0.173344  | -0.018526 | 0.399667  | 0.322785  | 0.135646  |
-| C02 Event-log fact-extraction           | 0.298485  | 1        | 0.123988 | 0.490256 | 0.37914  | 0.008298  | 0.194335 | 0.50082  | 0.54118   | 0.054764  | 0.307743  | 0.297081  | 0.393989  |
-| C03 Text to Model reconstruction        | 0.295291  | 0.123988 | 1        | 0.179729 | 0.212253 | 0.088679  | 0.081502 | 0.126915 | 0.018065  | 0.14154   | 0.169656  | 0.133124  | 0.144339  |
-| C04 Compliance / Conformance reasoning  | 0.335088  | 0.490256 | 0.179729 | 1        | 0.540951 | 0.26471   | 0.272383 | 0.666499 | 0.249461  | 0.002184  | 0.323363  | 0.332791  | 0.268119  |
-| C05 Counterfactual edits                | 0.322502  | 0.37914  | 0.212253 | 0.540951 | 1        | 0.084734  | 0.188508 | 0.400189 | 0.180696  | 0.097921  | 0.313958  | 0.339679  | 0.30121   |
-| C06 Multi-process memory interference   | 0.125535  | 0.008298 | 0.088679 | 0.26471  | 0.084734 | 1         | 0.114775 | 0.1267   | -0.061527 | 0.010992  | 0.291238  | 0.008096  | -0.014939 |
-| C07 Change-log diffing                  | 0.145858  | 0.194335 | 0.081502 | 0.272383 | 0.188508 | 0.114775  | 1        | 0.134424 | 0.358784  | 0.003882  | 0.250008  | 0.255592  | 0.17974   |
-| C08 Temporal / concurrency reasoning    | 0.291071  | 0.50082  | 0.126915 | 0.666499 | 0.400189 | 0.1267    | 0.134424 | 1        | 0.25154   | 0.051981  | 0.234786  | 0.2963    | 0.221442  |
-| C09 Unknown-should-remain-unknown       | 0.173344  | 0.54118  | 0.018065 | 0.249461 | 0.180696 | -0.061527 | 0.358784 | 0.25154  | 1         | -0.081543 | 0.382738  | 0.433636  | 0.320053  |
-| C10 Domain-synonym enforcement          | -0.018526 | 0.054764 | 0.14154  | 0.002184 | 0.097921 | 0.010992  | 0.003882 | 0.051981 | -0.081543 | 1         | -0.155826 | -0.084512 | 0.252396  |
-| C11 Performance analytics commentary    | 0.399667  | 0.307743 | 0.169656 | 0.323363 | 0.313958 | 0.291238  | 0.250008 | 0.234786 | 0.382738  | -0.155826 | 1         | 0.286659  | -0.017033 |
-| C12 Misinformation injection            | 0.322785  | 0.297081 | 0.133124 | 0.332791 | 0.339679 | 0.008096  | 0.255592 | 0.2963   | 0.433636  | -0.084512 | 0.286659  | 1         | 0.290348  |
-| C13 Edge-case / low-support prompts     | 0.135646  | 0.393989 | 0.144339 | 0.268119 | 0.30121  | -0.014939 | 0.17974  | 0.221442 | 0.320053  | 0.252396  | -0.017033 | 0.290348  | 1         |
+| Category                                | C01 | C02 | C03 | C04 | C05 | C06 | C07 | C08 | C09 | C10 | C11 | C12 | C13 |
+| --------------------------------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| C01 Domain-override / Precedence checks | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C02 Event-log fact-extraction           | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C03 Text to Model reconstruction        | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C04 Compliance / Conformance reasoning  | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C05 Counterfactual edits                | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C06 Multi-process memory interference   | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C07 Change-log diffing                  | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C08 Temporal / concurrency reasoning    | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C09 Unknown-should-remain-unknown       | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C10 Domain-synonym enforcement          | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C11 Performance analytics commentary    | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C12 Misinformation injection            | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |
+| C13 Edge-case / low-support prompts     | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan | nan |

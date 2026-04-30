@@ -11,7 +11,7 @@ REQUEST_CONTEXT_EVALUATION = "evaluation"
 REQUEST_CONTEXT_UNKNOWN = "unknown"
 API_KEY_ENV_PARAM = "api_key_env"
 
-EVALUATIONS_DIR = "evaluations"
+EVALUATIONS_DIR = "evaluations-dsv4pro"
 
 
 def _uses_responses_api(api_url):
