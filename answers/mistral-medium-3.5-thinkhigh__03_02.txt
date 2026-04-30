@@ -1,0 +1,168 @@
+```json
+{
+  "id": "Process_1",
+  "name": "Customer Support Ticket Process",
+  "isExecutable": true,
+  "flowElements": [
+    {
+      "id": "Start",
+      "type": "startEvent",
+      "name": "Support Email Received",
+      "outgoing": ["Flow_Start_to_ParseAndCreate"]
+    },
+    {
+      "id": "ParseAndCreate",
+      "type": "task",
+      "name": "Parse Email and Create Ticket",
+      "incoming": ["Flow_Start_to_ParseAndCreate"],
+      "outgoing": ["Flow_ParseAndCreate_to_InitialClassification"]
+    },
+    {
+      "id": "InitialClassification",
+      "type": "exclusiveGateway",
+      "name": "Initial Classification",
+      "gatewayDirection": "Diverging",
+      "incoming": ["Flow_ParseAndCreate_to_InitialClassification"],
+      "outgoing": [
+        "Flow_InitialClassification_to_ProvideResolution_Simple",
+        "Flow_InitialClassification_to_RootCauseAnalysis_Complex"
+      ]
+    },
+    {
+      "id": "ProvideResolution",
+      "type": "task",
+      "name": "Provide Resolution",
+      "incoming": [
+        "Flow_InitialClassification_to_ProvideResolution_Simple",
+        "Flow_RootCauseAnalysis_to_ProvideResolution"
+      ],
+      "outgoing": ["Flow_ProvideResolution_to_ParallelAfterResolution"]
+    },
+    {
+      "id": "RootCauseAnalysis",
+      "type": "task",
+      "name": "Root Cause Analysis",
+      "incoming": ["Flow_InitialClassification_to_RootCauseAnalysis_Complex"],
+      "outgoing": ["Flow_RootCauseAnalysis_to_ProvideResolution"]
+    },
+    {
+      "id": "ParallelAfterResolution",
+      "type": "parallelGateway",
+      "name": "Parallel After Resolution",
+      "gatewayDirection": "Diverging",
+      "incoming": ["Flow_ProvideResolution_to_ParallelAfterResolution"],
+      "outgoing": [
+        "Flow_ParallelAfterResolution_to_SendResponse",
+        "Flow_ParallelAfterResolution_to_LogSolution"
+      ]
+    },
+    {
+      "id": "SendResponse",
+      "type": "task",
+      "name": "Send Response to Customer",
+      "incoming": ["Flow_ParallelAfterResolution_to_SendResponse"],
+      "outgoing": ["Flow_SendResponse_to_EventGatewayWaitReply"]
+    },
+    {
+      "id": "LogSolution",
+      "type": "task",
+      "name": "Log Solution in Knowledge Base",
+      "incoming": ["Flow_ParallelAfterResolution_to_LogSolution"],
+      "outgoing": ["Flow_LogSolution_to_WaitForever"]
+    },
+    {
+      "id": "WaitForever",
+      "type": "task",
+      "name": "Wait Forever",
+      "incoming": ["Flow_LogSolution_to_WaitForever"],
+      "outgoing": ["Flow_WaitForever_loop"]
+    },
+    {
+      "id": "EventGatewayWaitReply",
+      "type": "eventBasedGateway",
+      "name": "Wait for Customer Reply or Timer",
+      "gatewayDirection": "Diverging",
+      "instantiate": false,
+      "incoming": ["Flow_SendResponse_to_EventGatewayWaitReply"],
+      "outgoing": [
+        "Flow_EventGateway_to_CustomerReply",
+        "Flow_EventGateway_to_Timer24h"
+      ]
+    },
+    {
+      "id": "CustomerReplyEvent",
+      "type": "intermediateCatchEvent",
+      "name": "Customer Reply",
+      "eventDefinitions": [{"type": "message", "messageRef": "CustomerReplyMessage"}],
+      "incoming": ["Flow_EventGateway_to_CustomerReply"],
+      "outgoing": ["Flow_CustomerReply_to_CloseTicket"]
+    },
+    {
+      "id": "Timer24h",
+      "type": "intermediateCatchEvent",
+      "name": "24 hours",
+      "eventDefinitions": [{"type": "timer", "timeDuration": "P1D"}],
+      "incoming": ["Flow_EventGateway_to_Timer24h"],
+      "outgoing": ["Flow_Timer24h_to_SendReminder"]
+    },
+    {
+      "id": "SendReminder",
+      "type": "task",
+      "name": "Send Reminder",
+      "incoming": ["Flow_Timer24h_to_SendReminder"],
+      "outgoing": ["Flow_SendReminder_to_CloseTicket"]
+    },
+    {
+      "id": "CloseTicket",
+      "type": "task",
+      "name": "Close Ticket",
+      "incoming": [
+        "Flow_CustomerReply_to_CloseTicket",
+        "Flow_SendReminder_to_CloseTicket"
+      ],
+      "outgoing": ["Flow_CloseTicket_to_End"]
+    },
+    {
+      "id": "End",
+      "type": "endEvent",
+      "name": "Process End",
+      "incoming": ["Flow_CloseTicket_to_End"]
+    },
+    {
+      "id": "CancellationSignal",
+      "type": "boundaryEvent",
+      "name": "Customer Cancellation",
+      "attachedToRef": "ParseAndCreate",
+      "interrupting": true,
+      "eventDefinitions": [{"type": "signal", "signalRef": "CustomerCancellationSignal"}],
+      "outgoing": ["Flow_Cancellation_to_Terminate"]
+    },
+    {
+      "id": "Terminate",
+      "type": "terminateEndEvent",
+      "name": "Terminated",
+      "incoming": ["Flow_Cancellation_to_Terminate"]
+    }
+  ],
+  "sequenceFlows": [
+    {"id": "Flow_Start_to_ParseAndCreate", "sourceRef": "Start", "targetRef": "ParseAndCreate"},
+    {"id": "Flow_ParseAndCreate_to_InitialClassification", "sourceRef": "ParseAndCreate", "targetRef": "InitialClassification"},
+    {"id": "Flow_InitialClassification_to_ProvideResolution_Simple", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "${ticket.type == 'Simple'}"},
+    {"id": "Flow_InitialClassification_to_RootCauseAnalysis_Complex", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "${ticket.type == 'Complex'}"},
+    {"id": "Flow_RootCauseAnalysis_to_ProvideResolution", "sourceRef": "RootCauseAnalysis", "targetRef": "ProvideResolution"},
+    {"id": "Flow_ProvideResolution_to_ParallelAfterResolution", "sourceRef": "ProvideResolution", "targetRef": "ParallelAfterResolution"},
+    {"id": "Flow_ParallelAfterResolution_to_SendResponse", "sourceRef": "ParallelAfterResolution", "targetRef": "SendResponse"},
+    {"id": "Flow_ParallelAfterResolution_to_LogSolution", "sourceRef": "ParallelAfterResolution", "targetRef": "LogSolution"},
+    {"id": "Flow_SendResponse_to_EventGatewayWaitReply", "sourceRef": "SendResponse", "targetRef": "EventGatewayWaitReply"},
+    {"id": "Flow_EventGateway_to_CustomerReply", "sourceRef": "EventGatewayWaitReply", "targetRef": "CustomerReplyEvent"},
+    {"id": "Flow_EventGateway_to_Timer24h", "sourceRef": "EventGatewayWaitReply", "targetRef": "Timer24h"},
+    {"id": "Flow_CustomerReply_to_CloseTicket", "sourceRef": "CustomerReplyEvent", "targetRef": "CloseTicket"},
+    {"id": "Flow_Timer24h_to_SendReminder", "sourceRef": "Timer24h", "targetRef": "SendReminder"},
+    {"id": "Flow_SendReminder_to_CloseTicket", "sourceRef": "SendReminder", "targetRef": "CloseTicket"},
+    {"id": "Flow_LogSolution_to_WaitForever", "sourceRef": "LogSolution", "targetRef": "WaitForever"},
+    {"id": "Flow_WaitForever_loop", "sourceRef": "WaitForever", "targetRef": "WaitForever"},
+    {"id": "Flow_CloseTicket_to_End", "sourceRef": "CloseTicket", "targetRef": "End"},
+    {"id": "Flow_Cancellation_to_Terminate", "sourceRef": "CancellationSignal", "targetRef": "Terminate"}
+  ]
+}
+```

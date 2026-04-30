@@ -394,7 +394,7 @@ def main(evaluation_folder, target_leaderboard, write_extra_stats=True, target_l
 
 if __name__ == "__main__":
     t0 = time.time_ns()
-    main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False, target_leaderboard_json=None)
+    #main("stats/self_evaluation", "stats/self_evaluation.md", write_extra_stats=False, target_leaderboard_json=None)
     main("evaluations", "leaderboard.md", write_extra_stats=True)
     t1 = time.time_ns()
     print((t1 - t0) / 10**9)

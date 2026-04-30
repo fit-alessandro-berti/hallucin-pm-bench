@@ -73,27 +73,82 @@ def _extract_responses_message(resp_json):
     return "\n".join(message_parts).strip()
 
 
+def _extract_text_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "\n".join(filter(None, (_extract_text_value(item) for item in value))).strip()
+    if isinstance(value, dict):
+        parts = []
+        for key in ("text", "content", "output_text", "reasoning", "thinking", "reasoning_content"):
+            text = _extract_text_value(value.get(key))
+            if text:
+                parts.append(text)
+        return "\n".join(parts).strip()
+    return str(value)
+
+
+def _extract_chat_message_parts(message):
+    content = message.get("content", "")
+    if isinstance(content, str):
+        return content, _extract_text_value(message.get("reasoning_content"))
+
+    if not isinstance(content, list):
+        return _extract_text_value(content), _extract_text_value(message.get("reasoning_content"))
+
+    message_parts = []
+    reasoning_parts = []
+
+    for item in content:
+        if isinstance(item, dict):
+            item_type = item.get("type", "")
+            is_reasoning = item_type in {"reasoning", "thinking", "reasoning_content"}
+
+            for key in ("text", "content", "output_text"):
+                text = _extract_text_value(item.get(key))
+                if text:
+                    if is_reasoning:
+                        reasoning_parts.append(text)
+                    else:
+                        message_parts.append(text)
+
+            for key in ("reasoning", "thinking", "reasoning_content"):
+                text = _extract_text_value(item.get(key))
+                if text:
+                    reasoning_parts.append(text)
+        else:
+            text = _extract_text_value(item)
+            if text:
+                message_parts.append(text)
+
+    top_level_reasoning = _extract_text_value(message.get("reasoning_content"))
+    if top_level_reasoning:
+        reasoning_parts.append(top_level_reasoning)
+
+    return "\n".join(message_parts).strip(), "\n".join(reasoning_parts).strip()
+
+
+def _final_response_only(response_message, reasoning_content):
+    return response_message
+
+
 def _parse_response_json(resp_json, use_responses_api):
     if use_responses_api:
         response_message = _extract_responses_message(resp_json)
         reasoning_content = _extract_responses_reasoning(resp_json)
 
-        if reasoning_content:
-            response_message = "<think>\n" + reasoning_content + "\n</think>\n\n" + response_message.strip()
-
-        return response_message
+        return _final_response_only(response_message, reasoning_content)
 
     if "choices" not in resp_json:
         print(resp_json)
 
     message = resp_json["choices"][-1]["message"]
 
-    response_message = message["content"]
-    if "reasoning_content" in message:
-        response_message = "<think>\n" + message[
-            "reasoning_content"] + "\n</think>\n\n" + response_message.strip()
+    response_message, reasoning_content = _extract_chat_message_parts(message)
+    return _final_response_only(response_message, reasoning_content)
 
-    return response_message
 
 
 class Shared:
@@ -178,6 +233,9 @@ class Shared:
                        ("mistral-medium-3.5",
                         {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
                          "api_key": os.environ["MISTRAL_API_KEY"]}),
+                       ("mistral-medium-3.5-thinkhigh",
+                        {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
+                         "api_key": os.environ["MISTRAL_API_KEY"], "payload": {"reasoning_effort": "high"}}),
                        ("gpt-5.2-2025-12-11-none",
                         {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/", "api_key": os.environ["OPENAI_API_KEY"]}),
                        ("gpt-5.2-2025-12-11-high",
@@ -366,9 +424,6 @@ def get_response(prompt, model_name, parameters=None):
                         # Possibly a keep-alive or incomplete chunk
                         traceback.print_exc()
 
-        if thinking_content:
-            response_message = ["<think>", thinking_content, "</think>", response_message]
-            response_message = "\n".join(response_message)
     else:
         with requests.post(complete_url, headers=headers, json=payload, timeout=20*60) as resp:
             if not resp.status_code == 200:

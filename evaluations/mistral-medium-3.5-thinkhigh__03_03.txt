@@ -1,0 +1,14 @@
+**9.2**
+
+### Evaluation Summary (Strict Rubric Application)
+- **Semantic Correctness (High Marks: 9.5/10 base)**: The LLM answer accurately models **all explicitly mentioned flow elements** from the prompt, including all 8 verbatim tasks ("validates the claim", "requests missing information", "**checks warranty eligibility**" – omitted in ground truth, "send rejection notice", "Create shipment order", "Schedule courier pickup", "update inventory records", "close the claim"). Flow logic perfectly matches the process description: start → validate loop (via completeness XOR gw until complete) → eligibility check → warranty XOR gw → reject/end or parallel split (two tasks) → join → update → close → success end. Exactly the required gateways (2 XOR diverging, parallel split/diverging + join/converging). Exactly 2 end events. No invented elements (e.g., no escalations/errors). Parallel activities correct. Self-contained valid BPMN 2.0 XML.
+  - Superior to ground truth, which **omits the required "checks warranty eligibility" task** (direct complete gw → warranty gw, only 7 tasks), violating "model **only** the flow elements explicitly mentioned" by omission.
+
+- **Deductions (-0.8 total, significant per strictness)**:
+  - **Task names verbatim? Perfect match** (e.g., lowercase starts like "validates", "requests", "checks", "send", "update"; exact phrasing/capitalization for "Create shipment order"/"Schedule courier pickup"). Ground truth fails this (e.g., "Validate the claim" ≠ "validates the claim"; altered wording/case). No deduction.
+  - **Extra/hallucinated elements? None** – all from prompt. The eligibility task is **required**, not extra (ground truth hallucinates its omission).
+  - **wrc_ ID prefix? Perfect** on all elements.
+  - **Minor structural/style diffs from ground truth (-0.3)**: Condition expressions on flows (valid BPMN, explicit "incomplete"/"complete"/"out of warranty"/"within warranty" – better than ground truth's implicit "Yes"/"No" names). No names on events/gateways (allowed, not required; ground truth adds extras like "Claim complete?"). gatewayDirection attributes (good practice, not in ground truth). Different flow IDs (wrc_flow_XX vs wrc_sfX – allowed). Whitespace/line count differs (allowed).
+  - **Small XML diffs (-0.5)**: Definitions/targetNamespace slightly different (allowed). No comments (ground truth has). Minor: completeness gw labeled "wrc_check_claim_complete" (descriptive, fine); inserted eligibility task adds 1 task + 2 flows semantically between complete→warranty (strictly matches "After validation... **checks warranty eligibility**" before decision gw; ground truth skips).
+
+Overall: Semantically equivalent+ (more complete than ground truth), no omissions/extras/violations. Minor non-prompt style diffs prevent perfect 10.0 under utmost strictness.
