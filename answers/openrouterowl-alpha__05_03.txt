@@ -1,0 +1,31 @@
+
+
+```xml
+<!-- Changes explained:
+1. Add a boundary timer event on the service task to track the 48h SLA.
+2. Connect escalation path to the existing Account-Manager Review activity (preserves rule: no new activities).
+3. Add the intermediate "escalation catch" start inside the subprocess-like path so the existing userTask is reused.
+-->
+
+<!-- Replace the standalone serviceTask with this version that carries a boundaryTimerEvent -->
+<bpmn:serviceTask id="Activity_CreateAccount" name="Create Account in Core System">
+    <bpmn:boundaryEvent id="BoundaryTimer_CreateAccount" attachedToRef="Activity_CreateAccount" cancelActivity="false">
+        <bpmn:timerEventDefinition id="TimerDef_48h">
+            <bpmn:timeDuration>PT48H</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+</bpmn:serviceTask>
+
+<!-- New flow connecting the boundary timer to the existing unreferenced Account-Manager Review -->
+<bpmn:sequenceFlow id="Flow_09" sourceRef="BoundaryTimer_CreateAccount" targetRef="Activity_AMReview"/>
+
+<!-- New flow so that after AM review, it rejoins the original path -->
+<bpmn:sequenceFlow id="Flow_10" sourceRef="BoundaryTimer_CreateAccount" targetRef="ESCALATED_END"/>
+
+<!-- (Flow_08 and the existing Activity_AMReview already exist.) -->
+
+<!-- No new activities introduced – timer, sequence flows, and boundary event only -->
+```
+
+Justification:  
+Attaching a non-interrupting 48‑hour timer boundary event to “Create Account in Core System” automatically triggers after the SLA window, routing work to the unused “Account-Manager Review” activity so the case is escalated without breaching the deadline.

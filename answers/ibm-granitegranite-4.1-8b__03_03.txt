@@ -1,0 +1,152 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmndi:BPMNDiagram xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+    xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/ diagram.xsd" id="Diagram_1">
+    <bpmn:Definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        targetNamespace="Warranty-Replacement v1.3"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20_XML_v2.0.xsd">
+        <!-- Process -->
+        <bpmn:Process id="Process_1" isExecutable="true">
+            <!-- Start Event: Online Warranty Claim -->
+            <bpmn:startEvent id="StartEvent_1" name="Online Warranty Claim" />
+            
+            <!-- Task: Validate Claim -->
+            <bpmn:task id="Task_ValidateClaim" name="Validate Claim">
+                <bpmn:outgoing>SequenceFlow_ValidateToDecision</bpmn:outgoing>
+            </bpmn:task>
+            
+            <!-- Exclusive Gateway: Check Claim Completeness -->
+            <bpmn:exclusiveGateway id="ExclusiveGateway_Completeness" name="Claim Completeness Decision"/>
+            
+            <!-- Task: Request Missing Information (only if claim is incomplete) -->
+            <bpmn:task id="Task_RequestMissingInfo" name="Request Missing Information">
+                <bpmn:incoming>SequenceFlow_ValidateToDecision_Incomplete</bpmn:incoming>
+                <bpmn:outgoing>SequenceFlow_RequestToValidate</bpmn:outgoing>
+            </bpmn:task>
+            
+            <!-- Sequence Flow: From Start to Validate Claim -->
+            <bpmn:sequenceFlow id="SequenceFlow_StartToValidate" name="" sourceRef="StartEvent_1" targetRef="Task_ValidateClaim"/>
+            
+            <!-- Sequence Flows for Claim Completeness Logic -->
+            <bpmn:sequenceFlow id="SequenceFlow_ValidateToDecision_Complete" name="" sourceRef="Task_ValidateClaim" targetRef="ExclusiveGateway_Completeness"/>
+            <bpmn:sequenceFlow id="SequenceFlow_ValidateToDecision_Incomplete" name="" sourceRef="Task_ValidateClaim" targetRef="ExclusiveGateway_Completeness" conditionExpression="#{claimIncomplete}"/>
+            <bpmn:sequenceFlow id="SequenceFlow_RequestToValidate" name="" sourceRef="Task_RequestMissingInfo" targetRef="Task_ValidateClaim"/>
+            
+            <!-- Gateway Outcomes for Claim Completeness -->
+            <bpmn:gatewayBehavior id="GatewayBehavior_Completeness">
+                <!-- Not needed in XML, but implied by sequence flows -->
+            </bpmn:gatewayBehavior>
+            
+            <!-- Exclusive Gateway: Warranty Eligibility Decision -->
+            <bpmn:exclusiveGateway id="ExclusiveGateway_WarrantyEligibility" name="Warranty Eligibility Decision"/>
+            
+            <!-- Task: Check Warranty Eligibility -->
+            <bpmn:task id="Task_CheckWarrantyEligibility" name="Check Warranty Eligibility">
+                <bpmn:incoming>SequenceFlow_CompletenessToDecision</bpmn:incoming>
+                <bpmn:outgoing>SequenceFlow_EligibleToParallel</bpmn:outgoing>
+                <bpmn:outgoing>SequenceFlow_NotEligibleToReject</bpmn:outgoing>
+            </bpmn:task>
+            
+            <!-- Sequence Flow from Completeness Decision to Eligibility Check -->
+            <bpmn:sequenceFlow id="SequenceFlow_CompletenessToDecision" name="" sourceRef="ExclusiveGateway_Completeness" targetRef="Task_CheckWarrantyEligibility"/>
+            
+            <!-- Sequence Flows for Eligibility Branches -->
+            <bpmn:sequenceFlow id="SequenceFlow_EligibleToParallel" name="" sourceRef="Task_CheckWarrantyEligibility" targetRef="ExclusiveGateway_WarrantyEligibility" conditionExpression="#{warrantyInScope}"/>
+            <bpmn:sequenceFlow id="SequenceFlow_NotEligibleToReject" name="" sourceRef="Task_CheckWarrantyEligibility" targetRef="ExclusiveGateway_WarrantyEligibility" conditionExpression="#{warrantyOutOfScope}"/>
+            
+            <!-- Gateway Outcomes for Warranty Eligibility -->
+            <bpmn:gatewayBehavior id="GatewayBehavior_Eligibility">
+                <!-- Not needed in XML, but implied by sequence flows -->
+            </bpmn:gatewayBehavior>
+            
+            <!-- Parallel Split: Create Shipment Order & Schedule Courier Pick-up (only if eligible) -->
+            <bpmn:parallelGateway id="ParallelSplit_1" name="Parallel Split">
+                <bpmn:incoming>SequenceFlow_EligibleToParallel</bpmn:incoming>
+            </bpmn:parallelGateway>
+            
+            <!-- Tasks in parallel -->
+            <bpmn:task id="Task_CreateShipmentOrder" name="Create Shipment Order">
+                <bpmn:incoming>SequenceFlow_ParallelToJoin</bpmn:incoming>
+            </bpmn:task>
+            <bpmn:task id="Task_ScheduleCourierPickup" name="Schedule Courier Pickup">
+                <bpmn:incoming>SequenceFlow_ParallelToJoin</bpmn:incoming>
+            </bpmn:task>
+            
+            <!-- Sequence Flows from Parallel Split to parallel tasks -->
+            <bpmn:sequenceFlow id="SequenceFlow_ParallelToCreateShipment" name="" sourceRef="ParallelSplit_1" targetRef="Task_CreateShipmentOrder"/>
+            <bpmn:sequenceFlow id="SequenceFlow_ParallelToSchedulePickup" name="" sourceRef="ParallelSplit_1" targetRef="Task_ScheduleCourierPickup"/>
+            
+            <!-- Parallel Join -->
+            <bpmn:parallelGateway id="ParallelJoin_1" name="Parallel Join">
+                <bpmn:incoming>SequenceFlow_CreateShipmentToJoin</bpmn:incoming>
+                <bpmn:incoming>SequenceFlow_SchedulePickupToJoin</bpmn:incoming>
+            </bpmn:parallelGateway>
+            
+            <!-- Tasks to Parallel Join -->
+            <bpmn:sequenceFlow id="SequenceFlow_CreateShipmentToJoin" name="" sourceRef="Task_CreateShipmentOrder" targetRef="ParallelJoin_1"/>
+            <bpmn:sequenceFlow id="SequenceFlow_SchedulePickupToJoin" name="" sourceRef="Task_ScheduleCourierPickup" targetRef="ParallelJoin_1"/>
+            
+            <!-- Task: Update Inventory Records -->
+            <bpmn:task id="Task_UpdateInventory" name="Update Inventory Records">
+                <bpmn:incoming>SequenceFlow_JoinToUpdate</bpmn:incoming>
+            </bpmn:task>
+            
+            <!-- Sequence Flow from Parallel Join to Inventory Update -->
+            <bpmn:sequenceFlow id="SequenceFlow_JoinToUpdate" name="" sourceRef="ParallelJoin_1" targetRef="Task_UpdateInventory"/>
+            
+            <!-- Task: Close Claim -->
+            <bpmn:task id="Task_CloseClaim" name="Close Claim">
+                <bpmn:incoming>SequenceFlow_UpdateToClose</bpmn:incoming>
+            </bpmn:task>
+            
+            <!-- Sequence Flow from Inventory Update to Claim Closure -->
+            <bpmn:sequenceFlow id="SequenceFlow_UpdateToClose" name="" sourceRef="Task_UpdateInventory" targetRef="Task_CloseClaim"/>
+            
+            <!-- End Event: Successful Completion -->
+            <bpmn:endEvent id="EndEvent_SuccessfulCompletion" name="Successful Completion"/>
+            
+            <!-- Connection from Close Claim to Successful End -->
+            <bpmn:sequenceFlow id="SequenceFlow_CloseToSuccess" name="" sourceRef="Task_CloseClaim" targetRef="EndEvent_SuccessfulCompletion"/>
+            
+            <!-- Exclusive Gateway for Out-of-Warranty Rejection -->
+            <bpmn:exclusiveGateway id="ExclusiveGateway_RejectionDecision" name="Warranty Out-of-Scope Decision"/>
+            
+            <!-- Task: Send Rejection Notice (only if out of warranty) -->
+            <bpmn:task id="Task_SendRejectionNotice" name="Send Rejection Notice">
+                <bpmn:incoming>SequenceFlow_NotEligibleToReject</bpmn:incoming>
+                <bpmn:outgoing>SequenceFlow_RejectToEnd</bpmn:outgoing>
+            </bpmn:task>
+            
+            <!-- Sequence Flow from Rejection Decision to Rejection Task -->
+            <bpmn:sequenceFlow id="SequenceFlow_RejectionDecisionToTask" name="" sourceRef="ExclusiveGateway_WarrantyEligibility" targetRef="Task_SendRejectionNotice" conditionExpression="#{warrantyOutOfScope}"/>
+            
+            <!-- End Event: Rejection -->
+            <bpmn:endEvent id="EndEvent_Rejection" name="Rejection"/>
+            
+            <!-- Sequence Flow from Rejection Task to Rejection End -->
+            <bpmn:sequenceFlow id="SequenceFlow_RejectToEnd" name="" sourceRef="Task_SendRejectionNotice" targetRef="EndEvent_Rejection"/>
+        </bpmn:Process>
+    </bpmn:Definitions>
+    
+    <!-- BPMNDiagram elements (optional for rendering) -->
+    <bpmndi:BPMNEdge id="Edge_1" bpmnElement="SequenceFlow_StartToValidate" />
+    <bpmn:CachedRegion id="Region_1">
+        <bpmn:CachedShape id="Shape_1" geom:wrc_StartEvent_1="0;0;30;30" geom:bounds="0;0;60;60"/>
+        <bpmn:CachedShape id="Shape_2" geom:wrc_Task_ValidateClaim="60;0;150;50" geom:bounds="60;0;180;80"/>
+        <bpmn:CachedShape id="Shape_3" geom:wrc_Task_RequestMissingInfo="120;100;150;50" geom:bounds="120;100;180;130"/>
+        <bpmn:CachedShape id="Shape_4" geom:wrc_ExclusiveGateway_Completeness="-150;0;30;30" geom:bounds="-150;0;60;60"/>
+        <bpmn:CachedShape id="Shape_5" geom:wrc_Task_CheckWarrantyEligibility="0;150;150;50" geom:bounds="0;150;180;180"/>
+        <bpmn:CachedShape id="Shape_6" geom:wrc_ExclusiveGateway_WarrantyEligibility="0;150;30;30" geom:bounds="-30;150;60;180"/>
+        <bpmn:CachedShape id="Shape_7" geom:wrc_ParallelSplit_1="150;0;30;30" geom:bounds="150;0;180;60"/>
+        <bpmn:CachedShape id="Shape_8" geom:wrc_Task_CreateShipmentOrder="300;0;150;50" geom:bounds="300;0;480;80"/>
+        <bpmn:CachedShape id="Shape_9" geom:wrc_Task_ScheduleCourierPickup="450;0;150;50" geom:bounds="450;0;630;80"/>
+        <bpmn:CachedShape id="Shape_10" geom:wrc_ParallelJoin_1="600;0;30;30" geom:bounds="600;0;630;60"/>
+        <bpmn:CachedShape id="Shape_11" geom:wrc_Task_UpdateInventory="450;150;150;50" geom:bounds="450;150;630;180"/>
+        <bpmn:CachedShape id="Shape_12" geom:wrc_Task_CloseClaim="300;150;150;50" geom:bounds="300;150;480;180"/>
+        <bpmn:CachedShape id="Shape_13" geom:wrc_EndEvent_SuccessfulCompletion="750;0;30;30" geom:bounds="750;0;780;60"/>
+        <bpmn:CachedShape id="Shape_14" geom:wrc_Task_SendRejectionNotice="-150;150;150;50" geom:bounds="-150;150;330;180"/>
+        <bpmn:CachedShape id="Shape_15" geom:wrc_EndEvent_Rejection="0;750;30;30" geom:bounds="-30;750;60;780"/>
+    </bpmn:CachedRegion>
+</bpmndi:BPMNDiagram>
+```

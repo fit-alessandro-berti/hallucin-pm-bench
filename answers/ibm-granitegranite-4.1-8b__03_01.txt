@@ -1,0 +1,63 @@
+```xml
+<definitions id="definitions" name="AcmeTech_SupportTicketProcess" targetNamespace="http://example.com">
+  <process id="process1" name="Support Ticket Process">
+    <startEvent id="startEvent1" name="Start"/>
+    
+    <task id="task1" name="Submit Support Ticket" />
+    <task id="task2" name="Classify Ticket" />
+    
+    <!-- Decision: Password Reset? -->
+    <exclusiveGateway id="gw1" name="IsPasswordReset"/>
+    <sequenceFlow id="flow1" sourceRef="task2" targetRef="gw1"/>
+    
+    <exclusiveGateway id="gw2" name="Diagnosis Decision" />
+    <sequenceFlow id="flow2" sourceRef="gw1" targetRef="gw2">
+      <conditionExpression xsi:type="tFormalExpression">${classification.equals("Password Reset")}</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Path for Password Reset -->
+    <task id="task3" name="Provide Reset Instructions"/>
+    <sequenceFlow id="flow3" sourceRef="gw1" targetRef="task3">
+      <conditionExpression xsi:type="tFormalExpression">${classification.equals("Password Reset")}</conditionExpression>
+    </sequenceFlow>
+    
+    <!-- Path for other tickets -->
+    <task id="task4" name="Initial Diagnosis"/>
+    <sequenceFlow id="flow4" sourceRef="gw2" targetRef="task4"/>
+    
+    <task id="task5" name="Resolve Issue"/>
+    <task id="task6" name="Forward to Specialist"/>
+    <exclusiveGateway id="gw3" name="Resolution Outcome"/>
+    <sequenceFlow id="flow5" sourceRef="task4" targetRef="gw3"/>
+    
+    <sequenceFlow id="flow6" sourceRef="gw3" targetRef="task5">
+      <conditionExpression xsi:type="tFormalExpression">${outcome.equals("Resolve Issue")}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow7" sourceRef="gw3" targetRef="task6">
+      <conditionExpression xsi:type="tFormalExpression">${outcome.equals("Forward to Specialist")}</conditionExpression>
+    </sequenceFlow>
+    
+    <task id="task7" name="Specialist Resolve Issue"/>
+    <sequenceFlow id="flow8" sourceRef="task6" targetRef="task7"/>
+    
+    <task id="task8" name="Confirm with Customer"/>
+    <sequenceFlow id="flow9" sourceRef="task5" targetRef="task8"/>
+    <sequenceFlow id="flow10" sourceRef="task7" targetRef="task8"/>
+    
+    <exclusiveGateway id="gw4" name="Customer Confirmation"/>
+    <sequenceFlow id="flow11" sourceRef="task8" targetRef="gw4"/>
+    
+    <endEvent id="endEvent1" name="Ticket Closed"/>
+    <endEvent id="endEvent2" name="Process Ended"/>
+    
+    <sequenceFlow id="flow12" sourceRef="gw4" targetRef="endEvent1">
+      <conditionExpression xsi:type="tFormalExpression">${customerConfirmed}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="gw4" targetRef="task4">
+      <conditionExpression xsi:type="tFormalExpression">${!customerConfirmed}</conditionExpression>
+    </sequenceFlow>
+    
+    <sequenceFlow id="flow14" sourceRef="endEvent1" targetRef="endEvent2"/>
+  </process>
+</definitions>
+```

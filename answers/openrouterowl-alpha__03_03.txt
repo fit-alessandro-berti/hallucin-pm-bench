@@ -1,0 +1,143 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  id="wrc_Definitions">
+
+  <bpmn:process id="wrc_WarrantyReplacement_v1.3" isExecutable="false">
+
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_StartEvent" name="online warranty claim">
+      <bpmn:outgoing>wrc_Flow01</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Validate Claim -->
+    <bpmn:task id="wrc_Task1" name="validates the claim">
+      <bpmn:incoming>wrc_Flow01</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow02</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Gateway: Check completeness of claim -->
+    <bpmn:exclusiveGateway id="wrc_Gateway1" name="Is claim complete?">
+      <bpmn:incoming>wrc_Flow02</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow02b</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow03</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow02a</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Request missing information -->
+    <bpmn:task id="wrc_Task2" name="requests missing information">
+      <bpmn:incoming>wrc_Flow02a</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow02c</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Wait for missing info -->
+    <bpmn:receiveTask id="wrc_Task2b" name="wait until it is received">
+      <bpmn:incoming>wrc_Flow02c</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow02b</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <!-- Check warranty eligibility -->
+    <bpmn:task id="wrc_Task3" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_Flow03</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow04</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Gateway: Warranty decision -->
+    <bpmn:exclusiveGateway id="wrc_Gateway2" name="Within warranty?">
+      <bpmn:incoming>wrc_Flow04</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow05a</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow05</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Send rejection notice -->
+    <bpmn:task id="wrc_Task4" name="send rejection notice">
+      <bpmn:incoming>wrc_Flow05a</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow06</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End event: Rejection -->
+    <bpmn:endEvent id="wrc_EndEvent_Rejection">
+      <bpmn:incoming>wrc_Flow06</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Parallel Split -->
+    <bpmn:parallelGateway id="wrc_ParallelSplit">
+      <bpmn:incoming>wrc_Flow05</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow07a</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow07b</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Create shipment order -->
+    <bpmn:task id="wrc_Task5" name="Create shipment order">
+      <bpmn:incoming>wrc_Flow07a</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow08a</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Schedule courier pickup -->
+    <bpmn:task id="wrc_Task6" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_Flow07b</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow08b</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Parallel Join -->
+    <bpmn:parallelGateway id="wrc_ParallelJoin">
+      <bpmn:incoming>wrc_Flow08a</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow08b</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow09</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- Update inventory records -->
+    <bpmn:task id="wrc_Task7" name="update inventory records">
+      <bpmn:incoming>wrc_Flow09</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow10</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Close the claim -->
+    <bpmn:task id="wrc_Task8" name="close the claim">
+      <bpmn:incoming>wrc_Flow10</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow11</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- End event: Successful completion -->
+    <bpmn:endEvent id="wrc_EndEvent_Success">
+      <bpmn:incoming>wrc_Flow11</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_Flow01" sourceRef="wrc_StartEvent" targetRef="wrc_Task1"/>
+    <bpmn:sequenceFlow id="wrc_Flow02" sourceRef="wrc_Task1" targetRef="wrc_Gateway1"/>
+    <bpmn:sequenceFlow id="wrc_Flow02a" name="Incomplete"
+                       sourceRef="wrc_Gateway1" targetRef="wrc_Task2"/>
+    <bpmn:sequenceFlow id="wrc_Flow02b" sourceRef="wrc_Task2b" targetRef="wrc_Gateway1"/>
+    <bpmn:sequenceFlow id="wrc_Flow02c" sourceRef="wrc_Task2" targetRef="wrc_Task2b"/>
+    <bpmn:sequenceFlow id="wrc_Flow03" name="Complete"
+                       sourceRef="wrc_Gateway1" targetRef="wrc_Task3"/>
+    <bpmn:sequenceFlow id="wrc_Flow04" sourceRef="wrc_Task3" targetRef="wrc_Gateway2"/>
+    <bpmn:sequenceFlow id="wrc_Flow05" name="Within warranty"
+                       sourceRef="wrc_Gateway2" targetRef="wrc_ParallelSplit"/>
+    <bpmn:sequenceFlow id="wrc_Flow05a" name="Out of warranty"
+                       sourceRef="wrc_Gateway2" targetRef="wrc_Task4"/>
+    <bpmn:sequenceFlow id="wrc_Flow06" sourceRef="wrc_Task4" targetRef="wrc_EndEvent_Rejection"/>
+    <bpmn:sequenceFlow id="wrc_Flow07a" sourceRef="wrc_ParallelSplit" targetRef="wrc_Task5"/>
+    <bpmn:sequenceFlow id="wrc_Flow07b" sourceRef="wrc_ParallelSplit" targetRef="wrc_Task6"/>
+    <bpmn:sequenceFlow id="wrc_Flow08a" sourceRef="wrc_Task5" targetRef="wrc_ParallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_Flow08b" sourceRef="wrc_Task6" targetRef="wrc_ParallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_Flow09" sourceRef="wrc_ParallelJoin" targetRef="wrc_Task7"/>
+    <bpmn:sequenceFlow id="wrc_Flow10" sourceRef="wrc_Task7" targetRef="wrc_Task8"/>
+    <bpmn:sequenceFlow id="wrc_Flow11" sourceRef="wrc_Task8" targetRef="wrc_EndEvent_Success"/>
+
+  </bpmn:process>
+
+  <!-- Diagram information -->
+  <bpmndi:BPMNDiagram id="wrc_BPMNDiagram">
+    <bpmndi:BPMNPlane id="wrc_BPMNPlane" bpmnElement="wrc_WarrantyReplacement_v1.3">
+      <!-- Layout omitted for clarity; can be auto-generated by tools -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</bpmn:definitions>
+```
