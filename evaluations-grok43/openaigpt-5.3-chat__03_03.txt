@@ -1,0 +1,12 @@
+3.0
+
+The LLM answer deviates significantly from the ground truth in multiple required aspects, warranting a low score under strict evaluation:
+
+- It introduces an extra/hallucinated task ("checks warranty eligibility" / wrc_check_warranty) between the completeness gateway and warranty gateway. The ground truth connects these gateways directly without this task, and the rubric explicitly deducts for extra tasks.
+- Task names do not match the ground truth (e.g., "validates the claim" vs. "Validate the claim"; "requests missing information" vs. "Request missing information"; "send rejection notice" vs. "Send rejection notice"; "close the claim" vs. "Close the claim"; "update inventory records" vs. "Update inventory records"). Even minor case or wording differences incur major point loss.
+- Element IDs differ substantially from the ground truth (e.g., wrc_validate_claim vs. wrc_validate; wrc_gateway_completeness vs. wrc_complete_gw; wrc_gateway_warranty vs. wrc_warranty_gw; wrc_gateway_parallel_split vs. wrc_parallel_split; wrc_end_rejected vs. wrc_end_reject). While the rubric allows some ID variation for semantic equivalence, the combination with other changes breaks equivalence.
+- Start and end event names differ in casing and wording (e.g., "online warranty claim submitted" vs. "Online warranty claim submitted"; "rejection end" vs. "Rejected"; "successful completion" vs. "Successful end").
+- Sequence flow IDs use a different naming scheme (wrc_flow_1 vs. wrc_sf1), and the overall XML structure includes an unnecessary xmlns:xsi declaration plus a process name attribute not present in the ground truth.
+- The resulting model is not semantically equivalent due to the inserted task and altered path (validate → completeness gateway → check task → warranty gateway), violating the "no extra tasks" rule.
+
+While the LLM includes the required gateways (completeness exclusive, warranty exclusive, parallel split/join), two end events, wrc_ prefixing, and the missing-info loop, these positives are outweighed by the errors. Small discrepancies like name casing and IDs are penalized heavily per the strictness requirement.

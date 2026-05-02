@@ -1,0 +1,12 @@
+2.0
+
+The LLM answer contains multiple critical structural and modeling failures that deviate substantially from the ground truth and the prompt's strict constraints:
+
+- Missing the first exclusive gateway (Password Reset decision after classification). Instead, it incorrectly places direct sequenceFlows from the classification task to both "Provide Reset Instructions" and "Initial Diagnosis" (s2 and s3), which violates BPMN exclusive semantics and the description in lines 3-4. This is not a minor omission; it breaks the entire conditional flow.
+- Only two gateways total, but they are misplaced and insufficient. The prompt explicitly requires marking the two decision points with exclusive gateways; the ground truth correctly uses three (gw1 for password, gw2 for internal resolve, gw3 for customer confirmation). The LLM's gw1 correctly handles resolve/forward, but its gw2 placement is the only other one, and the password branch is absent.
+- Task name mismatch on classification ("Classify Ticket" vs. ground truth "Auto-Classification"). While close, the prompt demands exact translation without invention.
+- No names on startEvent, endEvent, or gateways; no conditionExpressions on any sequenceFlows; missing XML declaration, targetNamespace, process name, and isExecutable attribute. These are not optional per the output rules.
+- The re-work loop is present (s12 from gw2 back to t3), but it cannot compensate for the upstream errors, as the overall process logic is invalid.
+- The answer is under 40 lines but fails to produce a correct single <definitions> block that matches the required elements and flows exactly.
+
+These are not small issues; the model is fundamentally broken in its decision logic and does not follow "exactly as stated" or "do not invent or add." It captures some task names and the specialist loop but earns a very low score due to the scale of deviations.

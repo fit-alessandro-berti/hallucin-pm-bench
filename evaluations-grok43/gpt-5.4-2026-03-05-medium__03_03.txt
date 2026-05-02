@@ -1,0 +1,14 @@
+3.0
+The LLM answer deviates substantially from the ground truth in multiple structural, naming, and content aspects, warranting a low score under strict evaluation. Key differences include:
+
+- Inclusion of an extraneous `<bpmn:message>` and `<bpmn:intermediateCatchEvent>` (plus associated messageEventDefinition and flows) to model the "wait for missing information" – this was not specified in the prompt's explicit list of elements (start event + 2 exclusive gateways + 1 parallel split/join pair + 2 end events) and violates "model only the flow elements explicitly mentioned" and "do not invent... beyond what is stated." Ground truth uses a direct sequence flow from request_info back to validate instead.
+- Addition of a full `<bpmndi:BPMNDiagram>` section with 20+ BPMNShape/BPMNEdge elements and coordinates – ground truth is a minimal process-only XML with no diagram.
+- Presence of a "checks warranty eligibility" task (and its incoming/outgoing flows) before the warranty gateway – ground truth omits this entirely, connecting the completeness gateway directly to the warranty gateway.
+- Divergent element IDs (e.g., "wrc_task_validate_claim", "wrc_gateway_completeness", "wrc_task_check_warranty_eligibility" vs. ground truth's shorter "wrc_validate", "wrc_complete_gw", "wrc_warranty_gw").
+- Task names use verbatim prompt phrasing but with original casing (e.g., "validates the claim", "requests missing information", "checks warranty eligibility", "send rejection notice", "update inventory records") vs. ground truth's title-case versions (e.g., "Validate the claim", "Request missing information", "Update inventory records").
+- Event names differ (start: "customer submits an online warranty claim" vs. "Online warranty claim submitted"; ends: "rejection"/"successful completion" vs. "Rejected"/"Successful end").
+- Gateway names differ (e.g., "claim complete?", "warranty decision", "parallel split"/"parallel join" vs. "Claim complete?", "Within warranty?", unnamed parallels).
+- Flow modeling differs: LLM uses conditionExpression CDATA on sequenceFlows and 3 flows + catch event for the completeness loop; ground truth uses name attributes like "No"/"Yes" and only 2 flows. LLM also inserts an extra check task and its flows before the warranty decision.
+- Overall XML length and element count are roughly double the ground truth due to the above additions, plus extra sequenceFlows for the check task and catch event.
+
+These are not minor (e.g., whitespace or ID variance) but core mismatches in modeling choices, added invented elements, and naming. Even semantically, the LLM overcomplicates the completeness loop and check step beyond the minimal ground truth while still matching some high-level flow. A higher score would require near-exact structural and naming alignment to the ground truth.

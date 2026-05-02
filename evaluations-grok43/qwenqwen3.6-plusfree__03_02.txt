@@ -1,0 +1,9 @@
+2.0
+
+The LLM answer deviates substantially from the ground truth in multiple critical dimensions. Its top-level JSON schema ("process" wrapper, "elements" + "sequenceFlows" arrays, "sourceRef"/"targetRef", "conditionExpression") is entirely different from the ground truth's ("process_id", "elements" + "flows", "source"/"target", inline "condition"). 
+
+It introduces an unrequested SubProcess_TicketScope (plus related boundary event and End_KB), which has no counterpart in the ground truth and violates the "model only what is described" rule. Flow connectivity is also broken: the sub-process sits in the main sequence (Start → SubProcess → Parse → ...), rendering the sub-process effectively empty while the real steps occur outside it. 
+
+The parallel construct differs (LLM splits after SendResponse into LogKB and EventWait with no join; ground truth forks before SendResponse/LogSolution and joins before AwaitReply). Element IDs, types, and names diverge on nearly every item (e.g., "Task_ParseCreate" vs "createTicket", generic "Task" vs specific types, separate "End_KB" and "End_Normal" vs single "end"). The cancellation modeling (boundary on sub-process) also differs from the ground truth's standalone "cancelEvent". 
+
+These are not minor naming or ordering variances; they represent structural, semantic, and format-level mismatches that collectively indicate a low-fidelity translation.

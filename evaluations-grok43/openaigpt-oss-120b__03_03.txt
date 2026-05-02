@@ -1,0 +1,11 @@
+2.0
+
+The LLM answer deviates substantially from the ground truth on multiple required dimensions, triggering large deductions under strict evaluation:
+
+- XML is not valid or self-contained: multiple broken tags (<bpmn:>, <:outgoing>, <bpmn:Split>, <pmn:incoming>, malformed targetRef like "targetwrc_createShipment", duplicated/incomplete attributes) render the document unparseable as BPMN 2.0. Ground truth is clean, minimal, and valid.
+- Hallucinated extra task: "checks warranty eligibility" is inserted before the warranty gateway. Ground truth omits any such task, routing directly from completeness gateway to warranty gateway per the prompt's explicit "use" list (start + two exclusive gateways + parallel pair + listed tasks only).
+- Task names fail verbatim requirement and differ from ground truth: LLM uses lowercase starts ("validates the claim"), full phrases ("Create shipment order for the replacement unit") while ground truth uses title-case shortened forms ("Create shipment order", "Validate the claim"). Additional mismatches in start/end event names.
+- Gateway and flow structure errors: parallel gateways contain invalid child elements; some sequenceFlows lack proper conditions or have syntax issues; overall element count and connections diverge from the 15 flows and 4 gateways in ground truth.
+- Minor but cumulative: wrong namespace usage, extra attributes (isExecutable="true"), absent condition labels on flows, different IDs.
+
+These are not small formatting issues but core failures in validity, fidelity to required elements, and absence of inventions. Even one major XML breakage or extra task would cap the score well below 5.0; the combination yields 2.0.

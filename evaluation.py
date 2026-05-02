@@ -3,12 +3,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 
 
-EVALUATING_MODEL_NAME = "deepseek/deepseek-v4-pro"
-EVALUATING_API_URL = "https://openrouter.ai/api/v1/"
-EVALUATING_API_KEY = os.environ["OPENROUTER_API_KEY"]
-EVALUATING_PAYLOAD = {"reasoning": {"effort": "medium"}}
+EVALUATING_MODEL_NAME = "grok-4.3"
+EVALUATING_API_URL = "https://api.x.ai/v1/"
+EVALUATING_API_KEY = os.environ["GROK_API_KEY"]
+EVALUATING_PAYLOAD = {}
 MAX_THREADS = 100
-LEADERBOARD_PATH = "leaderboard_dsv4pro.md"
+LEADERBOARD_PATH = "leaderboard_grok43.md"
 
 # Hardcoded evaluation-order options. Do not expose these as command-line flags.
 PROCESS_ONE_MODEL_AT_A_TIME = False

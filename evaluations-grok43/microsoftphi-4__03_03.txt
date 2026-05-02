@@ -1,0 +1,12 @@
+2.0
+
+The LLM answer deviates substantially from the ground truth in multiple required areas, warranting a low score under strict evaluation:
+
+- Invented elements violating "model only explicitly mentioned flow elements": added `<bpmn:intermediateCatchEvent id="wrc_RequestCompletion">` (plus its flows) to handle the wait for missing info; this is not stated in the prompt and not present in ground truth.
+- Extra task not in ground truth or prompt spec: `wrc_CheckWarrantyEligibility` task before the warranty gateway (ground truth routes directly from completeness gateway to warranty gateway with no intervening task).
+- Task element types and names fail "match the text verbatim": mixes `<bpmn:task>` and `<bpmn:userTask>` (ground truth uses only `<bpmn:task>`); most tasks lack `name` attributes entirely; present names have incorrect capitalization/spelling (e.g., "Create Shipment Order", "Schedule Courier Pickup", "Close the Claim") vs. ground truth's exact phrasing.
+- Start event and end events lack required names; start event ID and overall element naming differ unnecessarily from the minimal ground truth style.
+- Loop for incomplete claim is modeled incorrectly (via invented event) instead of the direct request_info → validate loop in ground truth.
+- Minor XML issues compound the problems: inconsistent placement of some sequenceFlow definitions, unnecessary attributes, and non-minimal structure (ground truth is 34 lines with 15 flows; LLM is bloated with extras).
+
+These are not minor or semantically equivalent differences; they include hallucinations and violations of the prompt's explicit constraints on gateways, tasks, and no-invention rule. Only the high-level skeleton (start → validate → completeness gateway → warranty gateway → parallel split/join → update → close → success end, plus reject path) is roughly captured, but that is insufficient for a higher score.

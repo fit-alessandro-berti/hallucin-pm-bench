@@ -1,0 +1,15 @@
+2.0
+
+The LLM answer deviates substantially from the ground truth in multiple critical ways, warranting a low score under strict evaluation:
+
+- Entirely different JSON schema (full BPMN XML-serialized structure with namespaces, versus ground truth's minimal "process_id" + "elements" array + "flows" array).
+- JSON is malformed/invalid due to duplicate top-level keys inside "bpmn:process" ("bpmn:exclusiveGateway" and "bpmn:task" each appear twice, which is not allowed in JSON objects).
+- Multiple invented/hallucinated elements absent from ground truth and not described: Gateway_CancelCheck, Gateway_CustomerReplyCheck (unused/dead element with no connecting flows), Gateway_ReplyOrTimeout, and conditional data checks like "cancelled == true".
+- Cancel modeled incorrectly as a gateway condition check at one specific point (after parallel join) instead of ground truth's separate "cancelEvent" intermediate message catch leading directly to "terminate".
+- No "cancelEvent" message catch or "terminateEndEvent" as listed in ground truth; instead uses standard endEvent for termination.
+- Task "Parse Email and Create Ticket" combines two steps, while ground truth separates "start" (Email Received) from "createTicket".
+- Extra synchronization gateway ("Gateway_SynchronizeAfterParallel") plus unnecessary cancel/reply checks before the event-based wait, bloating the model beyond ground truth's 18 elements and 19 flows.
+- Flow structure includes unused or mismatched paths (e.g., Gateway_CustomerReplyCheck never referenced in sequenceFlow).
+- Minor but additive issues: different element IDs/names throughout, condition expressions on flows not present in ground truth, and overall failure to produce "only" the expected JSON representation without extras.
+
+While the LLM captures a rough version of the core sequence (classify, parallel send/log, event-based wait/reply/timer, reminder/close, terminate on cancel), the format mismatch, invalid JSON, and multiple inventions/hallucinations cause severe point loss.
