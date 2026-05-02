@@ -1,4 +1,4 @@
-## Overall Leaderboard (deepseek-v4-pro used as the Judge)
+## Overall Leaderboard (grok-4.3 used as the Judge)
 
 The higher the score, the better the model.
 Maximum attainable score per category: **3 points**.
