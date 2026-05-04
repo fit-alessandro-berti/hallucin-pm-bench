@@ -1,0 +1,278 @@
+{
+  "process": {
+    "id": "Process_1",
+    "name": "Customer Support Ticket Process",
+    "startEvent": {
+      "id": "StartEvent_1",
+      "name": "Support Email Received",
+      "outgoing": "Flow_1"
+    },
+    "endEvents": [
+      {
+        "id": "EndEvent_1",
+        "name": "Ticket Closed"
+      },
+      {
+        "id": "EndEvent_2",
+        "name": "Ticket Terminated"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "Task_1",
+        "name": "Parse Email & Create Ticket",
+        "incoming": "Flow_1",
+        "outgoing": "Flow_2"
+      },
+      {
+        "id": "Task_2",
+        "name": "Initial Classification",
+        "incoming": "Flow_2",
+        "outgoing": ["Flow_3", "Flow_4"]
+      },
+      {
+        "id": "Task_3",
+        "name": "Root Cause Analysis",
+        "incoming": "Flow_4",
+        "outgoing": "Flow_5"
+      },
+      {
+        "id": "Task_4",
+        "name": "Provide Resolution",
+        "incoming": ["Flow_3", "Flow_5"],
+        "outgoing": "Flow_6"
+      },
+      {
+        "id": "Task_5",
+        "name": "Send Response to Customer",
+        "incoming": "Flow_6",
+        "outgoing": "Flow_7"
+      },
+      {
+        "id": "Task_6",
+        "name": "Log Solution in Knowledge Base",
+        "incoming": "Flow_6",
+        "outgoing": "Flow_8"
+      },
+      {
+        "id": "Task_7",
+        "name": "Send Reminder",
+        "incoming": "Flow_11",
+        "outgoing": "Flow_12"
+      }
+    ],
+    "Gateways": [
+      {
+        "id": "Gateway_1",
+        "type": "Exclusive",
+        "name": "Simple or Complex?",
+        "incoming": "Flow_2",
+        "outgoing": ["Flow_3", "Flow_4"]
+      },
+      {
+        "id": "Gateway_2",
+        "type": "Parallel",
+        "name": "Parallel Paths",
+        "incoming": "Flow_6",
+        "outgoing": ["Flow_7", "Flow_8"]
+      },
+      {
+        "id": "Gateway_3",
+        "type": "Exclusive",
+        "name": "Customer Reply Received?",
+        "incoming": ["Flow_7", "Flow_9"],
+        "outgoing": ["Flow_10", "Flow_11"]
+      },
+      {
+        "id": "Gateway_4",
+        "type": "Inclusive",
+        "name": "Ticket Termination Check",
+        "incoming": ["Flow_10", "Flow_12"],
+        "outgoing": "Flow_13"
+      }
+    ],
+    "events": [
+      {
+        "id": "Event_1",
+        "type": "IntermediateCatch",
+        "name": "Wait for Customer Reply",
+        "incoming": "Flow_7",
+        "outgoing": "Flow_9",
+        "eventDefinition": {
+          "type": "Timer",
+          "timeDuration": "PT24H"
+        }
+      },
+      {
+        "id": "Event_2",
+        "type": "IntermediateCatch",
+        "name": "Customer Reply Received",
+        "incoming": "Flow_9",
+        "outgoing": "Flow_10"
+      },
+      {
+        "id": "Event_3",
+        "type": "IntermediateCatch",
+        "name": "Ticket Cancelled",
+        "incoming": ["Flow_1", "Flow_2", "Flow_3", "Flow_4", "Flow_5", "Flow_6", "Flow_7", "Flow_8", "Flow_9"],
+        "outgoing": "Flow_14"
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "Flow_1",
+        "source": "StartEvent_1",
+        "target": "Task_1"
+      },
+      {
+        "id": "Flow_2",
+        "source": "Task_1",
+        "target": "Gateway_1"
+      },
+      {
+        "id": "Flow_3",
+        "source": "Gateway_1",
+        "target": "Task_4",
+        "condition": "TicketType == 'Simple'"
+      },
+      {
+        "id": "Flow_4",
+        "source": "Gateway_1",
+        "target": "Task_3",
+        "condition": "TicketType == 'Complex'"
+      },
+      {
+        "id": "Flow_5",
+        "source": "Task_3",
+        "target": "Task_4"
+      },
+      {
+        "id": "Flow_6",
+        "source": "Task_4",
+        "target": "Gateway_2"
+      },
+      {
+        "id": "Flow_7",
+        "source": "Gateway_2",
+        "target": "Task_5"
+      },
+      {
+        "id": "Flow_8",
+        "source": "Gateway_2",
+        "target": "Task_6"
+      },
+      {
+        "id": "Flow_9",
+        "source": "Event_1",
+        "target": "Gateway_3"
+      },
+      {
+        "id": "Flow_10",
+        "source": "Event_2",
+        "target": "Gateway_4",
+        "condition": "CustomerReplyReceived == true"
+      },
+      {
+        "id": "Flow_11",
+        "source": "Gateway_3",
+        "target": "Task_7",
+        "condition": "CustomerReplyReceived == false"
+      },
+      {
+        "id": "Flow_12",
+        "source": "Task_7",
+        "target": "Gateway_4"
+      },
+      {
+        "id": "Flow_13",
+        "source": "Gateway_4",
+        "target": "EndEvent_1"
+      },
+      {
+        "id": "Flow_14",
+        "source": "Event_3",
+        "target": "EndEvent_2"
+      }
+    ],
+    "boundaryEvents": [
+      {
+        "id": "BoundaryEvent_1",
+        "attachedTo": "Task_1",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_2",
+        "attachedTo": "Task_2",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_3",
+        "attachedTo": "Task_3",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_4",
+        "attachedTo": "Task_4",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_5",
+        "attachedTo": "Task_5",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_6",
+        "attachedTo": "Task_6",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_7",
+        "attachedTo": "Event_1",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      },
+      {
+        "id": "BoundaryEvent_8",
+        "attachedTo": "Task_7",
+        "eventDefinition": {
+          "type": "Message",
+          "messageRef": "CancelTicketMessage"
+        },
+        "outgoing": "Flow_14"
+      }
+    ],
+    "messageDefinitions": [
+      {
+        "id": "CancelTicketMessage",
+        "name": "CancelTicketMessage"
+      }
+    ]
+  }
+}

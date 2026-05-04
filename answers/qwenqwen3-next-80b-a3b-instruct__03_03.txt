@@ -1,0 +1,49 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             id="Definitions_1"
+             targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="Process_1" isExecutable="true">
+    <startEvent id="wrc_StartEvent" name="Start" />
+    <task id="wrc_ValidatedClaim" name="validate the claim" />
+    <exclusiveGateway id="wrc_Gateway_Incomplete" name="Is claim incomplete?" />
+    <task id="wrc_RequestMissingInfo" name="requests missing information" />
+    <exclusiveGateway id="wrc_Gateway_WarrantyEligibility" name="Is product within warranty?" />
+    <task id="wrc_SendRejectionNotice" name="send rejection notice" />
+    <endEvent id="wrc_EndRejection" name="End (Rejection)" />
+    <parallelGateway id="wrc_Gateway_ParallelSplit" name="Parallel Split" />
+    <task id="wrc_CreateShipmentOrder" name="Create shipment order" />
+    <task id="wrc_ScheduleCourierPickup" name="Schedule courier pickup" />
+    <parallelGateway id="wrc_Gateway_ParallelJoin" name="Parallel Join" />
+    <task id="wrc_UpdateInventoryRecords" name="update inventory records" />
+    <task id="wrc_CloseClaim" name="close the claim" />
+    <endEvent id="wrc_EndSuccess" name="End (Success)" />
+
+    <sequenceFlow id="wrc_SF_StartToValidate" sourceRef="wrc_StartEvent" targetRef="wrc_ValidatedClaim" />
+    <sequenceFlow id="wrc_SF_ValidateToIncompleteCheck" sourceRef="wrc_ValidatedClaim" targetRef="wrc_Gateway_Incomplete" />
+    <sequenceFlow id="wrc_SF_IncompleteYes" sourceRef="wrc_Gateway_Incomplete" targetRef="wrc_RequestMissingInfo" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.omg.org/spec/BPMN/20100524/MODEL"><![CDATA[${isIncomplete}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SF_IncompleteNo" sourceRef="wrc_Gateway_Incomplete" targetRef="wrc_Gateway_WarrantyEligibility" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.omg.org/spec/BPMN/20100524/MODEL"><![CDATA[${!isIncomplete}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SF_RequestToValidate" sourceRef="wrc_RequestMissingInfo" targetRef="wrc_ValidatedClaim" />
+    <sequenceFlow id="wrc_SF_WarrantyYes" sourceRef="wrc_Gateway_WarrantyEligibility" targetRef="wrc_Gateway_ParallelSplit" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.omg.org/spec/BPMN/20100524/MODEL"><![CDATA[${withinWarranty}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SF_WarrantyNo" sourceRef="wrc_Gateway_WarrantyEligibility" targetRef="wrc_SendRejectionNotice" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.omg.org/spec/BPMN/20100524/MODEL"><![CDATA[${!withinWarranty}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="wrc_SF_RejectionToEnd" sourceRef="wrc_SendRejectionNotice" targetRef="wrc_EndRejection" />
+    <sequenceFlow id="wrc_SF_ParallelSplitToShipment" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_CreateShipmentOrder" />
+    <sequenceFlow id="wrc_SF_ParallelSplitToPickup" sourceRef="wrc_Gateway_ParallelSplit" targetRef="wrc_ScheduleCourierPickup" />
+    <sequenceFlow id="wrc_SF_ShipmentToJoin" sourceRef="wrc_CreateShipmentOrder" targetRef="wrc_Gateway_ParallelJoin" />
+    <sequenceFlow id="wrc_SF_PickupToJoin" sourceRef="wrc_ScheduleCourierPickup" targetRef="wrc_Gateway_ParallelJoin" />
+    <sequenceFlow id="wrc_SF_ParallelJoinToInventory" sourceRef="wrc_Gateway_ParallelJoin" targetRef="wrc_UpdateInventoryRecords" />
+    <sequenceFlow id="wrc_SF_InventoryToClose" sourceRef="wrc_UpdateInventoryRecords" targetRef="wrc_CloseClaim" />
+    <sequenceFlow id="wrc_SF_CloseToEnd" sourceRef="wrc_CloseClaim" targetRef="wrc_EndSuccess" />
+  </process>
+</definitions>
+```
