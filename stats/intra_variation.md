@@ -12,6 +12,6 @@
 | C08 Temporal / concurrency reasoning    | 2.248456      |
 | C09 Unknown-should-remain-unknown       | 0.471405      |
 | C10 Domain-synonym enforcement          | 0.471405      |
-| C11 Performance analytics commentary    | 1.674794      |
+| C11 Performance analytics commentary    | 1.699673      |
 | C12 Misinformation injection            | 0.471405      |
 | C13 Edge-case / low-support prompts     | 1.414214      |

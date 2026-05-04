@@ -1,0 +1,208 @@
+{
+  "process": {
+    "id": "support-ticket-process",
+    "name": "Customer Support Ticket Process",
+    "flowElements": [
+      {
+        "id": "start",
+        "name": "Receive Support Email",
+        "type": "startEvent"
+      },
+      {
+        "id": "create-ticket",
+        "name": "Create Ticket in Help-Desk System",
+        "type": "task",
+        "category": "ServiceTask"
+      },
+      {
+        "id": "classify",
+        "name": "Initial Classification",
+        "type": "task",
+        "category": "UserTask"
+      },
+      {
+        "id": "resolve-simple",
+        "name": "Provide Resolution",
+        "type": "task",
+        "category": "UserTask"
+      },
+      {
+        "id": "analyze",
+        "name": "Root Cause Analysis",
+        "type": "task",
+        "category": "UserTask"
+      },
+      {
+        "id": "send-response",
+        "name": "Send Response to Customer",
+        "type": "task",
+        "category": "ServiceTask"
+      },
+      {
+        "id": "log-knowledge",
+        "name": "Log Solution in Knowledge Base",
+        "type": "task",
+        "category": "ServiceTask"
+      },
+      {
+        "id": "wait-24h",
+        "name": "Wait up to 24 Hours for Customer Reply",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": {
+          "type": "timer",
+          "timeDuration": "PT24H"
+        }
+      },
+      {
+        "id": "reminder",
+        "name": "Send Reminder",
+        "type": "task",
+        "category": "ServiceTask"
+      },
+      {
+        "id": "close-ticket",
+        "name": "Close Ticket",
+        "type": "task",
+        "category": "ServiceTask"
+      },
+      {
+        "id": "terminate",
+        "name": "Terminate",
+        "type": "endEvent",
+        "eventDefinition": {
+          "type": "terminate"
+        }
+      },
+      {
+        "id": "customer-reply",
+        "name": "Customer Reply Received",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": {
+          "type": "message",
+          "messageRef": "customer-reply-message"
+        }
+      },
+      {
+        "id": "cancel",
+        "name": "Ticket Canceled",
+        "type": "intermediateCatchEvent",
+        "eventDefinition": {
+          "type": "escalation",
+          "escalationRef": "ticket-canceled-escalation"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "sourceRef": "start",
+        "targetRef": "create-ticket"
+      },
+      {
+        "sourceRef": "create-ticket",
+        "targetRef": "classify"
+      },
+      {
+        "sourceRef": "classify",
+        "targetRef": "resolve-simple",
+        "conditionExpression": "${classification == 'Simple'}"
+      },
+      {
+        "sourceRef": "classify",
+        "targetRef": "analyze",
+        "conditionExpression": "${classification == 'Complex'}"
+      },
+      {
+        "sourceRef": "resolve-simple",
+        "targetRef": "send-response"
+      },
+      {
+        "sourceRef": "analyze",
+        "targetRef": "send-response"
+      },
+      {
+        "sourceRef": "send-response",
+        "targetRef": "log-knowledge"
+      },
+      {
+        "sourceRef": "send-response",
+        "targetRef": "wait-24h"
+      },
+      {
+        "sourceRef": "log-knowledge",
+        "targetRef": "wait-24h"
+      },
+      {
+        "sourceRef": "wait-24h",
+        "targetRef": "reminder"
+      },
+      {
+        "sourceRef": "customer-reply",
+        "targetRef": "close-ticket"
+      },
+      {
+        "sourceRef": "reminder",
+        "targetRef": "close-ticket"
+      },
+      {
+        "sourceRef": "close-ticket",
+        "targetRef": "terminate"
+      },
+      {
+        "sourceRef": "cancel",
+        "targetRef": "terminate"
+      }
+    ],
+    "messageFlow": [
+      {
+        "id": "msg-reply",
+        "sourceRef": "customer-reply",
+        "targetRef": "send-response"
+      }
+    ],
+    "extensionElements": {
+      "diagrams": [
+        {
+          "id": "diagram-1",
+          "name": "Support Ticket Process Diagram",
+          "bpmnElement": "support-ticket-process",
+          "plane": {
+            "id": "plane-1",
+            "bpmnElement": "support-ticket-process",
+            "shape": [
+              { "id": "sh-start", "bpmnElement": "start", "bounds": { "x": 100, "y": 100, "width": 30, "height": 30 } },
+              { "id": "sh-create-ticket", "bpmnElement": "create-ticket", "bounds": { "x": 100, "y": 150, "width": 150, "height": 50 } },
+              { "id": "sh-classify", "bpmnElement": "classify", "bounds": { "x": 100, "y": 220, "width": 150, "height": 50 } },
+              { "id": "sh-resolve-simple", "bpmnElement": "resolve-simple", "bounds": { "x": 100, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-analyze", "bpmnElement": "analyze", "bounds": { "x": 300, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-send-response", "bpmnElement": "send-response", "bounds": { "x": 500, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-log-knowledge", "bpmnElement": "log-knowledge", "bounds": { "x": 500, "y": 380, "width": 150, "height": 50 } },
+              { "id": "sh-wait-24h", "bpmnElement": "wait-24h", "bounds": { "x": 700, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-reminder", "bpmnElement": "reminder", "bounds": { "x": 900, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-close-ticket", "bpmnElement": "close-ticket", "bounds": { "x": 1100, "y": 300, "width": 150, "height": 50 } },
+              { "id": "sh-terminate", "bpmnElement": "terminate", "bounds": { "x": 1300, "y": 300, "width": 30, "height": 30 } },
+              { "id": "sh-customer-reply", "bpmnElement": "customer-reply", "bounds": { "x": 900, "y": 200, "width": 100, "height": 30 } },
+              { "id": "sh-cancel", "bpmnElement": "cancel", "bounds": { "x": 1300, "y": 100, "width": 100, "height": 30 } }
+            ],
+            "edge": [
+              { "id": "e-start-to-create", "bpmnElement": "start", "sourceRef": "sh-start", "targetRef": "sh-create-ticket" },
+              { "id": "e-create-to-classify", "bpmnElement": "create-ticket", "sourceRef": "sh-create-ticket", "targetRef": "sh-classify" },
+              { "id": "e-classify-to-simple", "bpmnElement": "classify", "sourceRef": "sh-classify", "targetRef": "sh-resolve-simple", "conditionExpression": "${classification == 'Simple'}" },
+              { "id": "e-classify-to-analyze", "bpmnElement": "classify", "sourceRef": "sh-classify", "targetRef": "sh-analyze", "conditionExpression": "${classification == 'Complex'}" },
+              { "id": "e-simple-to-response", "bpmnElement": "resolve-simple", "sourceRef": "sh-resolve-simple", "targetRef": "sh-send-response" },
+              { "id": "e-analyze-to-response", "bpmnElement": "analyze", "sourceRef": "sh-analyze", "targetRef": "sh-send-response" },
+              { "id": "e-send-response-to-log", "bpmnElement": "send-response", "sourceRef": "sh-send-response", "targetRef": "sh-log-knowledge" },
+              { "id": "e-send-response-to-wait", "bpmnElement": "send-response", "sourceRef": "sh-send-response", "targetRef": "sh-wait-24h" },
+              { "id": "e-log-to-wait", "bpmnElement": "log-knowledge", "sourceRef": "sh-log-knowledge", "targetRef": "sh-wait-24h" },
+              { "id": "e-wait-to-reminder", "bpmnElement": "wait-24h", "sourceRef": "sh-wait-24h", "targetRef": "sh-reminder" },
+              { "id": "e-customer-reply-to-close", "bpmnElement": "customer-reply", "sourceRef": "sh-customer-reply", "targetRef": "sh-close-ticket" },
+              { "id": "e-reminder-to-close", "bpmnElement": "reminder", "sourceRef": "sh-reminder", "targetRef": "sh-close-ticket" },
+              { "id": "e-close-to-terminate", "bpmnElement": "close-ticket", "sourceRef": "sh-close-ticket", "targetRef": "sh-terminate" },
+              { "id": "e-cancel-to-terminate", "bpmnElement": "cancel", "sourceRef": "sh-cancel", "targetRef": "sh-terminate" }
+            ],
+            "plane": {}
+          }
+        }
+      ]
+    }
+  }
+}

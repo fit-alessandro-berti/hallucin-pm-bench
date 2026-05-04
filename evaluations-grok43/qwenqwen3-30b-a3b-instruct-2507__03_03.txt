@@ -1,0 +1,15 @@
+3.0
+The LLM answer deviates significantly from the ground truth in multiple required dimensions, warranting a low score under strict evaluation:
+
+- It invents an extraneous task named "online warranty claim" (with connecting flows), which is not present in the process description or ground truth (where submission is handled solely by the startEvent). This is a direct hallucination.
+- It includes an unnecessary task "checks warranty eligibility" (positioned before the second exclusive gateway). The ground truth omits this entirely, treating the warranty decision as a pure gateway outcome after validation completes. Adding it violates the "only explicitly mentioned flow elements" and "minimal-yet-complete" constraint while duplicating the role of the warranty decision gateway.
+- Task names use incorrect casing (e.g., "validates the claim", "checks warranty eligibility", "create shipment order") instead of the ground-truth title-case equivalents (e.g., "Validate the claim", "Create shipment order"). Since the prompt requires names to "match the text verbatim" but the ground truth is the reference standard, this mismatch counts against.
+- All exclusive and parallel gateways incorrectly specify `gatewayDirection="Converging"` (even the splits). Ground truth correctly omits this where irrelevant and relies on flow semantics.
+- The model includes a massive, unrequested `<bpmndi:BPMNDiagram>` section with dozens of `<bpmndi:BPMNShape>` and `<bpmndi:BPMNEdge>` elements containing explicit coordinates. The ground truth provides only the semantic `<bpmn:process>` model (34 lines total).
+- Flow conditions are missing from sequenceFlows exiting decision gateways (ground truth explicitly uses `name="No"` / `name="Yes"`). Sequence flows use non-matching IDs and lack any branch labels.
+- Element IDs and process ID diverge from the ground-truth pattern (e.g., "wrc_ValidateClaim" vs. ground truth's "wrc_validate"; process ID "wrc_WarrantyReplacementProcess" vs. "wrc_process").
+- Namespace handling differs (no `bpmn:` prefix on core elements; default namespace + partial visual namespace) vs. ground truth's consistent `bpmn:` prefixing throughout.
+- StartEvent and both endEvents lack any `name` attributes that the ground truth supplies.
+- While the high-level logic (validate loop via request-info, warranty branch to reject vs. parallel create/schedule, then sequential update-close-success) is recognizable, the foregoing additions, omissions, and formatting errors make the outputs non-equivalent. No attempt is made to match the exact element count, ordering, or minimal structure shown in the ground truth.
+
+Each of the above constitutes non-trivial divergence; even "small" casing or direction errors trigger heavy deductions given the strict rubric.
