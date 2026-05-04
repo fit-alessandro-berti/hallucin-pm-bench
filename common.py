@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import requests
 import traceback
@@ -12,6 +13,37 @@ REQUEST_CONTEXT_UNKNOWN = "unknown"
 API_KEY_ENV_PARAM = "api_key_env"
 
 EVALUATIONS_DIR = "evaluations-grok43"
+MODELS_CONFIG_PATH = Path(__file__).with_name("models.json")
+
+
+def _load_models_config(path=MODELS_CONFIG_PATH):
+    with path.open(encoding="utf-8") as config_file:
+        return json.load(config_file)
+
+
+def _normalize_model_catalogue_entry(entry):
+    if isinstance(entry, str):
+        return entry
+
+    if (
+        isinstance(entry, list)
+        and len(entry) == 2
+        and isinstance(entry[0], str)
+        and isinstance(entry[1], dict)
+    ):
+        return (entry[0], entry[1])
+
+    raise ValueError(f"Unsupported model catalogue entry in {MODELS_CONFIG_PATH}: {entry!r}")
+
+
+def _load_model_catalogue():
+    config = _load_models_config()
+    model_catalogue = config.get("model_catalogue")
+
+    if not isinstance(model_catalogue, list):
+        raise ValueError(f"{MODELS_CONFIG_PATH} must contain a model_catalogue list")
+
+    return [_normalize_model_catalogue_entry(entry) for entry in model_catalogue]
 
 
 def _uses_responses_api(api_url):
@@ -155,195 +187,7 @@ def _parse_response_json(resp_json, use_responses_api):
 
 
 class Shared:
-    MODEL_CATALOGUE = ["openai/gpt-4.1",
-                  "openai/gpt-4.1-mini",
-                  "openai/gpt-4.5-preview",
-                  "anthropic/claude-3.7-sonnet",
-                  "anthropic/claude-sonnet-4", "anthropic/claude-opus-4",
-                  "x-ai/grok-3-beta",
-                  "openai/o4-mini-high",
-                  "openai/o4-mini",
-                       "x-ai/grok-4",
-                       "anthropic/claude-opus-4.1",
-                       "openai/gpt-oss-20b",
-                       "openai/gpt-oss-120b",
-                       "openai/gpt-3.5-turbo",
-                       "openai/gpt-4-turbo",
-                       "mistralai/mixtral-8x22b-instruct",
-                       "qwen/qwen3-max",
-                       ("openai/gpt-oss-120b-high", {"base_model": "openai/gpt-oss-120b", "payload": {"reasoning_effort": "high"}}),
-                       "google/gemini-2.5-pro",
-                       "mistralai/mistral-medium-3.1",
-                       ("deepseek/deepseek-v3.2-speciale",
-                        {"base_model": "deepseek/deepseek-v3.2-speciale",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("deepseek/deepseek-v3.2",
-                        {"base_model": "deepseek/deepseek-v3.2",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("nvidia/nemotron-3-nano-30b-a3b-thinking",
-                        {"base_model": "nvidia/nemotron-3-nano-30b-a3b:free",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("openai/gpt-5.2-codex-xhigh",
-                        {"base_model": "openai/gpt-5.2-codex",
-                         "payload": {"reasoning": {"effort": "xhigh"}}}),
-                       ("openai/gpt-5.3-codex-xhigh",
-                        {"base_model": "openai/gpt-5.3-codex",
-                         "payload": {"reasoning": {"effort": "xhigh"}}}),
-                       "qwen/qwen3.5-35b-a3b",
-                       "qwen/qwen3.5-27b",
-                       "qwen/qwen3.5-122b-a10b",
-                       "anthropic/claude-sonnet-4.5",
-                       "baidu/ernie-4.5-21b-a3b-thinking",
-                       "anthropic/claude-haiku-4.5",
-                       "moonshotai/kimi-k2-thinking",
-                       "mistralai/mistral-large-2512",
-                       "amazon/nova-2-lite-v1",
-                       "moonshotai/kimi-k2.5",
-                       "z-ai/glm-5",
-                       "qwen/qwen3.5-397b-a17b",
-                       "google/gemini-3.1-pro-preview",
-                       "inception/mercury-2",
-                       "qwen/qwen3.5-9b",
-                       "bytedance-seed/seed-2.0-lite",
-                       "bytedance-seed/seed-2.0-mini",
-                       "minimax/minimax-m2.7",
-                       "arcee-ai/trinity-large-thinking",
-                       "z-ai/glm-5v-turbo",
-                       "qwen/qwen3.6-plus:free",
-                       "google/gemma-4-26b-a4b-it",
-                       "google/gemma-4-31b-it",
-                       "z-ai/glm-5.1",
-                       "Meta-Muse-Spark-20260414",
-                       "moonshotai/kimi-k2.6",
-                       "ChatGPT-5.5-Pro-20260422",
-                       "xiaomi/mimo-v2.5-pro",
-                       "xiaomi/mimo-v2.5",
-                       "inclusionai/ling-2.6-1t:free",
-                       "tencent/hy3-preview:free",
-                       "deepseek/deepseek-v4-flash",
-                       "deepseek/deepseek-v4-pro",
-                       "qwen/qwen3.6-max-preview", "qwen/qwen3.6-27b", "qwen/qwen3.6-flash",
-                       "qwen/qwen3.6-35b-a3b",
-                       "openrouter/owl-alpha",
-                       "ibm-granite/granite-4.1-8b",
-                       "poolside/laguna-m.1:free", "poolside/laguna-xs.2:free",
-                       ("anthropic/claude-opus-4.7-thinking",
-                        {"base_model": "anthropic/claude-opus-4.7",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("anthropic/claude-opus-4.6-thinking",
-                        {"base_model": "anthropic/claude-opus-4.6",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("anthropic/claude-sonnet-4.6-thinking",
-                        {"base_model": "anthropic/claude-sonnet-4.6",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("mistral-medium-3.5",
-                        {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
-                         "api_key_env": "MISTRAL_API_KEY"}),
-                       ("mistral-medium-3.5-thinkhigh",
-                        {"base_model": "mistral-medium-3.5", "api_url": "https://api.mistral.ai/v1/",
-                         "api_key_env": "MISTRAL_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.2-2025-12-11-none",
-                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/", "api_key_env": "OPENAI_API_KEY"}),
-                       ("gpt-5.2-2025-12-11-high",
-                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.2-2025-12-11-medium",
-                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
-                       ("gpt-5.2-2025-12-11-xhigh",
-                        {"base_model": "gpt-5.2-2025-12-11", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
-                       ("gpt-5.4-2026-03-05-none",
-                        {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY"}),
-                       ("gpt-5.4-2026-03-05-high",
-                        {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.4-2026-03-05-medium",
-                        {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
-                       ("gpt-5.4-2026-03-05-xhigh",
-                        {"base_model": "gpt-5.4-2026-03-05", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
-                       ("gpt-5.5-2026-04-23-none",
-                        {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY"}),
-                       ("gpt-5.5-2026-04-23-high",
-                        {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.5-2026-04-23-medium",
-                        {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "medium"}}),
-                       ("gpt-5.5-2026-04-23-xhigh",
-                        {"base_model": "gpt-5.5-2026-04-23", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "xhigh"}}),
-                       ("gpt-5.4-mini-2026-03-17-high",
-                        {"base_model": "gpt-5.4-mini-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.4-mini-2026-03-17-none",
-                        {"base_model": "gpt-5.4-mini-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "none"}}),
-                       ("gpt-5.4-nano-2026-03-17-high",
-                        {"base_model": "gpt-5.4-nano-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "high"}}),
-                       ("gpt-5.4-nano-2026-03-17-none",
-                        {"base_model": "gpt-5.4-nano-2026-03-17", "api_url": "https://api.openai.com/v1/",
-                         "api_key_env": "OPENAI_API_KEY", "payload": {"reasoning_effort": "none"}}),
-                       ("grok-4.3",
-                        {"base_model": "grok-4.3",
-                         "api_url": "https://api.x.ai/v1/",
-                         "api_key_env": "GROK_API_KEY"}),
-                       ("grok-4.20-experimental-beta-0304-non-reasoning",
-                        {"base_model": "grok-4.20-experimental-beta-0304-non-reasoning", "api_url": "https://api.x.ai/v1/",
-                         "api_key_env": "GROK_API_KEY"}),
-                       ("grok-4.20-experimental-beta-0304-reasoning",
-                        {"base_model": "grok-4.20-experimental-beta-0304-reasoning",
-                         "api_url": "https://api.x.ai/v1/",
-                         "api_key_env": "GROK_API_KEY"}),
-                       ("grok-4.20-multi-agent-experimental-beta-0304",
-                        {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
-                         "api_url": "https://api.x.ai/v1/",
-                         "api_key_env": "GROK_API_KEY"}),
-                       ("grok-4.20-heavy",
-                        {"base_model": "grok-4.20-multi-agent-experimental-beta-0304",
-                         "api_url": "https://api.x.ai/v1/",
-                         "api_key_env": "GROK_API_KEY",
-                         "payload": {"reasoning": {"effort": "high"}}}),
-                       ("nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-                        {"base_model": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-                         "api_key_env": "DEEPINFRA_API_KEY",
-                         "api_url": "https://api.deepinfra.com/v1/openai/"}),
-                       "Grok-4.1-20251118",
-                       "google/gemini-2.5-flash",
-                       "z-ai/glm-5-turbo",
-                  "anthropic/claude-3.7-sonnet:thinking",
-                  "meta-llama/llama-4-maverick",
-                       "baidu/ernie-4.5-300b-a47b",
-                  "microsoft/phi-4",
-                  "openai/o1", "openai/o1-pro", "openai/o3",
-                       ("x-ai/grok-4.1-fast",
-                        {"base_model": "x-ai/grok-4.1-fast",
-                         "payload": {"reasoning": {"enabled": False}}}),
-                       ("x-ai/grok-4.1-fast-thinking",
-                        {"base_model": "x-ai/grok-4.1-fast",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       "allenai/olmo-3-32b-think",
-                       "anthropic/claude-opus-4.5",
-                       "prime-intellect/intellect-3",
-                       ("google/gemini-3-flash-preview",
-                        {"base_model": "google/gemini-3-flash-preview",
-                         "payload": {"reasoning": {"enabled": False}}}),
-                       ("google/gemini-3-flash-preview-thinking",
-                        {"base_model": "google/gemini-3-flash-preview",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       ("google/gemini-3.1-flash-lite-preview",
-                        {"base_model": "google/gemini-3.1-flash-lite-preview",
-                         "payload": {"reasoning": {"enabled": False}}}),
-                       ("google/gemini-3.1-flash-lite-preview-thinking",
-                        {"base_model": "google/gemini-3.1-flash-lite-preview",
-                         "payload": {"reasoning": {"enabled": True}}}),
-                       "openai/gpt-5.3-chat",
-                  ]
+    MODEL_CATALOGUE = _load_model_catalogue()
 
     SELECTED_FOR_SELF_EVALUATION = ["mistralai/ministral-3b",
                                     "mistral/ministral-8b",
