@@ -169,6 +169,23 @@ def ensure_model_registered(config: Dict[str, Any], dry_run: bool) -> None:
         handler.write("\n")
 
 
+def read_api_key(config: Dict[str, Any]) -> str | None:
+    api_key_env = config.get("api_key_env")
+    if api_key_env and os.environ.get(api_key_env):
+        return os.environ[api_key_env]
+
+    api_key_file = config.get("api_key_file")
+    if api_key_file:
+        candidate = Path(api_key_file)
+        if not candidate.is_absolute():
+            candidate = (REPO_ROOT / candidate).resolve()
+        if candidate.exists():
+            with open(candidate, "r", encoding="utf-8") as handler:
+                return handler.read().strip()
+
+    return None
+
+
 def build_runtime_parameters(config: Dict[str, Any]) -> Dict[str, Any]:
     parameters: Dict[str, Any] = {}
     if config["base_model"] != config["alias"]:
@@ -181,9 +198,9 @@ def build_runtime_parameters(config: Dict[str, Any]) -> Dict[str, Any]:
         parameters["payload"] = config["payload"]
     if config.get("add_prompt"):
         parameters["add_prompt"] = config["add_prompt"]
-    if config.get("api_key_file"):
-        with open(config["api_key_file"], "r", encoding="utf-8") as handler:
-            parameters["api_key"] = handler.read().strip()
+    api_key = read_api_key(config)
+    if api_key:
+        parameters["api_key"] = api_key
     return parameters
 
 
