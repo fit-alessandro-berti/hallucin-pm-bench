@@ -1,6 +1,7 @@
 import os, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
+from results import EXPECTED_EVALUATION_FILES
 
 
 EVALUATING_MODEL_NAME = "grok-4.3"
@@ -252,6 +253,11 @@ def _evaluate_answer_batch(answers, base_model_name, target_directory, include_g
     return modified_something
 
 
+def _count_evaluation_files(target_directory):
+    with os.scandir(target_directory) as entries:
+        return sum(1 for entry in entries if entry.is_file())
+
+
 def evaluate(model_name=EVALUATING_MODEL_NAME, target_directory=EVALUATIONS_DIR, include_ground_truth_answer=True, filter_self=False, parameters=None):
     if parameters is None:
         parameters = {}
@@ -312,6 +318,11 @@ def main1():
         print("round finished")
 
         if not modified_something:
+            evaluation_file_count = _count_evaluation_files(EVALUATIONS_DIR)
+            if evaluation_file_count % EXPECTED_EVALUATION_FILES == 0:
+                print("no changes and evaluation file count is", evaluation_file_count, "- exiting")
+                return
+
             time.sleep(10)
 
 
