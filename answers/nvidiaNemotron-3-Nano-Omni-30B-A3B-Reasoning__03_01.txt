@@ -1,0 +1,61 @@
+**BPMN 2.0 XML (≤ 40 lines)**  
+
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             targetNamespace="AcmeTechSupport">
+  <process id="AcmeTechSupportProcess" isExecutable="true">
+
+    <!-- 1. Ticket submission (start event) -->
+    <startEvent id="start" name="Ticket Submitted"/>
+
+    <!-- 2. Automatic classification -->
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="classify"/>
+    <serviceTask id="classify" name="Classify Ticket"/>
+
+    <!-- 3. Password Reset decision -->
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <sequenceFlow id="flow2" sourceRef="classify" targetRef="gw1"/>
+    <sequenceFlow id="flow3" sourceRef="gw1" targetRef="provideReset" conditionExpression="false()"/>
+    <sequenceFlow id="flow4" sourceRef="gw1" targetRef="initialDiagnosis" conditionExpression="true()"/>
+
+    <!-- 3a. Provide Reset Instructions -->
+    <userTask id="provideReset" name="Provide Reset Instructions"/>
+
+    <!-- 4. Initial Diagnosis (agent) -->
+    <userTask id="initialDiagnosis" name="Initial Diagnosis"/>
+
+    <!-- 5. Agent decision: Resolve vs. Forward -->
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <sequenceFlow id="flow5" sourceRef="initialDiagnosis" targetRef="gw2"/>
+    <sequenceFlow id="flow6" sourceRef="gw2" targetRef="resolveIssue" conditionExpression="resolveIssue()"/>
+    <sequenceFlow id="flow7" sourceRef="gw2" targetRef="forwardToSpecialist" conditionExpression="!resolveIssue()"/>
+
+    <!-- 5a. Resolve Issue (agent) -->
+    <userTask id="resolveIssue" name="Resolve Issue"/>
+
+    <!-- 6. Specialist resolves the ticket -->
+    <userTask id="forwardToSpecialist" name="Forward to Specialist"/>
+    <sequenceFlow id="flow8" sourceRef="forwardToSpecialist" targetRef="resolveIssue"/>
+
+    <!-- 7. Confirm with Customer -->
+    <userTask id="confirm" name="Confirm with Customer"/>
+    <sequenceFlow id="flow9" sourceRef="resolveIssue" targetRef="confirm"/>
+
+    <!-- 8. Customer confirms → close ticket -->
+    <sequenceFlow id="flow10" sourceRef="confirm" targetRef="close"/>
+
+    <!-- 9. Customer reports issue persists → loop back to Initial Diagnosis -->
+    <exclusiveGateway id="gw3" name="Customer Issue Persists?"/>
+    <sequenceFlow id="flow11" sourceRef="confirm" targetRef="gw3"/>
+    <sequenceFlow id="flow12" sourceRef="gw3" targetRef="initialDiagnosis" conditionExpression="true()"/>
+    <sequenceFlow id="flow13" sourceRef="gw3" targetRef="close" conditionExpression="false()"/>
+
+    <!-- 10. End of process (closed ticket) -->
+    <endEvent id="close" name="Ticket Closed"/>
+    <sequenceFlow id="flow14" sourceRef="close" targetRef="end"/>
+
+  </process>
+  <endEvent id="end"/>
+</definitions>
+```

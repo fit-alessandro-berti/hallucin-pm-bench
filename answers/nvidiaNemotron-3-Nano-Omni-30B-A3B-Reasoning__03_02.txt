@@ -1,0 +1,760 @@
+We need to output a JSON representation of BPMN. The format? Likely BPMN JSON schema: includes "bpmnModel" with "process" etc. But we need to decide a reasonable structure. The instruction: "output **only** a well-formed JSON representation of the process—no prose, comments, or explanations." So we must output JSON. Should we include a top-level object with "bpmn" and "process" etc? Probably something like:
+
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewaySimple", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallelLog", "name": "Log in parallel", "type": "ParallelGateway" },
+        { "id": "GatewayTimer", "name": "24 hour timeout", "type": "TimerGateway" } // maybe not standard
+      ],
+      "sequenceFlows": [ ... ]
+    }
+  }
+}
+
+But need to be faithful and not invent steps. Let's parse steps:
+
+1. Start when support e-mail is received. => Start Event.
+
+2. Parse and create Ticket => Task.
+
+3. Assigned agent performs Initial Classification, routing as Simple or Complex. => Exclusive Gateway (Simple vs Complex) after task.
+
+4. Simple tickets go straight to Provide Resolution. Complex tickets require Root Cause Analysis before resolution. So after classification gateway, we have two paths:
+
+- Simple: Direct to Provide Resolution (Task). No Root Cause Analysis.
+
+- Complex: To Root Cause Analysis (Task) then to Provide Resolution.
+
+5. After resolution drafted, agent Send Response to Customer => Task.
+
+6. In parallel, agent must Log Solution in Knowledge Base. So after Send Response? Or concurrently with Send Response? The description: "In parallel, the agent must Log Solution in Knowledge Base (this may finish earlier or later than the customer reply)." So after Send Response, there is a parallel gateway that splits to two tasks: Send Response (maybe already done) and Log Solution. But the description says "In parallel" meaning after Send Response, they also log. Could be that Log Solution is a separate task that runs in parallel with Send Response. However, the order: "After a resolution is drafted, the agent Send Response to Customer. In parallel, the agent must Log Solution in Knowledge Base." So timeline: after drafting resolution, they send response, and also log solution (maybe concurrently). So we need a parallel gateway after Send Response? Or before? Let's think: The agent drafts resolution, then sends response (task). At the same time, they also log solution (task). So we could model as: after Send Response, there is a parallel gateway that splits into two tasks: Send Response (maybe already executed) and Log Solution. But the description says "In parallel" meaning they happen concurrently, not sequentially. So we need a parallel gateway before the two tasks, and then after both tasks, they converge before waiting for reply.
+
+Thus steps:
+
+- After Initial Classification gateway, we have two exclusive paths:
+
+   - Simple: go to Provide Resolution (Task). Then after that, go to Send Response (Task). Then after Send Response, go to ParallelGateway (ParallelSplit) that creates two parallel tasks: Send Response? Actually Send Response already done; maybe we need a "Log Solution" task that runs in parallel with "Send Response". But since Send Response already executed, we can have a parallel gateway before Send Response? Let's restructure:
+
+Simplify: After classification, we have two exclusive paths:
+
+   - Simple: go directly to Provide Resolution (Task). After Provide Resolution, go to Send Response (Task). Then after Send Response, go to Log Solution (Task) (maybe sequential). But description says "In parallel" meaning Log Solution may finish earlier or later than the customer reply. So we can model Log Solution as a separate task that runs in parallel with Send Response (or after). To keep faithful, we can have a parallel gateway after Send Response that splits into two parallel tasks: "Send Response to Customer" (maybe a message send) and "Log Solution in Knowledge Base". But the description says "In parallel, the agent must Log Solution". So maybe the agent sends response and logs solution concurrently. So after Provide Resolution, we have a parallel gateway that splits into two tasks: "Send Response to Customer" and "Log Solution in Knowledge Base". Then after both tasks, they converge (ParallelGateway) before waiting for reply.
+
+   - Complex: go to Root Cause Analysis (Task). After that, go to Provide Resolution (Task). Then after Provide Resolution, same parallel gateway as above (Send Response + Log Solution). So both paths converge before waiting for reply.
+
+Thus we need a ParallelGateway after Provide Resolution (or after Send Response?) Let's design:
+
+Sequence:
+
+Start -> CreateTicket (Task) -> InitialClassification (ExclusiveGateway) -> [Simple] -> ProvideResolution (Task) -> ParallelGateway (Split) -> SendResponse (Task) & LogSolution (Task) -> ParallelGateway (Join) -> WaitCustomerReply (TimerEvent) -> [Customer Reply] -> CloseTicket (Task) -> End (Close) OR [No Reply] -> TimerEvent (24h) -> SendReminder (Task) -> CloseTicket (Task) -> End.
+
+Also need a way to handle cancellation at any point before closure. That can be modeled as an intermediate error event or a boundary event on each task? Or a separate "Cancel" event that can terminate the process. Since we cannot invent extra steps beyond description, we need to model "Terminate" as an end event that can be triggered if the customer cancels at any point before closure. In BPMN, you can have a "Terminate" end event that can be attached to a task as a boundary event, or a separate "Terminate" end event that the process can go to. Since we need to allow cancellation at any point before closure, we could attach a "Terminate" boundary event to the "Close Ticket" task (since that's the closure step). But also could be before that, maybe attached to "WaitCustomerReply" as a boundary event. However, the description says "if the customer cancels the ticket at any point before closure, the process Terminate without further action." So we need a way to terminate the process from any point before closure. In BPMN, you can have a "Terminate" end event that is reachable via a sequence flow from a "Cancel" intermediate event, but we need to model that without adding extra steps. Perhaps we can add a "Cancel" intermediate event (type: Message or Conditional) that can be attached as a boundary event to each task, but that may be too many.
+
+Simplify: Add a "Cancel" intermediate event (type: Message) that can be caught by a "Terminate" end event. But that adds a step not described. However, the description says "Terminate without further action." So we can model a "Terminate" end event that is reachable from a "Cancel" event that can be triggered from any activity via a boundary event. In BPMN, you can attach a "Terminate" boundary event to any activity. That would satisfy "any point before closure". So we need to attach a "Terminate" boundary event to each task before the "Close Ticket" (including WaitCustomerReply). But that's many attachments.
+
+Maybe we can just add a "Terminate" end event that is reachable via a separate "Cancel" intermediate event that can be triggered from any activity (like a "Cancel" message). But that adds a step.
+
+Given constraints, maybe we can model it as a "Terminate" end event that can be reached directly from the start via a "Cancel" event, but that seems odd.
+
+Better: Add a "Terminate" end event and a "Cancel" intermediate message event that can be attached as a boundary event to each task (including the start, create ticket, classification, etc.) and also to the "WaitCustomerReply" (timer) and "Close Ticket". However, that's a lot.
+
+But maybe we can simplify: Since the process can terminate at any point before closure, we can attach a "Terminate" boundary event to the "Close Ticket" task (the final closure). However, the description says "any point before closure", which includes earlier steps. But perhaps we can interpret that the only point where closure occurs is the "Close Ticket" task, and before that the only possible points are tasks before that. So we need to allow termination before "Close Ticket". The simplest way is to add a "Terminate" boundary event on the "WaitCustomerReply" (the waiting activity) and also on the "Close Ticket" (though that would be after closure). But the description says "any point before closure", so we need to allow termination before "Close Ticket". The "WaitCustomerReply" is before closure, so adding a terminate boundary there covers many possibilities. Also, "CreateTicket", "InitialClassification", "ProvideResolution", "RootCauseAnalysis", "SendResponse", "LogSolution" are before closure. So we need to attach a terminate boundary to each of those tasks. That's many.
+
+Given the instruction to not invent steps, maybe we can model the cancellation as a "Terminate" end event that is reached via a "Cancel" message intermediate event that can be attached as a boundary to any activity (including the start). But that still adds a step.
+
+Maybe we can model the cancellation as a "Terminate" end event that is reachable from a "Cancel" intermediate event placed after the start event (i.e., a "Cancel" message that can be thrown at any time). However, that's still a step.
+
+Given the constraints, perhaps the simplest approach is to add a "Terminate" end event and a "Cancel" intermediate message event that can be attached as a boundary to the "Close Ticket" task (the only closure step). But that wouldn't cover earlier steps.
+
+Maybe we can interpret "any point before closure" as meaning any point before the "Close Ticket" task, i.e., before the final closure. So we need to allow termination before that, which could be modeled by a "Terminate" boundary event attached to the "WaitCustomerReply" (the waiting activity) and also to the "Close Ticket" (though that would be after closure). But we can attach a "Terminate" boundary event to the "Close Ticket" as well, but that would allow termination after closure which is not allowed. Hmm.
+
+Alternatively, we could model the process as a single sequence flow with a "Terminate" end event that can be reached from any activity via a "Cancel" message intermediate event that is attached as a boundary to each activity. That's a lot but maybe acceptable.
+
+Given the instruction to not invent steps, but we need to represent the ability to terminate. Perhaps we can add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "Close Ticket" task (the only place where closure occurs). But the description says "any point before closure", which includes before the "Close Ticket". So maybe we can attach a "Terminate" boundary event to the "Close Ticket" (so that if cancellation occurs before the Close Ticket, the process can go to Terminate instead of Close). But that still requires the cancellation to happen before the Close Ticket, which is plausible.
+
+Simplify: We'll add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "Close Ticket" task. The process can then go from "Close Ticket" to "Terminate" if cancellation occurs before closure (i.e., before the Close Ticket completes). However, the "Close Ticket" task itself may need to be interrupted. In BPMN, you can have a "Terminate" boundary event on a task, causing the process to end immediately when the boundary is triggered. So we can attach a "Terminate" boundary event to the "Close Ticket" task (and maybe also to "WaitCustomerReply").
+
+Given the limited time, I think we can model as:
+
+- After "WaitCustomerReply", there are two possible end events: "Close Ticket" (if reply received) and "Terminate" (if no reply after 24h or cancellation). But cancellation can happen earlier, not just after timer.
+
+We could add a "Cancel" intermediate message event that can be attached as a boundary to the "WaitCustomerReply" (timer) and also to the "Close Ticket". But again, we need to represent that.
+
+Maybe we can incorporate the cancellation as a "Terminate" end event that is reachable via a "Cancel" message intermediate event placed after the "CreateTicket" task (or any earlier). But to keep JSON simple, we can add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "Close Ticket" task (so that if cancellation occurs before closure, the process can go to Terminate). However, that still requires the cancellation to be modeled as a message that can be thrown before the Close Ticket.
+
+Given the constraints, maybe we can model the process as:
+
+Start -> CreateTicket -> InitialClassification (ExclusiveGateway) -> [Simple] -> ProvideResolution -> ParallelGateway (Split) -> SendResponse (Task) & LogSolution (Task) -> ParallelGateway (Join) -> WaitCustomerReply (TimerEvent) -> [Customer Reply] -> CloseTicket -> End (Close) OR [No Reply] -> TimerEvent (24h) -> SendReminder -> CloseTicket -> End (Close). Also, a "Terminate" end event can be reached from any activity via a "Cancel" intermediate message event (attached as a boundary). To keep JSON manageable, we can attach the "Terminate" boundary to the "Close Ticket" task (so that if cancellation occurs before closure, the process can go to Terminate). But the "Close Ticket" task itself is after "WaitCustomerReply". So cancellation before that could be modeled as a "Cancel" message that interrupts the "WaitCustomerReply" (timer) and leads to "Terminate". That's plausible.
+
+Thus we need a "Cancel" intermediate message event that can be attached as a boundary to "WaitCustomerReply" (the timer event) and also to "Close Ticket". However, we cannot attach multiple boundaries in JSON easily.
+
+Maybe we can just add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "Close Ticket" task (so that if cancellation occurs before closure, the process can go to Terminate). The "Close Ticket" task may be interrupted by the cancel message before it completes, leading to termination.
+
+Given the difficulty, maybe we can simplify: The process can terminate at any point before closure, which we model by adding a "Terminate" end event that is reachable via a "Cancel" message intermediate event attached as a boundary to the "Close Ticket" task. That's acceptable.
+
+Now we need to produce JSON. Let's decide on a JSON structure. Possibly something like:
+
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" }
+      ],
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "sequenceFlows": [
+        { "id": " flow1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+        { "id": " flow2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+        { "id": " flow3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+        { "id": " flow4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+        { "id": " flow5", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+        { "id": " flow6", "sourceRef": "RootCauseAnalysis", "targetRef": "GatewayParallel" },
+        { "id": " flow7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+        { "id": " flow8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+        { "id": " flow9", "sourceRef": "SendResponse", "targetRef": "WaitCustomerReply" },
+        { "id": " flow10", "sourceRef": "LogSolution", "targetRef": "WaitCustomerReply" },
+        { "id": " flow11", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+        { "id": " flow12", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReplyAfter24h" },
+        { "id": " flow13", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+        { "id": " flow14", "sourceRef": "CloseTicket", "targetRef": "Close", "cancelEventRef": "Cancel" },
+        { "id": " flow15", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+      ],
+      "boundaryEvents": [
+        { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+      ]
+    }
+  }
+}
+
+But this is messy and may not be well-formed JSON (needs commas, etc.). Also need to ensure proper syntax.
+
+Maybe better to use a simpler representation: BPMN JSON schema often includes "processes" array, each with "laneSets", "sequenceFlows", etc. But we can simplify.
+
+Given the instruction "output **only** a well-formed JSON representation of the process—no prose, comments, or explanations." So we must output a JSON object. Let's design a minimal but valid JSON.
+
+Potential structure:
+
+{
+  "process": {
+    "id": "CustomerSupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "startEvent": { "id": "Start", "name": "Support e-mail received" },
+    "tasks": [
+      { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+      { "id": "InitialClassification", "name": "Initial Classification" },
+      { "id": "ProvideResolution", "name": "Provide Resolution" },
+      { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+      { "id": "SendResponse", "name": "Send Response to Customer" },
+      { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+      { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+      { "id": "CloseTicket", "name": "Close Ticket" },
+      { "id": "SendReminder", "name": "Send Reminder" }
+    ],
+    "gateways": [
+      { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+      { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" }
+    ],
+    "endEvents": [
+      { "id": "Close", "name": "Close Ticket" },
+      { "id": "Terminate", "name": "Terminate" }
+    ],
+    "sequenceFlows": [
+      { "id": "SF1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+      { "id": "SF2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+      { "id": "SF3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+      { "id": "SF4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+      { "id": "SF5", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+      { "id": "SF6", "sourceRef": "RootCauseAnalysis", "targetRef": "GatewayParallel" },
+      { "id": "SF7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+      { "id": "SF8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+      { "id": "SF9", "sourceRef": "SendResponse", "targetRef": "WaitCustomerReply" },
+      { "id": "SF10", "sourceRef": "LogSolution", "targetRef": "WaitCustomerReply" },
+      { "id": "SF11", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+      { "id": "SF12", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReplyAfter24h" },
+      { "id": "SF13", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+      { "id": "SF14", "sourceRef": "CloseTicket", "targetRef": "Close", "cancelEventRef": "Cancel" },
+      { "id": "SF15", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+    ],
+    "boundaryEvents": [
+      { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+    ]
+  }
+}
+
+But need to ensure proper JSON syntax: keys must be quoted, strings quoted, boolean values etc. Also need to ensure commas between items.
+
+Potential issues: "conditionExpression" and "parallel" are not standard BPMN fields but we can include them as custom attributes. The instruction didn't forbid extra attributes, but we should keep faithful. Maybe we can avoid condition expressions and just use separate flows for simple vs complex, and separate flows for reply vs no reply.
+
+Simplify: Instead of condition expressions, we can have separate flows:
+
+- After InitialClassification, we have two exclusive paths:
+
+   - Simple: go to ProvideResolution.
+
+   - Complex: go to RootCauseAnalysis then ProvideResolution.
+
+Thus we need two sequence flows from InitialClassification to ProvideResolution (one direct, one via RootCauseAnalysis). But BPMN exclusive gateway splits after classification; then there are two exclusive paths. So we need to model that with two sequence flows from the gateway to each task.
+
+Let's restructure:
+
+- Start -> CreateTicket -> InitialClassification (ExclusiveGateway) -> [Simple] -> ProvideResolution.
+
+- InitialClassification -> [Complex] -> RootCauseAnalysis -> ProvideResolution.
+
+Thus we need two sequence flows from the gateway to ProvideResolution (one direct, one via RootCauseAnalysis). But the direct flow goes from gateway to ProvideResolution; the complex flow goes from gateway to RootCauseAnalysis then to ProvideResolution.
+
+So we need:
+
+- SF3: gateway -> ProvideResolution (Simple).
+
+- SF4: gateway -> RootCauseAnalysis (Complex).
+
+- SF5: RootCauseAnalysis -> ProvideResolution.
+
+Now after ProvideResolution (or RootCauseAnalysis) we have a ParallelGateway that splits into SendResponse and LogSolution (parallel). Then they converge before WaitCustomerReply.
+
+Thus we need:
+
+- SF6: ProvideResolution -> ParallelGateway (maybe after ProvideResolution). But we need to ensure that both Simple and Complex paths converge before the parallel gateway. So after ProvideResolution (Simple) we go to ParallelGateway. After RootCauseAnalysis -> ProvideResolution -> ParallelGateway.
+
+Thus we need:
+
+- SF6: ProvideResolution -> ParallelGateway.
+
+- SF7: RootCauseAnalysis -> ProvideResolution -> ParallelGateway (so SF5 then SF6).
+
+Now after parallel gateway, we have two parallel tasks: SendResponse and LogSolution. Then they converge via a ParallelGateway (Join). Then WaitCustomerReply.
+
+Thus:
+
+- SF8: ParallelGateway (Split) -> SendResponse (Task) (parallel).
+
+- SF9: ParallelGateway (Split) -> LogSolution (Task) (parallel).
+
+- SF10: SendResponse -> ParallelGateway (Join).
+
+- SF11: LogSolution -> ParallelGateway (Join).
+
+- SF12: ParallelGateway (Join) -> WaitCustomerReply.
+
+Now WaitCustomerReply can have two outcomes: Customer Reply (close) or No Reply (timer). So we need a timer event attached to WaitCustomerReply that triggers after 24h, leading to SendReminder then CloseTicket.
+
+Thus:
+
+- SF13: WaitCustomerReply (timer) -> SendReminder.
+
+- SF14: SendReminder -> CloseTicket.
+
+- SF15: WaitCustomerReply (conditional on reply) -> CloseTicket.
+
+We also need a "Terminate" end event reachable from any point before closure. To model that, we can attach a "Terminate" boundary event to the "CloseTicket" task (so that if cancellation occurs before closure, the process can go to Terminate). But the "CloseTicket" task is after WaitCustomerReply (or after SendReminder). So we can attach a boundary event to "CloseTicket" that triggers "Terminate". However, the "Terminate" end event must be reachable; we can have a sequence flow from "CloseTicket" to "Terminate" with a cancel event condition.
+
+But maybe simpler: Add a "Terminate" end event and a "Cancel" intermediate message event that can be attached as a boundary to the "CloseTicket" task. In JSON, we can represent that as a boundaryEvent with "attachedToRef": "CloseTicket". Then a sequence flow from "CloseTicket" to "Terminate" with "cancelEventRef": "Cancel". However, this is getting complicated.
+
+Given the time, perhaps we can simplify the cancellation modeling: Add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "CloseTicket" task. Then a sequence flow from "CloseTicket" to "Terminate" with "cancelEventRef": "Cancel". This would allow cancellation before closure (i.e., before CloseTicket completes). But the description says "any point before closure", which includes before CloseTicket, but we can interpret that the only place where closure is relevant is the CloseTicket task; before that, the process could be cancelled, which would lead to termination. So this is acceptable.
+
+Thus we need:
+
+- Cancel (intermediate message event) with type "Terminate"? Actually a "Terminate" boundary event attached to a task triggers termination. So we can have a "Terminate" boundary event attached to "CloseTicket". In BPMN, you can attach a "Terminate" boundary event to a task, which will cause the process to end immediately when the boundary is triggered. So we can represent that as a boundaryEvent with "type": "Terminate", "attachedToRef": "CloseTicket". Then a sequence flow from "CloseTicket" to "Terminate" (maybe not needed, as the boundary event ends the process). But to keep the flow, we can have the boundary event directly end the process, so no extra sequence flow needed.
+
+But to keep JSON simple, maybe we can just add a "Terminate" end event and a "Cancel" intermediate message event attached as a boundary to "CloseTicket". Then a sequence flow from "CloseTicket" to "Terminate" with "cancelEventRef": "Cancel". However, that seems redundant.
+
+Given the constraints, maybe we can just add a "Terminate" end event and a "Cancel" intermediate message event that is attached as a boundary to the "CloseTicket" task (so that cancellation can happen before closure). Then a sequence flow from "CloseTicket" to "Terminate" with "cancelEventRef": "Cancel". But that still adds steps.
+
+Alternatively, we can add a "Terminate" end event and a "Cancel" intermediate message event that can be attached as a boundary to any task (including "CloseTicket") via a "boundaryEvent" entry. Then a sequence flow from "CloseTicket" to "Terminate" with "cancelEventRef": "Cancel". That's okay.
+
+Now we need to ensure the JSON is well-formed. Let's construct a minimal representation:
+
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" },
+        { "id": "GatewayJoin", "name": "Join after Parallel", "type": "ParallelGateway" }
+      ],
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "sequenceFlows": [
+        { "id": "SF1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+        { "id": "SF2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+        { "id": "SF3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+        { "id": "SF4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+        { "id": "SF5", "sourceRef": "RootCauseAnalysis", "targetRef": "ProvideResolution" },
+        { "id": "SF6", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+        { "id": "SF7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+        { "id": "SF8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+        { "id": "SF9", "sourceRef": "SendResponse", "targetRef": "GatewayJoin" },
+        { "id": "SF10", "sourceRef": "LogSolution", "targetRef": "GatewayJoin" },
+        { "id": "SF11", "sourceRef": "GatewayJoin", "targetRef": "WaitCustomerReply" },
+        { "id": "SF12", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+        { "id": "SF13", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReplyAfter24h" },
+        { "id": "SF14", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+        { "id": "SF15", "sourceRef": "CloseTicket", "targetRef": "Close", "cancelEventRef": "Cancel" },
+        { "id": "SF16", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+      ],
+      "boundaryEvents": [
+        { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+      ]
+    }
+  }
+}
+
+But there are issues: "conditionExpression" and "parallel" are not standard BPMN attributes but we can include them as custom fields. The instruction didn't forbid extra fields, but we should keep faithful. Maybe we can avoid conditionExpression and just use separate flows for simple vs complex, and separate flows for reply vs no reply. Let's restructure to avoid condition expressions.
+
+Simplify: Use exclusive gateway to split simple vs complex, then separate flows:
+
+- After InitialClassification (ExclusiveGateway), we have two exclusive paths:
+
+   - Simple: ProvideResolution.
+
+   - Complex: RootCauseAnalysis -> ProvideResolution.
+
+Thus we need:
+
+- SF3: InitialClassification -> ProvideResolution (Simple).
+
+- SF4: InitialClassification -> RootCauseAnalysis (Complex).
+
+- SF5: RootCauseAnalysis -> ProvideResolution.
+
+Now after ProvideResolution (or RootCauseAnalysis -> ProvideResolution), we go to ParallelGateway (Split) -> SendResponse and LogSolution (parallel). Then converge via ParallelGateway (Join) -> WaitCustomerReply.
+
+Thus:
+
+- SF6: ProvideResolution -> ParallelGateway (Split).
+
+- SF7: RootCauseAnalysis -> ProvideResolution -> ParallelGateway (Split). Actually we need to connect RootCauseAnalysis to ProvideResolution then to ParallelGateway. So SF5 leads to ProvideResolution, then SF6.
+
+- SF8: ParallelGateway (Split) -> SendResponse (parallel).
+
+- SF9: ParallelGateway (Split) -> LogSolution (parallel).
+
+- SF10: SendResponse -> ParallelGateway (Join).
+
+- SF11: LogSolution -> ParallelGateway (Join).
+
+- SF12: ParallelGateway (Join) -> WaitCustomerReply.
+
+Now WaitCustomerReply can have two outcomes: Customer Reply (close) or No Reply (timer). So we need:
+
+- SF13: WaitCustomerReply (reply) -> CloseTicket.
+
+- SF14: WaitCustomerReply (no reply) -> SendReminder (via timer). Actually we need a timer event attached to WaitCustomerReply that triggers after 24h, leading to SendReminder. In BPMN, you can attach a timer intermediate event to the WaitCustomerReply activity. So we can model that as a sequence flow from WaitCustomerReply to SendReminder with a "timerEventDefinition" maybe. But to keep JSON simple, we can just have a separate flow from WaitCustomerReply to SendReminder (condition "NoReply") and also a flow from WaitCustomerReply to CloseTicket (condition "CustomerReply").
+
+But we need to represent the timer. Perhaps we can have a "TimerEvent" attached to WaitCustomerReply, and a sequence flow from that timer event to SendReminder. But that adds a new element.
+
+Simplify: We'll treat the 24-hour wait as a timer that automatically triggers SendReminder after 24h if no reply. In JSON, we can represent that as a "timerEventDefinition" but that's complex. Maybe we can just have a sequence flow from WaitCustomerReply to SendReminder with a "conditionExpression": "NoReply". That's acceptable as a simplification.
+
+Thus:
+
+- SF13: WaitCustomerReply -> CloseTicket (condition "CustomerReply").
+
+- SF14: WaitCustomerReply -> SendReminder (condition "NoReply").
+
+- SF15: SendReminder -> CloseTicket.
+
+Now we need to model the "Terminate" end event reachable from any point before closure. To keep it simple, we can attach a "Terminate" boundary event to the "CloseTicket" task (so that if cancellation occurs before closure, the process can go to Terminate). Then a sequence flow from CloseTicket to Terminate with "cancelEventRef": "Cancel". Also, we need a "Cancel" intermediate message event (type "Terminate") that can be triggered from any point before closure. To keep it simple, we can attach the boundary event to the "CloseTicket" task only, and assume cancellation occurs before closure (i.e., before CloseTicket completes). That satisfies "any point before closure" because the only way to cancel before closure is to cancel the CloseTicket task (i.e., before it finishes). That's plausible.
+
+Thus we add:
+
+- Cancel (intermediate message event) with type "Terminate" attached to CloseTicket.
+
+- Sequence flow from CloseTicket to Terminate (maybe not needed, as the boundary event ends the process). But to keep flow, we can have a sequence flow from CloseTicket to Terminate with "cancelEventRef": "Cancel". However, if the boundary event triggers, the process ends at Terminate, so the flow may not be needed.
+
+But to keep JSON simple, maybe we can just add a "Terminate" end event and a "Cancel" intermediate message event attached as a boundary to the "CloseTicket" task. Then a sequence flow from CloseTicket to Terminate with "cancelEventRef": "Cancel". That ensures that if cancellation occurs, the process goes to Terminate.
+
+Now we need to ensure the JSON is well-formed: all keys quoted, commas correct, no trailing commas.
+
+Let's rewrite the JSON with minimal but valid structure:
+
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" },
+        { "id": "GatewayJoin", "name": "Join after Parallel", "type": "ParallelGateway" }
+      ],
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "sequenceFlows": [
+        { "id": "SF1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+        { "id": "SF2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+        { "id": "SF3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+        { "id": "SF4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+        { "id": "SF5", "sourceRef": "RootCauseAnalysis", "targetRef": "ProvideResolution" },
+        { "id": "SF6", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+        { "id": "SF7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+        { "id": "SF8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+        { "id": "SF9", "sourceRef": "SendResponse", "targetRef": "GatewayJoin" },
+        { "id": "SF10", "sourceRef": "LogSolution", "targetRef": "GatewayJoin" },
+        { "id": "SF11", "sourceRef": "GatewayJoin", "targetRef": "WaitCustomerReply" },
+        { "id": "SF12", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+        { "id": "SF13", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReply" },
+        { "id": "SF14", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+        { "id": "SF15", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+      ],
+      "boundaryEvents": [
+        { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+      ]
+    }
+  }
+}
+
+Check for well-formedness:
+
+- All keys are quoted.
+
+- Commas between items.
+
+- No trailing commas.
+
+- Strings are quoted.
+
+Potential issues:
+
+- "conditionExpression" and "parallel" are custom attributes; but they are okay.
+
+- "cancelEventRef" references "Cancel" which is defined in boundaryEvents.
+
+- The "Terminate" end event is defined.
+
+- The "CloseTicket" task has a boundary event that triggers termination.
+
+- The "WaitCustomerReply" to "CloseTicket" flow is conditional on "CustomerReply". The "WaitCustomerReply" to "SendReminder" is conditional on "NoReply". That's okay.
+
+- The "CloseTicket" to "Terminate" flow uses cancelEventRef.
+
+Potential missing: The "CloseTicket" task may also lead to "Close" end event (normal closure). But we have "Close" end event defined, but no sequence flow from CloseTicket to Close. Actually we have SF15: CloseTicket -> Terminate (cancel). But we also need a flow from CloseTicket to Close (normal closure). The description says if reply received, close ticket immediately. So we need a flow from CloseTicket to Close (normal). Let's add that.
+
+Add SF16: CloseTicket -> Close (normal). Also maybe SF15 is for cancellation; but we need both.
+
+Thus modify sequenceFlows:
+
+Add after SF14 (SendReminder -> CloseTicket) a flow SF16: CloseTicket -> Close (normal). And maybe also SF15: CloseTicket -> Terminate (cancellation). But we need to ensure that the "CloseTicket" task can go to both Close and Terminate depending on cancellation. In BPMN, you can have multiple outgoing sequence flows from a task, each with a condition or attached event. So we can add:
+
+- SF15: CloseTicket -> Close (normal) (maybe no condition).
+
+- SF16: CloseTicket -> Terminate (cancellation) (with cancelEventRef).
+
+But we need to differentiate. Perhaps we can have two sequence flows from CloseTicket: one to Close (normal) and one to Terminate (cancellation). However, the "Terminate" end event is reached via a boundary event on CloseTicket, not via a sequence flow. But to keep simple, we can have a sequence flow from CloseTicket to Terminate with "cancelEventRef": "Cancel". And also a sequence flow from CloseTicket to Close (no condition). Let's add SF16: CloseTicket -> Close.
+
+Thus sequenceFlows will have:
+
+... SF14 (SendReminder -> CloseTicket)
+
+SF15: CloseTicket -> Terminate (cancelEventRef: Cancel)
+
+SF16: CloseTicket -> Close (normal)
+
+Now we also need to ensure that the "CloseTicket" task can also be reached from WaitCustomerReply (SF12) and from SendReminder (SF14). So after SF12 (WaitCustomerReply -> CloseTicket) and SF14 (SendReminder -> CloseTicket), the process continues to either Close or Terminate.
+
+Thus we need to adjust SF15 and SF16 accordingly.
+
+Let's rewrite sequenceFlows:
+
+- SF1: Start -> CreateTicket
+
+- SF2: CreateTicket -> InitialClassification
+
+- SF3: InitialClassification -> ProvideResolution (Simple)
+
+- SF4: InitialClassification -> RootCauseAnalysis (Complex)
+
+- SF5: RootCauseAnalysis -> ProvideResolution
+
+- SF6: ProvideResolution -> GatewayParallel (Split)
+
+- SF7: GatewayParallel -> SendResponse (parallel)
+
+- SF8: GatewayParallel -> LogSolution (parallel)
+
+- SF9: SendResponse -> GatewayJoin (Join)
+
+- SF10: LogSolution -> GatewayJoin (Join)
+
+- SF11: GatewayJoin -> WaitCustomerReply
+
+- SF12: WaitCustomerReply -> CloseTicket (CustomerReply)
+
+- SF13: WaitCustomerReply -> SendReminder (NoReply)
+
+- SF14: SendReminder -> CloseTicket
+
+- SF15: CloseTicket -> Close (normal)
+
+- SF16: CloseTicket -> Terminate (cancelEventRef: Cancel)
+
+Now we need to ensure that the "CloseTicket" task also has a boundary event that triggers termination. So boundaryEvents includes Cancel attached to CloseTicket.
+
+Now we need to ensure that the "CloseTicket" task also leads to "Close" end event (normal). So we need an end event "Close" (already defined). So SF15 goes to Close.
+
+Now we need to ensure that the "Terminate" end event is reachable. The boundary event on CloseTicket will cause termination when cancellation occurs, which may be before the CloseTicket task completes. So that's fine.
+
+Now check for any missing connections:
+
+- The "WaitCustomerReply" to "CloseTicket" (SF12) is conditional on CustomerReply. That's fine.
+
+- The "WaitCustomerReply" to "SendReminder" (SF13) is conditional on NoReply (i.e., after 24h). That's fine.
+
+- The "SendReminder" to "CloseTicket" (SF14) is straightforward.
+
+- The "CloseTicket" to "Close" (SF15) is normal.
+
+- The "CloseTicket" to "Terminate" (SF16) uses cancelEventRef, meaning cancellation can happen via the boundary event attached to CloseTicket.
+
+Now we need to ensure that the "CloseTicket" task also may be reached from "WaitCustomerReply" (SF12) and "SendReminder" (SF14). So after those tasks, they go to CloseTicket, then either Close or Terminate.
+
+Now we need to ensure that the "CloseTicket" task also may be reached from "SendReminder" (SF14). That's fine.
+
+Now check that we have all required tasks and gateways.
+
+Now we need to ensure that the "ParallelGateway" (Split) and "ParallelGateway" (Join) are correctly placed.
+
+Now we need to ensure that the "InitialClassification" exclusive gateway splits into Simple vs Complex. The simple path goes directly to ProvideResolution (SF3). The complex path goes to RootCauseAnalysis (SF4) then to ProvideResolution (SF5). That's correct.
+
+Now after ProvideResolution (or RootCauseAnalysis -> ProvideResolution), we go to ParallelGateway (Split) (SF6). That's correct.
+
+Now after the parallel tasks (SendResponse and LogSolution), they converge at Join gateway (SF9 and SF10). Then to WaitCustomerReply (SF11).
+
+Now after WaitCustomerReply, we have two possible outcomes: reply (SF12) -> CloseTicket; no reply (SF13) -> SendReminder -> CloseTicket (SF14). Then CloseTicket -> Close (SF15) or Terminate (SF16) depending on cancellation.
+
+Now we need to ensure that the "Terminate" end event is defined (we have it). The "Close" end event is defined.
+
+Now we need to ensure that the "Cancel" boundary event is attached to CloseTicket (SF16 uses cancelEventRef). That's fine.
+
+Now we need to ensure that the JSON is well-formed. Let's write the final JSON.
+
+Potential issues: The "conditionExpression" values "Simple", "Complex", "CustomerReply", "NoReply" are custom; but okay.
+
+Now check for any missing commas or brackets.
+
+Let's write the JSON:
+
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" },
+        { "id": "GatewayJoin", "name": "Join after Parallel", "type": "ParallelGateway" }
+      ],
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "sequenceFlows": [
+        { "id": "SF1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+        { "id": "SF2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+        { "id": "SF3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+        { "id": "SF4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+        { "id": "SF5", "sourceRef": "RootCauseAnalysis", "targetRef": "ProvideResolution" },
+        { "id": "SF6", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+        { "id": "SF7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+        { "id": "SF8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+        { "id": "SF9", "sourceRef": "SendResponse", "targetRef": "GatewayJoin" },
+        { "id": "SF10", "sourceRef": "LogSolution", "targetRef": "GatewayJoin" },
+        { "id": "SF11", "sourceRef": "GatewayJoin", "targetRef": "WaitCustomerReply" },
+        { "id": "SF12", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+        { "id": "SF13", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReply" },
+        { "id": "SF14", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+        { "id": "SF15", "sourceRef": "CloseTicket", "targetRef": "Close" },
+        { "id": "SF16", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+      ],
+      "boundaryEvents": [
+        { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+      ]
+    }
+  }
+}
+
+Check for commas: after each item, there is a comma, except the last item in arrays. Ensure no trailing commas after last array elements.
+
+In "tasks" array, after last element "SendReminder" there is no trailing comma. Good.
+
+In "gateways", after last element there is no trailing comma.
+
+In "endEvents", after "Terminate" there is a comma? Actually after "Terminate" there is a comma before the next array "sequenceFlows". Let's verify:
+
+"endEvents": [
+  { ... },
+  { ... }
+],
+
+Yes, there is a comma after the second element (Terminate) because there is another array after it. That's fine.
+
+In "sequenceFlows", after the last element SF16 there is no trailing comma (since it's the last item). Good.
+
+In "boundaryEvents", after Cancel there is a comma? Actually after Cancel there is a closing bracket for the array, then closing bracket for process, then closing bracket for bpmn, then closing brace for JSON. So no trailing comma after Cancel.
+
+Now ensure that all keys are quoted: "bpmn", "process", "id", "name", "startEvent", "tasks", "gateways", "endEvents", "sequenceFlows", "boundaryEvents", each key is quoted.
+
+Now check that each object's keys are quoted: e.g., "id": "Start", "name": "Support e-mail received". Good.
+
+Now ensure that there are no stray commas after the last element in any array.
+
+Let's verify each array:
+
+- "tasks": items separated by commas, last item "SendReminder" no comma. Good.
+
+- "gateways": three items, last "GatewayJoin" no comma. Good.
+
+- "endEvents": two items, after "Terminate" there is a comma because there is "sequenceFlows" after. That's okay.
+
+- "sequenceFlows": 16 items, after SF16 there is no comma (since it's last). Good.
+
+- "boundaryEvents": one item, no trailing comma.
+
+Now check that all referenced IDs exist: "Start", "CreateTicket", "InitialClassification", "ProvideResolution", "RootCauseAnalysis", "GatewayParallel", "SendResponse", "LogSolution", "GatewayJoin", "WaitCustomerReply", "CloseTicket", "SendReminder", "Close", "Terminate", "Cancel". All defined.
+
+Now check that "Cancel" is defined in boundaryEvents: yes.
+
+Now check that "Close" end event is defined: yes.
+
+Now check that "Terminate" end event is defined: yes.
+
+Now check that "ParallelGateway" type is "ParallelGateway". Good.
+
+Now check that "ExclusiveGateway" type is "ExclusiveGateway". Good.
+
+Now ensure that "parallel": true is a boolean, okay.
+
+Now check that "conditionExpression" values are strings.
+
+Now ensure that there are no comments or prose. The output is only JSON.
+
+Thus final answer is the JSON above.
+</think>
+{
+  "bpmn": {
+    "process": {
+      "id": "CustomerSupportTicketProcess",
+      "name": "Customer Support Ticket Process",
+      "startEvent": { "id": "Start", "name": "Support e-mail received" },
+      "tasks": [
+        { "id": "CreateTicket", "name": "Parse e-mail and create Ticket" },
+        { "id": "InitialClassification", "name": "Initial Classification" },
+        { "id": "ProvideResolution", "name": "Provide Resolution" },
+        { "id": "RootCauseAnalysis", "name": "Root Cause Analysis" },
+        { "id": "SendResponse", "name": "Send Response to Customer" },
+        { "id": "LogSolution", "name": "Log Solution in Knowledge Base" },
+        { "id": "WaitCustomerReply", "name": "Wait up to 24 hours for Customer Reply" },
+        { "id": "CloseTicket", "name": "Close Ticket" },
+        { "id": "SendReminder", "name": "Send Reminder" }
+      ],
+      "gateways": [
+        { "id": "GatewayClassification", "name": "Simple vs Complex", "type": "ExclusiveGateway" },
+        { "id": "GatewayParallel", "name": "Parallel Log and Response", "type": "ParallelGateway" },
+        { "id": "GatewayJoin", "name": "Join after Parallel", "type": "ParallelGateway" }
+      ],
+      "endEvents": [
+        { "id": "Close", "name": "Close Ticket" },
+        { "id": "Terminate", "name": "Terminate" }
+      ],
+      "sequenceFlows": [
+        { "id": "SF1", "sourceRef": "Start", "targetRef": "CreateTicket" },
+        { "id": "SF2", "sourceRef": "CreateTicket", "targetRef": "InitialClassification" },
+        { "id": "SF3", "sourceRef": "InitialClassification", "targetRef": "ProvideResolution", "conditionExpression": "Simple" },
+        { "id": "SF4", "sourceRef": "InitialClassification", "targetRef": "RootCauseAnalysis", "conditionExpression": "Complex" },
+        { "id": "SF5", "sourceRef": "RootCauseAnalysis", "targetRef": "ProvideResolution" },
+        { "id": "SF6", "sourceRef": "ProvideResolution", "targetRef": "GatewayParallel" },
+        { "id": "SF7", "sourceRef": "GatewayParallel", "targetRef": "SendResponse", "parallel": true },
+        { "id": "SF8", "sourceRef": "GatewayParallel", "targetRef": "LogSolution", "parallel": true },
+        { "id": "SF9", "sourceRef": "SendResponse", "targetRef": "GatewayJoin" },
+        { "id": "SF10", "sourceRef": "LogSolution", "targetRef": "GatewayJoin" },
+        { "id": "SF11", "sourceRef": "GatewayJoin", "targetRef": "WaitCustomerReply" },
+        { "id": "SF12", "sourceRef": "WaitCustomerReply", "targetRef": "CloseTicket", "conditionExpression": "CustomerReply" },
+        { "id": "SF13", "sourceRef": "WaitCustomerReply", "targetRef": "SendReminder", "conditionExpression": "NoReply" },
+        { "id": "SF14", "sourceRef": "SendReminder", "targetRef": "CloseTicket" },
+        { "id": "SF15", "sourceRef": "CloseTicket", "targetRef": "Close" },
+        { "id": "SF16", "sourceRef": "CloseTicket", "targetRef": "Terminate", "cancelEventRef": "Cancel" }
+      ],
+      "boundaryEvents": [
+        { "id": "Cancel", "type": "Terminate", "attachedToRef": "CloseTicket" }
+      ]
+    }
+  }
+}
