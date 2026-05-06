@@ -1,0 +1,268 @@
+{
+  "$type": "bpmn:Definitions",
+  "id": "definitions",
+  "targetNamespace": "http://bpmn.io/schema/bpmn",
+  "messages": [
+    {
+      "$type": "bpmn:Message",
+      "id": "msg_supportEmail",
+      "name": "Support E-mail"
+    },
+    {
+      "$type": "bpmn:Message",
+      "id": "msg_customerReply",
+      "name": "Customer Reply"
+    },
+    {
+      "$type": "bpmn:Message",
+      "id": "msg_cancel",
+      "name": "Ticket Cancel"
+    }
+  ],
+  "processes": [
+    {
+      "$type": "bpmn:Process",
+      "id": "customerSupportTicketProcess",
+      "isExecutable": true,
+      "flowElements": [
+        {
+          "$type": "bpmn:StartEvent",
+          "id": "SE1",
+          "name": "Receive support e-mail",
+          "eventDefinitions": [
+            {
+              "$type": "bpmn:MessageEventDefinition",
+              "messageRef": "msg_supportEmail"
+            }
+          ]
+        },
+        {
+          "$type": "bpmn:Task",
+          "id": "T1",
+          "name": "Parse e-mail and create Ticket"
+        },
+        {
+          "$type": "bpmn:SubProcess",
+          "id": "SP1",
+          "name": "Ticket Handling",
+          "flowElements": [
+            {
+              "$type": "bpmn:Task",
+              "id": "T2",
+              "name": "Initial Classification"
+            },
+            {
+              "$type": "bpmn:ExclusiveGateway",
+              "id": "XG1",
+              "name": "Classification"
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T3",
+              "name": "Root Cause Analysis"
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T4",
+              "name": "Provide Resolution"
+            },
+            {
+              "$type": "bpmn:ParallelGateway",
+              "id": "PG1",
+              "name": "Fork for parallel activities"
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T5",
+              "name": "Send Response to Customer"
+            },
+            {
+              "$type": "bpmn:EventBasedGateway",
+              "id": "EBG1",
+              "name": "Wait for Reply or Timeout"
+            },
+            {
+              "$type": "bpmn:IntermediateCatchEvent",
+              "id": "ICE1",
+              "name": "Customer Reply",
+              "eventDefinitions": [
+                {
+                  "$type": "bpmn:MessageEventDefinition",
+                  "messageRef": "msg_customerReply"
+                }
+              ]
+            },
+            {
+              "$type": "bpmn:IntermediateCatchEvent",
+              "id": "ICE2",
+              "name": "24 hours passed",
+              "eventDefinitions": [
+                {
+                  "$type": "bpmn:TimerEventDefinition",
+                  "timeDuration": "PT24H"
+                }
+              ]
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T8",
+              "name": "Send Reminder"
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T7",
+              "name": "Close Ticket"
+            },
+            {
+              "$type": "bpmn:EndEvent",
+              "id": "EE1",
+              "name": "Closed"
+            },
+            {
+              "$type": "bpmn:Task",
+              "id": "T6",
+              "name": "Log Solution in Knowledge Base"
+            },
+            {
+              "$type": "bpmn:EndEvent",
+              "id": "EE2",
+              "name": "Knowledge Base Updated"
+            }
+          ],
+          "sequenceFlows": [
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF3",
+              "sourceRef": "T2",
+              "targetRef": "XG1"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF_simple",
+              "sourceRef": "XG1",
+              "targetRef": "T4",
+              "name": "Simple"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF_complex",
+              "sourceRef": "XG1",
+              "targetRef": "T3",
+              "name": "Complex"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF4",
+              "sourceRef": "T3",
+              "targetRef": "T4"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF5",
+              "sourceRef": "T4",
+              "targetRef": "PG1"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF6",
+              "sourceRef": "PG1",
+              "targetRef": "T5"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF7",
+              "sourceRef": "T5",
+              "targetRef": "EBG1"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF8",
+              "sourceRef": "EBG1",
+              "targetRef": "ICE1"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF9",
+              "sourceRef": "EBG1",
+              "targetRef": "ICE2"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF10",
+              "sourceRef": "ICE1",
+              "targetRef": "T7"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF11",
+              "sourceRef": "ICE2",
+              "targetRef": "T8"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF12",
+              "sourceRef": "T8",
+              "targetRef": "T7"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF13",
+              "sourceRef": "T7",
+              "targetRef": "EE1"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF14",
+              "sourceRef": "PG1",
+              "targetRef": "T6"
+            },
+            {
+              "$type": "bpmn:SequenceFlow",
+              "id": "SF15",
+              "sourceRef": "T6",
+              "targetRef": "EE2"
+            }
+          ]
+        },
+        {
+          "$type": "bpmn:BoundaryEvent",
+          "id": "BE1",
+          "name": "Customer Cancel",
+          "attachedToRef": "SP1",
+          "cancelActivity": true,
+          "eventDefinitions": [
+            {
+              "$type": "bpmn:MessageEventDefinition",
+              "messageRef": "msg_cancel"
+            }
+          ]
+        },
+        {
+          "$type": "bpmn:EndEvent",
+          "id": "EE3",
+          "name": "Terminated"
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "$type": "bpmn:SequenceFlow",
+          "id": "SF1",
+          "sourceRef": "SE1",
+          "targetRef": "T1"
+        },
+        {
+          "$type": "bpmn:SequenceFlow",
+          "id": "SF2",
+          "sourceRef": "T1",
+          "targetRef": "SP1"
+        },
+        {
+          "$type": "bpmn:SequenceFlow",
+          "id": "SF_cancel",
+          "sourceRef": "BE1",
+          "targetRef": "EE3"
+        }
+      ]
+    }
+  ]
+}
