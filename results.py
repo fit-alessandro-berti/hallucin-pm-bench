@@ -14,7 +14,44 @@ reg_expr = re.compile(pattern)
 CATEGORY_IDS = tuple(f"{idx:02d}" for idx in range(1, 14))
 EXPECTED_EVALUATION_FILES = 39
 NAME_PREFIXES = ("anthropic", "x-ai", "openai", "qwen", "mistralai", "mistral/", "google", "microsoft", "deepseek", "meta-llama")
-OPEN_SOURCE_PATTERNS = ("qwen3", "llama", "mistral", "phi", "glm", "deepseek", "baidu", "moonshot", "oss")
+_CLOSED_SOURCE_MODEL_FAMILIES = (
+    "gpt-3.5",
+    "gpt-4",
+    "gpt-5",
+    "chatgpt",
+    "claude",
+    "gemini",
+    "grok",
+    "o1-",
+    "o3-",
+    "o4-mini",
+)
+_CLOSED_SOURCE_COMMERCIAL_TIERS = (
+    "2.5-plus",
+    "2.5-turbo",
+    "2.5-max",
+    "qwen3-max",
+    "qwen3.6",
+)
+_CLOSED_SOURCE_MODEL_ALIASES = (
+    "sonus",
+    "sonar-",
+    "quasar",
+    "optimus",
+    "horizon",
+    "cypher",
+    "mistral-medium",
+    "magistral-medium",
+    "ministral-3b",
+    "sonoma",
+    "mimo",
+    "muse",
+)
+_CLOSED_SOURCE_MODEL_MARKERS = (
+    _CLOSED_SOURCE_MODEL_FAMILIES
+    + _CLOSED_SOURCE_COMMERCIAL_TIERS
+    + _CLOSED_SOURCE_MODEL_ALIASES
+)
 LRM_PATTERNS = ("-think", "gemini-2.5-pro", "thinking", "openaio", "grok-3-mini-beta", "deepseek-r1", "grok-4", "gemini-2.5", "gpt-5", "gpt-oss", "grok-code-fast-1", "qwen3.5", "glm", "deepseek-v3.2", "deepseek-v4")
 _DEFAULT_LEADERBOARD_JSON = object()
 
@@ -42,13 +79,9 @@ def format_name(llm):
 
 
 def is_open_source(model_name):
-    model_name_lower = model_name.lower()
-
-    for p in OPEN_SOURCE_PATTERNS:
-        if p in model_name_lower:
-            if "mistral-medium" not in model_name_lower and "ministral" not in model_name_lower:
-                return ":white_check_mark:"
-
+    model_name_lower = model_name.lower().replace("/", "-").replace(":", "-").replace("_", "-").replace(" ", "-")
+    if model_name_lower and not any(marker in model_name_lower for marker in _CLOSED_SOURCE_MODEL_MARKERS):
+        return ":white_check_mark:"
     return ":x:"
 
 
