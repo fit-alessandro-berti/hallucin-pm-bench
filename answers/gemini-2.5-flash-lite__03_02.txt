@@ -1,0 +1,757 @@
+```json
+{
+  "bpmn:definitions": {
+    "@xmlns:bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "@xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "@xmlns:dc": "http://www.omg.org/spec/DD/20100524/DC",
+    "@xmlns:di": "http://www.omg.org/spec/DD/20100524/DI",
+    "@targetNamespace": "http://bpmn.io/schema/bpmn",
+    "bpmn:collaboration": {
+      "@id": "Collaboration_1",
+      "bpmn:participant": [
+        {
+          "@id": "Participant_1",
+          "@name": "Customer Support Process",
+          "@processRef": "Process_1"
+        },
+        {
+          "@id": "Participant_Customer",
+          "@name": "Customer"
+        }
+      ]
+    },
+    "bpmn:process": {
+      "@id": "Process_1",
+      "@isExecutable": "false",
+      "bpmn:startEvent": {
+        "@id": "StartEvent_1",
+        "@name": "Support E-mail Received"
+      },
+      "bpmn:sequenceFlow": [
+        {
+          "@id": "Flow_1",
+          "@sourceRef": "StartEvent_1",
+          "@targetRef": "Task_ParseEmail"
+        },
+        {
+          "@id": "Flow_2",
+          "@sourceRef": "Task_ParseEmail",
+          "@targetRef": "Task_InitialClassification"
+        },
+        {
+          "@id": "Flow_3",
+          "@sourceRef": "Task_InitialClassification",
+          "@targetRef": "Gateway_Classification"
+        },
+        {
+          "@id": "Flow_4_Simple",
+          "@name": "Simple",
+          "@sourceRef": "Gateway_Classification",
+          "@targetRef": "Task_ProvideResolution"
+        },
+        {
+          "@id": "Flow_5_Complex",
+          "@name": "Complex",
+          "@sourceRef": "Gateway_Classification",
+          "@targetRef": "Task_RootCauseAnalysis"
+        },
+        {
+          "@id": "Flow_6",
+          "@sourceRef": "Task_RootCauseAnalysis",
+          "@targetRef": "Task_ProvideResolution"
+        },
+        {
+          "@id": "Flow_7",
+          "@sourceRef": "Task_ProvideResolution",
+          "@targetRef": "Gateway_ParallelTasks"
+        },
+        {
+          "@id": "Flow_8",
+          "@sourceRef": "Gateway_ParallelTasks",
+          "@targetRef": "Task_SendResponse"
+        },
+        {
+          "@id": "Flow_9",
+          "@sourceRef": "Gateway_ParallelTasks",
+          "@targetRef": "Task_LogSolution"
+        },
+        {
+          "@id": "Flow_10",
+          "@sourceRef": "Task_SendResponse",
+          "@targetRef": "Event_WaitForCustomerReply"
+        },
+        {
+          "@id": "Flow_11",
+          "@sourceRef": "Event_WaitForCustomerReply",
+          "@targetRef": "Gateway_CustomerReply"
+        },
+        {
+          "@id": "Flow_12",
+          "@sourceRef": "Gateway_CustomerReply",
+          "@targetRef": "Task_CloseTicket_Reply"
+        },
+        {
+          "@id": "Flow_13",
+          "@sourceRef": "Task_LogSolution",
+          "@targetRef": "Gateway_ParallelTasks_Completion"
+        },
+        {
+          "@id": "Flow_14",
+          "@sourceRef": "Task_CloseTicket_Reply",
+          "@targetRef": "EndEvent_1"
+        },
+        {
+          "@id": "Flow_15",
+          "@sourceRef": "Event_Timer_24Hours",
+          "@targetRef": "Task_SendReminder"
+        },
+        {
+          "@id": "Flow_16",
+          "@sourceRef": "Task_SendReminder",
+          "@targetRef": "Task_CloseTicket_NoReply"
+        },
+        {
+          "@id": "Flow_17",
+          "@sourceRef": "Task_CloseTicket_NoReply",
+          "@targetRef": "EndEvent_1"
+        },
+        {
+          "@id": "Flow_18",
+          "@sourceRef": "Gateway_ParallelTasks_Completion",
+          "@targetRef": "Gateway_CustomerReply"
+        },
+        {
+          "@id": "Flow_19",
+          "@sourceRef": "Gateway_CustomerReply",
+          "@targetRef": "Event_Timer_24Hours",
+          "@conditionExpression": "No Reply Received"
+        },
+        {
+          "@id": "Flow_20",
+          "@sourceRef": "Event_CancelTicket",
+          "@targetRef": "EndEvent_Cancel"
+        }
+      ],
+      "bpmn:task": [
+        {
+          "@id": "Task_ParseEmail",
+          "@name": "Parse E-mail and Create Ticket"
+        },
+        {
+          "@id": "Task_InitialClassification",
+          "@name": "Initial Classification"
+        },
+        {
+          "@id": "Task_ProvideResolution",
+          "@name": "Provide Resolution"
+        },
+        {
+          "@id": "Task_RootCauseAnalysis",
+          "@name": "Root Cause Analysis"
+        },
+        {
+          "@id": "Task_SendResponse",
+          "@name": "Send Response to Customer"
+        },
+        {
+          "@id": "Task_LogSolution",
+          "@name": "Log Solution in Knowledge Base"
+        },
+        {
+          "@id": "Task_CloseTicket_Reply",
+          "@name": "Close Ticket"
+        },
+        {
+          "@id": "Task_SendReminder",
+          "@name": "Send Reminder"
+        },
+        {
+          "@id": "Task_CloseTicket_NoReply",
+          "@name": "Close Ticket"
+        }
+      ],
+      "bpmn:exclusiveGateway": [
+        {
+          "@id": "Gateway_Classification",
+          "@name": "Ticket Classification"
+        },
+        {
+          "@id": "Gateway_CustomerReply",
+          "@name": "Customer Reply Received?"
+        }
+      ],
+      "bpmn:parallelGateway": [
+        {
+          "@id": "Gateway_ParallelTasks",
+          "@name": "Parallel Tasks Start"
+        },
+        {
+          "@id": "Gateway_ParallelTasks_Completion",
+          "@name": "Parallel Tasks Completion"
+        }
+      ],
+      "bpmn:intermediateCatchEvent": [
+        {
+          "@id": "Event_WaitForCustomerReply",
+          "@name": "Wait for Customer Reply",
+          "bpmn:messageEventDefinition": {
+            "@id": "MessageEventDefinition_1",
+            "@messageRef": "Message_CustomerReply"
+          }
+        },
+        {
+          "@id": "Event_Timer_24Hours",
+          "@name": "24 Hours Passed",
+          "bpmn:timerEventDefinition": {
+            "@id": "TimerEventDefinition_1"
+          }
+        }
+      ],
+      "bpmn:endEvent": [
+        {
+          "@id": "EndEvent_1",
+          "@name": "Process Complete"
+        },
+        {
+          "@id": "EndEvent_Cancel",
+          "@name": "Process Terminated"
+        }
+      ],
+      "bpmn:intermediateThrowEvent": {
+        "@id": "Event_CancelTicket",
+        "@name": "Customer Cancels Ticket",
+        "bpmn:messageEventDefinition": {
+          "@id": "MessageEventDefinition_Cancel",
+          "@messageRef": "Message_CancelTicket"
+        }
+      },
+      "bpmn:message": [
+        {
+          "@id": "Message_CustomerReply",
+          "@name": "Customer Reply"
+        },
+        {
+          "@id": "Message_CancelTicket",
+          "@name": "Cancel Ticket"
+        }
+      ]
+    },
+    "bpmndi:BPMNDiagram": {
+      "@id": "BPMNDiagram_1",
+      "bpmndi:BPMNPlane": {
+        "@bpmnElement": "Collaboration_1",
+        "bpmndi:BPMNShape": [
+          {
+            "@id": "BPMNShape_Participant_1",
+            "@bpmnElement": "Participant_1",
+            "bpmndi:Bounds": {
+              "@x": 100,
+              "@y": 100,
+              "@width": 800,
+              "@height": 600
+            }
+          },
+          {
+            "@id": "BPMNShape_Participant_Customer",
+            "@bpmnElement": "Participant_Customer",
+            "bpmndi:Bounds": {
+              "@x": 100,
+              "@y": 750,
+              "@width": 800,
+              "@height": 100
+            }
+          },
+          {
+            "@id": "BPMNShape_StartEvent_1",
+            "@bpmnElement": "StartEvent_1",
+            "bpmndi:Bounds": {
+              "@x": 220,
+              "@y": 250,
+              "@width": 36,
+              "@height": 36
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_ParseEmail",
+            "@bpmnElement": "Task_ParseEmail",
+            "bpmndi:Bounds": {
+              "@x": 300,
+              "@y": 238,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_InitialClassification",
+            "@bpmnElement": "Task_InitialClassification",
+            "bpmndi:Bounds": {
+              "@x": 450,
+              "@y": 238,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Gateway_Classification",
+            "@bpmnElement": "Gateway_Classification",
+            "bpmndi:Bounds": {
+              "@x": 600,
+              "@y": 251,
+              "@width": 50,
+              "@height": 50
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_ProvideResolution",
+            "@bpmnElement": "Task_ProvideResolution",
+            "bpmndi:Bounds": {
+              "@x": 550,
+              "@y": 350,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_RootCauseAnalysis",
+            "@bpmnElement": "Task_RootCauseAnalysis",
+            "bpmndi:Bounds": {
+              "@x": 400,
+              "@y": 350,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Gateway_ParallelTasks",
+            "@bpmnElement": "Gateway_ParallelTasks",
+            "bpmndi:Bounds": {
+              "@x": 600,
+              "@y": 363,
+              "@width": 50,
+              "@height": 50
+            }
+          },
+          {
+            "@id": "BPMNShape_Gateway_ParallelTasks_Completion",
+            "@bpmnElement": "Gateway_ParallelTasks_Completion",
+            "bpmndi:Bounds": {
+              "@x": 700,
+              "@y": 363,
+              "@width": 50,
+              "@height": 50
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_SendResponse",
+            "@bpmnElement": "Task_SendResponse",
+            "bpmndi:Bounds": {
+              "@x": 770,
+              "@y": 350,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_LogSolution",
+            "@bpmnElement": "Task_LogSolution",
+            "bpmndi:Bounds": {
+              "@x": 770,
+              "@y": 450,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Event_WaitForCustomerReply",
+            "@bpmnElement": "Event_WaitForCustomerReply",
+            "bpmndi:Bounds": {
+              "@x": 820,
+              "@y": 550,
+              "@width": 36,
+              "@height": 36
+            }
+          },
+          {
+            "@id": "BPMNShape_Gateway_CustomerReply",
+            "@bpmnElement": "Gateway_CustomerReply",
+            "bpmndi:Bounds": {
+              "@x": 670,
+              "@y": 550,
+              "@width": 50,
+              "@height": 50
+            }
+          },
+          {
+            "@id": "BPMNShape_Event_Timer_24Hours",
+            "@bpmnElement": "Event_Timer_24Hours",
+            "bpmndi:Bounds": {
+              "@x": 500,
+              "@y": 550,
+              "@width": 36,
+              "@height": 36
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_CloseTicket_Reply",
+            "@bpmnElement": "Task_CloseTicket_Reply",
+            "bpmndi:Bounds": {
+              "@x": 550,
+              "@y": 650,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_SendReminder",
+            "@bpmnElement": "Task_SendReminder",
+            "bpmndi:Bounds": {
+              "@x": 400,
+              "@y": 650,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_Task_CloseTicket_NoReply",
+            "@bpmnElement": "Task_CloseTicket_NoReply",
+            "bpmndi:Bounds": {
+              "@x": 250,
+              "@y": 650,
+              "@width": 100,
+              "@height": 70
+            }
+          },
+          {
+            "@id": "BPMNShape_EndEvent_1",
+            "@bpmnElement": "EndEvent_1",
+            "bpmndi:Bounds": {
+              "@x": 150,
+              "@y": 670,
+              "@width": 36,
+              "@height": 36
+            }
+          },
+          {
+            "@id": "BPMNShape_Event_CancelTicket",
+            "@bpmnElement": "Event_CancelTicket",
+            "bpmndi:Bounds": {
+              "@x": 250,
+              "@y": 450,
+              "@width": 36,
+              "@height": 36
+            }
+          },
+          {
+            "@id": "BPMNShape_EndEvent_Cancel",
+            "@bpmnElement": "EndEvent_Cancel",
+            "bpmndi:Bounds": {
+              "@x": 350,
+              "@y": 450,
+              "@width": 36,
+              "@height": 36
+            }
+          }
+        ],
+        "bpmndi:BPMNEdge": [
+          {
+            "@id": "BPMNEdge_Flow_1",
+            "@bpmnElement": "Flow_1",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 256,
+                "@y": 268
+              },
+              {
+                "@x": 300,
+                "@y": 273
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_2",
+            "@bpmnElement": "Flow_2",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 400,
+                "@y": 273
+              },
+              {
+                "@x": 450,
+                "@y": 273
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_3",
+            "@bpmnElement": "Flow_3",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 550,
+                "@y": 276
+              },
+              {
+                "@x": 600,
+                "@y": 276
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_4_Simple",
+            "@bpmnElement": "Flow_4_Simple",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 625,
+                "@y": 251
+              },
+              {
+                "@x": 625,
+                "@y": 300
+              },
+              {
+                "@x": 550,
+                "@y": 350
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_5_Complex",
+            "@bpmnElement": "Flow_5_Complex",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 600,
+                "@y": 276
+              },
+              {
+                "@x": 400,
+                "@y": 350
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_6",
+            "@bpmnElement": "Flow_6",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 500,
+                "@y": 420
+              },
+              {
+                "@x": 550,
+                "@y": 420
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_7",
+            "@bpmnElement": "Flow_7",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 650,
+                "@y": 388
+              },
+              {
+                "@x": 700,
+                "@y": 388
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_8",
+            "@bpmnElement": "Flow_8",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 700,
+                "@y": 388
+              },
+              {
+                "@x": 770,
+                "@y": 385
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_9",
+            "@bpmnElement": "Flow_9",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 700,
+                "@y": 388
+              },
+              {
+                "@x": 770,
+                "@y": 485
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_10",
+            "@bpmnElement": "Flow_10",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 870,
+                "@y": 385
+              },
+              {
+                "@x": 870,
+                "@y": 550
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_11",
+            "@bpmnElement": "Flow_11",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 856,
+                "@y": 568
+              },
+              {
+                "@x": 670,
+                "@y": 575
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_12",
+            "@bpmnElement": "Flow_12",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 670,
+                "@y": 575
+              },
+              {
+                "@x": 600,
+                "@y": 650
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_13",
+            "@bpmnElement": "Flow_13",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 870,
+                "@y": 485
+              },
+              {
+                "@x": 870,
+                "@y": 500
+              },
+              {
+                "@x": 700,
+                "@y": 388
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_14",
+            "@bpmnElement": "Flow_14",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 650,
+                "@y": 685
+              },
+              {
+                "@x": 150,
+                "@y": 688
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_15",
+            "@bpmnElement": "Flow_15",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 536,
+                "@y": 568
+              },
+              {
+                "@x": 536,
+                "@y": 590
+              },
+              {
+                "@x": 400,
+                "@y": 650
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_16",
+            "@bpmnElement": "Flow_16",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 500,
+                "@y": 685
+              },
+              {
+                "@x": 350,
+                "@y": 685
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_17",
+            "@bpmnElement": "Flow_17",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 350,
+                "@y": 685
+              },
+              {
+                "@x": 150,
+                "@y": 688
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_18",
+            "@bpmnElement": "Flow_18",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 720,
+                "@y": 388
+              },
+              {
+                "@x": 720,
+                "@y": 575
+              },
+              {
+                "@x": 670,
+                "@y": 575
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_19",
+            "@bpmnElement": "Flow_19",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 670,
+                "@y": 575
+              },
+              {
+                "@x": 500,
+                "@y": 575
+              }
+            ]
+          },
+          {
+            "@id": "BPMNEdge_Flow_20",
+            "@bpmnElement": "Flow_20",
+            "bpmndi:WayPoint": [
+              {
+                "@x": 286,
+                "@y": 468
+              },
+              {
+                "@x": 350,
+                "@y": 468
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
+```
