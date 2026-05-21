@@ -1,0 +1,301 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="wrc_Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Business Process Architect" exporterVersion="1.0">
+  <bpmn:process id="wrc_Process_1" isExecutable="true">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="wrc_StartEvent_1" name="online warranty claim">
+      <bpmn:outgoing>wrc_Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- Step 2: Validation -->
+    <bpmn:task id="wrc_Task_1" name="validates the claim">
+      <bpmn:incoming>wrc_Flow_1</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="wrc_XGW_1" name="Completeness">
+      <bpmn:incoming>wrc_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="wrc_Task_2" name="requests missing information">
+      <bpmn:incoming>wrc_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_4</bpmn:outgoing>
+    </bpmn:task>
+    
+    <!-- Step 3: Eligibility -->
+    <bpmn:task id="wrc_Task_3" name="checks warranty eligibility">
+      <bpmn:incoming>wrc_Flow_5</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_6</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="wrc_XGW_2" name="Warranty Decision">
+      <bpmn:incoming>wrc_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_7</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_9</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="wrc_Task_4" name="send rejection notice">
+      <bpmn:incoming>wrc_Flow_7</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_8</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="wrc_EndEvent_1" name="Rejected">
+      <bpmn:incoming>wrc_Flow_8</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <!-- Step 4: Parallel Activities -->
+    <bpmn:parallelGateway id="wrc_PGW_1" name="Parallel Split">
+      <bpmn:incoming>wrc_Flow_9</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_10</bpmn:outgoing>
+      <bpmn:outgoing>wrc_Flow_11</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:task id="wrc_Task_5" name="Create shipment order">
+      <bpmn:incoming>wrc_Flow_10</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_12</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="wrc_Task_6" name="Schedule courier pickup">
+      <bpmn:incoming>wrc_Flow_11</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_13</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:parallelGateway id="wrc_PGW_2" name="Parallel Join">
+      <bpmn:incoming>wrc_Flow_12</bpmn:incoming>
+      <bpmn:incoming>wrc_Flow_13</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_14</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Step 5: Finalization -->
+    <bpmn:task id="wrc_Task_7" name="update inventory records">
+      <bpmn:incoming>wrc_Flow_14</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_15</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="wrc_Task_8" name="close the claim">
+      <bpmn:incoming>wrc_Flow_15</bpmn:incoming>
+      <bpmn:outgoing>wrc_Flow_16</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="wrc_EndEvent_2" name="Completed">
+      <bpmn:incoming>wrc_Flow_16</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="wrc_Flow_1" sourceRef="wrc_StartEvent_1" targetRef="wrc_Task_1" />
+    <bpmn:sequenceFlow id="wrc_Flow_2" sourceRef="wrc_Task_1" targetRef="wrc_XGW_1" />
+    <bpmn:sequenceFlow id="wrc_Flow_3" name="incomplete" sourceRef="wrc_XGW_1" targetRef="wrc_Task_2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">incomplete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_Flow_4" sourceRef="wrc_Task_2" targetRef="wrc_Task_1" />
+    <bpmn:sequenceFlow id="wrc_Flow_5" name="complete" sourceRef="wrc_XGW_1" targetRef="wrc_Task_3">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">complete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_Flow_6" sourceRef="wrc_Task_3" targetRef="wrc_XGW_2" />
+    <bpmn:sequenceFlow id="wrc_Flow_7" name="out of warranty" sourceRef="wrc_XGW_2" targetRef="wrc_Task_4">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">out of warranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_Flow_8" sourceRef="wrc_Task_4" targetRef="wrc_EndEvent_1" />
+    <bpmn:sequenceFlow id="wrc_Flow_9" name="within warranty" sourceRef="wrc_XGW_2" targetRef="wrc_PGW_1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">within warranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_Flow_10" sourceRef="wrc_PGW_1" targetRef="wrc_Task_5" />
+    <bpmn:sequenceFlow id="wrc_Flow_11" sourceRef="wrc_PGW_1" targetRef="wrc_Task_6" />
+    <bpmn:sequenceFlow id="wrc_Flow_12" sourceRef="wrc_Task_5" targetRef="wrc_PGW_2" />
+    <bpmn:sequenceFlow id="wrc_Flow_13" sourceRef="wrc_Task_6" targetRef="wrc_PGW_2" />
+    <bpmn:sequenceFlow id="wrc_Flow_14" sourceRef="wrc_PGW_2" targetRef="wrc_Task_7" />
+    <bpmn:sequenceFlow id="wrc_Flow_15" sourceRef="wrc_Task_7" targetRef="wrc_Task_8" />
+    <bpmn:sequenceFlow id="wrc_Flow_16" sourceRef="wrc_Task_8" targetRef="wrc_EndEvent_2" />
+    
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="wrc_BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="wrc_BPMNPlane_1" bpmnElement="wrc_Process_1">
+      
+      <!-- Shapes -->
+      <bpmndi:BPMNShape id="wrc_Shape_StartEvent_1" bpmnElement="wrc_StartEvent_1">
+        <dc:Bounds x="80" y="200" width="36" height="36" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_1" bpmnElement="wrc_Task_1">
+        <dc:Bounds x="200" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_XGW_1" bpmnElement="wrc_XGW_1" isMarkerVisible="true">
+        <dc:Bounds x="350" y="198" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="345" y="174" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_2" bpmnElement="wrc_Task_2">
+        <dc:Bounds x="320" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_3" bpmnElement="wrc_Task_3">
+        <dc:Bounds x="450" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_XGW_2" bpmnElement="wrc_XGW_2" isMarkerVisible="true">
+        <dc:Bounds x="600" y="198" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="585" y="174" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_4" bpmnElement="wrc_Task_4">
+        <dc:Bounds x="570" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_EndEvent_1" bpmnElement="wrc_EndEvent_1">
+        <dc:Bounds x="750" y="302" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="748" y="345" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_PGW_1" bpmnElement="wrc_PGW_1">
+        <dc:Bounds x="700" y="198" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="690" y="174" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_5" bpmnElement="wrc_Task_5">
+        <dc:Bounds x="800" y="98" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_6" bpmnElement="wrc_Task_6">
+        <dc:Bounds x="800" y="258" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_PGW_2" bpmnElement="wrc_PGW_2">
+        <dc:Bounds x="950" y="198" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="945" y="174" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_7" bpmnElement="wrc_Task_7">
+        <dc:Bounds x="1050" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_Task_8" bpmnElement="wrc_Task_8">
+        <dc:Bounds x="1200" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="wrc_Shape_EndEvent_2" bpmnElement="wrc_EndEvent_2">
+        <dc:Bounds x="1350" y="200" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1343" y="243" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_1" bpmnElement="wrc_Flow_1">
+        <di:waypoint x="116" y="218" />
+        <di:waypoint x="200" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_2" bpmnElement="wrc_Flow_2">
+        <di:waypoint x="300" y="218" />
+        <di:waypoint x="350" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_3" bpmnElement="wrc_Flow_3">
+        <di:waypoint x="375" y="248" />
+        <di:waypoint x="375" y="280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="380" y="260" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_4" bpmnElement="wrc_Flow_4">
+        <di:waypoint x="320" y="320" />
+        <di:waypoint x="150" y="320" />
+        <di:waypoint x="150" y="218" />
+        <di:waypoint x="200" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_5" bpmnElement="wrc_Flow_5">
+        <di:waypoint x="400" y="223" />
+        <di:waypoint x="450" y="218" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="410" y="200" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_6" bpmnElement="wrc_Flow_6">
+        <di:waypoint x="550" y="218" />
+        <di:waypoint x="600" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_7" bpmnElement="wrc_Flow_7">
+        <di:waypoint x="625" y="248" />
+        <di:waypoint x="625" y="280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="630" y="260" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_8" bpmnElement="wrc_Flow_8">
+        <di:waypoint x="670" y="320" />
+        <di:waypoint x="750" y="320" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_9" bpmnElement="wrc_Flow_9">
+        <di:waypoint x="650" y="223" />
+        <di:waypoint x="700" y="218" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="655" y="200" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_10" bpmnElement="wrc_Flow_10">
+        <di:waypoint x="725" y="198" />
+        <di:waypoint x="725" y="138" />
+        <di:waypoint x="800" y="138" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_11" bpmnElement="wrc_Flow_11">
+        <di:waypoint x="725" y="248" />
+        <di:waypoint x="725" y="298" />
+        <di:waypoint x="800" y="298" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_12" bpmnElement="wrc_Flow_12">
+        <di:waypoint x="900" y="138" />
+        <di:waypoint x="975" y="138" />
+        <di:waypoint x="975" y="198" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_13" bpmnElement="wrc_Flow_13">
+        <di:waypoint x="900" y="298" />
+        <di:waypoint x="975" y="298" />
+        <di:waypoint x="975" y="248" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_14" bpmnElement="wrc_Flow_14">
+        <di:waypoint x="1000" y="223" />
+        <di:waypoint x="1050" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_15" bpmnElement="wrc_Flow_15">
+        <di:waypoint x="1150" y="218" />
+        <di:waypoint x="1200" y="218" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="wrc_Edge_Flow_16" bpmnElement="wrc_Flow_16">
+        <di:waypoint x="1300" y="218" />
+        <di:waypoint x="1350" y="218" />
+      </bpmndi:BPMNEdge>
+      
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+```
