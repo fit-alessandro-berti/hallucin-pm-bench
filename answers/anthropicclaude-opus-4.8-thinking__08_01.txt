@@ -1,0 +1,28 @@
+## Answer: **Yes** — T5 can fire before T3.
+
+### Concrete firing sequence
+
+| Step | Transition | Marking after firing (p0,p1,p2,p3,p4,p5,p6) |
+|------|-----------|---------------------------------------------|
+| start | — | (1, 0, 0, 0, 0, 0, 0) |
+| 1 | **T1** | (0, 1, 1, 0, 0, 0, 0) |
+| 2 | **T2** | (0, 0, 1, 1, 0, 0, 0) |
+| 3 | **T5** | (0, 0, 1, 0, 0, 0, 1) |
+
+### Justification
+
+- **T1** is enabled (p0 = 1) and produces tokens in p1 and p2.
+- **T2** is enabled (p1 = 1) and moves the token from p1 into **p3**.
+- Now examine **T5**'s enabling condition:
+  - Normal input **p3 = 1** ✔ (token present)
+  - Inhibitor input **p4 = 0** ✔ (T3 has not yet fired, so p4 is still empty)
+
+Both conditions hold, so **T5 fires**, depositing a token in p6 — all while **T3 has never fired** (p2 still holds its token, p4 is still empty).
+
+### Why this is possible
+
+The only thing that can put a token in p4 is **T3** (p2 → p4). The inhibitor arc on T5 forbids firing only when p4 is **non‑empty**. Since the parallel branch through p2/T3 runs independently of the p1/T2/p3 branch, the "p3‑branch" can reach p3 and trigger T5 **before** the "p4‑branch" ever executes T3. The net does not enforce any ordering between the two parallel branches.
+
+Hence the sequence **T1 → T2 → T5** demonstrates T5 firing strictly before T3.
+
+> **Note (design implication):** This reveals a race condition — the inhibitor‑guarded "shortcut" T5 and the synchronising join T4 compete. Once T5 consumes p3, T4 can never fire (it needs both p3 and p4). If T5 is meant to be a *timeout/exception* path that should only trigger when the p4 branch is genuinely stalled, the model may need an extra guard, because here it can legitimately "win the race" even in normal operation.

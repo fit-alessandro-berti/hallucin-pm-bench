@@ -1,0 +1,30 @@
+## Answer: **Yes**, T5 can fire before T3 (in fact T5 can fire while T3 never fires at all).
+
+### Shortest firing sequence (4 transitions)
+
+```
+T1 , T2b , T4 , T5
+```
+
+### Marking trace
+
+| Step | Transition | Effect | Resulting marking |
+|------|-----------|--------|-------------------|
+| 0 | — | initial | p0=1 |
+| 1 | **T1** | p0 → pa, pb | pa=1, pb=1 |
+| 2 | **T2b** | pa → pd (the *shortcut*, skips pc) | pd=1, pb=1 |
+| 3 | **T4** | pb → pe | pd=1, pe=1 |
+| 4 | **T5** | pd, pe → pf | pf=1 |
+
+T5 fires at step 4, while T3 has **never** fired — so T5 trivially precedes T3.
+
+### Why this is minimal
+
+- T5 requires **both** `pd` and `pe` in its preset.
+- The only way to get any token off `p0` is **T1** (it is the sole enabled transition initially), and T1 is the only producer of `pb` (needed downstream for `pe`).
+- After T1 we still need to create one token in `pd` **and** one in `pe`:
+  - `pe` requires firing **T4** (pb → pe).
+  - `pd` requires firing either **T2b** (pa → pd) or the longer route **T2 → T3** (pa → pc → pd). Using **T2b** avoids T3 and costs only one transition.
+- Hence the minimum is: 1 (T1) + 1 (T2b) + 1 (T4) + 1 (T5) = **4 transitions**, which the sequence above achieves.
+
+The `T2b` "shortcut" is exactly what makes the `T5`‑before‑`T3` ordering possible: it deposits a token directly in `pd` without ever passing through `pc`/`T3`.

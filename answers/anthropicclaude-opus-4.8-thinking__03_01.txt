@@ -1,0 +1,35 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             targetNamespace="http://acmetech.com/support">
+  <process id="supportTicket" isExecutable="true">
+    <startEvent id="start" name="Ticket Submitted"/>
+    <serviceTask id="t1" name="Classify Ticket"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <userTask id="t2" name="Provide Reset Instructions"/>
+    <userTask id="t3" name="Initial Diagnosis"/>
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <userTask id="t4" name="Forward to Specialist"/>
+    <task id="t5" name="Resolve Issue"/>
+    <userTask id="t6" name="Confirm with Customer"/>
+    <exclusiveGateway id="gw3" name="Confirmed?"/>
+    <endEvent id="end" name="Ticket Closed"/>
+
+    <sequenceFlow id="f1" sourceRef="start" targetRef="t1"/>
+    <sequenceFlow id="f2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="f3" sourceRef="gw1" targetRef="t2" name="Password Reset"/>
+    <sequenceFlow id="f4" sourceRef="gw1" targetRef="t3" name="Otherwise"/>
+    <sequenceFlow id="f5" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="f6" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="f7" sourceRef="gw2" targetRef="t5" name="Resolve"/>
+    <sequenceFlow id="f8" sourceRef="gw2" targetRef="t4" name="Forward"/>
+    <sequenceFlow id="f9" sourceRef="t4" targetRef="t5"/>
+    <sequenceFlow id="f10" sourceRef="t5" targetRef="t6"/>
+    <sequenceFlow id="f11" sourceRef="t6" targetRef="gw3"/>
+    <sequenceFlow id="f12" sourceRef="gw3" targetRef="end" name="Confirmed"/>
+    <sequenceFlow id="f13" sourceRef="gw3" targetRef="t3" name="Issue Persists"/>
+  </process>
+</definitions>
+```
+
+**Note:** The text actually contains *three* decision points (classification, resolve/forward, and customer confirmation), so I used three exclusive gateways. A valid BPMN model requires a gateway at every conditional split (line 5 is a genuine XOR choice), so `gw2` was necessary in addition to the two you highlighted (`gw1`, `gw3`). No escalations, timers, or other unstated elements were added.
