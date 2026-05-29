@@ -1,0 +1,876 @@
+{
+  "bpmn:definitions": {
+    "xmlns:bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+    "xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+    "xmlns:dc": "http://www.omg.org/spec/DD/20100524/DC",
+    "xmlns:di": "http://www.omg.org/spec/DD/20100524/DI",
+    "id": "Definitions_1",
+    "targetNamespace": "http://example.com/customer-support-ticket",
+    "bpmn:process": {
+      "id": "customer_support_ticket_process",
+      "name": "Customer Support Ticket Process",
+      "isExecutable": true,
+      "elements": [
+        {
+          "bpmn:startEvent": {
+            "id": "start_1",
+            "name": "Support Email Received"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_create_ticket",
+            "name": "Parse Email and Create Ticket in Help Desk"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_initial_classification",
+            "name": "Perform Initial Classification"
+          }
+        },
+        {
+          "bpmn:exclusiveGateway": {
+            "id": "gateway_classify",
+            "name": "Ticket Classification"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_root_cause_analysis",
+            "name": "Perform Root Cause Analysis"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_provide_resolution",
+            "name": "Provide Resolution"
+          }
+        },
+        {
+          "bpmn:parallelGateway": {
+            "id": "gateway_parallel_fork",
+            "name": "Parallel Tasks Fork"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_send_response",
+            "name": "Send Response to Customer"
+          }
+        },
+        {
+          "bpmn:eventBasedGateway": {
+            "id": "gateway_wait_reply",
+            "name": "Wait for Customer Response"
+          }
+        },
+        {
+          "bpmn:intermediateCatchEvent": {
+            "id": "event_customer_reply",
+            "name": "Customer Reply Received",
+            "bpmn:messageEventDefinition": {
+              "id": "msg_customer_reply"
+            }
+          }
+        },
+        {
+          "bpmn:intermediateCatchEvent": {
+            "id": "event_24h_elapsed",
+            "name": "24 Hours Elapsed",
+            "bpmn:timerEventDefinition": {
+              "id": "timer_24h",
+              "timeDuration": "PT24H"
+            }
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_send_reminder",
+            "name": "Send Reminder to Customer"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_close_ticket",
+            "name": "Close Ticket"
+          }
+        },
+        {
+          "bpmn:task": {
+            "id": "task_log_solution",
+            "name": "Log Solution in Knowledge Base"
+          }
+        },
+        {
+          "bpmn:parallelGateway": {
+            "id": "gateway_parallel_join",
+            "name": "Parallel Tasks Join"
+          }
+        },
+        {
+          "bpmn:endEvent": {
+            "id": "end_1",
+            "name": "Ticket Process Complete"
+          }
+        },
+        {
+          "bpmn:eventSubProcess": {
+            "id": "subprocess_cancel",
+            "name": "Cancellation Handler",
+            "triggeredByEvent": true,
+            "elements": [
+              {
+                "bpmn:startEvent": {
+                  "id": "start_cancel",
+                  "name": "Customer Cancels Ticket",
+                  "bpmn:messageEventDefinition": {
+                    "id": "msg_cancel"
+                  }
+                }
+              },
+              {
+                "bpmn:terminateEndEvent": {
+                  "id": "end_terminate",
+                  "name": "Terminate Process"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "sequenceFlows": [
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_1",
+            "sourceRef": "start_1",
+            "targetRef": "task_create_ticket"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_2",
+            "sourceRef": "task_create_ticket",
+            "targetRef": "task_initial_classification"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_3",
+            "sourceRef": "task_initial_classification",
+            "targetRef": "gateway_classify"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_simple",
+            "sourceRef": "gateway_classify",
+            "targetRef": "task_provide_resolution",
+            "bpmn:conditionExpression": {
+              "id": "cond_simple",
+              "text": "ticketType == 'Simple'"
+            }
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_complex",
+            "sourceRef": "gateway_classify",
+            "targetRef": "task_root_cause_analysis",
+            "bpmn:conditionExpression": {
+              "id": "cond_complex",
+              "text": "ticketType == 'Complex'"
+            }
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_4",
+            "sourceRef": "task_root_cause_analysis",
+            "targetRef": "task_provide_resolution"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_5",
+            "sourceRef": "task_provide_resolution",
+            "targetRef": "gateway_parallel_fork"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_6",
+            "sourceRef": "gateway_parallel_fork",
+            "targetRef": "task_send_response"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_7",
+            "sourceRef": "gateway_parallel_fork",
+            "targetRef": "task_log_solution"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_8",
+            "sourceRef": "task_send_response",
+            "targetRef": "gateway_wait_reply"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_9",
+            "sourceRef": "gateway_wait_reply",
+            "targetRef": "event_customer_reply"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_10",
+            "sourceRef": "gateway_wait_reply",
+            "targetRef": "event_24h_elapsed"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_11",
+            "sourceRef": "event_customer_reply",
+            "targetRef": "task_close_ticket"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_12",
+            "sourceRef": "event_24h_elapsed",
+            "targetRef": "task_send_reminder"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_13",
+            "sourceRef": "task_send_reminder",
+            "targetRef": "task_close_ticket"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_14",
+            "sourceRef": "task_log_solution",
+            "targetRef": "gateway_parallel_join"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_15",
+            "sourceRef": "task_close_ticket",
+            "targetRef": "gateway_parallel_join"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_16",
+            "sourceRef": "gateway_parallel_join",
+            "targetRef": "end_1"
+          }
+        },
+        {
+          "bpmn:sequenceFlow": {
+            "id": "flow_cancel",
+            "sourceRef": "start_cancel",
+            "targetRef": "end_terminate"
+          }
+        }
+      ]
+    },
+    "bpmn:BPMNDiagram": {
+      "id": "diagram_1",
+      "bpmn:BPMNPlane": {
+        "id": "plane_1",
+        "bpmn:BPMNShape": [
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_start_1",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_1"],
+              "bpmn:incoming": [],
+              "bpmn:name": "Support Email Received",
+              "di:width": 30,
+              "di:height": 30,
+              "di:x": 50,
+              "di:y": 150
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_create_ticket",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_2"],
+              "bpmn:incoming": ["flow_1"],
+              "bpmn:name": "Parse Email and Create Ticket in Help Desk",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 120,
+              "di:y": 135
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_initial_classification",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_3"],
+              "bpmn:incoming": ["flow_2"],
+              "bpmn:name": "Perform Initial Classification",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 350,
+              "di:y": 135
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_gateway_classify",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_simple", "flow_complex"],
+              "bpmn:incoming": ["flow_3"],
+              "bpmn:name": "Ticket Classification",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 580,
+              "di:y": 145
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_rca",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_4"],
+              "bpmn:incoming": ["flow_complex"],
+              "bpmn:name": "Perform Root Cause Analysis",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 660,
+              "di:y": 80
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_resolution",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_5"],
+              "bpmn:incoming": ["flow_simple", "flow_4"],
+              "bpmn:name": "Provide Resolution",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 350,
+              "di:y": 60
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_gateway_fork",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_6", "flow_7"],
+              "bpmn:incoming": ["flow_5"],
+              "bpmn:name": "Parallel Tasks Fork",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 580,
+              "di:y": 75
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_send_response",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_8"],
+              "bpmn:incoming": ["flow_6"],
+              "bpmn:name": "Send Response to Customer",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 660,
+              "di:y": 60
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_gateway_wait",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_9", "flow_10"],
+              "bpmn:incoming": ["flow_8"],
+              "bpmn:name": "Wait for Customer Response",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 890,
+              "di:y": 75
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_event_reply",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [
+                {
+                  "bpmn:messageEventDefinition": {
+                    "id": "msg_customer_reply"
+                  }
+                }
+              ],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_11"],
+              "bpmn:incoming": ["flow_9"],
+              "bpmn:name": "Customer Reply Received",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 960,
+              "di:y": 30
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_event_24h",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [
+                {
+                  "bpmn:timerEventDefinition": {
+                    "id": "timer_24h",
+                    "timeDuration": "PT24H"
+                  }
+                }
+              ],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_12"],
+              "bpmn:incoming": ["flow_10"],
+              "bpmn:name": "24 Hours Elapsed",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 960,
+              "di:y": 110
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_send_reminder",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_13"],
+              "bpmn:incoming": ["flow_12"],
+              "bpmn:name": "Send Reminder to Customer",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 1070,
+              "di:y": 95
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_close_ticket",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_15"],
+              "bpmn:incoming": ["flow_11", "flow_13"],
+              "bpmn:name": "Close Ticket",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 1300,
+              "di:y": 95
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_log_solution",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_14"],
+              "bpmn:incoming": ["flow_7"],
+              "bpmn:name": "Log Solution in Knowledge Base",
+              "di:width": 180,
+              "di:height": 60,
+              "di:x": 660,
+              "di:y": 250
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_gateway_join",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_16"],
+              "bpmn:incoming": ["flow_14", "flow_15"],
+              "bpmn:name": "Parallel Tasks Join",
+              "di:width": 40,
+              "di:height": 40,
+              "di:x": 890,
+              "di:y": 265
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_end_1",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": [],
+              "bpmn:incoming": ["flow_16"],
+              "bpmn:name": "Ticket Process Complete",
+              "di:width": 30,
+              "di:height": 30,
+              "di:x": 960,
+              "di:y": 250
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_subprocess_cancel",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": true,
+              "bpmn:isInterrupting": true,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": [],
+              "bpmn:incoming": [],
+              "bpmn:name": "Cancellation Handler",
+              "di:width": 160,
+              "di:height": 80,
+              "di:x": 580,
+              "di:y": 300
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_start_cancel",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": true,
+              "bpmn:isInterrupting": true,
+              "bpmn:eventDefinitions": [
+                {
+                  "bpmn:messageEventDefinition": {
+                    "id": "msg_cancel"
+                  }
+                }
+              ],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": ["flow_cancel"],
+              "bpmn:incoming": [],
+              "bpmn:name": "Customer Cancels Ticket",
+              "di:width": 30,
+              "di:height": 30,
+              "di:x": 600,
+              "di:y": 320
+            }
+          },
+          {
+            "bpmn:BPMNShape": {
+              "id": "shape_end_terminate",
+              "bpmn:boundaryEvent": false,
+              "bpmn:triggeredByEvent": false,
+              "bpmn:isInterrupting": false,
+              "bpmn:eventDefinitions": [],
+              "bpmn:extensionElements": {},
+              "bpmn:outgoing": [],
+              "bpmn:incoming": ["flow_cancel"],
+              "bpmn:name": "Terminate Process",
+              "di:width": 30,
+              "di:height": 30,
+              "di:x": 690,
+              "di:y": 320
+            }
+          }
+        ],
+        "bpmn:BPMNEdge": [
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_1",
+              "bpmn:sourceRef": "shape_start_1",
+              "bpmn:targetRef": "shape_create_ticket",
+              "di:waypoints": [
+                { "di:x": 65, "di:y": 165 },
+                { "di:x": 120, "di:y": 165 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_2",
+              "bpmn:sourceRef": "shape_create_ticket",
+              "bpmn:targetRef": "shape_initial_classification",
+              "di:waypoints": [
+                { "di:x": 300, "di:y": 165 },
+                { "di:x": 350, "di:y": 165 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_3",
+              "bpmn:sourceRef": "shape_initial_classification",
+              "bpmn:targetRef": "shape_gateway_classify",
+              "di:waypoints": [
+                { "di:x": 530, "di:y": 165 },
+                { "di:x": 580, "di:y": 165 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_simple",
+              "bpmn:sourceRef": "shape_gateway_classify",
+              "bpmn:targetRef": "shape_resolution",
+              "di:waypoints": [
+                { "di:x": 580, "di:y": 145 },
+                { "di:x": 580, "di:y": 90 },
+                { "di:x": 530, "di:y": 90 }
+              ],
+              "bpmn:label": {
+                "id": "label_simple",
+                "text": "Simple"
+              }
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_complex",
+              "bpmn:sourceRef": "shape_gateway_classify",
+              "bpmn:targetRef": "shape_rca",
+              "di:waypoints": [
+                { "di:x": 600, "di:y": 145 },
+                { "di:x": 600, "di:y": 110 },
+                { "di:x": 660, "di:y": 110 }
+              ],
+              "bpmn:label": {
+                "id": "label_complex",
+                "text": "Complex"
+              }
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_4",
+              "bpmn:sourceRef": "shape_rca",
+              "bpmn:targetRef": "shape_resolution",
+              "di:waypoints": [
+                { "di:x": 660, "di:y": 110 },
+                { "di:x": 580, "di:y": 110 },
+                { "di:x": 580, "di:y": 90 },
+                { "di:x": 530, "di:y": 90 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_5",
+              "bpmn:sourceRef": "shape_resolution",
+              "bpmn:targetRef": "shape_gateway_fork",
+              "di:waypoints": [
+                { "di:x": 530, "di:y": 90 },
+                { "di:x": 580, "di:y": 90 },
+                { "di:x": 580, "di:y": 75 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_6",
+              "bpmn:sourceRef": "shape_gateway_fork",
+              "bpmn:targetRef": "shape_send_response",
+              "di:waypoints": [
+                { "di:x": 600, "di:y": 75 },
+                { "di:x": 600, "di:y": 90 },
+                { "di:x": 660, "di:y": 90 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_7",
+              "bpmn:sourceRef": "shape_gateway_fork",
+              "bpmn:targetRef": "shape_log_solution",
+              "di:waypoints": [
+                { "di:x": 580, "di:y": 115 },
+                { "di:x": 580, "di:y": 250 },
+                { "di:x": 660, "di:y": 250 },
+                { "di:x": 660, "di:y": 280 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_8",
+              "bpmn:sourceRef": "shape_send_response",
+              "bpmn:targetRef": "shape_gateway_wait",
+              "di:waypoints": [
+                { "di:x": 840, "di:y": 90 },
+                { "di:x": 890, "di:y": 90 },
+                { "di:x": 890, "di:y": 75 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_9",
+              "bpmn:sourceRef": "shape_gateway_wait",
+              "bpmn:targetRef": "shape_event_reply",
+              "di:waypoints": [
+                { "di:x": 910, "di:y": 75 },
+                { "di:x": 930, "di:y": 75 },
+                { "di:x": 930, "di:y": 50 },
+                { "di:x": 960, "di:y": 50 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_10",
+              "bpmn:sourceRef": "shape_gateway_wait",
+              "bpmn:targetRef": "shape_event_24h",
+              "di:waypoints": [
+                { "di:x": 910, "di:y": 75 },
+                { "di:x": 930, "di:y": 75 },
+                { "di:x": 930, "di:y": 110 },
+                { "di:x": 960, "di:y": 110 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_11",
+              "bpmn:sourceRef": "shape_event_reply",
+              "bpmn:targetRef": "shape_close_ticket",
+              "di:waypoints": [
+                { "di:x": 980, "di:y": 50 },
+                { "di:x": 1300, "di:y": 50 },
+                { "di:x": 1300, "di:y": 95 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_12",
+              "bpmn:sourceRef": "shape_event_24h",
+              "bpmn:targetRef": "shape_send_reminder",
+              "di:waypoints": [
+                { "di:x": 980, "di:y": 110 },
+                { "di:x": 1070, "di:y": 110 },
+                { "di:x": 1070, "di:y": 125 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_13",
+              "bpmn:sourceRef": "shape_send_reminder",
+              "bpmn:targetRef": "shape_close_ticket",
+              "di:waypoints": [
+                { "di:x": 1250, "di:y": 125 },
+                { "di:x": 1300, "di:y": 125 },
+                { "di:x": 1300, "di:y": 95 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_14",
+              "bpmn:sourceRef": "shape_log_solution",
+              "bpmn:targetRef": "shape_gateway_join",
+              "di:waypoints": [
+                { "di:x": 840, "di:y": 280 },
+                { "di:x": 890, "di:y": 280 },
+                { "di:x": 890, "di:y": 265 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_15",
+              "bpmn:sourceRef": "shape_close_ticket",
+              "bpmn:targetRef": "shape_gateway_join",
+              "di:waypoints": [
+                { "di:x": 1300, "di:y": 125 },
+                { "di:x": 1300, "di:y": 265 },
+                { "di:x": 910, "di:y": 265 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_16",
+              "bpmn:sourceRef": "shape_gateway_join",
+              "bpmn:targetRef": "shape_end_1",
+              "di:waypoints": [
+                { "di:x": 930, "di:y": 265 },
+                { "di:x": 940, "di:y": 265 },
+                { "di:x": 940, "di:y": 250 },
+                { "di:x": 960, "di:y": 250 }
+              ]
+            }
+          },
+          {
+            "bpmn:BPMNEdge": {
+              "id": "edge_flow_cancel",
+              "bpmn:sourceRef": "shape_start_cancel",
+              "bpmn:targetRef": "shape_end_terminate",
+              "di:waypoints": [
+                { "di:x": 630, "di:y": 335 },
+                { "di:x": 690, "di:y": 335 }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

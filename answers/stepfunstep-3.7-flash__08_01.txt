@@ -1,0 +1,19 @@
+### Answer: **Yes**, it is possible for T5 to fire before T3.
+---
+#### Concrete Firing Sequence (from initial marking):
+`T1 → T2 → T5`
+---
+#### Justification:
+We verify each step of the sequence and the enabling conditions of T5 relative to T3:
+1.  **Initial marking**: Only `p0` holds 1 token, so only T1 is enabled. Firing T1 consumes the token from `p0` and produces 1 token each in `p1` and `p2`, resulting in the marking: `p1=1, p2=1` (all other places empty).
+2.  After T1 fires, both T2 (input `p1`) and T3 (input `p2`) are enabled. We choose to fire T2 first: this consumes the token from `p1` and produces a token in `p3`, resulting in the marking: `p2=1, p3=1` (all other places empty, including `p4=0`).
+3.  In this marking, **T5 is enabled**:
+    - Its normal input arc from `p3` is satisfied (p3 has 1 token).
+    - Its inhibitor arc from `p4` is satisfied (p4 has 0 tokens, as T3 has not yet fired, and T3 is the only transition that produces tokens in p4).
+    Firing T5 now consumes the token from `p3` and produces a token in `p6`. At this point, T5 has fired, while T3 has not yet fired (it remains enabled due to the token still in `p2`, but is fired later if desired).
+
+This sequence is valid for the safe Petri net, as all transitions fire only when enabled, and no place ever holds more than 1 token.
+
+---
+#### Key Insight:
+T5 can only fire if `p4` is empty. Since T3 is the only transition that populates `p4`, T5 can only fire *before* T3 fires (or after T4 removes the `p4` token, but T4 also consumes the `p3` token required for T5, making post-T4 firing of T5 impossible). Thus, any execution where T5 fires at all must have T5 precede T3.
