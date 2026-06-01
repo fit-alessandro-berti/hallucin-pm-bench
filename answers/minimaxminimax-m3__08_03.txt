@@ -1,0 +1,31 @@
+# Analysis: Can T5 fire before T3?
+
+## Answer: **Yes — it is possible.**
+
+The key observation is that **T2b** produces a token in `pd` directly from `pa`, bypassing `pc` entirely. Since `T3` needs a token in `pc`, firing `T2b` instead of `T2` allows `pd` to be filled without ever giving `T3` a chance to fire.
+
+## Shortest Firing Sequence
+
+$$\boxed{\;T1 \;\rightarrow\; T2b \;\rightarrow\; T4 \;\rightarrow\; T5\;}$$
+
+## Trace Verification
+
+| Step | Transition | Precondition | Marking after firing (`p0 pa pb pc pd pe pf`) |
+|------|------------|--------------|----------------------------------------------|
+| 0    | —          | —            | `1 0 0 0 0 0 0`                              |
+| 1    | **T1**     | `p0 ≥ 1`     | `0 1 1 0 0 0 0`                              |
+| 2    | **T2b**    | `pa ≥ 1`     | `0 0 1 0 1 0 0`                              |
+| 3    | **T4**     | `pb ≥ 1`     | `0 0 0 0 1 1 0`                              |
+| 4    | **T5**     | `pd ≥ 1 ∧ pe ≥ 1` | `0 0 0 0 0 0 1`                       |
+
+After step 4, `T5` has fired. Notice that throughout this sequence `pc` **never received a token**, so `T3` (which requires `pc ≥ 1`) was never enabled — let alone fired.
+
+## Why this is the minimum length
+
+* `T1` is the only initially enabled transition, so it must fire first.
+* To enable `T5`, both `pd` and `pe` must hold a token.
+  * `pe` can only come from `T4` (needs `pb`) — at least one further step.
+  * `pd` can come from either `T2b` (needs `pa`, **1 step after T1**) or via the longer route `T2 → T3` (2+ steps after T1).
+* `T5` itself adds one more step.
+
+Hence the lower bound is **4 transitions**, and the sequence above attains it. (The variant `T1, T4, T2b, T5` is an equally short alternative.)

@@ -1,0 +1,35 @@
+# Contoso Airlines – Flight-Refund Process Analysis
+
+## 1. Decision Points
+
+The process contains **three decision points** (i.e., points where the flow may branch or a go/no-go judgement is made):
+
+| # | Decision Point | Where it occurs | Logic / Branch | Outcome |
+|---|---|---|---|---|
+| **D1** | **Eligibility validation** | During *Triage_Agent_Validate_Eligibility* | The triage agent compares the claim against the *FlightManifest* and the *WeatherReport* to determine whether the claim is **eligible** to proceed. | Only an eligible claim advances to *Finance_Controller_PreApprove*. |
+| **D2** | **High-value threshold check** | After the refund amount is known (between *Finance_Controller_PreApprove* and *Process_Refund_Payment*) | **If refund amount > €1 000** → the case is routed to *Senior_Auditor_Review*. **If ≤ €1 000** → the audit step is skipped. | Determines whether the high-value sub-process is activated. |
+| **D3** | **Finance pre-approval** | *Finance_Controller_PreApprove* (using the *EligibilityChecklist*) | The finance controller grants or withholds pre-approval. | Pre-approval is a mandatory gate before *Process_Refund_Payment*; for high-value claims it is the trigger for *Senior_Auditor_Review*. |
+
+> Note: The legacy activity *CustomerService_Agent_Decide* is **not part of Contoso's process** and is not used as a decision point.
+
+---
+
+## 2. Required Documents (Artefacts)
+
+Seven artefacts are defined in the process. Each is tied to a specific activity:
+
+| # | Document | Produced / Used in | Role |
+|---|---|---|---|
+| **R1** | **RefundRequestForm** | *Customer_Submit_Claim* | Input artefact captured from the passenger. |
+| **R2** | **FlightManifest** | *Triage_Agent_Validate_Eligibility* | Used as a reference to validate eligibility. |
+| **R3** | **WeatherReport** | *Triage_Agent_Validate_Eligibility* | Used as a reference to validate eligibility. |
+| **R4** | **EligibilityChecklist** | *Finance_Controller_PreApprove* | Supporting checklist signed off by the finance controller. |
+| **R5** | **AuditTrail** | *Senior_Auditor_Review* (high-value branch only) | Mandatory artefact when refund > €1 000. |
+| **R6** | **BankTransferAuthorization** | *Process_Refund_Payment* | Must be present and signed before payment is executed. |
+| **R7** | **RefundConfirmationPDF** | *Issue_Confirmation_Letter* | Output document emailed to the passenger. |
+
+---
+
+### Quick Cross-Check Against the Constraints
+- *Process_Refund_Payment* is correctly gated by **Finance_Controller_PreApprove** (R4) and, when applicable, by **Senior_Auditor_Review** (R5) — and it additionally requires **BankTransferAuthorization** (R6).
+- No activity or document outside the seven listed above has been introduced; the non-existent *CustomerService_Agent_Decide* has been deliberately omitted.

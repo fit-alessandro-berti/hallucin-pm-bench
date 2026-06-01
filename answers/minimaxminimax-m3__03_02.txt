@@ -1,0 +1,188 @@
+```json
+{
+  "definitions": {
+    "id": "Definitions_1",
+    "targetNamespace": "http://bpmn.io/schema/bpmn",
+    "messages": [
+      {"id": "CustomerReplyMessage", "name": "Customer Reply"},
+      {"id": "CustomerCancelMessage", "name": "Customer Cancellation"}
+    ]
+  },
+  "process": {
+    "id": "CustomerSupportTicket",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "nodes": [
+      {
+        "id": "StartEvent_Email",
+        "type": "startEvent",
+        "name": "Support Email Received"
+      },
+      {
+        "id": "Task_Parse",
+        "type": "task",
+        "name": "Parse Email and Create Ticket"
+      },
+      {
+        "id": "SubProcess_Handle",
+        "type": "subProcess",
+        "name": "Handle Ticket",
+        "nodes": [
+          {
+            "id": "StartEvent_Sub",
+            "type": "startEvent"
+          },
+          {
+            "id": "Task_Classify",
+            "type": "task",
+            "name": "Initial Classification"
+          },
+          {
+            "id": "Gateway_Classify",
+            "type": "exclusiveGateway",
+            "name": "Simple or Complex?"
+          },
+          {
+            "id": "Task_Resolution_Simple",
+            "type": "task",
+            "name": "Provide Resolution"
+          },
+          {
+            "id": "Task_RCA",
+            "type": "task",
+            "name": "Root Cause Analysis"
+          },
+          {
+            "id": "Task_Resolution_Complex",
+            "type": "task",
+            "name": "Provide Resolution"
+          },
+          {
+            "id": "Gateway_Merge",
+            "type": "exclusiveGateway",
+            "name": "Merge Resolutions"
+          },
+          {
+            "id": "Task_SendResponse",
+            "type": "task",
+            "name": "Send Response to Customer"
+          },
+          {
+            "id": "Gateway_ParallelSplit",
+            "type": "parallelGateway",
+            "name": "Parallel Split"
+          },
+          {
+            "id": "Task_LogKB",
+            "type": "task",
+            "name": "Log Solution in Knowledge Base"
+          },
+          {
+            "id": "Gateway_EventBased",
+            "type": "eventBasedGateway",
+            "name": "Wait for Reply or Timeout"
+          },
+          {
+            "id": "Event_CustomerReply",
+            "type": "intermediateCatchEvent",
+            "name": "Customer Reply Received",
+            "eventDefinitions": [
+              {
+                "type": "message",
+                "messageRef": "CustomerReplyMessage"
+              }
+            ]
+          },
+          {
+            "id": "Event_24hTimer",
+            "type": "intermediateCatchEvent",
+            "name": "24 Hours Elapsed",
+            "eventDefinitions": [
+              {
+                "type": "timer",
+                "timerDefinition": "PT24H"
+              }
+            ]
+          },
+          {
+            "id": "Task_SendReminder",
+            "type": "task",
+            "name": "Send Reminder"
+          },
+          {
+            "id": "Task_Close",
+            "type": "task",
+            "name": "Close Ticket"
+          },
+          {
+            "id": "Gateway_ParallelJoin",
+            "type": "parallelGateway",
+            "name": "Parallel Join"
+          },
+          {
+            "id": "EndEvent_Sub",
+            "type": "endEvent",
+            "name": "Process Complete"
+          }
+        ],
+        "edges": [
+          {"source": "StartEvent_Sub", "target": "Task_Classify"},
+          {"source": "Task_Classify", "target": "Gateway_Classify"},
+          {"source": "Gateway_Classify", "target": "Task_Resolution_Simple", "name": "Simple"},
+          {"source": "Gateway_Classify", "target": "Task_RCA", "name": "Complex"},
+          {"source": "Task_RCA", "target": "Task_Resolution_Complex"},
+          {"source": "Task_Resolution_Simple", "target": "Gateway_Merge"},
+          {"source": "Task_Resolution_Complex", "target": "Gateway_Merge"},
+          {"source": "Gateway_Merge", "target": "Task_SendResponse"},
+          {"source": "Task_SendResponse", "target": "Gateway_ParallelSplit"},
+          {"source": "Gateway_ParallelSplit", "target": "Task_LogKB"},
+          {"source": "Gateway_ParallelSplit", "target": "Gateway_EventBased"},
+          {"source": "Task_LogKB", "target": "Gateway_ParallelJoin"},
+          {"source": "Gateway_EventBased", "target": "Event_CustomerReply"},
+          {"source": "Gateway_EventBased", "target": "Event_24hTimer"},
+          {"source": "Event_CustomerReply", "target": "Task_Close"},
+          {"source": "Event_24hTimer", "target": "Task_SendReminder"},
+          {"source": "Task_SendReminder", "target": "Task_Close"},
+          {"source": "Task_Close", "target": "Gateway_ParallelJoin"},
+          {"source": "Gateway_ParallelJoin", "target": "EndEvent_Sub"}
+        ]
+      },
+      {
+        "id": "EndEvent_Closed",
+        "type": "endEvent",
+        "name": "Ticket Closed"
+      },
+      {
+        "id": "EndEvent_Terminate",
+        "type": "endEvent",
+        "name": "Terminate",
+        "eventDefinitions": [
+          {
+            "type": "terminate"
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {"source": "StartEvent_Email", "target": "Task_Parse"},
+      {"source": "Task_Parse", "target": "SubProcess_Handle"},
+      {"source": "SubProcess_Handle", "target": "EndEvent_Closed"}
+    ],
+    "boundaryEvents": [
+      {
+        "id": "BoundaryEvent_Cancel",
+        "attachedToRef": "SubProcess_Handle",
+        "cancelActivity": true,
+        "name": "Customer Cancels Ticket",
+        "eventDefinitions": [
+          {
+            "type": "message",
+            "messageRef": "CustomerCancelMessage"
+          }
+        ],
+        "outgoing": "EndEvent_Terminate"
+      }
+    ]
+  }
+}
+```

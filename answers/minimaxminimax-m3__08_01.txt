@@ -1,0 +1,26 @@
+## Answer: **Yes** — T5 can fire before T3.
+
+### Concrete firing sequence
+
+$$\sigma \;=\; T_1,\; T_2,\; T_5$$
+
+### Marking trace
+
+| Step | Transition fired | p0 | p1 | p2 | p3 | p4 | p5 | p6 | Comment |
+|------|-----------------|----|----|----|----|----|----|----|---------|
+| 0    | —               | 1  | 0  | 0  | 0  | 0  | 0  | 0  | initial marking M₀ |
+| 1    | T1              | 0  | 1  | 1  | 0  | 0  | 0  | 0  | parallel split, p1‖p2 |
+| 2    | T2              | 0  | 0  | 1  | 1  | 0  | 0  | 0  | p1→p3 |
+| 3    | T5              | 0  | 0  | 1  | 0  | 0  | 0  | 1  | p3 consumed, **p4=0** (inhibitor satisfied) → p6 |
+
+After step 2 the marking is $M_2 = (p_3=1,\, p_4=0)$.  
+At this point:
+
+- **Normal arc:** $p_3 = 1$ ✔  
+- **Inhibitor arc:** $p_4 = 0$ ✔ (T3 has *not* yet fired, so no token sits in p4)  
+- Hence T5 is **enabled**, even though p2 is still marked and T3 is also concurrently enabled.
+
+Firing T5 next produces the token in p6 *before* T3 ever fires, so the ordering T5 ≺ T3 is reachable.
+
+### Why it is not a race/scheduling accident
+The crucial observation is the **asymmetry** introduced by the inhibitor arc on p4. T3 is the *only* transition that can ever place a token into p4 (T1 never reaches p4 directly; T4 consumes from p4). Therefore, as long as we keep T3 from firing, p4 stays empty, and T5’s inhibitor condition remains satisfied whenever p3 is marked. The split-transition T1 makes p1 and p2 simultaneously available, but the two branches (p1-branch and p2-branch) are causally independent — there is no synchronisation forcing T2 to wait for T3. Thus the firing T1 → T2 → T5 is a perfectly legal interleaving in which T5 strictly precedes T3. ∎
