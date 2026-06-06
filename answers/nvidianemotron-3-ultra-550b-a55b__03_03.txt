@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="wrc_definitions"
+                  targetNamespace="http://example.org/warranty-replacement">
+  <bpmn:process id="wrc_process" isExecutable="false">
+    <!-- Start -->
+    <bpmn:startEvent id="wrc_start" name="Online warranty claim submitted"/>
+
+    <!-- Validate claim -->
+    <bpmn:task id="wrc_validateClaim" name="Validate claim"/>
+
+    <!-- Exclusive gateway: claim completeness -->
+    <bpmn:exclusiveGateway id="wrc_gw_claimComplete" name="Claim complete?"/>
+
+    <!-- Request missing information -->
+    <bpmn:task id="wrc_requestMissingInfo" name="Request missing information"/>
+
+    <!-- Check warranty eligibility -->
+    <bpmn:task id="wrc_checkWarranty" name="Check warranty eligibility"/>
+
+    <!-- Exclusive gateway: warranty decision -->
+    <bpmn:exclusiveGateway id="wrc_gw_warrantyDecision" name="Warranty status?"/>
+
+    <!-- Send rejection notice -->
+    <bpmn:task id="wrc_sendRejection" name="Send rejection notice"/>
+
+    <!-- End event for rejection -->
+    <bpmn:endEvent id="wrc_endRejection" name="Rejection"/>
+
+    <!-- Parallel split -->
+    <bpmn:parallelGateway id="wrc_gw_parallelSplit" name="Parallel split"/>
+
+    <!-- Parallel tasks -->
+    <bpmn:task id="wrc_createShipment" name="Create shipment order"/>
+    <bpmn:task id="wrc_schedulePickup" name="Schedule courier pickup"/>
+
+    <!-- Parallel join -->
+    <bpmn:parallelGateway id="wrc_gw_parallelJoin" name="Parallel join"/>
+
+    <!-- Update inventory records -->
+    <bpmn:task id="wrc_updateInventory" name="Update inventory records"/>
+
+    <!-- Close the claim -->
+    <bpmn:task id="wrc_closeClaim" name="Close the claim"/>
+
+    <!-- End event for successful completion -->
+    <bpmn:endEvent id="wrc_endSuccess" name="Completed"/>
+
+    <!-- Sequence flows -->
+    <bpmn:sequenceFlow id="wrc_flow_start_validate" sourceRef="wrc_start" targetRef="wrc_validateClaim"/>
+    <bpmn:sequenceFlow id="wrc_flow_validate_gw" sourceRef="wrc_validateClaim" targetRef="wrc_gw_claimComplete"/>
+    <bpmn:sequenceFlow id="wrc_flow_gw_complete" sourceRef="wrc_gw_claimComplete" targetRef="wrc_checkWarranty">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Complete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_gw_incomplete" sourceRef="wrc_gw_claimComplete" targetRef="wrc_requestMissingInfo">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Incomplete</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_request_validate" sourceRef="wrc_requestMissingInfo" targetRef="wrc_validateClaim"/>
+    <bpmn:sequenceFlow id="wrc_flow_check_gw" sourceRef="wrc_checkWarranty" targetRef="wrc_gw_warrantyDecision"/>
+    <bpmn:sequenceFlow id="wrc_flow_gw_within" sourceRef="wrc_gw_warrantyDecision" targetRef="wrc_gw_parallelSplit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Within warranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_gw_out" sourceRef="wrc_gw_warrantyDecision" targetRef="wrc_sendRejection">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Out of warranty</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="wrc_flow_reject_end" sourceRef="wrc_sendRejection" targetRef="wrc_endRejection"/>
+    <bpmn:sequenceFlow id="wrc_flow_split_create" sourceRef="wrc_gw_parallelSplit" targetRef="wrc_createShipment"/>
+    <bpmn:sequenceFlow id="wrc_flow_split_schedule" sourceRef="wrc_gw_parallelSplit" targetRef="wrc_schedulePickup"/>
+    <bpmn:sequenceFlow id="wrc_flow_create_join" sourceRef="wrc_createShipment" targetRef="wrc_gw_parallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_flow_schedule_join" sourceRef="wrc_schedulePickup" targetRef="wrc_gw_parallelJoin"/>
+    <bpmn:sequenceFlow id="wrc_flow_join_update" sourceRef="wrc_gw_parallelJoin" targetRef="wrc_updateInventory"/>
+    <bpmn:sequenceFlow id="wrc_flow_update_close" sourceRef="wrc_updateInventory" targetRef="wrc_closeClaim"/>
+    <bpmn:sequenceFlow id="wrc_flow_close_end" sourceRef="wrc_closeClaim" targetRef="wrc_endSuccess"/>
+  </bpmn:process>
+
+  <!-- Minimal DI information (optional) -->
+  <bpmndi:BPMNDiagram id="wrc_diagram">
+    <bpmndi:BPMNPlane id="wrc_plane" bpmnElement="wrc_process"/>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

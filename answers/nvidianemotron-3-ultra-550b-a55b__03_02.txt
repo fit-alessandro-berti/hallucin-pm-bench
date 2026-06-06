@@ -1,0 +1,132 @@
+{
+  "process": {
+    "id": "CustomerSupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "elements": [
+      {
+        "id": "start",
+        "name": "Support Email Received",
+        "type": "startEvent",
+        "eventType": "message"
+      },
+      {
+        "id": "parseEmail",
+        "name": "Parse Email & Create Ticket",
+        "type": "task"
+      },
+      {
+        "id": "initialClassification",
+        "name": "Initial Classification",
+        "type": "task"
+      },
+      {
+        "id": "classificationGateway",
+        "name": "Classification",
+        "type": "exclusiveGateway"
+      },
+      {
+        "id": "provideResolutionSimple",
+        "name": "Provide Resolution",
+        "type": "task"
+      },
+      {
+        "id": "rootCauseAnalysis",
+        "name": "Root Cause Analysis",
+        "type": "task"
+      },
+      {
+        "id": "provideResolutionComplex",
+        "name": "Provide Resolution",
+        "type": "task"
+      },
+      {
+        "id": "sendResponse",
+        "name": "Send Response to Customer",
+        "type": "task"
+      },
+      {
+        "id": "parallelSplit",
+        "name": "Parallel Split",
+        "type": "parallelGateway"
+      },
+      {
+        "id": "logSolution",
+        "name": "Log Solution in Knowledge Base",
+        "type": "task"
+      },
+      {
+        "id": "waitForReply",
+        "name": "Wait for Customer Reply",
+        "type": "receiveTask"
+      },
+      {
+        "id": "timer24h",
+        "name": "24h Timer",
+        "type": "boundaryEvent",
+        "attachedToRef": "waitForReply",
+        "eventType": "timer",
+        "interrupting": true,
+        "timeDuration": "PT24H"
+      },
+      {
+        "id": "sendReminder",
+        "name": "Send Reminder",
+        "type": "task"
+      },
+      {
+        "id": "closeTicket",
+        "name": "Close Ticket",
+        "type": "task"
+      },
+      {
+        "id": "end",
+        "name": "End",
+        "type": "endEvent"
+      },
+      {
+        "id": "logEnd",
+        "name": "Log End",
+        "type": "endEvent"
+      },
+      {
+        "id": "cancellationSubprocess",
+        "name": "Cancellation Handling",
+        "type": "eventSubprocess",
+        "interrupting": true
+      },
+      {
+        "id": "cancelStart",
+        "name": "Ticket Cancelled",
+        "type": "startEvent",
+        "eventType": "message",
+        "parentId": "cancellationSubprocess"
+      },
+      {
+        "id": "terminate",
+        "name": "Terminate",
+        "type": "endEvent",
+        "terminate": true,
+        "parentId": "cancellationSubprocess"
+      }
+    ],
+    "sequenceFlows": [
+      { "id": "flow1", "sourceRef": "start", "targetRef": "parseEmail" },
+      { "id": "flow2", "sourceRef": "parseEmail", "targetRef": "initialClassification" },
+      { "id": "flow3", "sourceRef": "initialClassification", "targetRef": "classificationGateway" },
+      { "id": "flow4", "sourceRef": "classificationGateway", "targetRef": "provideResolutionSimple", "conditionExpression": "${ticketType == 'Simple'}" },
+      { "id": "flow5", "sourceRef": "classificationGateway", "targetRef": "rootCauseAnalysis", "conditionExpression": "${ticketType == 'Complex'}" },
+      { "id": "flow6", "sourceRef": "rootCauseAnalysis", "targetRef": "provideResolutionComplex" },
+      { "id": "flow7", "sourceRef": "provideResolutionSimple", "targetRef": "sendResponse" },
+      { "id": "flow8", "sourceRef": "provideResolutionComplex", "targetRef": "sendResponse" },
+      { "id": "flow9", "sourceRef": "sendResponse", "targetRef": "parallelSplit" },
+      { "id": "flow10", "sourceRef": "parallelSplit", "targetRef": "logSolution" },
+      { "id": "flow11", "sourceRef": "parallelSplit", "targetRef": "waitForReply" },
+      { "id": "flow12", "sourceRef": "logSolution", "targetRef": "logEnd" },
+      { "id": "flow13", "sourceRef": "waitForReply", "targetRef": "closeTicket" },
+      { "id": "flow14", "sourceRef": "timer24h", "targetRef": "sendReminder" },
+      { "id": "flow15", "sourceRef": "sendReminder", "targetRef": "closeTicket" },
+      { "id": "flow16", "sourceRef": "closeTicket", "targetRef": "end" },
+      { "id": "flow17", "sourceRef": "cancelStart", "targetRef": "terminate" }
+    ]
+  }
+}
