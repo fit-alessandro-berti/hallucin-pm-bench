@@ -1,0 +1,36 @@
+```xml
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="defs1" targetNamespace="http://acmetech.example/support">
+  <process id="supportTicketProcess" isExecutable="false">
+    <startEvent id="s1" name="Ticket Submitted"/>
+    <serviceTask id="t1" name="Classify Ticket"/>
+    <exclusiveGateway id="gw1" name="Password Reset?"/>
+    <task id="t2" name="Provide Reset Instructions"/>
+    <task id="t3" name="Initial Diagnosis"/>
+    <exclusiveGateway id="gw2" name="Resolve or Forward?"/>
+    <task id="t4" name="Resolve Issue"/>
+    <task id="t5" name="Forward to Specialist"/>
+    <task id="t6" name="Confirm with Customer"/>
+    <exclusiveGateway id="gw3" name="Customer Confirms Resolution?"/>
+    <endEvent id="e1" name="Ticket Closed"/>
+    <sequenceFlow id="f1" sourceRef="s1" targetRef="t1"/>
+    <sequenceFlow id="f2" sourceRef="t1" targetRef="gw1"/>
+    <sequenceFlow id="f3" name="Password Reset" sourceRef="gw1" targetRef="t2"/>
+    <sequenceFlow id="f4" name="Otherwise" sourceRef="gw1" targetRef="t3"/>
+    <sequenceFlow id="f5" sourceRef="t3" targetRef="gw2"/>
+    <sequenceFlow id="f6" name="Resolve" sourceRef="gw2" targetRef="t4"/>
+    <sequenceFlow id="f7" name="Forward" sourceRef="gw2" targetRef="t5"/>
+    <sequenceFlow id="f8" sourceRef="t5" targetRef="t4"/>
+    <sequenceFlow id="f9" sourceRef="t4" targetRef="t6"/>
+    <sequenceFlow id="f10" sourceRef="t2" targetRef="t6"/>
+    <sequenceFlow id="f11" sourceRef="t6" targetRef="gw3"/>
+    <sequenceFlow id="f12" name="Confirmed" sourceRef="gw3" targetRef="e1"/>
+    <sequenceFlow id="f13" name="Issue Persists" sourceRef="gw3" targetRef="t3"/>
+  </process>
+</definitions>
+```
+
+Notes on modelling choices (strictly from the text):
+- **gw1** marks the classification decision (lines 3–4); **gw3** marks the customer-confirmation decision (lines 8–9), with the loop flow `f13` going back to **Initial Diagnosis** exactly as line 9 states.
+- **gw2** is required by line 5’s explicit “either / or” choice; the specialist path rejoins **Resolve Issue** per line 6.
+- “Provide Reset Instructions” flows into “Confirm with Customer” so the process ends only when the ticket is closed (line 10). No extra timers, escalations, or events were added.

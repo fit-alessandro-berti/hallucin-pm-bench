@@ -1,0 +1,23 @@
+## Yes — T5 can fire before T3.
+
+**Concrete firing sequence:** `T1 → T2 → T5`
+
+**Step-by-step trace:**
+
+| Step | Fired | Resulting marking (tokens) |
+|------|-------|---------------------------|
+| 0 | — (initial) | p0 = 1 |
+| 1 | **T1** (p0 → p1 + p2) | p1 = 1, p2 = 1 |
+| 2 | **T2** (p1 → p3) | p2 = 1, p3 = 1 |
+| 3 | **T5** (p3, inhibitor on p4 → p6) | p2 = 1, p6 = 1 |
+
+**Justification:**
+
+After firing T1 and T2, the marking is `{p2, p3}`. At this point:
+
+1. **T5's normal precondition is met:** p3 contains a token.
+2. **T5's inhibitor condition is met:** p4 contains **zero** tokens, because the *only* transition that puts a token into p4 is T3 — and T3 has not yet fired.
+
+Hence T5 is enabled and fires, consuming the token from p3 and producing one in p6. T3 was never fired before this point, so T5 indeed fires before T3.
+
+**Remark (side effect):** After this sequence the net reaches marking `{p2, p6}`. T3 can still fire afterwards (p2 → p4), yielding `{p4, p6}` — but then T4 is dead forever, since p3 can never be re-marked (p0 and p1 are empty). So firing T5 before T3 permanently disables the synchronising join T4 — a classic inhibitor-arc race that the process designer may want to be aware of.
