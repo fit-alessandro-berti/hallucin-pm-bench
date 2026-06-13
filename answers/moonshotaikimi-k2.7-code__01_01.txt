@@ -1,0 +1,29 @@
+ **Decision points**
+
+1. **Claim-eligibility decision** — *Triage_Agent_Validate_Eligibility*  
+   - Compares the *RefundRequestForm* against the *FlightManifest* and *WeatherReport*.  
+   - Outcome: the claim is either eligible (proceed) or not eligible.
+
+2. **Pre-approval decision** — *Finance_Controller_PreApprove*  
+   - Uses the *EligibilityChecklist*.  
+   - Outcome: the refund is either pre-approved (proceed) or not pre-approved.
+
+3. **High-value routing decision** — based on refund amount  
+   - Checks whether the refund amount is **greater than €1 000**.  
+   - Outcome: if yes, *Senior_Auditor_Review* is required (with the *AuditTrail*); if no, the case proceeds directly to payment once pre-approved.
+
+4. **Payment-start condition** — for *Process_Refund_Payment*  
+   - Starts only after *Finance_Controller_PreApprove* has succeeded, any required *Senior_Auditor_Review* is complete, and the signed *BankTransferAuthorization* is present.  
+   - Outcome: payment is executed or remains blocked until all conditions are met.
+
+**Required documents / artefacts**
+
+- *RefundRequestForm*
+- *FlightManifest*
+- *WeatherReport*
+- *EligibilityChecklist*
+- *AuditTrail* (required only for the high-value branch)
+- *BankTransferAuthorization* (must be signed before payment)
+- *RefundConfirmationPDF* (issued to the passenger)
+
+No legacy activities (such as *CustomerService_Agent_Decide*) are included, because they are not part of Contoso’s defined process.
