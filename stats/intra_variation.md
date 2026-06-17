@@ -4,7 +4,7 @@
 | --------------------------------------- | ------------- |
 | C01 Domain-override / Precedence checks | 1.312335      |
 | C02 Event-log fact-extraction           | 0.816497      |
-| C03 Text to Model reconstruction        | 0.547507      |
+| C03 Text to Model reconstruction        | 0.471405      |
 | C04 Compliance / Conformance reasoning  | 1.632993      |
 | C05 Counterfactual edits                | 1.699673      |
 | C06 Multi-process memory interference   | 0.942809      |
