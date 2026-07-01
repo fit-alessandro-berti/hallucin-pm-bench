@@ -1,0 +1,38 @@
+## Answer: **Yes**, T5 can fire before T3.
+
+### Reasoning
+
+T5 requires:
+- **p3 ≥ 1** (regular precondition), and
+- **p4 = 0** (inhibitor condition).
+
+Nothing in the net forces T3 to fire before T5 gets these conditions satisfied. Since T1 splits the token into two independent branches (p1→p3 via T2, and p2→p4 via T3), these two branches can proceed **in any interleaving**, including one where the p3-branch advances while the p4-branch has not yet fired.
+
+### Concrete firing sequence
+
+Start: `p0=1, all others=0`
+
+1. **Fire T1** (`p0 → p1+p2`)  
+   Marking: `p1=1, p2=1`
+
+2. **Fire T2** (`p1 → p3`)  
+   Marking: `p2=1, p3=1`
+
+3. **Fire T5** — check enabling:  
+   - p3 = 1 ✔ (regular arc satisfied)  
+   - p4 = 0 ✔ (inhibitor condition satisfied, since T3 has not yet fired)  
+
+   Fire T5 (`p3 → p6`)  
+   Marking: `p2=1, p6=1`
+
+At this point, **T5 has fired**, and **T3 has not yet fired** (p2 still holds its token, ready for T3 later). This confirms the firing sequence
+
+```
+T1 , T2 , T5
+```
+
+is a valid execution from the initial marking in which T5 occurs strictly before T3 (indeed, before T3 ever fires at all in this run — but even if T3 is fired afterward, e.g. continuing with T3, T4 could never fire since p3 is now empty, but that doesn't affect the question asked).
+
+### Why this is not prevented by the inhibitor arc
+
+The inhibitor arc on T5 only checks the **current** marking of p4, not any historical ordering with T3. Since p4 starts at 0 and remains 0 until T3 actually fires, T5 is free to fire any time before T3 does — as demonstrated by the interleaving above, which is legal because T2 and T3 are causally independent (both only depend on the tokens produced by T1, in different places).

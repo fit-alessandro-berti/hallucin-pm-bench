@@ -1,0 +1,18 @@
+## Suggested SLA-compliance improvement
+
+Attach a **boundary timer event** (48 h) to `Activity_CreateAccount` and route the timeout branch into the **already-existing but currently orphaned** `Activity_AMReview` task, which already flows into `Activity_ActivateAccount`. This reuses an existing activity instead of adding a new one, while giving the process an automatic escalation path when the 48-hour SLA is breached.
+
+```xml
+<bpmn:boundaryEvent id="Boundary_CreateAccountSLA" name="48h SLA Breach"
+                    attachedToRef="Activity_CreateAccount" cancelActivity="true">
+  <bpmn:timerEventDefinition>
+    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<bpmn:sequenceFlow id="Flow_SLA_Escalation"
+                   sourceRef="Boundary_CreateAccountSLA"
+                   targetRef="Activity_AMReview"/>
+```
+
+**Justification:** The boundary timer starts counting as soon as `Activity_CreateAccount` begins (immediately after `Verify Identity` completes), and if the 48-hour deadline is exceeded it interrupts the task and reroutes the case to the existing `Activity_AMReview` task—providing automated SLA enforcement and escalation without introducing any new process elements.
