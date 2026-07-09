@@ -1,0 +1,239 @@
+{
+  "processId": "Process_CustomerSupportTicket",
+  "name": "Customer Support Ticket Process",
+  "isExecutable": true,
+  "elements": [
+    {
+      "id": "StartEvent_SupportEmail",
+      "type": "startEvent",
+      "name": "Support E-mail Received",
+      "eventDefinitions": [
+        {
+          "type": "messageEventDefinition",
+          "messageRef": "Msg_SupportEmail"
+        }
+      ]
+    },
+    {
+      "id": "Task_CreateTicket",
+      "type": "serviceTask",
+      "name": "Parse E-mail and Create Ticket"
+    },
+    {
+      "id": "Task_InitialClassification",
+      "type": "userTask",
+      "name": "Initial Classification"
+    },
+    {
+      "id": "Gateway_Classification",
+      "type": "exclusiveGateway",
+      "name": "Simple or Complex"
+    },
+    {
+      "id": "Task_RootCauseAnalysis",
+      "type": "userTask",
+      "name": "Root Cause Analysis"
+    },
+    {
+      "id": "Task_ProvideResolution",
+      "type": "userTask",
+      "name": "Provide Resolution"
+    },
+    {
+      "id": "Gateway_ParallelSplit",
+      "type": "parallelGateway",
+      "name": "Split"
+    },
+    {
+      "id": "Task_SendResponse",
+      "type": "userTask",
+      "name": "Send Response to Customer"
+    },
+    {
+      "id": "Task_LogSolution",
+      "type": "userTask",
+      "name": "Log Solution in Knowledge Base"
+    },
+    {
+      "id": "Gateway_ParallelJoin",
+      "type": "parallelGateway",
+      "name": "Join"
+    },
+    {
+      "id": "Gateway_EventBasedWait",
+      "type": "eventBasedGateway",
+      "name": "Wait for Customer Reply or 24h"
+    },
+    {
+      "id": "CatchEvent_CustomerReply",
+      "type": "intermediateCatchEvent",
+      "name": "Customer Reply Received",
+      "eventDefinitions": [
+        {
+          "type": "messageEventDefinition",
+          "messageRef": "Msg_CustomerReply"
+        }
+      ]
+    },
+    {
+      "id": "CatchEvent_24hTimer",
+      "type": "intermediateCatchEvent",
+      "name": "24 Hours Elapsed",
+      "eventDefinitions": [
+        {
+          "type": "timerEventDefinition",
+          "timeDuration": "PT24H"
+        }
+      ]
+    },
+    {
+      "id": "Task_SendReminder",
+      "type": "serviceTask",
+      "name": "Send Reminder"
+    },
+    {
+      "id": "Task_CloseTicket",
+      "type": "serviceTask",
+      "name": "Close Ticket"
+    },
+    {
+      "id": "EndEvent_Closed",
+      "type": "endEvent",
+      "name": "Ticket Closed"
+    },
+    {
+      "id": "EventSubProcess_Cancel",
+      "type": "subProcess",
+      "name": "Handle Customer Cancellation",
+      "triggeredByEvent": true,
+      "isExpanded": true,
+      "elements": [
+        {
+          "id": "StartEvent_Cancel",
+          "type": "startEvent",
+          "name": "Ticket Cancelled",
+          "isInterrupting": true,
+          "eventDefinitions": [
+            {
+              "type": "messageEventDefinition",
+              "messageRef": "Msg_CancelTicket"
+            }
+          ]
+        },
+        {
+          "id": "EndEvent_Terminate",
+          "type": "endEvent",
+          "name": "Terminate Process",
+          "eventDefinitions": [
+            {
+              "type": "terminateEventDefinition"
+            }
+          ]
+        }
+      ],
+      "flows": [
+        {
+          "id": "Flow_CancelToTerminate",
+          "sourceRef": "StartEvent_Cancel",
+          "targetRef": "EndEvent_Terminate"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "Flow_StartToCreate",
+      "sourceRef": "StartEvent_SupportEmail",
+      "targetRef": "Task_CreateTicket"
+    },
+    {
+      "id": "Flow_CreateToClassify",
+      "sourceRef": "Task_CreateTicket",
+      "targetRef": "Task_InitialClassification"
+    },
+    {
+      "id": "Flow_ClassifyToGateway",
+      "sourceRef": "Task_InitialClassification",
+      "targetRef": "Gateway_Classification"
+    },
+    {
+      "id": "Flow_Simple",
+      "sourceRef": "Gateway_Classification",
+      "targetRef": "Task_ProvideResolution",
+      "name": "Simple",
+      "conditionExpression": "ticketType == 'Simple'"
+    },
+    {
+      "id": "Flow_Complex",
+      "sourceRef": "Gateway_Classification",
+      "targetRef": "Task_RootCauseAnalysis",
+      "name": "Complex",
+      "conditionExpression": "ticketType == 'Complex'"
+    },
+    {
+      "id": "Flow_RCAToProvide",
+      "sourceRef": "Task_RootCauseAnalysis",
+      "targetRef": "Task_ProvideResolution"
+    },
+    {
+      "id": "Flow_ProvideToSplit",
+      "sourceRef": "Task_ProvideResolution",
+      "targetRef": "Gateway_ParallelSplit"
+    },
+    {
+      "id": "Flow_SplitToSend",
+      "sourceRef": "Gateway_ParallelSplit",
+      "targetRef": "Task_SendResponse"
+    },
+    {
+      "id": "Flow_SplitToLog",
+      "sourceRef": "Gateway_ParallelSplit",
+      "targetRef": "Task_LogSolution"
+    },
+    {
+      "id": "Flow_SendToJoin",
+      "sourceRef": "Task_SendResponse",
+      "targetRef": "Gateway_ParallelJoin"
+    },
+    {
+      "id": "Flow_LogToJoin",
+      "sourceRef": "Task_LogSolution",
+      "targetRef": "Gateway_ParallelJoin"
+    },
+    {
+      "id": "Flow_JoinToEventGateway",
+      "sourceRef": "Gateway_ParallelJoin",
+      "targetRef": "Gateway_EventBasedWait"
+    },
+    {
+      "id": "Flow_EventToReply",
+      "sourceRef": "Gateway_EventBasedWait",
+      "targetRef": "CatchEvent_CustomerReply"
+    },
+    {
+      "id": "Flow_EventToTimer",
+      "sourceRef": "Gateway_EventBasedWait",
+      "targetRef": "CatchEvent_24hTimer"
+    },
+    {
+      "id": "Flow_ReplyToClose",
+      "sourceRef": "CatchEvent_CustomerReply",
+      "targetRef": "Task_CloseTicket"
+    },
+    {
+      "id": "Flow_TimerToReminder",
+      "sourceRef": "CatchEvent_24hTimer",
+      "targetRef": "Task_SendReminder"
+    },
+    {
+      "id": "Flow_ReminderToClose",
+      "sourceRef": "Task_SendReminder",
+      "targetRef": "Task_CloseTicket"
+    },
+    {
+      "id": "Flow_CloseToEnd",
+      "sourceRef": "Task_CloseTicket",
+      "targetRef": "EndEvent_Closed"
+    }
+  ]
+}
