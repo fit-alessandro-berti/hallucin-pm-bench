@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             id="wrc_definitions"
+             targetNamespace="http://example.com/warranty-replacement">
+  <process id="wrc_process" name="Warranty-Replacement v1.3" isExecutable="false">
+
+    <startEvent id="wrc_start" name="Customer submits online warranty claim">
+      <outgoing> wrc_flow_start_validate </outgoing>
+    </startEvent>
+
+    <task id="wrc_validate_claim" name="validates the claim">
+      <incoming> wrc_flow_start_validate </incoming>
+      <incoming> wrc_flow_revalidate </incoming>
+      <outgoing> wrc_flow_validate_completeness </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_start_validate"
+                  sourceRef="wrc_start"
+                  targetRef="wrc_validate_claim"/>
+
+    <exclusiveGateway id="wrc_completeness_gateway" name="Claim complete?">
+      <incoming> wrc_flow_validate_completeness </incoming>
+      <outgoing> wrc_flow_incomplete </outgoing>
+      <outgoing> wrc_flow_complete </outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="wrc_flow_validate_completeness"
+                  sourceRef="wrc_validate_claim"
+                  targetRef="wrc_completeness_gateway"/>
+
+    <task id="wrc_request_missing_information" name="requests missing information">
+      <incoming> wrc_flow_incomplete </incoming>
+      <outgoing> wrc_flow_wait_information </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_incomplete"
+                  name="incomplete"
+                  sourceRef="wrc_completeness_gateway"
+                  targetRef="wrc_request_missing_information"/>
+
+    <intermediateCatchEvent id="wrc_wait_information" name="waits until it is received">
+      <incoming> wrc_flow_wait_information </incoming>
+      <outgoing> wrc_flow_revalidate </outgoing>
+    </intermediateCatchEvent>
+
+    <sequenceFlow id="wrc_flow_wait_information"
+                  sourceRef="wrc_request_missing_information"
+                  targetRef="wrc_wait_information"/>
+
+    <sequenceFlow id="wrc_flow_revalidate"
+                  sourceRef="wrc_wait_information"
+                  targetRef="wrc_validate_claim"/>
+
+    <task id="wrc_check_warranty_eligibility" name="checks warranty eligibility">
+      <incoming> wrc_flow_complete </incoming>
+      <outgoing> wrc_flow_warranty_decision </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_complete"
+                  name="complete"
+                  sourceRef="wrc_completeness_gateway"
+                  targetRef="wrc_check_warranty_eligibility"/>
+
+    <exclusiveGateway id="wrc_warranty_gateway" name="Warranty eligibility?">
+      <incoming> wrc_flow_warranty_decision </incoming>
+      <outgoing> wrc_flow_within_warranty </outgoing>
+      <outgoing> wrc_flow_out_of_warranty </outgoing>
+    </exclusiveGateway>
+
+    <sequenceFlow id="wrc_flow_warranty_decision"
+                  sourceRef="wrc_check_warranty_eligibility"
+                  targetRef="wrc_warranty_gateway"/>
+
+    <task id="wrc_send_rejection_notice" name="send rejection notice">
+      <incoming> wrc_flow_out_of_warranty </incoming>
+      <outgoing> wrc_flow_rejection_end </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_out_of_warranty"
+                  name="out of warranty"
+                  sourceRef="wrc_warranty_gateway"
+                  targetRef="wrc_send_rejection_notice"/>
+
+    <endEvent id="wrc_rejection_end" name="Rejection">
+      <incoming> wrc_flow_rejection_end </incoming>
+    </endEvent>
+
+    <sequenceFlow id="wrc_flow_rejection_end"
+                  sourceRef="wrc_send_rejection_notice"
+                  targetRef="wrc_rejection_end"/>
+
+    <parallelGateway id="wrc_parallel_split" name="Parallel split">
+      <incoming> wrc_flow_within_warranty </incoming>
+      <outgoing> wrc_flow_create_shipment </outgoing>
+      <outgoing> wrc_flow_schedule_pickup </outgoing>
+    </parallelGateway>
+
+    <sequenceFlow id="wrc_flow_within_warranty"
+                  name="within warranty"
+                  sourceRef="wrc_warranty_gateway"
+                  targetRef="wrc_parallel_split"/>
+
+    <task id="wrc_create_shipment_order" name="Create shipment order">
+      <incoming> wrc_flow_create_shipment </incoming>
+      <outgoing> wrc_flow_shipment_join </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_create_shipment"
+                  sourceRef="wrc_parallel_split"
+                  targetRef="wrc_create_shipment_order"/>
+
+    <task id="wrc_schedule_courier_pickup" name="Schedule courier pickup">
+      <incoming> wrc_flow_schedule_pickup </incoming>
+      <outgoing> wrc_flow_pickup_join </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_schedule_pickup"
+                  sourceRef="wrc_parallel_split"
+                  targetRef="wrc_schedule_courier_pickup"/>
+
+    <parallelGateway id="wrc_parallel_join" name="Parallel join">
+      <incoming> wrc_flow_shipment_join </incoming>
+      <incoming> wrc_flow_pickup_join </incoming>
+      <outgoing> wrc_flow_update_inventory </outgoing>
+    </parallelGateway>
+
+    <sequenceFlow id="wrc_flow_shipment_join"
+                  sourceRef="wrc_create_shipment_order"
+                  targetRef="wrc_parallel_join"/>
+
+    <sequenceFlow id="wrc_flow_pickup_join"
+                  sourceRef="wrc_schedule_courier_pickup"
+                  targetRef="wrc_parallel_join"/>
+
+    <task id="wrc_update_inventory_records" name="update inventory records">
+      <incoming> wrc_flow_update_inventory </incoming>
+      <outgoing> wrc_flow_close_claim </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_update_inventory"
+                  sourceRef="wrc_parallel_join"
+                  targetRef="wrc_update_inventory_records"/>
+
+    <task id="wrc_close_claim" name="close the claim">
+      <incoming> wrc_flow_close_claim </incoming>
+      <outgoing> wrc_flow_success_end </outgoing>
+    </task>
+
+    <sequenceFlow id="wrc_flow_close_claim"
+                  sourceRef="wrc_update_inventory_records"
+                  targetRef="wrc_close_claim"/>
+
+    <endEvent id="wrc_success_end" name="Successful completion">
+      <incoming> wrc_flow_success_end </incoming>
+    </endEvent>
+
+    <sequenceFlow id="wrc_flow_success_end"
+                  sourceRef="wrc_close_claim"
+                  targetRef="wrc_success_end"/>
+
+  </process>
+</definitions>
