@@ -1,0 +1,650 @@
+{
+  "definitions": {
+    "id": "Definitions_CustomerSupportTicket",
+    "type": "bpmn:Definitions",
+    "bpmnVersion": "2.0",
+    "targetNamespace": "https://example.com/bpmn/customer-support-ticket",
+    "messages": [
+      {
+        "id": "Message_SupportEmail",
+        "type": "bpmn:Message",
+        "name": "Support E-mail"
+      },
+      {
+        "id": "Message_CustomerResponse",
+        "type": "bpmn:Message",
+        "name": "Response to Customer"
+      },
+      {
+        "id": "Message_CustomerReply",
+        "type": "bpmn:Message",
+        "name": "Customer Reply"
+      },
+      {
+        "id": "Message_Reminder",
+        "type": "bpmn:Message",
+        "name": "Reminder"
+      },
+      {
+        "id": "Message_TicketCancellation",
+        "type": "bpmn:Message",
+        "name": "Ticket Cancellation"
+      }
+    ],
+    "resources": [
+      {
+        "id": "Resource_AssignedAgent",
+        "type": "bpmn:Resource",
+        "name": "Assigned Agent"
+      },
+      {
+        "id": "Resource_HelpDeskSystem",
+        "type": "bpmn:Resource",
+        "name": "Help-Desk System"
+      }
+    ],
+    "dataStores": [
+      {
+        "id": "DataStore_HelpDesk",
+        "type": "bpmn:DataStore",
+        "name": "Help-Desk System"
+      },
+      {
+        "id": "DataStore_KnowledgeBase",
+        "type": "bpmn:DataStore",
+        "name": "Knowledge Base"
+      }
+    ],
+    "processes": [
+      {
+        "id": "Process_CustomerSupportTicket",
+        "type": "bpmn:Process",
+        "name": "Customer Support Ticket",
+        "isExecutable": true,
+        "processType": "Private",
+        "dataObjects": [
+          {
+            "id": "DataObject_Ticket",
+            "type": "bpmn:DataObject",
+            "name": "Ticket",
+            "isCollection": false
+          }
+        ],
+        "dataObjectReferences": [
+          {
+            "id": "DataObjectRef_Ticket",
+            "type": "bpmn:DataObjectReference",
+            "name": "Ticket",
+            "dataObjectRef": "DataObject_Ticket"
+          }
+        ],
+        "dataStoreReferences": [
+          {
+            "id": "DataStoreRef_HelpDesk",
+            "type": "bpmn:DataStoreReference",
+            "name": "Help-Desk System",
+            "dataStoreRef": "DataStore_HelpDesk"
+          },
+          {
+            "id": "DataStoreRef_KnowledgeBase",
+            "type": "bpmn:DataStoreReference",
+            "name": "Knowledge Base",
+            "dataStoreRef": "DataStore_KnowledgeBase"
+          }
+        ],
+        "flowNodes": [
+          {
+            "id": "StartEvent_SupportEmail",
+            "type": "bpmn:StartEvent",
+            "name": "Support E-mail Received",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition",
+                "messageRef": "Message_SupportEmail"
+              }
+            ]
+          },
+          {
+            "id": "Gateway_CancellationMonitoringSplit",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Diverging"
+          },
+          {
+            "id": "Task_ParseEmail",
+            "type": "bpmn:ServiceTask",
+            "name": "Parse Support E-mail",
+            "performerRef": "Resource_HelpDeskSystem",
+            "implementation": "Help-Desk System"
+          },
+          {
+            "id": "Task_CreateTicket",
+            "type": "bpmn:ServiceTask",
+            "name": "Create Ticket",
+            "performerRef": "Resource_HelpDeskSystem",
+            "implementation": "Help-Desk System",
+            "dataOutputAssociations": [
+              {
+                "id": "DataAssociation_CreateTicket",
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "\"Open\"",
+                    "to": "Ticket.status"
+                  }
+                ]
+              },
+              {
+                "id": "DataAssociation_StoreTicket",
+                "sourceRef": "DataObjectRef_Ticket",
+                "targetRef": "DataStoreRef_HelpDesk"
+              }
+            ]
+          },
+          {
+            "id": "Task_InitialClassification",
+            "type": "bpmn:UserTask",
+            "name": "Initial Classification",
+            "performerRef": "Resource_AssignedAgent",
+            "dataInputAssociations": [
+              {
+                "sourceRef": "DataObjectRef_Ticket"
+              }
+            ],
+            "dataOutputAssociations": [
+              {
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "classification result",
+                    "to": "Ticket.classification"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "Gateway_Classification",
+            "type": "bpmn:ExclusiveGateway",
+            "name": "Simple or Complex?",
+            "gatewayDirection": "Diverging"
+          },
+          {
+            "id": "Task_RootCauseAnalysis",
+            "type": "bpmn:UserTask",
+            "name": "Root Cause Analysis",
+            "performerRef": "Resource_AssignedAgent",
+            "dataInputAssociations": [
+              {
+                "sourceRef": "DataObjectRef_Ticket"
+              }
+            ],
+            "dataOutputAssociations": [
+              {
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "root cause analysis result",
+                    "to": "Ticket.rootCause"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "Gateway_ClassificationMerge",
+            "type": "bpmn:ExclusiveGateway",
+            "gatewayDirection": "Converging"
+          },
+          {
+            "id": "Task_ProvideResolution",
+            "type": "bpmn:UserTask",
+            "name": "Provide Resolution",
+            "performerRef": "Resource_AssignedAgent",
+            "dataInputAssociations": [
+              {
+                "sourceRef": "DataObjectRef_Ticket"
+              }
+            ],
+            "dataOutputAssociations": [
+              {
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "drafted resolution",
+                    "to": "Ticket.resolution"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "Gateway_ParallelWorkSplit",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Diverging"
+          },
+          {
+            "id": "Task_SendResponse",
+            "type": "bpmn:SendTask",
+            "name": "Send Response to Customer",
+            "performerRef": "Resource_AssignedAgent",
+            "messageRef": "Message_CustomerResponse",
+            "dataInputAssociations": [
+              {
+                "sourceRef": "DataObjectRef_Ticket"
+              }
+            ]
+          },
+          {
+            "id": "Task_LogSolution",
+            "type": "bpmn:UserTask",
+            "name": "Log Solution in Knowledge Base",
+            "performerRef": "Resource_AssignedAgent",
+            "dataInputAssociations": [
+              {
+                "sourceRef": "DataObjectRef_Ticket"
+              }
+            ],
+            "dataOutputAssociations": [
+              {
+                "id": "DataAssociation_LogKnowledge",
+                "sourceRef": "DataObjectRef_Ticket",
+                "targetRef": "DataStoreRef_KnowledgeBase"
+              }
+            ]
+          },
+          {
+            "id": "Gateway_WaitForReply",
+            "type": "bpmn:EventBasedGateway",
+            "name": "Customer Reply or 24 Hours",
+            "gatewayDirection": "Diverging",
+            "eventGatewayType": "Exclusive",
+            "instantiate": false
+          },
+          {
+            "id": "CatchEvent_CustomerReply",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Customer Reply",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition",
+                "messageRef": "Message_CustomerReply"
+              }
+            ]
+          },
+          {
+            "id": "CatchEvent_24Hours",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "24 Hours",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TimerEventDefinition",
+                "timeDuration": {
+                  "type": "bpmn:FormalExpression",
+                  "body": "PT24H"
+                }
+              }
+            ]
+          },
+          {
+            "id": "Task_CloseTicketOnReply",
+            "type": "bpmn:UserTask",
+            "name": "Close Ticket",
+            "performerRef": "Resource_AssignedAgent",
+            "dataOutputAssociations": [
+              {
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "\"Closed\"",
+                    "to": "Ticket.status"
+                  }
+                ]
+              },
+              {
+                "sourceRef": "DataObjectRef_Ticket",
+                "targetRef": "DataStoreRef_HelpDesk"
+              }
+            ]
+          },
+          {
+            "id": "Task_SendReminder",
+            "type": "bpmn:SendTask",
+            "name": "Send Reminder",
+            "performerRef": "Resource_HelpDeskSystem",
+            "implementation": "Automatic",
+            "messageRef": "Message_Reminder"
+          },
+          {
+            "id": "Task_CloseTicketAfterReminder",
+            "type": "bpmn:ServiceTask",
+            "name": "Close Ticket",
+            "performerRef": "Resource_HelpDeskSystem",
+            "implementation": "Help-Desk System",
+            "dataOutputAssociations": [
+              {
+                "targetRef": "DataObjectRef_Ticket",
+                "assignments": [
+                  {
+                    "from": "\"Closed\"",
+                    "to": "Ticket.status"
+                  }
+                ]
+              },
+              {
+                "sourceRef": "DataObjectRef_Ticket",
+                "targetRef": "DataStoreRef_HelpDesk"
+              }
+            ]
+          },
+          {
+            "id": "Gateway_CloseMerge",
+            "type": "bpmn:ExclusiveGateway",
+            "gatewayDirection": "Converging"
+          },
+          {
+            "id": "Gateway_ParallelWorkJoin",
+            "type": "bpmn:ParallelGateway",
+            "gatewayDirection": "Converging"
+          },
+          {
+            "id": "EndEvent_Completed",
+            "type": "bpmn:EndEvent",
+            "name": "Ticket Process Completed"
+          },
+          {
+            "id": "Gateway_CancelOrClosed",
+            "type": "bpmn:EventBasedGateway",
+            "name": "Cancellation Before Closure",
+            "gatewayDirection": "Diverging",
+            "eventGatewayType": "Exclusive",
+            "instantiate": false
+          },
+          {
+            "id": "CatchEvent_CustomerCancellation",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Customer Cancels Ticket",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition",
+                "messageRef": "Message_TicketCancellation"
+              }
+            ]
+          },
+          {
+            "id": "CatchEvent_TicketClosed",
+            "type": "bpmn:IntermediateCatchEvent",
+            "name": "Ticket Is Closed",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:ConditionalEventDefinition",
+                "condition": {
+                  "type": "bpmn:FormalExpression",
+                  "language": "FEEL",
+                  "body": "Ticket != null and Ticket.status = \"Closed\""
+                }
+              }
+            ]
+          },
+          {
+            "id": "EndEvent_Terminate",
+            "type": "bpmn:EndEvent",
+            "name": "Terminate",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TerminateEventDefinition"
+              }
+            ]
+          },
+          {
+            "id": "EndEvent_CancellationWindowClosed",
+            "type": "bpmn:EndEvent",
+            "name": "Cancellation Window Closed"
+          }
+        ],
+        "sequenceFlows": [
+          {
+            "id": "Flow_Start_To_CancellationSplit",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "StartEvent_SupportEmail",
+            "targetRef": "Gateway_CancellationMonitoringSplit"
+          },
+          {
+            "id": "Flow_CancellationSplit_To_Parse",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_CancellationMonitoringSplit",
+            "targetRef": "Task_ParseEmail"
+          },
+          {
+            "id": "Flow_CancellationSplit_To_CancelGateway",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_CancellationMonitoringSplit",
+            "targetRef": "Gateway_CancelOrClosed"
+          },
+          {
+            "id": "Flow_Parse_To_Create",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_ParseEmail",
+            "targetRef": "Task_CreateTicket"
+          },
+          {
+            "id": "Flow_Create_To_Classification",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_CreateTicket",
+            "targetRef": "Task_InitialClassification"
+          },
+          {
+            "id": "Flow_Classification_To_Route",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_InitialClassification",
+            "targetRef": "Gateway_Classification"
+          },
+          {
+            "id": "Flow_Route_Simple",
+            "type": "bpmn:SequenceFlow",
+            "name": "Simple",
+            "sourceRef": "Gateway_Classification",
+            "targetRef": "Gateway_ClassificationMerge",
+            "conditionExpression": {
+              "type": "bpmn:FormalExpression",
+              "language": "FEEL",
+              "body": "Ticket.classification = \"Simple\""
+            }
+          },
+          {
+            "id": "Flow_Route_Complex",
+            "type": "bpmn:SequenceFlow",
+            "name": "Complex",
+            "sourceRef": "Gateway_Classification",
+            "targetRef": "Task_RootCauseAnalysis",
+            "conditionExpression": {
+              "type": "bpmn:FormalExpression",
+              "language": "FEEL",
+              "body": "Ticket.classification = \"Complex\""
+            }
+          },
+          {
+            "id": "Flow_RCA_To_Merge",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_RootCauseAnalysis",
+            "targetRef": "Gateway_ClassificationMerge"
+          },
+          {
+            "id": "Flow_Merge_To_Resolution",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_ClassificationMerge",
+            "targetRef": "Task_ProvideResolution"
+          },
+          {
+            "id": "Flow_Resolution_To_WorkSplit",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_ProvideResolution",
+            "targetRef": "Gateway_ParallelWorkSplit"
+          },
+          {
+            "id": "Flow_WorkSplit_To_Response",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_ParallelWorkSplit",
+            "targetRef": "Task_SendResponse"
+          },
+          {
+            "id": "Flow_WorkSplit_To_Knowledge",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_ParallelWorkSplit",
+            "targetRef": "Task_LogSolution"
+          },
+          {
+            "id": "Flow_Response_To_ReplyGateway",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "Gateway_WaitForReply"
+          },
+          {
+            "id": "Flow_ReplyGateway_To_Reply",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_WaitForReply",
+            "targetRef": "CatchEvent_CustomerReply"
+          },
+          {
+            "id": "Flow_ReplyGateway_To_Timer",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_WaitForReply",
+            "targetRef": "CatchEvent_24Hours"
+          },
+          {
+            "id": "Flow_Reply_To_CloseAgent",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "CatchEvent_CustomerReply",
+            "targetRef": "Task_CloseTicketOnReply"
+          },
+          {
+            "id": "Flow_Timer_To_Reminder",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "CatchEvent_24Hours",
+            "targetRef": "Task_SendReminder"
+          },
+          {
+            "id": "Flow_Reminder_To_CloseSystem",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Task_CloseTicketAfterReminder"
+          },
+          {
+            "id": "Flow_CloseAgent_To_CloseMerge",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_CloseTicketOnReply",
+            "targetRef": "Gateway_CloseMerge"
+          },
+          {
+            "id": "Flow_CloseSystem_To_CloseMerge",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_CloseTicketAfterReminder",
+            "targetRef": "Gateway_CloseMerge"
+          },
+          {
+            "id": "Flow_CloseMerge_To_WorkJoin",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_CloseMerge",
+            "targetRef": "Gateway_ParallelWorkJoin"
+          },
+          {
+            "id": "Flow_Knowledge_To_WorkJoin",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Task_LogSolution",
+            "targetRef": "Gateway_ParallelWorkJoin"
+          },
+          {
+            "id": "Flow_WorkJoin_To_End",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_ParallelWorkJoin",
+            "targetRef": "EndEvent_Completed"
+          },
+          {
+            "id": "Flow_CancelGateway_To_Cancellation",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_CancelOrClosed",
+            "targetRef": "CatchEvent_CustomerCancellation"
+          },
+          {
+            "id": "Flow_CancelGateway_To_Closed",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "Gateway_CancelOrClosed",
+            "targetRef": "CatchEvent_TicketClosed"
+          },
+          {
+            "id": "Flow_Cancellation_To_Terminate",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "CatchEvent_CustomerCancellation",
+            "targetRef": "EndEvent_Terminate"
+          },
+          {
+            "id": "Flow_Closed_To_CancellationWindowEnd",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "CatchEvent_TicketClosed",
+            "targetRef": "EndEvent_CancellationWindowClosed"
+          }
+        ]
+      }
+    ],
+    "collaborations": [
+      {
+        "id": "Collaboration_CustomerSupport",
+        "type": "bpmn:Collaboration",
+        "participants": [
+          {
+            "id": "Participant_CustomerSupport",
+            "type": "bpmn:Participant",
+            "name": "Customer Support",
+            "processRef": "Process_CustomerSupportTicket"
+          },
+          {
+            "id": "Participant_Customer",
+            "type": "bpmn:Participant",
+            "name": "Customer"
+          }
+        ],
+        "messageFlows": [
+          {
+            "id": "MessageFlow_SupportEmail",
+            "type": "bpmn:MessageFlow",
+            "name": "Support E-mail",
+            "messageRef": "Message_SupportEmail",
+            "sourceRef": "Participant_Customer",
+            "targetRef": "StartEvent_SupportEmail"
+          },
+          {
+            "id": "MessageFlow_CustomerResponse",
+            "type": "bpmn:MessageFlow",
+            "name": "Response to Customer",
+            "messageRef": "Message_CustomerResponse",
+            "sourceRef": "Task_SendResponse",
+            "targetRef": "Participant_Customer"
+          },
+          {
+            "id": "MessageFlow_CustomerReply",
+            "type": "bpmn:MessageFlow",
+            "name": "Customer Reply",
+            "messageRef": "Message_CustomerReply",
+            "sourceRef": "Participant_Customer",
+            "targetRef": "CatchEvent_CustomerReply"
+          },
+          {
+            "id": "MessageFlow_Reminder",
+            "type": "bpmn:MessageFlow",
+            "name": "Reminder",
+            "messageRef": "Message_Reminder",
+            "sourceRef": "Task_SendReminder",
+            "targetRef": "Participant_Customer"
+          },
+          {
+            "id": "MessageFlow_TicketCancellation",
+            "type": "bpmn:MessageFlow",
+            "name": "Ticket Cancellation",
+            "messageRef": "Message_TicketCancellation",
+            "sourceRef": "Participant_Customer",
+            "targetRef": "CatchEvent_CustomerCancellation"
+          }
+        ]
+      }
+    ]
+  }
+}
