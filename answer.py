@@ -1,6 +1,7 @@
 import os, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
+from file_utils import read_file_with_fallback
 
 
 MANUAL = False
@@ -14,7 +15,7 @@ def _respond_single_prompt(prompt, model_name, m_name, base_model_name, paramete
         if os.path.exists(answer_path) and os.path.getsize(answer_path) > 0:
             return False
 
-        prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read() + parameters.get("add_prompt", "")
+        prompt_content = read_file_with_fallback(os.path.join("prompts", prompt)) + parameters.get("add_prompt", "")
 
         aa = time.time_ns()
         print("starting", model_name, prompt, answer_path)

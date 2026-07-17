@@ -2,6 +2,7 @@ import os, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 from results import EXPECTED_EVALUATION_FILES
+from file_utils import open_file_with_fallback, read_file_with_fallback
 
 
 EVALUATING_MODEL_NAME = "grok-4.3"
@@ -44,7 +45,7 @@ def _parse_leaderboard(path=LEADERBOARD_PATH):
     llm_idx = None
     avg_idx = None
 
-    with open(path, encoding="utf-8") as leaderboard_file:
+    with open_file_with_fallback(path) as leaderboard_file:
         for line in leaderboard_file:
             cells = _split_markdown_row(line)
             if not cells:
@@ -195,9 +196,9 @@ def _build_evaluation_order(target_directory, model_filter=None):
 def _evaluate_single_answer(answer, base_model_name, target_directory, include_ground_truth_answer, parameters):
     evaluation_path = os.path.join(target_directory, answer)
     prompt = answer.split("__")[1]
-    prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read()
-    gt_content = open(os.path.join("gt_answers", prompt), encoding="utf-8").read()
-    answer_content = open(os.path.join("answers", answer), encoding="utf-8").read().split("</think>")[-1].split("</thought>")[-1]
+    prompt_content = read_file_with_fallback(os.path.join("prompts", prompt))
+    gt_content = read_file_with_fallback(os.path.join("gt_answers", prompt))
+    answer_content = read_file_with_fallback(os.path.join("answers", answer)).split("</think>")[-1].split("</thought>")[-1]
 
     evaluation_prompt = []
     evaluation_prompt.append("I ask you to evaluate from 1.0 (minimum) to 10.0 (maximum) the LLM answer provided to the following prompt. Please put the score (from 1.0 to 10.0) in the beginning of your response.")

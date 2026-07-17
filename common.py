@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from file_utils import read_file_with_fallback
+
 import requests
 import traceback
 import json
@@ -17,8 +19,7 @@ MODELS_CONFIG_PATH = Path(__file__).with_name("models.json")
 
 
 def _load_models_config(path=MODELS_CONFIG_PATH):
-    with path.open(encoding="utf-8") as config_file:
-        return json.load(config_file)
+    return json.loads(read_file_with_fallback(path))
 
 
 def _normalize_model_catalogue_entry(entry):

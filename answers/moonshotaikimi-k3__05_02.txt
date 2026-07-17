@@ -1,0 +1,19 @@
+**1. Unified diff**
+
+```diff
+--- a/onboarding.bpmn
++++ b/onboarding.bpmn
+@@ -15,7 +15,7 @@
+     <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+     <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
+     <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+-    <bpmn:serviceTask id="Task_GrantAccess"   name="Grant System Access"    camunda:dueDate="P1D" camunda:type="external"/>
++    <bpmn:serviceTask id="Task_GrantAccess"   name="Grant System Access"    camunda:class="com.globex.onboarding.GrantSystemAccessDelegate"/>
+     <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GrantAccess" targetRef="EndEvent_1"/>
+     <bpmn:endEvent id="EndEvent_1" name="Ready to Work"/>
+   </bpmn:process>
+```
+
+**2. Rationale**
+
+"Grant System Access" is the only step whose completion lies outside the engine's control — as an external task it stalls the process end until a worker happens to poll, lock, and complete it, and since Camunda honors `camunda:dueDate` only on user tasks its nominal 1-day SLA was never even enforceable — so switching the existing serviceTask to a synchronously executed in-engine Java delegate removes the single unbounded, deadline-free wait from the critical path.

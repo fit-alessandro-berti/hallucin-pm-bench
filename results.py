@@ -6,6 +6,7 @@ import time
 from statistics import median, pstdev
 
 from common import EVALUATIONS_DIR
+from file_utils import read_file_with_fallback
 
 
 pattern = r'(?P<sign>[-+]?)(?:(?P<float>\d+\.\d+)|(?P<int>\d+)|(?P<numerator>\d+)/(?P<denominator>\d+))(?!\.)'
@@ -164,8 +165,7 @@ def _load_evaluation_data(evaluation_folder):
             category = question[:2]
             categories.add(category)
 
-            with open(entry.path, encoding="utf-8") as evaluation_file:
-                number = match_regex(evaluation_file.read())
+            number = match_regex(read_file_with_fallback(entry.path))
 
             if number is None:
                 number = 1.0
