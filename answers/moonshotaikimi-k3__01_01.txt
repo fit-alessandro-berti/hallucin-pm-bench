@@ -1,0 +1,30 @@
+### Decision points
+
+1. **Eligibility validation — `Triage_Agent_Validate_Eligibility`**
+   - Determines whether the passenger’s claim is eligible.
+   - Based on the **FlightManifest** and **WeatherReport**.
+
+2. **Financial pre-approval — `Finance_Controller_PreApprove`**
+   - Determines whether the refund receives finance sign-off.
+   - Based on the **EligibilityChecklist**.
+   - Payment cannot begin unless this step succeeds.
+
+3. **High-value branching decision**
+   - **Refund amount > €1,000:** `Senior_Auditor_Review` is required before payment.
+   - **Refund amount ≤ €1,000:** no senior-auditor step is required; payment may proceed after successful finance pre-approval and receipt of the signed authorization.
+
+`Senior_Auditor_Review` is a mandatory high-value review, but the description does not define an additional approval criterion or outcome for it. Likewise, presence of the signed **BankTransferAuthorization** is a payment precondition rather than a separately defined decision activity.
+
+### Required documents
+
+| Document | Where required |
+|---|---|
+| **RefundRequestForm** | Completed during `Customer_Submit_Claim` |
+| **FlightManifest** | Consulted during eligibility validation |
+| **WeatherReport** | Consulted during eligibility validation |
+| **EligibilityChecklist** | Used for finance-controller pre-approval |
+| **AuditTrail** | Required for `Senior_Auditor_Review` when the refund is greater than €1,000 |
+| **BankTransferAuthorization** | Must be signed and present before `Process_Refund_Payment` |
+| **RefundConfirmationPDF** | Emailed during `Issue_Confirmation_Letter` |
+
+The legacy **`CustomerService_Agent_Decide`** activity is not part of Contoso’s process.
