@@ -62,11 +62,18 @@ def respond_for_model(model_name, parameters=None):
     m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
     changed = False
+    failure_count = 0
 
     if MANUAL:
         for prompt in os.listdir("prompts"):
-            changed = _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters) or changed
-        return changed
+            answer_path = os.path.join("answers", m_name + "__" + prompt)
+
+            if (not os.path.exists(answer_path)) or (os.path.getsize(answer_path) == 0):
+                completed = _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters)
+                changed = completed or changed
+                if not completed:
+                    failure_count += 1
+        return changed or failure_count > 0
 
     futures = []
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
@@ -85,19 +92,23 @@ def respond_for_model(model_name, parameters=None):
 
         for future in as_completed(futures):
             try:
-                changed = future.result() or changed
+                completed = future.result()
+                changed = completed or changed
+                if not completed:
+                    failure_count += 1
             except Exception as e:
-                changed = True
+                failure_count += 1
                 print("thread except", str(e))
 
-    return changed
+    return changed or failure_count > 0
 
 def main():
     changed = False
     for model in Shared.MODEL_CATALOGUE:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]
-        changed = changed or respond_for_model(model_name, parameters)
+        model_changed = respond_for_model(model_name, parameters)
+        changed = model_changed or changed
 
     return changed
 
