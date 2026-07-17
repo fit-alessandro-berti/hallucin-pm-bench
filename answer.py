@@ -10,15 +10,15 @@ MAX_THREADS = 100
 def _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters):
     answer_path = os.path.join("answers", m_name + "__" + prompt)
 
-    if os.path.exists(answer_path) and os.path.getsize(answer_path) > 0:
-        return False
-
-    prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read() + parameters.get("add_prompt", "")
-
-    aa = time.time_ns()
-    print("starting", model_name, prompt, answer_path)
-
     try:
+        if os.path.exists(answer_path) and os.path.getsize(answer_path) > 0:
+            return False
+
+        prompt_content = open(os.path.join("prompts", prompt), encoding="utf-8").read() + parameters.get("add_prompt", "")
+
+        aa = time.time_ns()
+        print("starting", model_name, prompt, answer_path)
+
         is_completed = False
 
         if MANUAL:
@@ -99,10 +99,14 @@ def respond_for_model(model_name, parameters=None):
 def main():
     work_found = False
     for model in Shared.MODEL_CATALOGUE:
-        parameters = None if isinstance(model, str) else model[1]
-        model_name = model if isinstance(model, str) else model[0]
-        model_work_found = respond_for_model(model_name, parameters)
-        work_found = model_work_found or work_found
+        try:
+            parameters = None if isinstance(model, str) else model[1]
+            model_name = model if isinstance(model, str) else model[0]
+            model_work_found = respond_for_model(model_name, parameters)
+            work_found = model_work_found or work_found
+        except Exception as e:
+            work_found = True
+            print("model except", model, str(e))
 
     return work_found
 
