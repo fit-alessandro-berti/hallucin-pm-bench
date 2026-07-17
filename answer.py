@@ -61,19 +61,16 @@ def respond_for_model(model_name, parameters=None):
 
     m_name = model_name.replace(":", "").replace("/", "")
     base_model_name = parameters.get("base_model", model_name)
-    changed = False
-    failure_count = 0
+    work_found = False
 
     if MANUAL:
         for prompt in os.listdir("prompts"):
             answer_path = os.path.join("answers", m_name + "__" + prompt)
 
             if (not os.path.exists(answer_path)) or (os.path.getsize(answer_path) == 0):
-                completed = _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters)
-                changed = completed or changed
-                if not completed:
-                    failure_count += 1
-        return changed or failure_count > 0
+                work_found = True
+                _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters)
+        return work_found
 
     futures = []
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
@@ -81,6 +78,7 @@ def respond_for_model(model_name, parameters=None):
             answer_path = os.path.join("answers", m_name + "__" + prompt)
 
             if (not os.path.exists(answer_path)) or (os.path.getsize(answer_path) == 0):
+                work_found = True
                 futures.append(executor.submit(
                     _respond_single_prompt,
                     prompt,
@@ -92,29 +90,25 @@ def respond_for_model(model_name, parameters=None):
 
         for future in as_completed(futures):
             try:
-                completed = future.result()
-                changed = completed or changed
-                if not completed:
-                    failure_count += 1
+                future.result()
             except Exception as e:
-                failure_count += 1
                 print("thread except", str(e))
 
-    return changed or failure_count > 0
+    return work_found
 
 def main():
-    changed = False
+    work_found = False
     for model in Shared.MODEL_CATALOGUE:
         parameters = None if isinstance(model, str) else model[1]
         model_name = model if isinstance(model, str) else model[0]
-        model_changed = respond_for_model(model_name, parameters)
-        changed = model_changed or changed
+        model_work_found = respond_for_model(model_name, parameters)
+        work_found = model_work_found or work_found
 
-    return changed
+    return work_found
 
 
 if __name__ == "__main__":
-    changed = True
-    while changed:
-        changed = main()
+    work_found = True
+    while work_found:
+        work_found = main()
         print("round finished")
