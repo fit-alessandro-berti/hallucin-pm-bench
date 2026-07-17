@@ -1,0 +1,217 @@
+{
+  "processId": "CustomerSupportTicketProcess",
+  "processName": "Customer Support Ticket Process",
+  "elements": [
+    {
+      "id": "Start_SupportEmailReceived",
+      "type": "startEvent",
+      "name": "Support e-mail received",
+      "eventDefinition": "message",
+      "message": "Support E-mail"
+    },
+    {
+      "id": "Task_ParseAndCreateTicket",
+      "type": "task",
+      "name": "Parse e-mail and create Ticket"
+    },
+    {
+      "id": "Task_InitialClassification",
+      "type": "task",
+      "name": "Initial Classification"
+    },
+    {
+      "id": "Gateway_Classification_XOR",
+      "type": "exclusiveGateway",
+      "name": "Simple or Complex?"
+    },
+    {
+      "id": "Task_RootCauseAnalysis",
+      "type": "task",
+      "name": "Root Cause Analysis"
+    },
+    {
+      "id": "Task_ProvideResolution",
+      "type": "task",
+      "name": "Provide Resolution"
+    },
+    {
+      "id": "Gateway_Parallel_Fork",
+      "type": "parallelGateway",
+      "name": "Fork Resolution and Logging",
+      "direction": "diverging"
+    },
+    {
+      "id": "Task_SendResponse",
+      "type": "task",
+      "name": "Send Response to Customer"
+    },
+    {
+      "id": "Task_LogKB",
+      "type": "task",
+      "name": "Log Solution in Knowledge Base"
+    },
+    {
+      "id": "Gateway_Parallel_Join",
+      "type": "parallelGateway",
+      "name": "Join Resolution and Logging",
+      "direction": "converging"
+    },
+    {
+      "id": "Gateway_EventBased_WaitForReply",
+      "type": "eventBasedGateway",
+      "name": "Wait for Customer Reply"
+    },
+    {
+      "id": "Event_CustomerReply",
+      "type": "intermediateCatchEvent",
+      "name": "Customer Reply received",
+      "eventDefinition": "message",
+      "message": "Customer Reply"
+    },
+    {
+      "id": "Event_Timer_24h",
+      "type": "intermediateCatchEvent",
+      "name": "24 hours passed",
+      "eventDefinition": "timer",
+      "timerDuration": "PT24H"
+    },
+    {
+      "id": "Task_SendReminder",
+      "type": "task",
+      "name": "Send Reminder"
+    },
+    {
+      "id": "Task_CloseTicket",
+      "type": "task",
+      "name": "Close Ticket"
+    },
+    {
+      "id": "End_Closed",
+      "type": "endEvent",
+      "name": "Ticket Closed"
+    },
+    {
+      "id": "EventSubprocess_CancelHandler",
+      "type": "eventSubProcess",
+      "name": "Cancel Handling",
+      "triggeredByInterrupting": true,
+      "elements": [
+        {
+          "id": "Start_CancelRequest",
+          "type": "startEvent",
+          "name": "Customer cancels ticket",
+          "eventDefinition": "message",
+          "message": "Cancel Ticket",
+          "isInterrupting": true
+        },
+        {
+          "id": "End_Terminate",
+          "type": "endEvent",
+          "name": "Terminate",
+          "eventDefinition": "terminate"
+        }
+      ],
+      "flows": [
+        {
+          "id": "Flow_Cancel_to_Terminate",
+          "from": "Start_CancelRequest",
+          "to": "End_Terminate"
+        }
+      ]
+    }
+  ],
+  "sequenceFlows": [
+    {
+      "id": "Flow_01",
+      "from": "Start_SupportEmailReceived",
+      "to": "Task_ParseAndCreateTicket"
+    },
+    {
+      "id": "Flow_02",
+      "from": "Task_ParseAndCreateTicket",
+      "to": "Task_InitialClassification"
+    },
+    {
+      "id": "Flow_03",
+      "from": "Task_InitialClassification",
+      "to": "Gateway_Classification_XOR"
+    },
+    {
+      "id": "Flow_04_Simple",
+      "from": "Gateway_Classification_XOR",
+      "to": "Task_ProvideResolution",
+      "condition": "Simple"
+    },
+    {
+      "id": "Flow_05_Complex",
+      "from": "Gateway_Classification_XOR",
+      "to": "Task_RootCauseAnalysis",
+      "condition": "Complex"
+    },
+    {
+      "id": "Flow_06_RCA_to_Resolution",
+      "from": "Task_RootCauseAnalysis",
+      "to": "Task_ProvideResolution"
+    },
+    {
+      "id": "Flow_07",
+      "from": "Task_ProvideResolution",
+      "to": "Gateway_Parallel_Fork"
+    },
+    {
+      "id": "Flow_08a",
+      "from": "Gateway_Parallel_Fork",
+      "to": "Task_SendResponse"
+    },
+    {
+      "id": "Flow_08b",
+      "from": "Gateway_Parallel_Fork",
+      "to": "Task_LogKB"
+    },
+    {
+      "id": "Flow_09a",
+      "from": "Task_SendResponse",
+      "to": "Gateway_Parallel_Join"
+    },
+    {
+      "id": "Flow_09b",
+      "from": "Task_LogKB",
+      "to": "Gateway_Parallel_Join"
+    },
+    {
+      "id": "Flow_10",
+      "from": "Gateway_Parallel_Join",
+      "to": "Gateway_EventBased_WaitForReply"
+    },
+    {
+      "id": "Flow_11a",
+      "from": "Gateway_EventBased_WaitForReply",
+      "to": "Event_CustomerReply"
+    },
+    {
+      "id": "Flow_11b",
+      "from": "Gateway_EventBased_WaitForReply",
+      "to": "Event_Timer_24h"
+    },
+    {
+      "id": "Flow_12_ReplyReceived",
+      "from": "Event_CustomerReply",
+      "to": "Task_CloseTicket"
+    },
+    {
+      "id": "Flow_13_Timeout",
+      "from": "Event_Timer_24h",
+      "to": "Task_SendReminder"
+    },
+    {
+      "id": "Flow_14",
+      "from": "Task_SendReminder",
+      "to": "Task_CloseTicket"
+    },
+    {
+      "id": "Flow_15",
+      "from": "Task_CloseTicket",
+      "to": "End_Closed"
+    }
+  ]
+}

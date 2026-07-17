@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Warranty-Replacement v1.3">
+  <bpmn:process id="WarrantyReplacement" name="Warranty-Replacement v1.3" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Online warranty claim submitted">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:task id="Task_ValidateClaim" name="Validate the claim">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="Gateway_Completeness" name="Claim complete?">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3_Complete</bpmn:outgoing>
+      <bpmn:outgoing>Flow_3_Incomplete</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="Task_RequestMissingInfo" name="Request missing information">
+      <bpmn:incoming>Flow_3_Incomplete</bpmn:incoming>
+      <bpmn:outgoing>Flow_3a</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_ReceiveMissingInfo" name="Receive missing information">
+      <bpmn:incoming>Flow_3a</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_CheckEligibility" name="Check warranty eligibility">
+      <bpmn:incoming>Flow_3_Complete</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:exclusiveGateway id="Gateway_WarrantyEligibility" name="Warranty eligibility?">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6_InWarranty</bpmn:outgoing>
+      <bpmn:outgoing>Flow_6_OutOfWarranty</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:task id="Task_SendRejection" name="Send rejection notice">
+      <bpmn:incoming>Flow_6_OutOfWarranty</bpmn:incoming>
+      <bpmn:outgoing>Flow_7_Rejected</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="EndEvent_Rejected" name="End - Rejected">
+      <bpmn:incoming>Flow_7_Rejected</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:parallelGateway id="Gateway_Parallel_Fork" name="Fork">
+      <bpmn:incoming>Flow_6_InWarranty</bpmn:incoming>
+      <bpmn:outgoing>Flow_8a</bpmn:outgoing>
+      <bpmn:outgoing>Flow_8b</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:task id="Task_CreateShipment" name="Create shipment order">
+      <bpmn:incoming>Flow_8a</bpmn:incoming>
+      <bpmn:outgoing>Flow_9a</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_SchedulePickup" name="Schedule courier pickup">
+      <bpmn:incoming>Flow_8b</bpmn:incoming>
+      <bpmn:outgoing>Flow_9b</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:parallelGateway id="Gateway_Parallel_Join" name="Join">
+      <bpmn:incoming>Flow_9a</bpmn:incoming>
+      <bpmn:incoming>Flow_9b</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <bpmn:task id="Task_UpdateInventory" name="Update inventory records">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_CloseClaim" name="Close the claim">
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="EndEvent_Closed" name="End - Closed">
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_ValidateClaim" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_ValidateClaim" targetRef="Gateway_Completeness" />
+    <bpmn:sequenceFlow id="Flow_3_Incomplete" name="Incomplete" sourceRef="Gateway_Completeness" targetRef="Task_RequestMissingInfo" />
+    <bpmn:sequenceFlow id="Flow_3a" sourceRef="Task_RequestMissingInfo" targetRef="Task_ReceiveMissingInfo" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_ReceiveMissingInfo" targetRef="Task_ValidateClaim" />
+    <bpmn:sequenceFlow id="Flow_3_Complete" name="Complete" sourceRef="Gateway_Completeness" targetRef="Task_CheckEligibility" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CheckEligibility" targetRef="Gateway_WarrantyEligibility" />
+    <bpmn:sequenceFlow id="Flow_6_OutOfWarranty" name="Out of warranty" sourceRef="Gateway_WarrantyEligibility" targetRef="Task_SendRejection" />
+    <bpmn:sequenceFlow id="Flow_7_Rejected" sourceRef="Task_SendRejection" targetRef="EndEvent_Rejected" />
+    <bpmn:sequenceFlow id="Flow_6_InWarranty" name="Within warranty" sourceRef="Gateway_WarrantyEligibility" targetRef="Gateway_Parallel_Fork" />
+    <bpmn:sequenceFlow id="Flow_8a" sourceRef="Gateway_Parallel_Fork" targetRef="Task_CreateShipment" />
+    <bpmn:sequenceFlow id="Flow_8b" sourceRef="Gateway_Parallel_Fork" targetRef="Task_SchedulePickup" />
+    <bpmn:sequenceFlow id="Flow_9a" sourceRef="Task_CreateShipment" targetRef="Gateway_Parallel_Join" />
+    <bpmn:sequenceFlow id="Flow_9b" sourceRef="Task_SchedulePickup" targetRef="Gateway_Parallel_Join" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Gateway_Parallel_Join" targetRef="Task_UpdateInventory" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Task_UpdateInventory" targetRef="Task_CloseClaim" />
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="Task_CloseClaim" targetRef="EndEvent_Closed" />
+  </bpmn:process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="WarrantyReplacement">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <omgdc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ValidateClaim_di" bpmnElement="Task_ValidateClaim">
+        <omgdc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Completeness_di" bpmnElement="Gateway_Completeness">
+        <omgdc:Bounds x="400" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RequestMissingInfo_di" bpmnElement="Task_RequestMissingInfo">
+        <omgdc:Bounds x="350" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReceiveMissingInfo_di" bpmnElement="Task_ReceiveMissingInfo">
+        <omgdc:Bounds x="500" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CheckEligibility_di" bpmnElement="Task_CheckEligibility">
+        <omgdc:Bounds x="500" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_WarrantyEligibility_di" bpmnElement="Gateway_WarrantyEligibility">
+        <omgdc:Bounds x="650" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SendRejection_di" bpmnElement="Task_SendRejection">
+        <omgdc:Bounds x="750" y="20" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Rejected_di" bpmnElement="EndEvent_Rejected">
+        <omgdc:Bounds x="900" y="38" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Parallel_Fork_di" bpmnElement="Gateway_Parallel_Fork">
+        <omgdc:Bounds x="750" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateShipment_di" bpmnElement="Task_CreateShipment">
+        <omgdc:Bounds x="880" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SchedulePickup_di" bpmnElement="Task_SchedulePickup">
+        <omgdc:Bounds x="880" y="180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Parallel_Join_di" bpmnElement="Gateway_Parallel_Join">
+        <omgdc:Bounds x="1050" y="120" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UpdateInventory_di" bpmnElement="Task_UpdateInventory">
+        <omgdc:Bounds x="1150" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CloseClaim_di" bpmnElement="Task_CloseClaim">
+        <omgdc:Bounds x="1300" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Closed_di" bpmnElement="EndEvent_Closed">
+        <omgdc:Bounds x="1450" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
