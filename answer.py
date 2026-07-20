@@ -1,4 +1,9 @@
-import os, time
+import os
+import shlex
+import shutil
+import subprocess
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from common import *
 from file_utils import read_file_with_fallback
@@ -6,6 +11,30 @@ from file_utils import read_file_with_fallback
 
 MANUAL = False
 MAX_THREADS = 100
+
+
+def open_text_editor(file_path):
+    configured_editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
+    if configured_editor:
+        subprocess.run(shlex.split(configured_editor) + [file_path])
+        return
+
+    if sys.platform.startswith("linux"):
+        editor_candidates = ["mousepad", "xdg-open"]
+    elif os.name == "nt":
+        editor_candidates = ["notepad++.exe", "notepad.exe"]
+    else:
+        editor_candidates = ["open"]
+
+    for editor in editor_candidates:
+        if shutil.which(editor):
+            subprocess.run([editor, file_path])
+            return
+
+    raise RuntimeError(
+        "No supported text editor found. Install mousepad on Linux, "
+        "Notepad++/Notepad on Windows, or set VISUAL/EDITOR."
+    )
 
 
 def _respond_single_prompt(prompt, model_name, m_name, base_model_name, parameters):
@@ -23,13 +52,13 @@ def _respond_single_prompt(prompt, model_name, m_name, base_model_name, paramete
         is_completed = False
 
         if MANUAL:
-            import pyperclip, subprocess
+            import pyperclip
             pyperclip.copy(prompt_content)
 
             F = open(answer_path, "w")
             F.close()
 
-            subprocess.run(["notepad.exe", answer_path])
+            open_text_editor(answer_path)
             if os.path.getsize(answer_path) > 0:
                 is_completed = True
         else:
