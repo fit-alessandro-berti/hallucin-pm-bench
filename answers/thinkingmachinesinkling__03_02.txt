@@ -1,0 +1,208 @@
+{
+  "process": {
+    "id": "Proc_CustomerSupport",
+    "name": "Customer Support Ticket Process"
+  },
+  "nodes": [
+    {
+      "id": "SE_Start",
+      "type": "StartEvent",
+      "name": "Support E-mail Received",
+      "eventDefinition": "messageEventDefinition"
+    },
+    {
+      "id": "T_Parse",
+      "type": "Task",
+      "name": "Parse E-mail and Create Ticket"
+    },
+    {
+      "id": "T_Classify",
+      "type": "Task",
+      "name": "Initial Classification"
+    },
+    {
+      "id": "GW_Route",
+      "type": "ExclusiveGateway",
+      "name": "Route Ticket"
+    },
+    {
+      "id": "T_RootCause",
+      "type": "Task",
+      "name": "Root Cause Analysis"
+    },
+    {
+      "id": "T_Resolve",
+      "type": "Task",
+      "name": "Provide Resolution"
+    },
+    {
+      "id": "GW_Parallel",
+      "type": "ParallelGateway",
+      "name": "Split"
+    },
+    {
+      "id": "T_SendResp",
+      "type": "Task",
+      "name": "Send Response to Customer"
+    },
+    {
+      "id": "GW_Event",
+      "type": "EventBasedGateway",
+      "name": "Wait for Reply or Timeout"
+    },
+    {
+      "id": "IE_Reply",
+      "type": "IntermediateCatchEvent",
+      "name": "Customer Reply",
+      "eventDefinition": "messageEventDefinition"
+    },
+    {
+      "id": "IE_Timer",
+      "type": "IntermediateCatchEvent",
+      "name": "24 Hours Elapsed",
+      "eventDefinition": "timerEventDefinition",
+      "timerDefinition": "duration",
+      "timeDuration": "PT24H"
+    },
+    {
+      "id": "T_Reminder",
+      "type": "Task",
+      "name": "Send Reminder"
+    },
+    {
+      "id": "T_Close",
+      "type": "Task",
+      "name": "Close Ticket"
+    },
+    {
+      "id": "EE_End1",
+      "type": "EndEvent",
+      "name": "End"
+    },
+    {
+      "id": "T_LogKB",
+      "type": "Task",
+      "name": "Log Solution in Knowledge Base"
+    },
+    {
+      "id": "EE_End2",
+      "type": "EndEvent",
+      "name": "End"
+    },
+    {
+      "id": "ESP_Cancel",
+      "type": "EventSubprocess",
+      "name": "Cancellation Handler",
+      "triggerConfig": {
+        "interrupting": true
+      }
+    },
+    {
+      "id": "SE_Cancel",
+      "type": "StartEvent",
+      "name": "Ticket Cancelled",
+      "eventDefinition": "messageEventDefinition"
+    },
+    {
+      "id": "EE_Terminate",
+      "type": "EndEvent",
+      "name": "Terminate",
+      "eventDefinition": "terminateEventDefinition"
+    }
+  ],
+  "flows": [
+    {
+      "id": "F1",
+      "source": "SE_Start",
+      "target": "T_Parse"
+    },
+    {
+      "id": "F2",
+      "source": "T_Parse",
+      "target": "T_Classify"
+    },
+    {
+      "id": "F3",
+      "source": "T_Classify",
+      "target": "GW_Route"
+    },
+    {
+      "id": "F4",
+      "source": "GW_Route",
+      "target": "T_Resolve",
+      "condition": "Simple"
+    },
+    {
+      "id": "F5",
+      "source": "GW_Route",
+      "target": "T_RootCause",
+      "condition": "Complex"
+    },
+    {
+      "id": "F6",
+      "source": "T_RootCause",
+      "target": "T_Resolve"
+    },
+    {
+      "id": "F7",
+      "source": "T_Resolve",
+      "target": "GW_Parallel"
+    },
+    {
+      "id": "F8",
+      "source": "GW_Parallel",
+      "target": "T_SendResp"
+    },
+    {
+      "id": "F9",
+      "source": "GW_Parallel",
+      "target": "T_LogKB"
+    },
+    {
+      "id": "F10",
+      "source": "T_SendResp",
+      "target": "GW_Event"
+    },
+    {
+      "id": "F11",
+      "source": "GW_Event",
+      "target": "IE_Reply"
+    },
+    {
+      "id": "F12",
+      "source": "IE_Reply",
+      "target": "T_Close"
+    },
+    {
+      "id": "F13",
+      "source": "GW_Event",
+      "target": "IE_Timer"
+    },
+    {
+      "id": "F14",
+      "source": "IE_Timer",
+      "target": "T_Reminder"
+    },
+    {
+      "id": "F15",
+      "source": "T_Reminder",
+      "target": "T_Close"
+    },
+    {
+      "id": "F16",
+      "source": "T_Close",
+      "target": "EE_End1"
+    },
+    {
+      "id": "F17",
+      "source": "T_LogKB",
+      "target": "EE_End2"
+    },
+    {
+      "id": "F18",
+      "source": "SE_Cancel",
+      "target": "EE_Terminate",
+      "subProcess": "ESP_Cancel"
+    }
+  ]
+}
