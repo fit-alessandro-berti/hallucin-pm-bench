@@ -3,7 +3,7 @@
 | Category                                | Median of Std |
 | --------------------------------------- | ------------- |
 | C01 Domain-override / Precedence checks | 1.414214      |
-| C02 Event-log fact-extraction           | 0.816497      |
+| C02 Event-log fact-extraction           | 0.761802      |
 | C03 Text to Model reconstruction        | 0.471405      |
 | C04 Compliance / Conformance reasoning  | 1.632993      |
 | C05 Counterfactual edits                | 1.885618      |
@@ -14,4 +14,4 @@
 | C10 Domain-synonym enforcement          | 0.471405      |
 | C11 Performance analytics commentary    | 1.699673      |
 | C12 Misinformation injection            | 0.471405      |
-| C13 Edge-case / low-support prompts     | 1.312335      |
+| C13 Edge-case / low-support prompts     | 1.363274      |
