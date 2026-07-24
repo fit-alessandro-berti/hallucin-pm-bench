@@ -1,0 +1,9 @@
+**Improvement: put an interrupting boundary timer on Task_RequestDocs and route it to an escalation end event.**
+
+Task_RequestDocs is the only unbounded wait — Start_Claim → Task_Check → GW_Docs are near-instant, so the SLA breach can only happen there.
+
+Add:
+- `Timer_SLA48` — interrupting `boundaryEvent` attached to `Task_RequestDocs`, `timerEventDefinition` with `timeDuration = PT36H` (48 h minus the intake budget consumed before GW_Docs).
+- `f10` — sequenceFlow from `Timer_SLA48` to new `Escalate_SLA`, an **escalationEndEvent**, which the parent/ops handler subscribes to.
+
+Keep `f6` unchanged for the happy path. No new tasks or subprocesses are created, and every claim now either reaches `Task_Triage` inside 48 h or is auto-escalated.

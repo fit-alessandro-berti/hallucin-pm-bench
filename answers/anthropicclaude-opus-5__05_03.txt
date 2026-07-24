@@ -1,0 +1,34 @@
+## Change: attach an interrupting boundary timer to **Create Account in Core System** and wire it to the already‑existing (currently orphaned) *Account‑Manager Review* task
+
+```xml
+<!-- NEW: 48h SLA timer on the existing service task (no new activity) -->
+<bpmn:boundaryEvent id="Timer_CreateAccountSLA"
+                    name="48h SLA breached"
+                    attachedToRef="Activity_CreateAccount"
+                    cancelActivity="true">
+  <bpmn:timerEventDefinition id="TimerDef_01">
+    <!-- deadline is anchored to the completion of Verify Identity, not to task start -->
+    <bpmn:timeDate xsi:type="bpmn:tFormalExpression">
+      ${dateTime(verifyIdentityCompletedAt).plusHours(48)}
+    </bpmn:timeDate>
+  </bpmn:timerEventDefinition>
+</bpmn:boundaryEvent>
+
+<!-- NEW: escalation path into the existing Account-Manager Review task -->
+<bpmn:sequenceFlow id="Flow_09"
+                   sourceRef="Timer_CreateAccountSLA"
+                   targetRef="Activity_AMReview"/>
+```
+
+```xml
+<!-- CHANGED: capture the SLA clock start when Verify Identity finishes -->
+<bpmn:userTask id="Activity_VerifyID" name="Verify Identity">
+  <bpmn:extensionElements>
+    <bpmn:documentation>On completion, set process variable verifyIdentityCompletedAt = now() (SLA clock start).</bpmn:documentation>
+  </bpmn:extensionElements>
+</bpmn:userTask>
+```
+
+*(Also ensure the root element declares `xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"`, which the current file uses but never binds.)*
+
+**Justification:** A boundary timer event on *Create Account in Core System*, dated 48 hours after *Verify Identity* completes, automatically withdraws the stalled service task and routes the case to the already‑modelled *Account‑Manager Review* (which then continues to *Activate Account*), enforcing the SLA and giving the orphaned escalation task a trigger — without introducing any new activity.

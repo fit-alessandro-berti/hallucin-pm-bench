@@ -1,0 +1,35 @@
+## 1. Unified diff
+
+```diff
+--- a/onboarding.bpmn
++++ b/onboarding.bpmn
+@@ -8,17 +8,17 @@
+   <bpmn:process id="OnboardingProcess" name="Employee Onboarding" isExecutable="true">
+     <bpmn:startEvent id="StartEvent_1" name="New Hire"/>
+     <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_CreateRecord"/>
+-    <bpmn:userTask id="Task_CreateRecord"     name="Create Employee Record" camunda:dueDate="P1D"/>
++    <bpmn:userTask id="Task_CreateRecord"     name="Create Employee Record" camunda:dueDate="${dateTime().withMillis(slaStart.time).plusDays(1)}"/>
+     <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_CreateRecord" targetRef="Task_PrepareContract"/>
+-    <bpmn:userTask id="Task_PrepareContract"  name="Prepare Contract"       camunda:dueDate="P2D"/>
++    <bpmn:userTask id="Task_PrepareContract"  name="Prepare Contract"       camunda:dueDate="${dateTime().withMillis(slaStart.time).plusDays(2)}"/>
+     <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_PrepareContract" targetRef="Task_SignContract"/>
+-    <bpmn:userTask id="Task_SignContract"     name="Sign Contract"          camunda:dueDate="P3D"/>
++    <bpmn:userTask id="Task_SignContract"     name="Sign Contract"          camunda:dueDate="${dateTime().withMillis(slaStart.time).plusDays(4)}"/>
+     <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_SignContract" targetRef="Task_CollectEquipment"/>
+-    <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="P5D"/>
++    <bpmn:userTask id="Task_CollectEquipment" name="Collect Equipment"      camunda:dueDate="${dateTime().withMillis(slaStart.time).plusDays(6)}"/>
+     <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_CollectEquipment" targetRef="Task_GrantAccess"/>
+-    <bpmn:serviceTask id="Task_GrantAccess"   name="Grant System Access"    camunda:dueDate="P1D" camunda:type="external"/>
++    <bpmn:serviceTask id="Task_GrantAccess"   name="Grant System Access"    camunda:dueDate="${dateTime().withMillis(slaStart.time).plusDays(7)}" camunda:type="external"/>
+     <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GrantAccess" targetRef="EndEvent_1"/>
+     <bpmn:endEvent id="EndEvent_1" name="Ready to Work"/>
+   </bpmn:process>
+```
+
+*(No activity added or removed, no sequence flow re-directed — only `camunda:dueDate` attribute values changed; `slaStart` is the hire/start timestamp already available on the process instance.)*
+
+## 2. Rationale
+
+Replacing task-creation-relative durations (`P1D…P5D`, which stack up to a 12-day worst case and let every upstream delay silently reset the clock) with **absolute deadlines anchored to the hire date** caps the end-to-end path at the contractual 7 days and makes each handoff breach visible immediately instead of being absorbed downstream.
+
+*Note:* the deeper fix — running the 5-day equipment lead time in parallel with contract preparation — cannot be expressed here, because any single sequence-flow reversal in this purely linear chain would orphan a task; that change would require adding gateways, which the rules forbid.

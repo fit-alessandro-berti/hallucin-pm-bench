@@ -1,0 +1,27 @@
+## Contoso Airlines — Flight-Refund Process
+
+### A. Decision points
+
+| # | Where it occurs | Question decided | Inputs used | Outcome / effect |
+|---|---|---|---|---|
+| **1** | **Triage_Agent_Validate_Eligibility** (step 2) | Is the claim eligible? | *FlightManifest*, *WeatherReport* (checked against the submitted claim) | Claim is validated as eligible and moves to pre-approval; otherwise it does not proceed. |
+| **2** | **Finance_Controller_PreApprove** (step 3) | Does the finance controller sign off? | *EligibilityChecklist* | Pre-approval succeeds → case continues; without a successful pre-approval, **Process_Refund_Payment** may not begin. |
+| **3** | **High-value branch** (step 4) — the one explicit branching point | Is the refund amount **greater than €1 000**? | Refund amount on the claim | **Yes** → **Senior_Auditor_Review** (must include the *AuditTrail*) before payment. **No** → proceed directly toward payment. |
+| **4** | Gate before **Process_Refund_Payment** (step 5) | Are all preconditions met? — (a) Finance_Controller_PreApprove succeeded, (b) for high-value claims, Senior_Auditor_Review completed, (c) the **signed** *BankTransferAuthorization* is present | *BankTransferAuthorization* (signed), completion status of steps 3 and 4 | Payment is executed only when all conditions hold. |
+
+**Note on scope:** Only decision point **#3** is a true branch (two divergent paths) as defined in the process. Points #1, #2 and #4 are gating/verification decisions stated by the process wording ("checks", "signs off", "may begin only after…", "once the signed … is present"). **Issue_Confirmation_Letter** (step 6) contains no decision — it is an automatic system action.
+
+### B. Required documents (complete list — nothing else exists in this process)
+
+| Document | Required at | Purpose |
+|---|---|---|
+| **RefundRequestForm** | Customer_Submit_Claim | Passenger's online claim submission. |
+| **FlightManifest** | Triage_Agent_Validate_Eligibility | Verification of the claim by the triage agent. |
+| **WeatherReport** | Triage_Agent_Validate_Eligibility | Second verification source for eligibility. |
+| **EligibilityChecklist** | Finance_Controller_PreApprove | Basis for the finance controller's sign-off. |
+| **AuditTrail** | Senior_Auditor_Review (high-value claims > €1 000 only) | Mandatory content of the senior auditor's review. |
+| **BankTransferAuthorization** (signed) | Process_Refund_Payment | Must be present before the finance team executes payment. |
+| **RefundConfirmationPDF** | Issue_Confirmation_Letter | Emailed to the passenger by the system. |
+
+### C. Explicit exclusion
+The legacy activity **“CustomerService_Agent_Decide”**, commonly cited in textbooks, is **not part of Contoso’s process** and therefore contributes **no decision point and no document**. No activities, roles, or artefacts beyond those listed above exist in this variant.

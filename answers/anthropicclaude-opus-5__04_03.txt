@@ -1,0 +1,12 @@
+**No — the trace is non‑compliant.**
+
+| Rule | Verdict | Reasoning |
+|---|---|---|
+| **1.** QE and RA once each, in that order | ✅ Satisfied | `Quality_Engineer_Review` occurs exactly once (position 3) and `Regulatory_Affairs_Review` exactly once (position 5), with QE preceding RA. |
+| **2.** severity = "High" ⇒ VP after QE **and** RA | ✅ Satisfied | `VP_Safety_Approval` (position 6) occurs after both QE (3) and RA (5). |
+| **3.** NA only after QE **and** RA complete | ❌ **Violated** | `Notify_Authorities` occurs at position 4, i.e. after QE but **before** `Regulatory_Affairs_Review` (position 5). Authorities were notified while regulatory review was still outstanding. |
+| **4.** CC only after NA (and after VP when rule 2 applies) | ⚠️ Locally satisfied, but tainted | `Close_Case` (position 7) follows NA (4) and VP (6), so the ordering constraint holds literally. However, its precondition NA was itself executed out of order, so the case was closed on the basis of a non‑conforming notification. |
+
+**Conclusion:** A single violation is sufficient to render the trace non‑compliant. Trace 2025‑05‑RX17 breaches **Rule 3** (premature `Notify_Authorities`), even though Rules 1, 2 and the literal ordering of Rule 4 are met.
+
+**Suggested remediation:** re‑sequence so that `Notify_Authorities` follows completion of `Regulatory_Affairs_Review` — e.g. `… QE, RA, NA, VP, CC` (or `… QE, RA, VP, NA, CC`), both of which satisfy all four rules. For the existing case, a deviation record / CAPA should document the early authority notification and confirm no incorrect information was transmitted before regulatory review concluded.
