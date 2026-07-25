@@ -1,0 +1,22 @@
+## Answer: **Yes** — T5 can fire before T3.
+
+**Concrete firing sequence from the initial marking:**
+
+| Step | Transition | Marking *after* firing (p0…p6) |
+|------|-----------|-------------------------------|
+| 0 | — (initial) | (1,0,0,0,0,0,0) |
+| 1 | **T1** | (0,1,1,0,0,0,0) |
+| 2 | **T2** | (0,0,1,1,0,0,0) |
+| 3 | **T5** | (0,0,1,0,0,0,1) |
+
+**Justification:**
+
+T5 requires two conditions: a token in **p3** (normal input arc) and **zero tokens in p4** (inhibitor arc).
+
+- Firing **T1** performs the parallel split, placing one token each in p1 and p2.
+- Firing **T2** moves the p1 token into **p3**, satisfying T5's normal-arc requirement.
+- The only transition that ever deposits a token into **p4** is **T3**. Since we have not fired T3 at this point, p4 is still empty — so T5's inhibitor condition (p4 = 0) is satisfied.
+
+Both of T5's conditions hold in marking (0,0,1,1,0,0,0), so **T5 fires**, producing a token in p6 — and it does so while T3 has never fired.
+
+**Note on ordering / interpretation.** Whether this is "correct" business behavior depends on intent: T5 acts as a *shortcut* that can pre-empt the synchronising join T4 whenever the p2→p4 branch (via T3) hasn't yet completed. Note that after firing T5 the token in p2 remains, so T3 can still fire afterward (reaching p4), but T4 can then never complete because p3 has been consumed — the net can deadlock with tokens stranded in p4/p6. If the modeling goal was for T5 to fire only when the p4 branch is *permanently* absent (rather than merely *not-yet-arrived*), this inhibitor construction doesn't guarantee that, and you may want to reconsider the design.
