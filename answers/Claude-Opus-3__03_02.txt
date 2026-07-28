@@ -1,0 +1,178 @@
+{
+  "definitions": {
+    "process": {
+      "id": "support_ticket_process",
+      "name": "Support Ticket Process",
+      "isExecutable": true,
+      "startEvent": {
+        "id": "start_event",
+        "name": "Receive Support Email"
+      },
+      "endEvent": [
+        {
+          "id": "end_event_closed",
+          "name": "Ticket Closed"
+        },
+        {
+          "id": "end_event_terminated",
+          "name": "Ticket Terminated"
+        }
+      ],
+      "serviceTask": [
+        {
+          "id": "create_ticket",
+          "name": "Create Ticket"
+        },
+        {
+          "id": "root_cause_analysis",
+          "name": "Root Cause Analysis"
+        },
+        {
+          "id": "log_solution",
+          "name": "Log Solution in Knowledge Base"
+        },
+        {
+          "id": "send_reminder",
+          "name": "Send Reminder"
+        }
+      ],
+      "userTask": [
+        {
+          "id": "initial_classification",
+          "name": "Initial Classification"
+        },
+        {
+          "id": "provide_resolution",
+          "name": "Provide Resolution" 
+        },
+        {
+          "id": "send_response",
+          "name": "Send Response to Customer"
+        },
+        {
+          "id": "close_ticket",
+          "name": "Close Ticket"
+        }
+      ],
+      "exclusiveGateway": [
+        {
+          "id": "classification_gateway",
+          "name": "Classification Gateway"
+        },
+        {
+          "id": "reply_gateway",
+          "name": "Reply Gateway"
+        }
+      ],
+      "eventBasedGateway": {
+        "id": "wait_reply_gateway",
+        "name": "Wait for Reply"
+      },
+      "intermediateCatchEvent": [
+        {
+          "id": "customer_reply",
+          "name": "Customer Reply",
+          "messageEventDefinition": {}
+        },
+        {
+          "id": "reply_timeout",
+          "name": "Reply Timeout",
+          "timerEventDefinition": {
+            "timeDuration": "PT24H"
+          }
+        }
+      ],
+      "boundaryEvent": {
+        "id": "customer_cancel",
+        "name": "Customer Cancel",
+        "attachedToRef": "wait_reply_gateway",
+        "cancelActivity": true,
+        "messageEventDefinition": {}
+      },
+      "sequenceFlow": [
+        {
+          "id": "start_to_create",
+          "sourceRef": "start_event",
+          "targetRef": "create_ticket"
+        },
+        {
+          "id": "create_to_classify", 
+          "sourceRef": "create_ticket",
+          "targetRef": "initial_classification"
+        },
+        {
+          "id": "classify_to_gateway",
+          "sourceRef": "initial_classification", 
+          "targetRef": "classification_gateway"
+        },
+        {
+          "id": "gateway_to_simple",
+          "sourceRef": "classification_gateway",
+          "targetRef": "provide_resolution",
+          "conditionExpression": "${ticket_type == 'simple'}"
+        },
+        {
+          "id": "gateway_to_complex",
+          "sourceRef": "classification_gateway",
+          "targetRef": "root_cause_analysis",
+          "conditionExpression": "${ticket_type == 'complex'}"  
+        },
+        {
+          "id": "root_cause_to_resolution",
+          "sourceRef": "root_cause_analysis",
+          "targetRef": "provide_resolution"
+        },
+        {
+          "id": "resolution_to_send",
+          "sourceRef": "provide_resolution",
+          "targetRef": "send_response"
+        },
+        {
+          "id": "send_to_log",
+          "sourceRef": "send_response", 
+          "targetRef": "log_solution"
+        },
+        {
+          "id": "send_to_wait",
+          "sourceRef": "send_response",
+          "targetRef": "wait_reply_gateway"
+        },
+        {
+          "id": "log_to_wait",
+          "sourceRef": "log_solution",
+          "targetRef": "wait_reply_gateway"  
+        },
+        {
+          "id": "wait_to_reply",
+          "sourceRef": "wait_reply_gateway",
+          "targetRef": "reply_gateway"
+        },
+        {
+          "id": "reply_caught",
+          "sourceRef": "customer_reply",
+          "targetRef": "close_ticket"  
+        },
+        {
+          "id": "close_to_end",
+          "sourceRef": "close_ticket",
+          "targetRef": "end_event_closed"
+        },
+        {
+          "id": "timeout_to_remind",
+          "sourceRef": "reply_timeout", 
+          "targetRef": "send_reminder"
+        },
+        {
+          "id": "remind_to_close",
+          "sourceRef": "send_reminder",
+          "targetRef": "close_ticket"
+        },
+        {
+          "id": "cancel_to_end",
+          "sourceRef": "customer_cancel",
+          "targetRef": "end_event_terminated"
+        }
+      ]
+    }
+  }
+}
