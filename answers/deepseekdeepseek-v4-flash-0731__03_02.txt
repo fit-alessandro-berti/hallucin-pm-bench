@@ -1,0 +1,438 @@
+{
+  "process": {
+    "id": "SupportTicketProcess",
+    "name": "Customer Support Ticket Process",
+    "isExecutable": true,
+    "nodes": [
+      {
+        "id": "StartEvent_EmailReceived",
+        "type": "bpmn:StartEvent",
+        "name": "Support Email Received",
+        "eventDefinitions": [
+          {
+            "type": "bpmn:MessageEventDefinition"
+          }
+        ],
+        "incoming": [],
+        "outgoing": ["Flow_Start_to_Parse"],
+        "bounds": { "x": 40, "y": 160, "width": 36, "height": 36 }
+      },
+      {
+        "id": "Task_ParseCreate",
+        "type": "bpmn:ServiceTask",
+        "name": "Parse Email and Create Ticket",
+        "incoming": ["Flow_Start_to_Parse"],
+        "outgoing": ["Flow_Parse_to_Classify"],
+        "bounds": { "x": 130, "y": 140, "width": 100, "height": 80 }
+      },
+      {
+        "id": "Task_InitialClassification",
+        "type": "bpmn:UserTask",
+        "name": "Initial Classification",
+        "incoming": ["Flow_Parse_to_Classify"],
+        "outgoing": ["Flow_Classify_to_Gateway"],
+        "bounds": { "x": 280, "y": 140, "width": 100, "height": 80 }
+      },
+      {
+        "id": "Gateway_TicketType",
+        "type": "bpmn:ExclusiveGateway",
+        "name": "Ticket Type?",
+        "gatewayDirection": "Diverging",
+        "incoming": ["Flow_Classify_to_Gateway"],
+        "outgoing": ["Flow_Gateway_Simple", "Flow_Gateway_Complex"],
+        "bounds": { "x": 440, "y": 155, "width": 50, "height": 50 }
+      },
+      {
+        "id": "Task_RootCauseAnalysis",
+        "type": "bpmn:UserTask",
+        "name": "Root Cause Analysis",
+        "incoming": ["Flow_Gateway_Complex"],
+        "outgoing": ["Flow_RCA_to_Merge"],
+        "bounds": { "x": 590, "y": 260, "width": 100, "height": 80 }
+      },
+      {
+        "id": "Gateway_MergeResolution",
+        "type": "bpmn:ExclusiveGateway",
+        "gatewayDirection": "Converging",
+        "incoming": ["Flow_Gateway_Simple", "Flow_RCA_to_Merge"],
+        "outgoing": ["Flow_Merge_to_ProvideRes"],
+        "bounds": { "x": 710, "y": 155, "width": 50, "height": 50 }
+      },
+      {
+        "id": "Task_ProvideResolution",
+        "type": "bpmn:UserTask",
+        "name": "Provide Resolution",
+        "incoming": ["Flow_Merge_to_ProvideRes"],
+        "outgoing": ["Flow_ProvideRes_to_GatewayParallel"],
+        "bounds": { "x": 820, "y": 140, "width": 100, "height": 80 }
+      },
+      {
+        "id": "Gateway_ParallelAfterResolution",
+        "type": "bpmn:ParallelGateway",
+        "name": "After Resolution",
+        "gatewayDirection": "Diverging",
+        "incoming": ["Flow_ProvideRes_to_GatewayParallel"],
+        "outgoing": ["Flow_Parallel_to_SendResponse", "Flow_Parallel_to_LogSolution"],
+        "bounds": { "x": 970, "y": 155, "width": 50, "height": 50 }
+      },
+      {
+        "id": "Task_SendResponse",
+        "type": "bpmn:UserTask",
+        "name": "Send Response to Customer",
+        "incoming": ["Flow_Parallel_to_SendResponse"],
+        "outgoing": ["Flow_SendResponse_to_GatewayWait"],
+        "bounds": { "x": 1090, "y": 60, "width": 120, "height": 80 }
+      },
+      {
+        "id": "Task_LogSolution",
+        "type": "bpmn:UserTask",
+        "name": "Log Solution in Knowledge Base",
+        "incoming": ["Flow_Parallel_to_LogSolution"],
+        "outgoing": ["Flow_Log_to_EndLog"],
+        "bounds": { "x": 1090, "y": 280, "width": 120, "height": 80 }
+      },
+      {
+        "id": "Gateway_WaitForCustomerReply",
+        "type": "bpmn:EventBasedGateway",
+        "name": "Wait for Customer Reply",
+        "gatewayDirection": "Diverging",
+        "incoming": ["Flow_SendResponse_to_GatewayWait"],
+        "outgoing": ["Flow_Wait_Reply", "Flow_Wait_Timeout"],
+        "bounds": { "x": 1270, "y": 75, "width": 50, "height": 50 }
+      },
+      {
+        "id": "Event_CustomerReply",
+        "type": "bpmn:IntermediateCatchEvent",
+        "name": "Customer Reply",
+        "eventDefinitions": [
+          {
+            "type": "bpmn:MessageEventDefinition"
+          }
+        ],
+        "incoming": ["Flow_Wait_Reply"],
+        "outgoing": ["Flow_Reply_to_CloseMerge"],
+        "bounds": { "x": 1410, "y": 40, "width": 36, "height": 36 }
+      },
+      {
+        "id": "Event_NoReplyTimeout",
+        "type": "bpmn:IntermediateCatchEvent",
+        "name": "24 Hours No Reply",
+        "eventDefinitions": [
+          {
+            "type": "bpmn:TimerEventDefinition",
+            "timeDuration": "PT24H"
+          }
+        ],
+        "incoming": ["Flow_Wait_Timeout"],
+        "outgoing": ["Flow_Timeout_to_Reminder"],
+        "bounds": { "x": 1410, "y": 190, "width": 36, "height": 36 }
+      },
+      {
+        "id": "Task_SendReminder",
+        "type": "bpmn:ServiceTask",
+        "name": "Send Reminder",
+        "incoming": ["Flow_Timeout_to_Reminder"],
+        "outgoing": ["Flow_Reminder_to_CloseMerge"],
+        "bounds": { "x": 1520, "y": 190, "width": 110, "height": 80 }
+      },
+      {
+        "id": "Gateway_MergeClose",
+        "type": "bpmn:ExclusiveGateway",
+        "gatewayDirection": "Converging",
+        "incoming": ["Flow_Reply_to_CloseMerge", "Flow_Reminder_to_CloseMerge"],
+        "outgoing": ["Flow_CloseMerge_to_CloseTicket"],
+        "bounds": { "x": 1710, "y": 75, "width": 50, "height": 50 }
+      },
+      {
+        "id": "Task_CloseTicket",
+        "type": "bpmn:UserTask",
+        "name": "Close Ticket",
+        "incoming": ["Flow_CloseMerge_to_CloseTicket"],
+        "outgoing": ["Flow_CloseTicket_to_EndNormal"],
+        "bounds": { "x": 1820, "y": 60, "width": 100, "height": 80 }
+      },
+      {
+        "id": "EndEvent_TicketClosed",
+        "type": "bpmn:EndEvent",
+        "name": "Ticket Closed",
+        "incoming": ["Flow_CloseTicket_to_EndNormal"],
+        "outgoing": [],
+        "bounds": { "x": 1970, "y": 82, "width": 36, "height": 36 }
+      },
+      {
+        "id": "EndEvent_SolutionLogged",
+        "type": "bpmn:EndEvent",
+        "name": "Solution Logged",
+        "incoming": ["Flow_Log_to_EndLog"],
+        "outgoing": [],
+        "bounds": { "x": 1300, "y": 310, "width": 36, "height": 36 }
+      },
+      {
+        "id": "EventSubProcess_Cancellation",
+        "type": "bpmn:SubProcess",
+        "name": "Customer Cancellation",
+        "triggeredByEvent": true,
+        "incoming": [],
+        "outgoing": [],
+        "bounds": { "x": 40, "y": 420, "width": 400, "height": 100 },
+        "nodes": [
+          {
+            "id": "StartEvent_CustomerCancellation",
+            "type": "bpmn:StartEvent",
+            "name": "Customer Cancellation",
+            "isInterrupting": true,
+            "eventDefinitions": [
+              {
+                "type": "bpmn:MessageEventDefinition"
+              }
+            ],
+            "incoming": [],
+            "outgoing": ["Flow_CancelStart_to_CancelEnd"],
+            "bounds": { "x": 80, "y": 460, "width": 36, "height": 36 }
+          },
+          {
+            "id": "EndEvent_Terminate",
+            "type": "bpmn:EndEvent",
+            "name": "Terminate",
+            "eventDefinitions": [
+              {
+                "type": "bpmn:TerminateEventDefinition"
+              }
+            ],
+            "incoming": ["Flow_CancelStart_to_CancelEnd"],
+            "outgoing": [],
+            "bounds": { "x": 280, "y": 460, "width": 36, "height": 36 }
+          }
+        ],
+        "sequenceFlows": [
+          {
+            "id": "Flow_CancelStart_to_CancelEnd",
+            "type": "bpmn:SequenceFlow",
+            "sourceRef": "StartEvent_CustomerCancellation",
+            "targetRef": "EndEvent_Terminate",
+            "waypoints": [
+              { "x": 126, "y": 478 },
+              { "x": 280, "y": 478 }
+            ]
+          }
+        ]
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "Flow_Start_to_Parse",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "StartEvent_EmailReceived",
+        "targetRef": "Task_ParseCreate",
+        "waypoints": [
+          { "x": 76, "y": 178 },
+          { "x": 130, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_Parse_to_Classify",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_ParseCreate",
+        "targetRef": "Task_InitialClassification",
+        "waypoints": [
+          { "x": 230, "y": 180 },
+          { "x": 280, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_Classify_to_Gateway",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_InitialClassification",
+        "targetRef": "Gateway_TicketType",
+        "waypoints": [
+          { "x": 380, "y": 180 },
+          { "x": 440, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_Gateway_Simple",
+        "type": "bpmn:SequenceFlow",
+        "name": "Simple",
+        "sourceRef": "Gateway_TicketType",
+        "targetRef": "Gateway_MergeResolution",
+        "conditionExpression": {
+          "type": "bpmn:FormalExpression",
+          "body": "${classification == 'Simple'}"
+        },
+        "waypoints": [
+          { "x": 490, "y": 180 },
+          { "x": 710, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_Gateway_Complex",
+        "type": "bpmn:SequenceFlow",
+        "name": "Complex",
+        "sourceRef": "Gateway_TicketType",
+        "targetRef": "Task_RootCauseAnalysis",
+        "conditionExpression": {
+          "type": "bpmn:FormalExpression",
+          "body": "${classification == 'Complex'}"
+        },
+        "waypoints": [
+          { "x": 465, "y": 205 },
+          { "x": 640, "y": 205 },
+          { "x": 640, "y": 260 }
+        ]
+      },
+      {
+        "id": "Flow_RCA_to_Merge",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_RootCauseAnalysis",
+        "targetRef": "Gateway_MergeResolution",
+        "waypoints": [
+          { "x": 690, "y": 300 },
+          { "x": 735, "y": 300 },
+          { "x": 735, "y": 205 }
+        ]
+      },
+      {
+        "id": "Flow_Merge_to_ProvideRes",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_MergeResolution",
+        "targetRef": "Task_ProvideResolution",
+        "waypoints": [
+          { "x": 760, "y": 180 },
+          { "x": 820, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_ProvideRes_to_GatewayParallel",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_ProvideResolution",
+        "targetRef": "Gateway_ParallelAfterResolution",
+        "waypoints": [
+          { "x": 920, "y": 180 },
+          { "x": 970, "y": 180 }
+        ]
+      },
+      {
+        "id": "Flow_Parallel_to_SendResponse",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_ParallelAfterResolution",
+        "targetRef": "Task_SendResponse",
+        "waypoints": [
+          { "x": 995, "y": 155 },
+          { "x": 1000, "y": 100 },
+          { "x": 1090, "y": 100 }
+        ]
+      },
+      {
+        "id": "Flow_Parallel_to_LogSolution",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_ParallelAfterResolution",
+        "targetRef": "Task_LogSolution",
+        "waypoints": [
+          { "x": 995, "y": 205 },
+          { "x": 1000, "y": 320 },
+          { "x": 1090, "y": 320 }
+        ]
+      },
+      {
+        "id": "Flow_SendResponse_to_GatewayWait",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_SendResponse",
+        "targetRef": "Gateway_WaitForCustomerReply",
+        "waypoints": [
+          { "x": 1210, "y": 100 },
+          { "x": 1270, "y": 100 }
+        ]
+      },
+      {
+        "id": "Flow_Wait_Reply",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_WaitForCustomerReply",
+        "targetRef": "Event_CustomerReply",
+        "waypoints": [
+          { "x": 1320, "y": 100 },
+          { "x": 1380, "y": 100 },
+          { "x": 1380, "y": 58 },
+          { "x": 1410, "y": 58 }
+        ]
+      },
+      {
+        "id": "Flow_Wait_Timeout",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_WaitForCustomerReply",
+        "targetRef": "Event_NoReplyTimeout",
+        "waypoints": [
+          { "x": 1295, "y": 125 },
+          { "x": 1295, "y": 208 },
+          { "x": 1410, "y": 208 }
+        ]
+      },
+      {
+        "id": "Flow_Reply_to_CloseMerge",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Event_CustomerReply",
+        "targetRef": "Gateway_MergeClose",
+        "waypoints": [
+          { "x": 1446, "y": 58 },
+          { "x": 1660, "y": 58 },
+          { "x": 1660, "y": 100 },
+          { "x": 1710, "y": 100 }
+        ]
+      },
+      {
+        "id": "Flow_Timeout_to_Reminder",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Event_NoReplyTimeout",
+        "targetRef": "Task_SendReminder",
+        "waypoints": [
+          { "x": 1446, "y": 208 },
+          { "x": 1480, "y": 208 },
+          { "x": 1480, "y": 230 },
+          { "x": 1520, "y": 230 }
+        ]
+      },
+      {
+        "id": "Flow_Reminder_to_CloseMerge",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_SendReminder",
+        "targetRef": "Gateway_MergeClose",
+        "waypoints": [
+          { "x": 1630, "y": 230 },
+          { "x": 1735, "y": 230 },
+          { "x": 1735, "y": 125 }
+        ]
+      },
+      {
+        "id": "Flow_CloseMerge_to_CloseTicket",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Gateway_MergeClose",
+        "targetRef": "Task_CloseTicket",
+        "waypoints": [
+          { "x": 1760, "y": 100 },
+          { "x": 1820, "y": 100 }
+        ]
+      },
+      {
+        "id": "Flow_CloseTicket_to_EndNormal",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_CloseTicket",
+        "targetRef": "EndEvent_TicketClosed",
+        "waypoints": [
+          { "x": 1920, "y": 100 },
+          { "x": 1970, "y": 100 }
+        ]
+      },
+      {
+        "id": "Flow_Log_to_EndLog",
+        "type": "bpmn:SequenceFlow",
+        "sourceRef": "Task_LogSolution",
+        "targetRef": "EndEvent_SolutionLogged",
+        "waypoints": [
+          { "x": 1210, "y": 320 },
+          { "x": 1250, "y": 320 },
+          { "x": 1250, "y": 328 },
+          { "x": 1300, "y": 328 }
+        ]
+      }
+    ]
+  }
+}
